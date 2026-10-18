@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.ws.openapi.filter;
 
-import fr.cnrs.opentheso.v2.shared.auth.SsoTokenService;
+import fr.cnrs.opentheso.shared.auth.SsoTokenService;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

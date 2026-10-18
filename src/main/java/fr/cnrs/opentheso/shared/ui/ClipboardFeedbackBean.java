@@ -1,0 +1,26 @@
+package fr.cnrs.opentheso.shared.ui;
+
+import fr.cnrs.opentheso.utils.MessageUtils;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
+import lombok.RequiredArgsConstructor;
+import org.primefaces.extensions.event.ClipboardErrorEvent;
+
+import java.io.Serializable;
+
+@Named("clipboardFeedbackBean")
+@ApplicationScoped
+@RequiredArgsConstructor
+public class ClipboardFeedbackBean implements Serializable {
+
+    private final transient LocaleBean localeBean;
+
+    public void onSuccess() {
+        MessageUtils.showInformationMessage(localeBean.getMsg("copied"));
+    }
+
+    public void onError(final ClipboardErrorEvent errorEvent) {
+        MessageUtils.showErrorMessage("Component id: " + errorEvent.getComponent().getId()
+                + " Action: " + errorEvent.getAction());
+    }
+}

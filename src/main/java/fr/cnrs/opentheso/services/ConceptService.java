@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.services;
 
-import fr.cnrs.opentheso.bean.importexport.outils.HTMLLinkElement;
-import fr.cnrs.opentheso.bean.importexport.outils.HtmlLinkExtraction;
+import fr.cnrs.opentheso.utils.HTMLLinkElement;
+import fr.cnrs.opentheso.utils.HtmlLinkExtraction;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.ConceptFacet;
 import fr.cnrs.opentheso.entites.ConceptReplacedBy;

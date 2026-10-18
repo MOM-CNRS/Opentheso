@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="compte"/>
+  <ui:define name="title">OpenTheso — #{localeBean.getMsg('nav.profile')}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{myAccountBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <h:form id="previewAccountForm" prependId="false">
+      <ui:fragment rendered="#{not userSession.loggedIn}">
+        <ui:include src="/includes/access-denied.xhtml">
+          <ui:param name="deniedKicker" value="#{localeBean.getMsg('profile.accessDenied.kicker')}"/>
+          <ui:param name="deniedTitle" value="#{localeBean.getMsg('profile.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{localeBean.getMsg('profile.accessDenied.sub')}"/>
+          <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('profile.accessDenied.back')}"/>
+        </ui:include>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{userSession.loggedIn}">
+          <div class="view-panel is-on" id="viewSettings">
+            <div class="bo bo-solo">
+              <nav class="bc" aria-label="#{localeBean.getMsg('profile.breadcrumb')}">
+                <h:commandLink styleClass="bc-lk" action="#{navigationBean.redirectToThesaurusPicker}">
+                  #{localeBean.getMsg('profile.breadcrumb.home')}
+                </h:commandLink>
+                <span class="bc-sep" aria-hidden="true">›</span>
+                <span class="bc-cur" aria-current="page">#{localeBean.getMsg('nav.profile')}</span>
+              </nav>
+              <a class="bo-back"
+                 href="#{request.contextPath}/thesauri"
+                 title="#{localeBean.getMsg('profile.identity.back')}"
+                 onclick="if (document.referrer &amp;&amp; document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+              <h:commandButton id="previewAccountSaveGo" value="save" styleClass="st-jsf-go"
+                               action="#{myAccountBean.saveIdentity}">
+                <f:ajax execute="@form"
+                        render="previewAccountHead previewAccountBanner previewAccountIdentity previewAccountSecurity previewAccountSaveFeedback"
+                        onevent="onPreviewAccountSave"/>
+              </h:commandButton>
+              <h:commandButton id="previewAccountApiGo" value="api" styleClass="st-jsf-go"
+                               action="#{myAccountBean.regenerateApiKey}">
+                <f:ajax execute="@this" render="previewAccountSecurity previewAccountSaveFeedback"
+                        onevent="onPreviewAccountSave"/>
+              </h:commandButton>
+              <h:panelGroup id="previewAccountHead" layout="block" styleClass="bo-head">
+                <div>
+                  <h1 class="bo-title">#{localeBean.getMsg('profile.identity.title')}</h1>
+                </div>
+              </h:panelGroup>
+              <div class="bo-full st-scope">
+                <h:panelGroup id="previewAccountBanner" layout="block">
+                  <div class="pf-id">
+                    <span class="pf-ava" aria-hidden="true">#{userSession.currentUserInitials}</span>
+                    <div class="pf-id-main">
+                      <div class="pf-id-name">#{myAccountBean.editableUsername}</div>
+                      <div class="pf-id-sub">#{myAccountBean.editableEmail}</div>
+                    </div>
+                    <div class="pf-id-tags">
+                      <ui:repeat value="#{myAccountBean.uniqueRoleLabels}" var="roleLabel">
+                        <span class="role-badge">#{roleLabel}</span>
+                      </ui:repeat>
+                      <ui:fragment rendered="#{userSession.superAdmin}">
+                        <span class="sa-badge">#{localeBean.getMsg('profile.role.superAdmin')}</span>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </h:panelGroup>
+
+                <div class="st-group-head">#{localeBean.getMsg('profile.group.account')}</div>
+                <h:panelGroup id="previewAccountIdentity" layout="block">
+                  <div class="bo-card">
+                    <div class="bo-card-h">
+                      <span class="bo-card-t">#{localeBean.getMsg('profile.card.identity')}</span>
+                    </div>
+                    <div class="bo-card-b st-form">
+                      <div class="st-row">
+                        <div class="st-row-l">#{localeBean.getMsg('profile.identity.name')} <span class="st-req">*</span></div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewAccountUsername" styleClass="st-input"
+                                       value="#{myAccountBean.editableUsername}"/>
+                        </div>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">#{localeBean.getMsg('profile.identity.email')} <span class="st-req">*</span></div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewAccountEmail" styleClass="st-input"
+                                       value="#{myAccountBean.editableEmail}"/>
+                          <p class="st-field-hint">#{localeBean.getMsg('profile.identity.emailHint')}</p>
+                        </div>
+                      </div>
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">#{localeBean.getMsg('profile.alert_by_email')}</div>
+                          <div class="st-toggle-d">#{localeBean.getMsg('profile.alert_by_emailTooltip')}</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox id="previewAccountAlertMail"
+                                                   styleClass="st-sw-input"
+                                                   value="#{myAccountBean.editableAlertMail}"/>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </h:panelGroup>
+
+                <div class="st-group-head">#{localeBean.getMsg('profile.group.security')}</div>
+                <h:panelGroup id="previewAccountSecurity" layout="block">
+                  <div class="bo-card">
+                    <div class="bo-card-h">
+                      <span class="bo-card-t">#{localeBean.getMsg('profile.card.security')}</span>
+                    </div>
+                    <div class="bo-card-b st-form">
+                      <div class="st-row">
+                        <div class="st-row-l">#{localeBean.getMsg('ui.profile.password')}</div>
+                        <div class="st-row-c">
+                          <h:inputSecret id="previewAccountPassword" styleClass="st-input"
+                                         value="#{myAccountBean.newPassword}" redisplay="false"/>
+                          <p class="st-field-hint">#{localeBean.getMsg('profile.passwordHint')}</p>
+                        </div>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">#{localeBean.getMsg('profile.passwordConfirm')}</div>
+                        <div class="st-row-c">
+                          <h:inputSecret id="previewAccountPasswordConfirm" styleClass="st-input"
+                                         value="#{myAccountBean.passwordConfirmation}" redisplay="false"/>
+                        </div>
+                      </div>
+                      <ui:fragment rendered="#{myAccountBean.apiKeySectionVisible}">
+                        <div class="st-row">
+                          <div class="st-row-l">#{localeBean.getMsg('profile.apiKey')}</div>
+                          <div class="st-row-c st-inline">
+                            <input class="st-input is-mono" type="text" readonly="readonly"
+                                   value="#{myAccountBean.apiKeyDisplay}"/>
+                            <ui:fragment rendered="#{myAccountBean.canRegenerateApiKey}">
+                              <button type="button" class="bo-btn ghost sm"
+                                      onclick="clickPreviewJsf('previewAccountApiGo'); return false;">
+                                #{localeBean.getMsg('profile.api.regenerate')}
+                              </button>
+                            </ui:fragment>
+                          </div>
+                        </div>
+                        <ui:fragment rendered="#{not empty myAccountBean.apiKeyPlain}">
+                          <p class="st-field-hint is-warn">#{localeBean.getMsg('profile.apiKeyCopyMessage')}</p>
+                        </ui:fragment>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </h:panelGroup>
+
+                <div class="st-group-head">#{localeBean.getMsg('profile.group.projects')}</div>
+                <div class="bo-card">
+                    <div class="bo-card-h">
+                      <span class="bo-card-t">#{localeBean.getMsg('profile.card.projects')}</span>
+                    </div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{userSession.superAdmin}">
+                      <p class="acc-roles-empty">#{localeBean.getMsg('profile.projects.superAdminHint')}</p>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{not userSession.superAdmin}">
+                      <h:panelGroup rendered="#{empty myAccountBean.projectRoles}" layout="block">
+                        <p class="acc-roles-empty">#{localeBean.getMsg('profile.roles.empty')}</p>
+                      </h:panelGroup>
+                      <div class="pf-tab">
+                        <ui:repeat value="#{myAccountBean.projectRoles}" var="project">
+                          <div class="acc-roles-proj">#{project.projectName}</div>
+                          <table class="st-table">
+                            <thead>
+                              <tr>
+                                <th>#{localeBean.getMsg('profile.roles.thesaurus')}</th>
+                                <th>#{localeBean.getMsg('profile.role')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <ui:repeat value="#{project.thesaurusRoles}" var="role">
+                                <tr>
+                                  <td>
+                                    <span class="proj-dot" style="background:var(--accent)" aria-hidden="true"></span>
+                                    <span class="st-td-name">#{role.thesaurusName}</span>
+                                    <span class="acc-roles-id"> (#{role.thesaurusId})</span>
+                                  </td>
+                                  <td>#{myAccountBean.labelForRole(role.roleName)}</td>
+                                </tr>
+                              </ui:repeat>
+                            </tbody>
+                          </table>
+                        </ui:repeat>
+                      </div>
+                    </ui:fragment>
+                  </div>
+                </div>
+
+                <h:panelGroup id="previewAccountSaveFeedback" layout="block">
+                  <span id="previewAccountSaveMsg" hidden="hidden"
+                        data-ok="#{not myAccountBean.identitySaveError}">#{myAccountBean.identitySaveMessage}</span>
+                  <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                                rendered="#{myAccountBean.identitySaveError and not empty myAccountBean.identitySaveMessage}">
+                    #{myAccountBean.identitySaveMessage}
+                  </h:panelGroup>
+                </h:panelGroup>
+                <div class="fsave">
+                  <button type="button" class="fsave-btn" data-act="account-save">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    #{localeBean.getMsg('save')}
+                  </button>
+                </div>
+                <div class="bo-toast above" id="accountSaveToast" hidden="hidden">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span id="accountSaveToastTxt">#{localeBean.getMsg('profile.identity.saved')}</span>
+                </div>
+                <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+              </div>
+            </div>
+          </div>
+      </ui:fragment>
+    </h:form>
+  </ui:define>
+</ui:composition>

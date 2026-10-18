@@ -1,312 +1,275 @@
-<!DOCTYPE HTML>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:c="jakarta.tags.core"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="atelier"/>
+  <ui:define name="viewActions">
+  </ui:define>
+  <ui:define name="title">OpenTheso — Atelier</ui:define>
+  <ui:define name="main">
 
-    <f:view>
-        <f:metadata>
-            <f:viewParam name="idc" value="#{selectedThesaurus.idConceptFromUri}"/>
-            <f:viewParam name="idg" value="#{selectedThesaurus.idGroupFromUri}"/>
-            <f:viewParam name="idt" value="#{selectedThesaurus.idThesoFromUri}"/>
-        </f:metadata>
-    </f:view>
-
-    <h:head>
-        <title>Opentheso</title>
-
-        <link href="../resources/img/O.png" rel="icon" />
-
-        <link rel="stylesheet" type="text/css" href="../resources/css/all.css" />
-        <link rel="stylesheet" type="text/css" href="../resources/css/theme_general.css" />
-        <link rel="stylesheet" type="text/css" href="../resources/css/theme_opentheso.css" />
-        <link rel="stylesheet" type="text/css" href="../resources/css/composants_opentheso.css" />
-
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/> 
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
-    </h:head>
-
-    <h:body id="page-top" onload="initMenu()">
-
-        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
-
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected()}" id="wrapper" style="height: 100%" >
-
-            <ui:include src="../commun/menu.xhtml" />
-
-            <div id="content-wrapper" style="width: 100%; min-height:100%; position:relative;">
-
-                <h:form id="containerIndex">
-
-                    <h:panelGroup id="header">
-                        <ui:include src="../commun/header.xhtml" />
-                    </h:panelGroup>
-
-                    <div class="container-fluid">
-
-                        <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800" style="font-size: 1.5rem;">#{langueBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a;font-size: 1.5rem;">#{langueBean.getMsg('menu.thesaurusWorkshop')}</span></h1>
-                        </div>
-
-                        <div class="col-12" style="height: 100%">
-                            <div class="card shadow mb-4" style="height: 100%; padding: 20px; color: #000">
-
-                                <h:panelGroup rendered="#{(selectedThesaurus.currentIdTheso != null) and (currentUser.hasRoleAsAdmin)}" >
-                                    <div class="card mb-4 py-3 border-left-success" style="padding-left: 10px; padding-right: 10px">
-                                        <ui:include src="actionsOnThisTheso.xhtml" />
-                                    </div>
-                                </h:panelGroup>
-
-                                <div hidden="true" class="card mb-4 py-3 border-left-success" style="padding-left: 10px; padding-right: 10px">
-                                    <h:outputText rendered="e" value="D'autres actions structurées avec choix d'un thésaurus en particulier"  /> <br/>
-                                    <p:wizard rendered="e" id="wizAtelier" widgetVar="wiz" nextLabel="Suivant" backLabel="Précédent" flowListener="#{atelierThesBean.onFlowProcess}" >
-                                        <p:tab id="actions" title="Choix de l'action" titleStyleClass="tabCostum">
-
-                                            <p:panel styleClass="redColoredPanel" style="padding: 10px">
-                                                <p:outputLabel value="Veuillez choisir l'action que vous voulez faire : " style="color: #000"/>
-                                                <p:selectOneRadio value="#{atelierThesBean.actionSelected}" unselectable="true" layout="pageDirection">
-                                                    <f:selectItem itemLabel="Comparaison d'un fichier aux thésaurus" itemValue="opt1"/>
-                                                    <f:selectItem itemDisabled="true" itemLabel="Correction globale" itemValue="opt2"/>
-                                                    <f:selectItem itemLabel="Fusionner deux thésaurus" itemValue="opt3"/>
-                                                </p:selectOneRadio>
-                                                <h:outputText  value="!!! Pour la fusion de deux thésaurus, les informations prises en compte sont : prefLabel, altLabel, definiton, alignement" style="color: brown" />
-                                            </p:panel>
-                                        </p:tab>
-
-                                        <p:tab id="entre" title="Entrées" titleStyleClass="tabCostum">
-
-                                            <p:panel id="fussion" rendered="#{atelierThesBean.isRubriqueSelected('opt3')}" style="padding: 10px">
-
-                                                <h5 style="color: #43B572; font-weight: bold; margin-top: 10px">Importation du thésaurus source</h5>
-
-                                                <p:fileUpload listener="#{fusionService.importTheso}" update="fussion" label="parcourir" 
-                                                              mode="advanced" auto="true">
-                                      <p:validateFile allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"/>
-                        </p:fileUpload>
-
-                                                <h:panelGroup rendered="#{fusionService.loadDone}">
-                                                    <div class="row" style="margin-left: 30px; margin-right: 30px; font-size: 12px;">
-                                                        <div class="col-12">
-                                                            <h:outputText value="URI: " />
-                                                            <h:outputText value="#{fusionService.uri}" style="color: #C63632"/>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row" rendered="#{fusionService.loadDone}" style="margin-left: 30px; margin-right: 30px; font-size: 12px;">
-                                                        <div class="col-12">
-                                                            <h:outputText value="Total des concepts: " />
-                                                            <h:outputText value="#{fusionService.total}" style="color: #C63632"/>
-                                                        </div>
-                                                    </div>
-                                                </h:panelGroup>
-                                            </p:panel>
-
-                                            <p:panel rendered="#{atelierThesBean.isRubriqueSelected('opt1')}" style="padding: 10px">
-                                                <h5 style="color: #43B572; font-weight: bold; margin-top: 10px">Les données de comparaison</h5>
-                                                <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
-                                                    <p:outputLabel for="@next" value="Délimiteur Csv :" style="color: #000" />
-                                                    <p:selectOneMenu value="#{atelierThesBean.choiceDelimiter}" >
-                                                        <f:selectItem itemLabel="," itemValue="0" />
-                                                        <f:selectItem itemLabel=";" itemValue="1" />
-                                                        <f:selectItem itemLabel="\t" itemValue="2" />
-                                                        <p:ajax event="change" listener="#{atelierThesBean.actionChoice()}" />
-                                                    </p:selectOneMenu>
-                                                </h:panelGrid>
-
-                                                <div class="row">
-                                                    <div class="col-12" >
-                                                        <p:fileUpload listener="#{atelierThesBean.loadFileCsv}" label="parcourir" mode="advanced" auto="true"
-                                                                      update="containerIndex">
-                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
-                        </p:fileUpload>
-                                                    </div>
-                                                </div>
-
-                                                <p:panel style="margin-top: 10px">
-                                                    <h5 style="color: #43B572; font-weight: bold; margin-top: 10px">Les données chargées</h5>
-                                                    <h:outputText value="Nombre des données récupérées : " style="color: #000;" />
-                                                    <h:outputText value="#{atelierThesBean.values.size()}" style="color: #143a1e; font-weight: bold;" />
-
-                                                    <h:form style="margin-top: 15px">
-
-                                                        <p:scrollPanel mode="native" style="width: 100%; max-height: 200px; border-width: 0">
-                                                            <h:panelGroup rendered="#{atelierThesBean.values.size() == 0}" >
-                                                                <div class="row">
-                                                                    <div class="col-12">
-                                                                        <h:outputText  value="Aucune donnée pour le moment ..." style="color: grey; font-style: italic" />
-                                                                    </div>
-                                                                </div>
-                                                            </h:panelGroup>
-
-                                                            <h:panelGroup rendered="#{atelierThesBean.values.size() > 0}" >
-                                                                <div class="row" style="border: 1px solid #143a1e;">
-                                                                    <ui:repeat var="title" value="#{atelierThesBean.titles}">
-                                                                        <div class="col-#{atelierThesBean.spanTable}"  style="background-color: #ecf8f1; color: #143a1e">
-                                                                            <h:outputText style="font-weight: bold;" value="#{title}"/>
-                                                                        </div>
-                                                                    </ui:repeat>
-                                                                </div>
-
-                                                                <ui:repeat var="ligne" value="#{atelierThesBean.values}">
-                                                                    <div class="row" style="border-left: 1px solid #143a1e; border-right: 1px solid #143a1e; border-bottom: 1px solid #143a1e;">
-                                                                        <ui:repeat var="value" value="#{ligne}">
-                                                                            <div class="col-#{atelierThesBean.spanTable}">
-                                                                                <h:outputText value="#{value}"/>
-                                                                            </div>
-                                                                        </ui:repeat>
-                                                                    </div>
-                                                                </ui:repeat>
-                                                            </h:panelGroup>
-                                                        </p:scrollPanel>
-                                                        <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
-                                                    </h:form>
-                                                    <h:panelGrid columns="2" style="margin-top: 15px" cellpadding="5" rendered="#{atelierThesBean.titles.size() > 0}">
-                                                        <p:outputLabel for="@next" value="Colone à comparer :" style="margin-right: 10px; color: #000" />
-                                                        <p:selectOneMenu value="#{atelierThesBean.selectedColumn}" style="font-size: 12px; background: white; border-color: #43B572">
-                                                            <f:selectItems value="#{atelierThesBean.titles}" var="titre"
-                                                                           itemLabel="#{titre}" itemValue="#{titre}"/>
-                                                        </p:selectOneMenu> 
-                                                    </h:panelGrid>
-                                                </p:panel>
-                                            </p:panel>
-                                        </p:tab>
-
-                                        <p:tab id="thesaurus" title="Les thésaurus" titleStyleClass="tabCostum">
-                                            <p:panel>
-                                                <h6 style="color: #43B572; font-weight: bold; margin-top: 10px">Liste des thésaurus</h6>
-                                                <h:outputText value="Veuillez selectionez un thésaurus : " />
-                                                <p:dataTable var="thes" value="#{atelierThesBean.nodeListThesaurus}"
-                                                             selection="#{atelierThesBean.thesoSelected}" rowKey="#{thes.id}" style="margin-top: 10px" lazy="false">
-                                                    <p:column selectionBox="true" style="width: 35px; text-align: center" />
-                                                    <p:column headerText="Id">
-                                                        <h:outputText value="#{thes.id}" />
-                                                    </p:column>
-                                                    <p:column headerText="Valeur">
-                                                        <h:outputText value="#{thes.value}" />
-                                                    </p:column>
-                                                    <p:column headerText="Statut">
-                                                        <h:outputText value="#{thes.status}" />
-                                                    </p:column>
-                                                </p:dataTable>
-                                            </p:panel>
-                                        </p:tab>
-
-                                        <p:tab id="resultat" title="Résultat" titleStyleClass="tabCostum">
-                                            <p:panel rendered="#{atelierThesBean.isRubriqueSelected('opt3')}">                                           
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <h:outputText value="Vous êtes sur le point de fussioner un thésaurus importé dans la thésaurus ' #{atelierThesBean.thesoSelected.value}' ! "
-                                                                      style="color: #000"/>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row" style="margin-top: 10px">
-                                                    <div class="col-12">
-                                                        <p:commandButton id="fussionBtn" value="Lancer la fussion" icon="fas fa-search" disabled="#{fusionService.fusionBtnEnable}"
-                                                                         style="color: white; background: #43B572; border: #43B572; margin-top: 10px" process="@this" 
-                                                                         actionListener="#{atelierThesBean.fusionner()}" update="containerIndex"/>
-                                                    </div>
-                                                </div>
-
-                                                <h:panelGroup id="statistiques" rendered="#{fusionService.fusionDone}">
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <h6>Conceptes ajoutés : #{fusionService.conceptsAjoutes.size()}</h6>
-                                                            <p:orderList value="#{fusionService.conceptsAjoutes}" var="concepte1" controlsLocation="none"
-                                                                         itemLabel="#{concepte1}" itemValue="#{concepte1}" />
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <h6>Conceptes modifiés : #{fusionService.conceptsModifies.size()}</h6>
-                                                            <p:orderList value="#{fusionService.conceptsModifies}" var="concepte2" controlsLocation="none"
-                                                                         itemLabel="#{concepte2}" itemValue="#{concepte2}" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        Le nombre de conceptes déjà existent : #{fusionService.conceptsExists.size()}
-                                                    </div>
-                                                    <br/>
-                                                </h:panelGroup>
-                                            </p:panel>
-
-                                            <p:panel rendered="#{atelierThesBean.isRubriqueSelected('opt1')}">
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <h:outputText value="Vous êtes sur le point de comparer chaque valeur de la colone '#{atelierThesBean.selectedColumn}
-                                                                      ' à l'ensemble des termes du thésaurus '#{atelierThesBean.thesoSelected.value}' ! "
-                                                                      style="color: #000"/>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row" style="margin-top: 10px">
-                                                    <div class="col-12">
-                                                        <p:commandButton value="Lancer la comparaison" icon="fas fa-search" process="@this" 
-                                                                         style="color: white; background: #43B572; border: #43B572; margin-top: 10px"
-                                                                         actionListener="#{atelierThesBean.comparer()}" update="containerIndex" />
-                                                    </div>
-                                                </div>
-
-                                                <p:scrollPanel mode="native" style="margin-top: 10px; width: 100%; max-height: 450px;"
-                                                               rendered="#{atelierThesBean.result.size() > 0}">
-                                                    <p:dataTable id="tbl" var="resultat" value="#{atelierThesBean.result}" lazy="false">
-                                                        <p:column headerText="Id Origine" style="background-color: #ebedf0;">
-                                                            <h:outputText value="#{resultat.idOrigine}" />
-                                                        </p:column>
-                                                        <p:column headerText="PrefLabel Origine" style="background-color: #ebedf0;">
-                                                            <h:outputText value="#{resultat.prefLabelOrigine}" />
-                                                        </p:column>
-                                                        <p:column headerText="Id #{atelierThesBean.thesoSelected.value}">
-                                                            <h:outputText value="#{resultat.idConcept}" />
-                                                        </p:column>
-                                                        <p:column headerText="PrefLabel #{atelierThesBean.thesoSelected.value}">
-                                                            <h:outputText value="#{resultat.prefLabelConcept}" />
-                                                        </p:column>
-                                                        <p:column headerText="AltLabel">
-                                                            <h:outputText value="#{resultat.altLabelConcept}" />
-                                                        </p:column>
-                                                        <p:column headerText="Terme Génerique">
-                                                            <h:outputText value="#{resultat.termGenerique}" />
-                                                        </p:column>
-                                                        <p:column headerText="Définition">
-                                                            <h:outputText value="#{resultat.definition}" />
-                                                        </p:column>
-                                                        <p:column headerText="URI Ark">
-                                                            <h:outputText value="#{resultat.uriArk}" />
-                                                        </p:column>
-                                                    </p:dataTable>
-                                                </p:scrollPanel>
-
-                                                <div class="row" style="margin-top: 15px;" >
-                                                    <div class="col-12" style="text-align: right">
-                                                        <p:commandButton value="Export Résultat" icon="fas fa-download" ajax="false" rendered="#{atelierThesBean.result.size() > 0}"
-                                                                         style="color: white; background: #43B572; border: #43B572;" update="containerIndex" >
-                                                            <p:fileDownload value="#{atelierThesBean.exportResultat()}" />
-                                                        </p:commandButton>
-                                                    </div>
-                                                </div>
-                                            </p:panel>
-                                        </p:tab>
-
-                                    </p:wizard>
-
-                                    <div class="row">
-                                        <div class="col-12" style="text-align: center" >
-                                            <p:commandButton rendered="e" id="cancelBtn" icon="fa fa-undo" class="btn btn-success" 
-                                                             style="width: 70px; color: white; background: #FFC107; border: #FFC107; margin-top: 10px"
-                                                             actionListener="#{atelierThesBean.init()}" process="@this"
-                                                             onclick="PF('wiz').loadStep(PF('wiz').cfg.steps[0], false);" update="containerIndex:wizAtelier"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <ui:include src="../commun/footer.xhtml" /> 
-                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
-                </h:form>
-
-                <ui:include src="../dialog/import/listAlignmentCsv.xhtml" />   
-                <ui:include src="../dialog/login/logout.xhtml" />
+          <div class="view-panel is-on" id="viewBatch">
+            <div class="bo" id="boRoot" data-obj="alignements" data-op="import">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              
+              <div class="bo-head" data-obj="alignements">
+                <div>
+                  <h1 class="bo-title">Alignements</h1>
+                  <div class="bo-head-sub">Liens vers d'autres référentiels (Wikidata, AAT…)</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="relations">
+                <div>
+                  <h1 class="bo-title">Associations</h1>
+                  <div class="bo-head-sub">Relations « associé » (skos:related) entre concepts</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="synonymes">
+                <div>
+                  <h1 class="bo-title">Formes alternatives</h1>
+                  <div class="bo-head-sub">Formes rejetées / variantes (altLabels)</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="notes">
+                <div>
+                  <h1 class="bo-title">Notes</h1>
+                  <div class="bo-head-sub">Définitions et notes d'application</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="identifiants">
+                <div>
+                  <h1 class="bo-title">Identifiants ARK</h1>
+                  <div class="bo-head-sub">Identifiants pérennes des concepts</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="images">
+                <div>
+                  <h1 class="bo-title">Images</h1>
+                  <div class="bo-head-sub">Importer des images</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="notations">
+                <div>
+                  <h1 class="bo-title">Notations</h1>
+                  <div class="bo-head-sub">Codes de classification</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="collections">
+                <div>
+                  <h1 class="bo-title">Collections</h1>
+                  <div class="bo-head-sub">Associer les concepts aux collections</div>
+                </div>
+              </div>
+              <div class="bo-head" data-obj="concepts">
+                <div>
+                  <h1 class="bo-title">Concepts &amp; listes</h1>
+                  <div class="bo-head-sub">Ajout, remplacement, obsolescence et comparaison</div>
+                </div>
+              </div>
+              <div class="bo-opsel" data-obj="alignements">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="alignements" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="alignements" data-op="delete">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Supprimer</span>
+                  </button><button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="alignements" data-op="export">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg><span>Exporter</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="relations">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="relations" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="synonymes">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="synonymes" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="synonymes" data-op="delete">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Supprimer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="notes">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="notes" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="identifiants">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="identifiants" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button><button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="identifiants" data-op="generate">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Générer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="images">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="images" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="notations">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="notations" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="collections">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="collections" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button>
+                </div>
+              </div><div class="bo-opsel" data-obj="concepts">
+                <div class="bo-ops" role="tablist">
+                  <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="concepts" data-op="import">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
+                  </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="concepts" data-op="replace">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Remplacer l'existant</span>
+                  </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="concepts" data-op="deprecate">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Rendre obsolète</span>
+                  </button><button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="concepts" data-op="compare">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Comparer</span>
+                  </button>
+                </div>
+              </div>
+              <div class="bo-full">
+              <c:if test="#{empty param.obj or param.obj eq 'alignements'}">
+              <ui:include src="/toolbox/includes/alignements-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'relations'}">
+              <div class="bo-panel" data-obj="relations" data-op="import"><div class="bo-p">
+            <div class="bo-acc">
+              <div class="bo-acc-step">
+            <button type="button" class="bo-acc-h" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+              <span class="bo-acc-sp"></span>
+              <button type="button" class="bo-btn ghost sm" data-act="toast" data-msg="modèle-relations.csv téléchargé"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Modèle</button>
+              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+            </button>
+            <div class="bo-acc-body"><table class="bo-fmt">
+              <thead><tr><th>localId</th><th>localId cible</th></tr></thead>
+              <tbody><tr><td>26678</td><td>300</td></tr></tbody>
+            </table><div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est facultative.</div></div>
+          </div>
+              <div class="bo-acc-step">
+            <button type="button" class="bo-acc-h" data-act="bo-acc">
+              <span class="bo-step-n">2</span>
+              <span class="bo-acc-t">Remplir le fichier<small>une ligne = une entrée · règles d'application</small></span>
+              <span class="bo-acc-sp"></span>
+              
+              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+            </button>
+            <div class="bo-acc-body"><ul class="bo-rules"><li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li><li class="warn">Si l'identifiant n'existe pas dans le thésaurus, la relation est <b>rejetée</b>.</li><li>Si la relation existe déjà, elle est rejetée.</li></ul></div>
+          </div>
             </div>
-        </h:panelGroup>
-    </h:body>
-</html>
+            <div class="bo-import">
+              <div class="bo-import-h">
+                <span class="bo-step-n acc">3</span>
+                <div><div class="bo-import-t">Importer le fichier</div>
+                  <div class="bo-import-s">déposez votre CSV rempli et lancez</div></div>
+              </div>
+              <div class="bo-card-b">
+                <div class="bo-cfg">
+                  <div class="bo-field"><div class="bo-field-l">L'identifiant est de type</div>
+                    <select class="bo-input"><option>identifier (id interne)</option><option>ark</option><option>handle</option></select></div>
+                  <div class="bo-field"><div class="bo-field-l">Délimiteur CSV</div>
+                    <select class="bo-input"><option>, (virgule)</option><option>; (point-virgule)</option><option>tabulation</option></select></div>
+                </div>
+                <button type="button" class="bo-drop bo-drop-empty" data-act="bo-pick">
+                  <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+                  <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+                  <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+                </button>
+                <div class="bo-drop has-file">
+                  <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+                  <div class="bo-file"><div class="bo-file-n">alignements-pactols.csv</div>
+                    <div class="bo-file-n bo-file-corr">alignements-pactols-corrige.csv</div>
+                    <div class="bo-file-m">142 lignes · 18 Ko</div></div>
+                  <button type="button" class="bo-file-x" data-act="bo-clear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+                </div>
+                <div class="bo-run">
+                  <button type="button" class="bo-btn primary" data-act="bo-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Valider le fichier<span class="bo-need-file"> — déposez un fichier</span></button>
+                  <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+                  <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+                </div>
+                <div class="bo-valid">
+                  <div class="bo-valid-h">
+                    <span class="bo-step-n acc sm">✓</span>
+                    <div><div class="bo-import-t">Validation du fichier</div>
+                      <div class="bo-import-s"><span class="bo-file-live">alignements-pactols.csv</span> · aperçu avant application</div></div>
+                  </div>
+                  <div class="bo-valid-sum">
+                    <div class="bo-stat ok"><b>142</b><span>lignes lues</span></div>
+                    <div class="bo-stat ok"><b class="bo-valid-n">138</b><span>valides</span></div>
+                    <div class="bo-stat rej bo-stat-err"><b>4</b><span>en erreur</span></div>
+                    <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+                  </div>
+                  <div class="bo-valid-errors">
+                    <div class="bo-valid-msg err"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>4 lignes en erreur. Corrigez-les dans votre fichier d'origine, puis réimportez-le. Vous pouvez aussi n'appliquer que les 138 lignes valides.</span></div>
+                    <table class="bo-errtbl">
+                      <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                      <tbody>
+                        <tr><td class="bo-err-ln">12</td><td class="bo-err-id">ark:/12148/c1a0c1</td><td><span class="bo-err-col">broader</span></td><td class="bo-err-msg">Terme générique introuvable (« Alliage cuivreu »)</td></tr>
+                        <tr><td class="bo-err-ln">47</td><td class="bo-err-id">— (vide)</td><td><span class="bo-err-col">identifier</span></td><td class="bo-err-msg">Identifiant obligatoire manquant</td></tr>
+                        <tr><td class="bo-err-ln">88</td><td class="bo-err-id">ark:/12148/c3d8n1</td><td><span class="bo-err-col">lang</span></td><td class="bo-err-msg">Code langue inconnu « fra » — attendu fr, en, de…</td></tr>
+                        <tr><td class="bo-err-ln">119</td><td class="bo-err-id">ark:/12148/c8h4n2</td><td><span class="bo-err-col">prefLabel</span></td><td class="bo-err-msg">Libellé en doublon avec un concept existant</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="bo-run">
+                      <button type="button" class="bo-btn primary" data-act="bo-reimport"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Réimporter le fichier corrigé</button>
+                      <button type="button" class="bo-btn ghost" data-act="bo-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Importer les 138 lignes valides</button>
+                      <button type="button" class="bo-btn ghost" data-act="bo-clear">Annuler</button>
+                    </div>
+                  </div>
+                  <div class="bo-valid-ok">
+                    <div class="bo-valid-msg ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Aucune erreur détectée — les 142 lignes sont prêtes à être appliquées.</span></div>
+                    <div class="bo-run">
+                      <button type="button" class="bo-btn primary" data-act="bo-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Confirmer — Importer les 142 lignes</button>
+                      <button type="button" class="bo-btn ghost" data-act="bo-clear">Annuler</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-result">
+                  <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Importer terminé</div>
+                  <div class="bo-result-stats">
+                    <div class="bo-stat ok"><b>142</b><span>lignes lues</span></div>
+                    <div class="bo-stat ok"><b class="bo-n-err">138</b><b class="bo-n-ok">142</b><span>appliquées</span></div>
+                    <div class="bo-stat rej bo-rej"><b class="bo-n-err">4</b><b class="bo-n-ok">0</b><span>rejetées</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div></div>
+              </c:if>
+              <c:if test="#{param.obj eq 'synonymes'}">
+              <ui:include src="/toolbox/includes/synonymes-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'notes'}">
+              <ui:include src="/toolbox/includes/notes-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'identifiants'}">
+              <ui:include src="/toolbox/includes/identifiants-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'images'}">
+              <ui:include src="/toolbox/includes/images-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'notations'}">
+              <ui:include src="/toolbox/includes/notations-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'collections'}">
+              <ui:include src="/toolbox/includes/collections-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'concepts'}">
+              <ui:include src="/toolbox/includes/concepts-panels.xhtml"/>
+              </c:if>
+              </div>
+            </div>
+          </div>
+  </ui:define>
+</ui:composition>

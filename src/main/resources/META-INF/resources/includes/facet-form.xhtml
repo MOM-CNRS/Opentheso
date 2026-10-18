@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="cv is-on is-facet"
+       data-id="#{thesaurusViewBean.selectedFacet.facetId}"
+       data-pref="#{thesaurusViewBean.selectedFacet.label}"
+       data-status="facet"
+       data-type="facet"
+       data-flash="#{facetLabelBlockEditorBean.flashMessage}"
+       data-flash-token="#{facetLabelBlockEditorBean.flashToken}"
+       data-flash-tr="#{facetTranslationBlockEditorBean.flashMessage}"
+       data-flash-tr-token="#{facetTranslationBlockEditorBean.flashToken}"
+       data-flash-rel="#{facetMemberBlockEditorBean.flashMessage}"
+       data-flash-rel-token="#{facetMemberBlockEditorBean.flashToken}"
+       data-rel-tree="#{facetMemberBlockEditorBean.treeReload ? '1' : ''}"
+       data-flash-note="#{facetNoteBlockEditorBean.flashMessage}"
+       data-flash-note-token="#{facetNoteBlockEditorBean.flashToken}"
+       data-msg-fold="#{localeBean.getMsg('block.collapse')}"
+       data-msg-unfold="#{localeBean.getMsg('block.expand')}">
+    <ui:fragment rendered="#{thesaurusViewBean.breadcrumbEnabled and not empty thesaurusViewBean.selectedFacet.parentConceptLabel}">
+      <div class="cv-path">
+        <span class="path">
+          <span class="path-seg">
+            <a class="path-link" href="thesaurus/consultation.xhtml?id=#{thesaurusViewBean.selectedFacet.parentConceptId}"
+               data-act="open" data-id="#{thesaurusViewBean.selectedFacet.parentConceptId}"
+               data-type="concept">#{thesaurusViewBean.selectedFacet.parentConceptLabel}</a>
+          </span>
+        </span>
+      </div>
+    </ui:fragment>
+    <div class="cv-head">
+      <h1 class="cv-pref">
+        <span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedFacet.label)}</span>
+        <span class="cv-lang">#{thesaurusViewBean.dash(thesaurusViewBean.selectedFacet.lang)}</span>
+        <span class="cv-status is-facet">facette</span>
+      </h1>
+    </div>
+    <div class="cv-blocks">
+      <section class="cblock#{facetLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="f-label">
+        <div class="cblock-head">
+          <span class="cblock-title">Libellé</span>
+          <div class="cblock-tools">
+            <h:commandButton id="fcLabelEditStart" value="✎" styleClass="cblock-gear"
+                             title="#{localeBean.getMsg('edit')}"
+                             rendered="#{facetLabelBlockEditorBean.editable and not facetLabelBlockEditorBean.editing}"
+                             action="#{facetLabelBlockEditorBean.startEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+            </h:commandButton>
+            <button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold"
+                    title="#{localeBean.getMsg('block.collapse')}"
+                    aria-expanded="true"
+                    aria-label="#{localeBean.getMsg('block.collapse')}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{facetLabelBlockEditorBean.editing}">
+            <div class="crow cblock-edit-row">
+              <div class="crow-lbl">Libellé</div>
+              <div class="crow-val">
+                <h:inputText id="fcLabelPrefInput" styleClass="st-input"
+                             value="#{facetLabelBlockEditorBean.preferredLabel}"
+                             pt:autocomplete="off"/>
+                <span class="val-lang">(#{thesaurusViewBean.selectedFacet.lang})</span>
+              </div>
+            </div>
+            <div class="crow">
+              <div class="crow-lbl">Concept parent</div>
+              <div class="crow-val">
+                <ui:fragment rendered="#{empty thesaurusViewBean.selectedFacet.parentConceptId}">
+                  <span class="muted">—</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{not empty thesaurusViewBean.selectedFacet.parentConceptId}">
+                  <button type="button" class="rel-term" data-act="open"
+                          data-id="#{thesaurusViewBean.selectedFacet.parentConceptId}"
+                          data-type="concept">#{thesaurusViewBean.dash(thesaurusViewBean.selectedFacet.parentConceptLabel)}</button>
+                </ui:fragment>
+              </div>
+            </div>
+            <div class="crow">
+              <div class="crow-lbl">Identifiant</div>
+              <div class="crow-val is-mono"><span>#{thesaurusViewBean.selectedFacet.facetId}</span></div>
+            </div>
+            <ui:fragment rendered="#{not empty facetLabelBlockEditorBean.errorMessage}">
+              <div class="cblock-edit-warn" role="alert">
+                <p>#{facetLabelBlockEditorBean.errorMessage}</p>
+              </div>
+            </ui:fragment>
+            <div class="cblock-edit-foot">
+              <h:commandLink id="fcLabelEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                             action="#{facetLabelBlockEditorBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <span>#{localeBean.getMsg('cancel')}</span>
+              </h:commandLink>
+              <h:commandLink id="fcLabelEditSave" styleClass="bo-btn primary sm"
+                             action="#{facetLabelBlockEditorBean.save}">
+                <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onLabelSave"/>
+                <span>#{localeBean.getMsg('concept.translation.done')}</span>
+              </h:commandLink>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not facetLabelBlockEditorBean.editing}">
+            <div class="crow">
+              <div class="crow-lbl">Libellé</div>
+              <div class="crow-val">
+                <span class="val-strong">#{thesaurusViewBean.dash(thesaurusViewBean.selectedFacet.label)}</span>
+                <span class="val-lang">(#{thesaurusViewBean.selectedFacet.lang})</span>
+              </div>
+            </div>
+            <div class="crow">
+              <div class="crow-lbl">Concept parent</div>
+              <div class="crow-val">
+                <ui:fragment rendered="#{empty thesaurusViewBean.selectedFacet.parentConceptId}">
+                  <span class="muted">—</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{not empty thesaurusViewBean.selectedFacet.parentConceptId}">
+                  <button type="button" class="rel-term" data-act="open"
+                          data-id="#{thesaurusViewBean.selectedFacet.parentConceptId}"
+                          data-type="concept">#{thesaurusViewBean.dash(thesaurusViewBean.selectedFacet.parentConceptLabel)}</button>
+                </ui:fragment>
+              </div>
+            </div>
+            <div class="crow">
+              <div class="crow-lbl">Identifiant</div>
+              <div class="crow-val is-mono"><span>#{thesaurusViewBean.selectedFacet.facetId}</span></div>
+            </div>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{facetMemberBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="f-mem">
+        <div class="cblock-head">
+          <span class="cblock-title">Membres</span>
+          <div class="cblock-tools">
+            <h:commandButton id="fcMemEditStart" value="✎" styleClass="cblock-gear"
+                             title="#{localeBean.getMsg('edit')}"
+                             rendered="#{facetMemberBlockEditorBean.editable and not facetMemberBlockEditorBean.editing}"
+                             action="#{facetMemberBlockEditorBean.startEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+            </h:commandButton>
+            <button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold"
+                    title="#{localeBean.getMsg('block.collapse')}"
+                    aria-expanded="true"
+                    aria-label="#{localeBean.getMsg('block.collapse')}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{facetMemberBlockEditorBean.editing}">
+            <div class="re" id="fcMemEditor"
+                 data-none="#{localeBean.getMsg('facet.draft.members.none')}"
+                 data-remove="#{localeBean.getMsg('facet.draft.members.remove')}"
+                 data-exists="#{localeBean.getMsg('facet.draft.members.exists')}">
+              <div class="re-rows" id="fcMemRows"></div>
+              <div id="fcMemSeed" hidden="hidden">
+                <ui:repeat value="#{facetMemberBlockEditorBean.rows}" var="row">
+                  <span data-id="#{row.conceptId}" data-label="#{row.label}"></span>
+                </ui:repeat>
+              </div>
+              <div class="re-row re-new" id="fcMemNew">
+                <div class="re-field">
+                  <input type="text" class="st-input re-q" id="fcMemQ" autocomplete="off" spellcheck="false"
+                         placeholder="#{localeBean.getMsg('facet.draft.members.search')}"
+                         aria-label="#{localeBean.getMsg('facet.draft.members.search')}"/>
+                  <div class="re-drop" id="fcMemDrop" hidden="hidden"></div>
+                  <div class="re-none" id="fcMemEmpty" hidden="hidden">#{localeBean.getMsg('facet.draft.members.none')}</div>
+                </div>
+              </div>
+              <div class="re-msg re-error" id="fcMemMsg" hidden="hidden"></div>
+              <h:inputHidden id="fcMembersPayload" pt:id="fcMembersPayload"
+                             value="#{facetMemberBlockEditorBean.membersPayload}"/>
+            </div>
+            <ui:fragment rendered="#{not empty facetMemberBlockEditorBean.errorMessage}">
+              <div class="cblock-edit-warn" role="alert">
+                <p>#{facetMemberBlockEditorBean.errorMessage}</p>
+              </div>
+            </ui:fragment>
+            <div class="cblock-edit-foot">
+              <h:commandLink id="fcMemEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                             action="#{facetMemberBlockEditorBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <span>#{localeBean.getMsg('cancel')}</span>
+              </h:commandLink>
+              <h:commandLink id="fcMemEditSave" styleClass="bo-btn primary sm"
+                             action="#{facetMemberBlockEditorBean.save}">
+                <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onLabelSave"/>
+                <span>#{localeBean.getMsg('concept.translation.done')}</span>
+              </h:commandLink>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not facetMemberBlockEditorBean.editing}">
+            <ui:fragment rendered="#{empty thesaurusViewBean.selectedFacet.members}">
+              <div class="muted">Aucun concept rattaché à cette facette.</div>
+            </ui:fragment>
+            <div class="rel-items">
+              <ui:repeat value="#{thesaurusViewBean.selectedFacet.members}" var="member">
+                <button type="button" class="rel-term" data-act="open" data-id="#{member.conceptId}" data-type="concept">
+                  #{empty member.label ? member.conceptId : member.label}
+                </button>
+              </ui:repeat>
+            </div>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{facetTranslationBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="f-tr">
+        <div class="cblock-head">
+          <span class="cblock-title">#{localeBean.getMsg('facet.draft.translations')}</span>
+          <div class="cblock-tools">
+            <h:commandButton id="fcTrEditStart" value="✎" styleClass="cblock-gear"
+                             title="#{localeBean.getMsg('edit')}"
+                             rendered="#{facetTranslationBlockEditorBean.editable and not facetTranslationBlockEditorBean.editing}"
+                             action="#{facetTranslationBlockEditorBean.startEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+            </h:commandButton>
+            <button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold"
+                    title="#{localeBean.getMsg('block.collapse')}"
+                    aria-expanded="true"
+                    aria-label="#{localeBean.getMsg('block.collapse')}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{facetTranslationBlockEditorBean.editing}">
+            <div class="te" id="fcTrEditor"
+                 data-empty="#{localeBean.getMsg('candidat.draft.tr.empty')}"
+                 data-drop="#{localeBean.getMsg('candidat.draft.tr.drop')}"
+                 data-ph="#{localeBean.getMsg('candidat.draft.tr.namePh')}"
+                 data-remove="#{localeBean.getMsg('candidat.draft.tr.remove')}"
+                 data-no="#{localeBean.getMsg('candidat.draft.tr.no')}"
+                 data-yes="#{localeBean.getMsg('candidat.draft.tr.yes')}"
+                 data-used="#{localeBean.getMsg('concept.translation.langUsed')}">
+              <div class="re-none" id="fcTrEmpty">#{localeBean.getMsg('candidat.draft.tr.empty')}</div>
+              <div id="fcTrList"></div>
+              <div id="fcTrSeed" hidden="hidden">
+                <ui:repeat value="#{facetTranslationBlockEditorBean.rows}" var="row">
+                  <span data-lang="#{row.lang}" data-value="#{row.value}"></span>
+                </ui:repeat>
+              </div>
+              <div class="te-add">
+                <div class="tp-lang-pick te-pick" id="fcTrPick">
+                  <button type="button"
+                          class="tree-lang-btn tp-lang-btn"
+                          id="fcTrBtn"
+                          data-act="fc-tr-toggle"
+                          title="#{localeBean.getMsg('candidat.draft.tr.add')}"
+                          aria-label="#{localeBean.getMsg('candidat.draft.tr.add')}"
+                          aria-haspopup="listbox"
+                          aria-expanded="false">
+                    <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                    <span class="tree-lang-name">#{localeBean.getMsg('candidat.draft.tr.add')}</span>
+                    <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="tree-lang-menu tp-lang-menu" id="fcTrMenu" role="listbox"
+                       aria-label="#{localeBean.getMsg('candidat.draft.tr.add')}">
+                    <div class="tree-lang-menu-h">#{localeBean.getMsg('candidat.draft.tr.add')}</div>
+                    <ui:repeat value="#{facetTranslationBlockEditorBean.pickerLanguages}" var="lang">
+                      <button type="button"
+                              class="tree-lang-opt"
+                              data-act="fc-tr-add"
+                              data-lang="#{lang.code}"
+                              data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                              data-name="#{lang.value}"
+                              role="option"
+                              aria-selected="false">
+                        <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                        <span class="tree-lang-opt-name">#{lang.value}</span>
+                        <span class="tree-lang-opt-code">#{lang.code}</span>
+                      </button>
+                    </ui:repeat>
+                  </div>
+                </div>
+              </div>
+              <h:inputHidden id="fcTrPayload" pt:id="fcTrPayload"
+                             value="#{facetTranslationBlockEditorBean.translationsPayload}"/>
+            </div>
+            <ui:fragment rendered="#{not empty facetTranslationBlockEditorBean.errorMessage}">
+              <div class="cblock-edit-warn" role="alert">
+                <p>#{facetTranslationBlockEditorBean.errorMessage}</p>
+              </div>
+            </ui:fragment>
+            <div class="cblock-edit-foot">
+              <h:commandLink id="fcTrEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                             action="#{facetTranslationBlockEditorBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <span>#{localeBean.getMsg('cancel')}</span>
+              </h:commandLink>
+              <h:commandLink id="fcTrEditSave" styleClass="bo-btn primary sm"
+                             action="#{facetTranslationBlockEditorBean.save}">
+                <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                <span>#{localeBean.getMsg('concept.translation.done')}</span>
+              </h:commandLink>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not facetTranslationBlockEditorBean.editing}">
+            <ui:fragment rendered="#{empty thesaurusViewBean.facetTranslationViewItems}">
+              <div class="muted">#{localeBean.getMsg('concept.translation.none')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty thesaurusViewBean.facetTranslationViewItems}">
+              <div class="tr-list">
+                <ui:repeat value="#{thesaurusViewBean.facetTranslationViewItems}" var="tr">
+                  <div class="tr-block">
+                    <div class="tr-item">
+                      <span class="tr-dot #{tr.todo ? 'tr-dot-todo' : 'tr-dot-ok'}" aria-hidden="true"></span>
+                      <ui:fragment rendered="#{thesaurusViewBean.hasLanguageFlag(tr.lang)}">
+                        <span class="tr-flag">#{thesaurusViewBean.flagEmoji(tr.lang)}</span>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{not thesaurusViewBean.hasLanguageFlag(tr.lang)}">
+                        <span class="tr-code">#{tr.lang}</span>
+                      </ui:fragment>
+                      <h:commandLink styleClass="tr-label"
+                                     action="#{thesaurusViewBean.openConceptInTranslationLanguage(tr.lang)}"
+                                     title="#{localeBean.getMsg('view.termLang')} · #{thesaurusViewBean.languageLabel(tr.lang)}"
+                                     pt:lang="#{tr.lang}"
+                                     pt:dir="#{thesaurusViewBean.textDirection(tr.lang)}">
+                        <f:ajax execute="@this"
+                                render=":previewDetailForm:previewDetail :previewThTitle :previewTreeMetaBox :previewTermLangUi :termLang"
+                                onevent="onPreviewTermLang"/>
+                        #{thesaurusViewBean.dash(tr.value)}
+                      </h:commandLink>
+                      <span class="tr-lang">#{thesaurusViewBean.languageLabel(tr.lang)}</span>
+                      <ui:fragment rendered="#{tr.todo}">
+                        <span class="tr-todo">#{localeBean.getMsg('concept.translation.todo')}</span>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </ui:repeat>
+              </div>
+            </ui:fragment>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{facetNoteBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="f-notes">
+        <div class="cblock-head">
+          <span class="cblock-title">Notes</span>
+          <div class="cblock-tools">
+            <h:commandButton id="fcNoteEditStart" value="✎" styleClass="cblock-gear"
+                             title="#{localeBean.getMsg('edit')}"
+                             rendered="#{facetNoteBlockEditorBean.editable and not facetNoteBlockEditorBean.editing}"
+                             action="#{facetNoteBlockEditorBean.startEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+            </h:commandButton>
+            <button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold"
+                    title="#{localeBean.getMsg('block.collapse')}"
+                    aria-expanded="true"
+                    aria-label="#{localeBean.getMsg('block.collapse')}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{facetNoteBlockEditorBean.editing}">
+            <div class="note-edit" id="fcNoteEditor"
+                 data-empty="#{localeBean.getMsg('candidat.draft.note.empty')}"
+                 data-add="#{localeBean.getMsg('candidat.draft.note.add')}"
+                 data-remove="#{localeBean.getMsg('candidat.draft.note.remove')}"
+                 data-text-ph="#{localeBean.getMsg('candidat.draft.note.textPh')}"
+                 data-source-ph="#{localeBean.getMsg('candidat.draft.note.sourcePh')}"
+                 data-work-lang="#{facetNoteBlockEditorBean.editingLang}">
+              <div class="note-edit" id="fcNoteList"></div>
+              <div id="fcNoteSeed" hidden="hidden">
+                <ui:repeat value="#{facetNoteBlockEditorBean.rows}" var="row">
+                  <span data-type="#{row.typeCode}" data-lang="#{row.lang}"
+                        data-value="#{row.value}" data-source="#{row.source}"></span>
+                </ui:repeat>
+              </div>
+              <button type="button" class="note-add-btn" id="fcNoteAdd" data-act="fc-note-add">
+                #{localeBean.getMsg('candidat.draft.note.add')}
+              </button>
+              <div id="fcNoteTypeOpts" hidden="hidden">
+                <ui:repeat value="#{facetNoteBlockEditorBean.noteTypes}" var="type">
+                  <span data-code="#{type.code}" data-label="#{thesaurusViewBean.noteTypeLabel(type.code)}"></span>
+                </ui:repeat>
+              </div>
+              <div id="fcNoteLangOpts" hidden="hidden">
+                <ui:repeat value="#{facetNoteBlockEditorBean.pickerLanguages}" var="lang">
+                  <span data-code="#{lang.code}"
+                        data-name="#{lang.value}"
+                        data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"></span>
+                </ui:repeat>
+              </div>
+              <h:inputHidden id="fcNotesPayload" pt:id="fcNotesPayload"
+                             value="#{facetNoteBlockEditorBean.notesPayload}"/>
+            </div>
+            <ui:fragment rendered="#{not empty facetNoteBlockEditorBean.errorMessage}">
+              <div class="cblock-edit-warn" role="alert">
+                <p>#{facetNoteBlockEditorBean.errorMessage}</p>
+              </div>
+            </ui:fragment>
+            <div class="cblock-edit-foot">
+              <h:commandLink id="fcNoteEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                             action="#{facetNoteBlockEditorBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <span>#{localeBean.getMsg('cancel')}</span>
+              </h:commandLink>
+              <h:commandLink id="fcNoteEditSave" styleClass="bo-btn primary sm"
+                             action="#{facetNoteBlockEditorBean.save}">
+                <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                <span>#{localeBean.getMsg('concept.translation.done')}</span>
+              </h:commandLink>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not facetNoteBlockEditorBean.editing}">
+            <ui:fragment rendered="#{empty thesaurusViewBean.selectedFacet.notes}">
+              <div class="muted">#{localeBean.getMsg('concept.note.none')}</div>
+            </ui:fragment>
+            <ui:repeat value="#{thesaurusViewBean.selectedFacet.notes}" var="note">
+              <div class="note-grp">
+                <div class="note-grp-t">#{thesaurusViewBean.noteTypeLabel(note.typeCode)}</div>
+                <div class="note-line">
+                  <span class="tr-flag">#{thesaurusViewBean.flagEmoji(note.lang)}</span>
+                  <p class="cv-def">#{note.value} <span class="note-lang">(#{note.lang})</span></p>
+                </div>
+              </div>
+            </ui:repeat>
+          </ui:fragment>
+        </div>
+      </section>
+    </div>
+    <ui:fragment rendered="#{facetCardDeleteBean.deletable}">
+      <div class="cv-facet-foot">
+        <button type="button" class="bo-btn danger fc-del" data-act="fc-del-ask">
+          #{localeBean.getMsg('facet.delete')}
+        </button>
+      </div>
+      <ui:fragment rendered="#{not empty facetCardDeleteBean.errorMessage}">
+        <div class="cblock-edit-warn cv-facet-del-err" role="alert">
+          <p>#{facetCardDeleteBean.errorMessage}</p>
+        </div>
+      </ui:fragment>
+    </ui:fragment>
+  </div>
+  <ui:fragment rendered="#{facetCardDeleteBean.deletable}">
+    <h:commandButton id="fcDeleteGo" style="display:none"
+                     action="#{facetCardDeleteBean.deleteFacet}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onLabelSave"/>
+    </h:commandButton>
+    <div class="block-overlay confirm-overlay" id="fcDeleteConfirm" hidden="hidden"
+         data-act="fc-del-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="fcDeleteConfirmTitle" data-act="fc-del-modal">
+        <div class="confirm-h" id="fcDeleteConfirmTitle">
+          #{localeBean.getMsg('facet.delete.confirmTitle')}
+        </div>
+        <p class="confirm-p">#{localeBean.getMsg('facet.delete.confirm', thesaurusViewBean.selectedFacet.label)}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost confirm-cancel"
+                  data-act="fc-del-dismiss">#{localeBean.getMsg('cancel')}</button>
+          <button type="button" class="bo-btn danger fc-del-go" data-act="fc-del-go">
+            #{localeBean.getMsg('facet.delete')}
+          </button>
+        </div>
+      </div>
+    </div>
+  </ui:fragment>
+</ui:composition>

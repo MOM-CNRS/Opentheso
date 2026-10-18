@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.services.mappers;
 
-import fr.cnrs.opentheso.bean.importexport.newcsvimport.SkosConceptImageDto;
 import fr.cnrs.opentheso.entites.Gps;
 import fr.cnrs.opentheso.models.skos.SkosConceptUpdateDto;
 import lombok.extern.slf4j.Slf4j;

@@ -1,0 +1,136 @@
+package fr.cnrs.opentheso.candidat.ui;
+
+import fr.cnrs.opentheso.entites.NoteType;
+import fr.cnrs.opentheso.models.notes.NodeNote;
+import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.candidat.persistence.CandidatMutationPersistence;
+import fr.cnrs.opentheso.candidat.service.CandidatMutationService;
+import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.shared.ui.UserSession;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+import org.primefaces.PrimeFaces;
+
+import java.io.Serializable;
+import java.util.List;
+
+@Getter
+@Setter
+@ViewScoped
+@RequiredArgsConstructor
+@Named("noteBeanCandidat")
+/**
+ * V1-ported bean: not wired to V2 Facelets yet; kept for tests / future UI.
+ */
+public class CandidatNoteBean implements Serializable {
+
+    private final transient CandidatBean candidatBean;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient UserSession userSession;
+    private final transient ThesaurusContext thesaurusContext;
+
+    private transient List<NoteType> noteTypes;
+    private String selectedLang;
+    private String selectedTypeNote;
+    private String noteValue;
+    private NodeNote selectedNodeNote;
+    private boolean isEditMode;
+    private boolean visible;
+
+    public void reset() {
+        visible = true;
+        noteTypes = candidatMutationService.loadNoteTypes();
+        selectedLang = candidatBean.getCandidatSelected().getLang();
+        noteValue = "";
+        selectedTypeNote = null;
+        isEditMode = false;
+    }
+
+    public void resetEditNode(NodeNote selectedNodeNote) {
+        reset();
+        noteValue = selectedNodeNote.getLexicalValue();
+        selectedTypeNote = selectedNodeNote.getLang();
+        this.selectedNodeNote = selectedNodeNote;
+        isEditMode = true;
+    }
+
+    public void addNewNote() {
+        if (isEditMode) {
+            updateNote();
+            return;
+        }
+
+        if (StringUtils.isBlank(noteValue)) {
+            MessageUtils.showErrorMessage("La note ne doit pas être vide !");
+            return;
+        }
+
+        candidatMutationService.addOrUpdateCandidateNote(
+                candidatBean.getCandidatSelected().getIdConcepte(),
+                selectedLang,
+                thesaurusContext.resolveThesaurusId(),
+                noteValue,
+                selectedTypeNote,
+                "",
+                requireUserId());
+
+        refreshInterface();
+        MessageUtils.showInformationMessage("Note ajoutée avec succès");
+        PrimeFaces.current().ajax().update("candidatForm:listTraductionForm");
+    }
+
+    public void updateNote() {
+        if (!candidatMutationService.updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                selectedNodeNote.getIdNote(),
+                selectedNodeNote.getIdConcept(),
+                selectedNodeNote.getLang(),
+                thesaurusContext.resolveThesaurusId(),
+                selectedNodeNote.getLexicalValue(),
+                selectedNodeNote.getNoteSource(),
+                selectedNodeNote.getNoteTypeCode(),
+                requireUserId()))) {
+            MessageUtils.showErrorMessage("Erreur pendant la modification de la note !");
+            return;
+        }
+
+        refreshInterface();
+        MessageUtils.showInformationMessage("Note modifiée avec succès");
+    }
+
+    public void deleteNote() {
+        candidatMutationService.deleteCandidateNote(
+                selectedNodeNote.getIdNote(),
+                selectedNodeNote.getIdConcept(),
+                selectedNodeNote.getLang(),
+                thesaurusContext.resolveThesaurusId(),
+                selectedNodeNote.getNoteTypeCode(),
+                selectedNodeNote.getLexicalValue(),
+                requireUserId());
+
+        refreshInterface();
+        MessageUtils.showInformationMessage("Note supprimée avec succès");
+        PrimeFaces.current().ajax().update("candidatForm");
+    }
+
+    private void refreshInterface() {
+        reset();
+        visible = false;
+
+        var notes = candidatMutationService.loadCandidateNotes(
+                candidatBean.getCandidatSelected().getIdConcepte(), thesaurusContext.resolveThesaurusId());
+        candidatBean.getCandidatSelected().setNodeNotes(notes);
+        PrimeFaces.current().ajax().update("candidatForm:listNotes");
+    }
+
+    private int requireUserId() {
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            throw new IllegalStateException("Utilisateur non connecté");
+        }
+        return userId;
+    }
+}

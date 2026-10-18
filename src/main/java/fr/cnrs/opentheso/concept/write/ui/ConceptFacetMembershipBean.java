@@ -1,0 +1,141 @@
+package fr.cnrs.opentheso.concept.write.ui;
+
+import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.concept.model.ConceptRelation;
+import fr.cnrs.opentheso.concept.session.ConceptNavigationSupport;
+import fr.cnrs.opentheso.concept.session.ConceptSelectionContext;
+import fr.cnrs.opentheso.concept.ui.ThesaurusBrowseBean;
+import fr.cnrs.opentheso.concept.write.model.ConceptWriteFacet;
+import fr.cnrs.opentheso.concept.write.model.MutationResult;
+import fr.cnrs.opentheso.concept.write.policy.ConceptWritePolicy;
+import fr.cnrs.opentheso.concept.write.service.ConceptWriteSearchService;
+import fr.cnrs.opentheso.facet.write.model.command.AddFacetMemberCommand;
+import fr.cnrs.opentheso.facet.write.model.command.RemoveFacetMemberCommand;
+import fr.cnrs.opentheso.facet.write.service.FacetMutationService;
+import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.shared.ui.UserSession;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+import org.primefaces.PrimeFaces;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
+@Getter
+@Setter
+@ViewScoped
+@Named("conceptFacetMembershipBean")
+@RequiredArgsConstructor
+public class ConceptFacetMembershipBean implements Serializable {
+
+    private final transient FacetMutationService facetMutationService;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+
+    private String currentConceptLabel;
+    private ConceptWriteFacet selectedFacet;
+    private List<ConceptRelation> facetsToRemove = Collections.emptyList();
+
+    public boolean isFacetActionsAvailable() {
+        return conceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
+    }
+
+    public void prepareAddToFacet() {
+        selectedFacet = null;
+        refreshCurrentConceptLabel();
+    }
+
+    public void prepareRemoveFromFacets() {
+        refreshCurrentConceptLabel();
+        reloadFacetsToRemove();
+    }
+
+    public List<ConceptWriteFacet> autocompleteFacet(String query) {
+        return conceptWriteSearchService.autocompleteFacet(
+                query,
+                thesaurusContext.resolveWorkLanguage(),
+                thesaurusContext.resolveThesaurusId()
+        );
+    }
+
+    public void submitAddToFacet() {
+        if (!isFacetActionsAvailable() || !conceptSelectionContext.hasSelection()) {
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
+            return;
+        }
+        if (selectedFacet == null || StringUtils.isBlank(selectedFacet.id())) {
+            MessageUtils.showErrorMessage("Aucune sélection !!");
+            return;
+        }
+        MutationResult result = facetMutationService.addMember(new AddFacetMemberCommand(
+                thesaurusContext.resolveThesaurusId(),
+                selectedFacet.id(),
+                conceptSelectionContext.getConceptId(),
+                false
+        ));
+        if (handleMutationResult(result, "addConceptToFacetDlg")) {
+            selectedFacet = null;
+        }
+    }
+
+    public void submitRemoveFromFacet(ConceptRelation facet) {
+        if (!isFacetActionsAvailable() || facet == null || !conceptSelectionContext.hasSelection()) {
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
+            return;
+        }
+        MutationResult result = facetMutationService.removeMember(new RemoveFacetMemberCommand(
+                thesaurusContext.resolveThesaurusId(),
+                facet.conceptId(),
+                conceptSelectionContext.getConceptId(),
+                false
+        ));
+        if (handleMutationResult(result, null)) {
+            reloadFacetsToRemove();
+        }
+    }
+
+    private void reloadFacetsToRemove() {
+        if (thesaurusBrowseBean.getSelectedConcept() == null) {
+            facetsToRemove = Collections.emptyList();
+            return;
+        }
+        List<ConceptRelation> facets = thesaurusBrowseBean.getSelectedConcept().facets();
+        facetsToRemove = facets != null ? List.copyOf(facets) : Collections.emptyList();
+    }
+
+    private boolean handleMutationResult(MutationResult result, String dialogWidget) {
+        if (result == null || !result.success()) {
+            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+            return false;
+        }
+        conceptNavigationSupport.refreshSelectedConcept();
+        thesaurusBrowseBean.invalidateConceptTree();
+        reloadFacetsToRemove();
+        PrimeFaces.current().ajax().update(
+                ":containerIndex:formRightTab",
+                ":containerIndex:formLeftTab",
+                ":messageIndex"
+        );
+        MessageUtils.showInformationMessage(result.message());
+        if (StringUtils.isNotBlank(dialogWidget)) {
+            PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");
+        }
+        return true;
+    }
+
+    private void refreshCurrentConceptLabel() {
+        currentConceptLabel = conceptSelectionContext.hasSelection()
+                ? conceptSelectionContext.getSummary().preferredLabel()
+                : "";
+    }
+}

@@ -1,0 +1,369 @@
+package fr.cnrs.opentheso.user.ui;
+
+import fr.cnrs.opentheso.shared.ui.LocaleBean;
+import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.shared.ui.UserSession;
+import fr.cnrs.opentheso.user.exception.ApiKeyRegenerationException;
+import fr.cnrs.opentheso.user.exception.InvalidProfileDataException;
+import fr.cnrs.opentheso.user.model.ApiKeyGenerationResult;
+import fr.cnrs.opentheso.user.model.ProfileWithRoles;
+import fr.cnrs.opentheso.user.model.ProjectRoleOverview;
+import fr.cnrs.opentheso.user.model.ThesaurusRoleOverview;
+import fr.cnrs.opentheso.user.model.UserProfile;
+import fr.cnrs.opentheso.user.service.UserApiKeyService;
+import fr.cnrs.opentheso.user.service.UserPasswordService;
+import fr.cnrs.opentheso.user.service.UserProfileService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.primefaces.PrimeFaces;
+
+import java.time.LocalDate;
+import java.time.Month;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class MyAccountBeanTest {
+
+    @Mock
+    private UserSession userSession;
+    @Mock
+    private LocaleBean localeBean;
+    @Mock
+    private UserProfileService userProfileService;
+    @Mock
+    private UserApiKeyService userApiKeyService;
+    @Mock
+    private UserPasswordService userPasswordService;
+
+    private MyAccountBean myAccountBean;
+
+    private static final UserProfile PROFILE = new UserProfile(
+            5, "alice", "alice@example.com", true, false, true, null, true
+    );
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(localeBean.getMsg(org.mockito.ArgumentMatchers.anyString()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(userProfileService.updateAlertMail(
+                        org.mockito.ArgumentMatchers.anyInt(),
+                        org.mockito.ArgumentMatchers.anyBoolean()))
+                .thenAnswer(inv -> PROFILE);
+        myAccountBean = new MyAccountBean(
+                userSession,
+                localeBean,
+                userProfileService,
+                userApiKeyService,
+                userPasswordService
+        );
+    }
+
+    @Test
+    void load_clearsStateWhenUserNotConnected() {
+        when(userSession.getCurrentUserId()).thenReturn(null);
+
+        myAccountBean.load();
+
+        assertNull(myAccountBean.getProfile());
+        assertTrue(myAccountBean.getProjectRoles().isEmpty());
+    }
+
+    @Test
+    void load_populatesProfileAndFormFields() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userProfileService.getProfileWithRoles(5)).thenReturn(
+                new ProfileWithRoles(PROFILE, List.of())
+        );
+
+        myAccountBean.load();
+
+        assertEquals(PROFILE, myAccountBean.getProfile());
+        assertEquals("alice", myAccountBean.getEditableUsername());
+        assertEquals("alice@example.com", myAccountBean.getEditableEmail());
+        assertTrue(myAccountBean.isEditableAlertMail());
+    }
+
+    @Test
+    void getEditableUsername_loadsProfileWhenViewActionDidNotRun() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userProfileService.getProfileWithRoles(5)).thenReturn(
+                new ProfileWithRoles(PROFILE, List.of())
+        );
+
+        assertEquals("alice", myAccountBean.getEditableUsername());
+        assertEquals("alice@example.com", myAccountBean.getEditableEmail());
+        verify(userProfileService).getProfileWithRoles(5);
+    }
+
+    @Test
+    void jsfHelpers_exposeProfileFlags() {
+        myAccountBean.setProfile(PROFILE);
+
+        assertFalse(myAccountBean.isSuperAdmin());
+        assertTrue(myAccountBean.isKeyNeverExpire());
+        assertNull(myAccountBean.getKeyExpiresAt());
+        assertFalse(myAccountBean.isKeyExpired());
+        assertTrue(myAccountBean.isApiKeySectionVisible());
+    }
+
+    @Test
+    void uniqueRoleLabels_deduplicatesAndOrdersByPrivilege() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userProfileService.getProfileWithRoles(5)).thenReturn(new ProfileWithRoles(
+                PROFILE,
+                List.of(
+                        new ProjectRoleOverview(1, "P1", List.of(
+                                new ThesaurusRoleOverview("A", "Th A", "contributor"),
+                                new ThesaurusRoleOverview("B", "Th B", "admin")
+                        )),
+                        new ProjectRoleOverview(2, "P2", List.of(
+                                new ThesaurusRoleOverview("C", "Th C", "admin"),
+                                new ThesaurusRoleOverview("D", "Th D", "manager")
+                        ))
+                )
+        ));
+
+        myAccountBean.load();
+
+        assertEquals(
+                List.of("profile.role.admin", "profile.role.manager", "profile.role.contributor"),
+                myAccountBean.getUniqueRoleLabels()
+        );
+    }
+
+    @Test
+    void jsfHelpers_detectExpiredKey() {
+        myAccountBean.setProfile(new UserProfile(
+                5, "alice", "alice@example.com", true, false, false, LocalDate.of(2000, Month.JANUARY, 1), true
+        ));
+
+        assertTrue(myAccountBean.isKeyExpired());
+        assertFalse(myAccountBean.isCanRegenerateApiKey());
+    }
+
+    @Test
+    void updateUsername_updatesProfileAndSession() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("bob");
+        when(userProfileService.updateUsername(5, "bob")).thenReturn(
+                new UserProfile(5, "bob", "alice@example.com", true, false, true, null, true)
+        );
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myAccountBean.updateUsername();
+        }
+
+        assertEquals("bob", myAccountBean.getProfile().username());
+        verify(userSession).refreshDisplayName("bob");
+    }
+
+    @Test
+    void updateEmail_keepsFormInSync() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableEmail("new@example.com");
+        when(userProfileService.updateEmail(5, "new@example.com")).thenReturn(
+                new UserProfile(5, "alice", "new@example.com", true, false, true, null, true)
+        );
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myAccountBean.updateEmail();
+        }
+
+        assertEquals("new@example.com", myAccountBean.getEditableEmail());
+        verify(userSession).refreshEmail("new@example.com");
+    }
+
+    @Test
+    void updateAlertMail_updatesSessionFlag() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableAlertMail(false);
+        when(userProfileService.updateAlertMail(5, false)).thenReturn(
+                new UserProfile(5, "alice", "alice@example.com", false, false, true, null, true)
+        );
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myAccountBean.updateAlertMail();
+        }
+
+        assertFalse(myAccountBean.isEditableAlertMail());
+        verify(userSession).refreshAlertMail(false);
+    }
+
+    @Test
+    void saveIdentity_updatesProfileAndSession() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("bob");
+        myAccountBean.setEditableEmail("bob@example.com");
+        var updated = new UserProfile(5, "bob", "bob@example.com", true, false, true, null, true);
+        when(userProfileService.updateIdentity(5, "bob", "bob@example.com")).thenReturn(updated);
+        when(userProfileService.updateAlertMail(5, false)).thenReturn(updated);
+
+        myAccountBean.saveIdentity();
+
+        assertEquals("bob", myAccountBean.getProfile().username());
+        assertEquals("bob@example.com", myAccountBean.getEditableEmail());
+        assertFalse(myAccountBean.isIdentitySaveError());
+        assertEquals("profile.identity.saved", myAccountBean.getIdentitySaveMessage());
+        verify(userSession).refreshDisplayName("bob");
+        verify(userSession).refreshEmail("bob@example.com");
+    }
+
+    @Test
+    void saveIdentity_changesPasswordWhenBothFieldsAreFilled() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("alice");
+        myAccountBean.setEditableEmail("alice@example.com");
+        myAccountBean.setNewPassword("Abcd1234!");
+        myAccountBean.setPasswordConfirmation("Abcd1234!");
+        when(userProfileService.updateIdentity(5, "alice", "alice@example.com")).thenReturn(PROFILE);
+
+        myAccountBean.saveIdentity();
+
+        verify(userPasswordService).changePassword(5, "Abcd1234!", "Abcd1234!");
+        assertNull(myAccountBean.getNewPassword());
+        assertNull(myAccountBean.getPasswordConfirmation());
+        assertFalse(myAccountBean.isIdentitySaveError());
+        assertEquals("profile.identity.savedWithPassword", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void saveIdentity_skipsPasswordWhenFieldsAreBlank() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("bob");
+        myAccountBean.setEditableEmail("bob@example.com");
+        when(userProfileService.updateIdentity(5, "bob", "bob@example.com")).thenReturn(
+                new UserProfile(5, "bob", "bob@example.com", true, false, true, null, true)
+        );
+
+        myAccountBean.saveIdentity();
+
+        verify(userPasswordService, never()).changePassword(org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        assertEquals("profile.identity.saved", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void saveIdentity_rejectsInvalidPasswordWithoutUpdatingIdentity() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("alice");
+        myAccountBean.setEditableEmail("alice@example.com");
+        myAccountBean.setNewPassword("weak");
+        myAccountBean.setPasswordConfirmation("weak");
+
+        myAccountBean.saveIdentity();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        verify(userProfileService, never()).updateIdentity(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+        verify(userPasswordService, never()).changePassword(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+    }
+
+    @Test
+    void saveIdentity_setsErrorWhenUserNotConnected() {
+        when(userSession.getCurrentUserId()).thenReturn(null);
+
+        myAccountBean.saveIdentity();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        assertEquals("profile.userNotConnected", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void saveIdentity_setsErrorOnInvalidData() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("");
+        myAccountBean.setEditableEmail("alice@example.com");
+        when(userProfileService.updateIdentity(5, "", "alice@example.com"))
+                .thenThrow(new InvalidProfileDataException("Le pseudo est obligatoire."));
+
+        myAccountBean.saveIdentity();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        assertEquals("Le pseudo est obligatoire.", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void updateUsername_showsErrorOnInvalidData() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("");
+        when(userProfileService.updateUsername(5, ""))
+                .thenThrow(new InvalidProfileDataException("Le pseudo est obligatoire."));
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            myAccountBean.updateUsername();
+            messages.verify(() -> MessageUtils.showErrorMessage("Le pseudo est obligatoire."));
+        }
+    }
+
+    @Test
+    void regenerateApiKey_storesPlainKeyForDisplay() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userApiKeyService.regenerateApiKey(5)).thenReturn(
+                new ApiKeyGenerationResult("plain-key", PROFILE)
+        );
+
+        myAccountBean.regenerateApiKey();
+
+        assertEquals("plain-key", myAccountBean.getApiKeyPlain());
+        assertFalse(myAccountBean.isIdentitySaveError());
+        assertEquals("profile.apiKeySavedSuccess", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void regenerateApiKey_showsErrorWhenRefused() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userApiKeyService.regenerateApiKey(5))
+                .thenThrow(new ApiKeyRegenerationException("Clé expirée"));
+
+        myAccountBean.regenerateApiKey();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        assertEquals("Clé expirée", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void load_delegatesRolesLoadingToProfileService() {
+        UserProfile superAdmin = new UserProfile(5, "root", "root@example.com", false, true, true, null, true);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userProfileService.getProfileWithRoles(5)).thenReturn(new ProfileWithRoles(superAdmin, List.of()));
+
+        myAccountBean.load();
+
+        verify(userProfileService).getProfileWithRoles(5);
+        assertTrue(myAccountBean.getProjectRoles().isEmpty());
+    }
+
+    private static MockedStatic<PrimeFaces> mockPrimeFaces() {
+        MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class);
+        PrimeFaces instance = mock(PrimeFaces.class);
+        PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
+        primeFaces.when(PrimeFaces::current).thenReturn(instance);
+        when(instance.ajax()).thenReturn(ajax);
+        return primeFaces;
+    }
+}

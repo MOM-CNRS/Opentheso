@@ -1,0 +1,67 @@
+package fr.cnrs.opentheso.graph.ui;
+
+import fr.cnrs.opentheso.graph.service.GraphVisualizationUrlService;
+import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.shared.session.ConceptSelectionSource;
+import fr.cnrs.opentheso.shared.web.ApplicationUriService;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.Serializable;
+
+@Getter
+@Setter
+@ViewScoped
+@Named("graphExploreBean")
+@RequiredArgsConstructor
+public class GraphExploreBean implements Serializable {
+
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ConceptSelectionSource conceptSelectionSource;
+    private final transient ApplicationUriService applicationUriService;
+    private final transient GraphVisualizationUrlService graphVisualizationUrlService;
+
+    private String conceptIdFromUri;
+    private String treeDataUrl;
+
+    public void loadThesaurusGraph() {
+        thesaurusContext.syncFromViewParams();
+        String baseUrl = applicationUriService.resolveApplicationRootUrl();
+        treeDataUrl = graphVisualizationUrlService.buildThesaurusTreeDataUrl(
+                baseUrl,
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage()
+        );
+    }
+
+    public void loadBranchGraph() {
+        thesaurusContext.syncFromViewParams();
+        String conceptId = resolveConceptId();
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String baseUrl = applicationUriService.resolveApplicationRootUrl();
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            treeDataUrl = "";
+            return;
+        }
+        treeDataUrl = graphVisualizationUrlService.buildBranchTreeDataUrl(
+                baseUrl,
+                thesaurusId,
+                conceptId,
+                thesaurusContext.resolveWorkLanguage()
+        );
+    }
+
+    private String resolveConceptId() {
+        if (StringUtils.isNotBlank(conceptIdFromUri)) {
+            return conceptIdFromUri.trim();
+        }
+        if (StringUtils.isNotBlank(thesaurusContext.getIdConceptFromUri())) {
+            return thesaurusContext.getIdConceptFromUri();
+        }
+        return conceptSelectionSource.getSelectedConceptId().orElse(null);
+    }
+}

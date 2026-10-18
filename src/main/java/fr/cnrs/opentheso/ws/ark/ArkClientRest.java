@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.ws.ark;
 
-import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -271,13 +270,13 @@ public final class ArkClientRest {
             return response.toString();
 
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ArkClientRest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ArkClientRest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ArkClientRest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ArkClientRest.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }

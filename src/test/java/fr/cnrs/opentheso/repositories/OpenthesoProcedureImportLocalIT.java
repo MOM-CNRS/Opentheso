@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.repositories;
 
-import fr.cnrs.opentheso.v2.shared.time.V2Dates;
+import fr.cnrs.opentheso.shared.time.Dates;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -67,9 +67,9 @@ class OpenthesoProcedureImportLocalIT {
 
     @Test
     void addNewConcept_withCalendarDates_succeeds() {
-        var created = V2Dates.toSqlDate(
+        var created = Dates.toSqlDate(
                 LocalDate.of(2026, 2, 27).atStartOfDay(ZoneId.systemDefault()).toInstant());
-        var modified = V2Dates.toSqlDate(
+        var modified = Dates.toSqlDate(
                 LocalDate.of(2026, 9, 1).atStartOfDay(ZoneId.systemDefault()).toInstant());
 
         assertDoesNotThrow(() -> conceptRepository.addNewConcept(

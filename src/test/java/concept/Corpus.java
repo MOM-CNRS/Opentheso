@@ -4,7 +4,6 @@
  */
 package concept;
 
-import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,13 +62,13 @@ public class Corpus {
             return getCountFromJson(json);
 
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
+            Logger.getLogger(Corpus.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
         } catch (MalformedURLException ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
+            Logger.getLogger(Corpus.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
         } catch (IOException ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
+            Logger.getLogger(Corpus.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
         } catch (Exception ex) {
-            Logger.getLogger(ConceptView.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
+            Logger.getLogger(Corpus.class.getName()).log(Level.SEVERE, null, ex + " " + uri);
         }
         return -1;
     }

@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.services;
 
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
 import fr.cnrs.opentheso.models.ConceptIdOnly;
 import fr.cnrs.opentheso.models.NodeAutoCompletionProjection;
 import fr.cnrs.opentheso.models.NodeSearchMiniAltProjection;
@@ -13,7 +12,6 @@ import fr.cnrs.opentheso.models.search.NodeSearchMini;
 import fr.cnrs.opentheso.models.terms.NodeEM;
 import fr.cnrs.opentheso.models.terms.NodeElement;
 import fr.cnrs.opentheso.models.terms.NodeTermTraduction;
-import fr.cnrs.opentheso.models.users.NodeUser;
 import fr.cnrs.opentheso.repositories.SearchRepository;
 
 import jakarta.persistence.EntityManager;
@@ -57,7 +55,6 @@ public class SearchService {
     private final EntityManager entityManager;
     private final DataSource dataSource;
     private final ConceptService conceptService;
-    private final SelectedTheso selectedTheso;
 
     public List<NodeIdValue> searchAutoCompletionForRelationIdValue(String value, String idLang, String idTheso) {
 
@@ -885,62 +882,6 @@ public class SearchService {
         }
 
         return results;
-    }
-
-    public List<NodeSearchMini> searchElastic(String value, NodeUser user) {
-
-        if (StringUtils.isEmpty(value))
-            return Collections.emptyList();
-
-        value = fr.cnrs.opentheso.utils.StringUtils.convertString(value);
-        var listResultAutoComplete = new ArrayList<NodeSearchMini>();
-        var idLang = (!"all".equalsIgnoreCase(selectedTheso.getSelectedLang())) ? selectedTheso.getSelectedLang() : null;
-        var isPrivate = Objects.isNull(user);
-
-        var preferred = searchRepository.searchPreferredTermsFullTextId(value, idLang, selectedTheso.getCurrentIdTheso(), isPrivate);
-        for (ConceptIdOnly item : preferred) {
-            var nodeConceptSearch = conceptService.getConceptForSearch(item.getIdConcept(), selectedTheso.getCurrentIdTheso(), idLang);
-            if (nodeConceptSearch == null) {
-                continue;
-            }
-            NodeSearchMini nodeSearchMini = new NodeSearchMini();
-            nodeSearchMini.setIdConcept(nodeConceptSearch.getIdConcept());
-            nodeSearchMini.setPrefLabel(nodeConceptSearch.getPrefLabel());
-            nodeSearchMini.setDeprecated(nodeConceptSearch.isDeprecated());
-            nodeSearchMini.setConcept(true);
-            listResultAutoComplete.add(nodeSearchMini);
-        }
-
-        var alternates = searchRepository.searchAltTermsFullTextId(value, idLang, selectedTheso.getCurrentIdTheso(), isPrivate);
-        for (ConceptIdOnly item : alternates) {
-            if (listResultAutoComplete.stream()
-                    .filter(element -> element.getIdConcept().equalsIgnoreCase(item.getIdConcept()))
-                    .findFirst()
-                    .isEmpty()) {
-
-                var nodeConceptSearch = conceptService.getConceptForSearch(item.getIdConcept(), selectedTheso.getCurrentIdTheso(), idLang);
-                if (nodeConceptSearch == null) {
-                    continue;
-                }
-                NodeSearchMini nodeSearchMini = new NodeSearchMini();
-                nodeSearchMini.setIdConcept(item.getIdConcept());
-                nodeSearchMini.setPrefLabel(nodeConceptSearch.getPrefLabel());
-
-                String altLabelValue = "";
-                if (CollectionUtils.isNotEmpty(alternates)) {
-                    String finalIdLang = idLang;
-                    var node = nodeConceptSearch.getNodeEM().stream()
-                            .filter(element -> finalIdLang.equalsIgnoreCase(element.getLang()))
-                            .findFirst();
-                    altLabelValue = node.isPresent() ? node.get().getLexicalValue() : "";
-                }
-                nodeSearchMini.setAltLabelValue(altLabelValue);
-                nodeSearchMini.setDeprecated(nodeConceptSearch.isDeprecated());
-                nodeSearchMini.setAltLabel(true);
-                listResultAutoComplete.add(nodeSearchMini);
-            }
-        }
-        return listResultAutoComplete;
     }
 
     public List<NodeSearchMini> searchByAllId(String identifier, String idLang, String idThesaurus, boolean isPrivate) {

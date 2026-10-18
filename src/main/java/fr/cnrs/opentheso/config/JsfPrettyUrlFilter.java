@@ -20,64 +20,59 @@ import java.util.Map;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class JsfPrettyUrlFilter extends OncePerRequestFilter {
 
-    private static final String V2_PREVIEW_PREFIX = "/v2-preview";
+    private static final String FORMER_UI_PREFIX = "/v2";
+    private static final String FORMER_PREVIEW_PREFIX = "/v2-preview";
 
     private static final Map<String, String> FORWARD_TARGETS = Map.ofEntries(
-            Map.entry("/", "/v2/thesauri.xhtml"),
+            Map.entry("/", "/thesauri.xhtml"),
             Map.entry("/index", "/index.xhtml"),
+            Map.entry("/index.xhtml", "/index.xhtml"),
             Map.entry("/reset-password", "/reset-password.xhtml"),
-            Map.entry("/profile", "/profile/myAccount.xhtml"),
-            Map.entry("/candidat", "/candidat/candidat.xhtml"),
-            Map.entry("/toolbox/edition", "/toolbox/edition.xhtml"),
-            Map.entry("/v2", "/v2/thesauri.xhtml"),
-            Map.entry("/v2/thesauri", "/v2/thesauri.xhtml"),
-            Map.entry("/v2/admin/instance", "/v2/admin/instance.xhtml"),
-            Map.entry("/v2/admin/projets", "/v2/admin/projets.xhtml"),
-            Map.entry("/v2/admin/thesauri", "/v2/admin/thesauri.xhtml"),
-            Map.entry("/v2/admin/utilisateurs", "/v2/admin/utilisateurs.xhtml"),
-            Map.entry("/v2/setting/preference", "/v2/setting/preference.xhtml"),
-            Map.entry("/v2/setting/identifiants", "/v2/setting/identifiants.xhtml"),
-            Map.entry("/v2/setting/corpus", "/v2/setting/corpus.xhtml"),
-            Map.entry("/v2/setting/parametres", "/v2/setting/parametres.xhtml"),
-            Map.entry("/v2/project/projets", "/v2/project/projets.xhtml"),
-            Map.entry("/v2/user/compte", "/v2/user/compte.xhtml"),
-            Map.entry("/v2/user/preference", "/v2/user/preference.xhtml"),
-            Map.entry("/v2/proposition/propositions", "/v2/proposition/propositions.xhtml"),
-            Map.entry("/v2/candidat/candidats", "/v2/candidat/candidats.xhtml"),
-            Map.entry("/v2/toolbox/atelier", "/v2/toolbox/atelier.xhtml"),
-            Map.entry("/v2/toolbox/maintenance", "/v2/toolbox/maintenance.xhtml"),
-            Map.entry("/v2/toolbox/statistiques", "/v2/toolbox/statistiques.xhtml"),
-            Map.entry("/v2/toolbox/synchronisation", "/v2/toolbox/synchronisation.xhtml"),
-            Map.entry("/v2/toolbox/portail", "/v2/toolbox/portail.xhtml"),
-            Map.entry("/v2/toolbox/actions-lot", "/v2/toolbox/actions-lot.xhtml"),
-            Map.entry("/v2/graph/graphe", "/v2/graph/graphe.xhtml"),
-            Map.entry("/v2/thesaurus/consultation", "/v2/thesaurus/consultation.xhtml"),
-            Map.entry(V2_PREVIEW_PREFIX, "/v2/thesauri.xhtml")
-    );
-
-    /** Anciennes pages plates `/v2-preview/*.xhtml` → arborescence `/v2/`. */
-    private static final Map<String, String> V2_PREVIEW_PAGES = Map.ofEntries(
-            Map.entry("/index.xhtml", "/v2/index.xhtml"),
-            Map.entry("/preference.xhtml", "/v2/setting/preference.xhtml"),
-            Map.entry("/identifiants.xhtml", "/v2/setting/identifiants.xhtml"),
-            Map.entry("/corpus.xhtml", "/v2/setting/corpus.xhtml"),
-            Map.entry("/parametres.xhtml", "/v2/setting/parametres.xhtml"),
-            Map.entry("/statistiques.xhtml", "/v2/toolbox/statistiques.xhtml"),
-            Map.entry("/atelier.xhtml", "/v2/toolbox/atelier.xhtml"),
-            Map.entry("/maintenance.xhtml", "/v2/toolbox/maintenance.xhtml"),
-            Map.entry("/synchronisation.xhtml", "/v2/toolbox/synchronisation.xhtml"),
-            Map.entry("/portail.xhtml", "/v2/toolbox/portail.xhtml"),
-            Map.entry("/actions-lot.xhtml", "/v2/toolbox/actions-lot.xhtml"),
-            Map.entry("/candidats.xhtml", "/v2/candidat/candidats.xhtml"),
-            Map.entry("/graphe.xhtml", "/v2/graph/graphe.xhtml"),
-            Map.entry("/compte.xhtml", "/v2/user/compte.xhtml"),
-            Map.entry("/preference-user.xhtml", "/v2/user/preference.xhtml"),
-            Map.entry("/projets.xhtml", "/v2/project/projets.xhtml"),
-            Map.entry("/admin-utilisateurs.xhtml", "/v2/admin/utilisateurs.xhtml"),
-            Map.entry("/admin-projets.xhtml", "/v2/admin/projets.xhtml"),
-            Map.entry("/admin-thesauri.xhtml", "/v2/admin/thesauri.xhtml"),
-            Map.entry("/consultation.xhtml", "/v2/thesaurus/consultation.xhtml"),
-            Map.entry("/target.xhtml", "/v2/prototype/target.xhtml")
+            Map.entry("/profile", "/user/compte.xhtml"),
+            Map.entry("/candidat", "/candidat/candidats.xhtml"),
+            Map.entry("/toolbox/edition", "/toolbox/atelier.xhtml"),
+            Map.entry("/thesauri", "/thesauri.xhtml"),
+            Map.entry("/admin/instance", "/admin/instance.xhtml"),
+            Map.entry("/admin/projets", "/admin/projets.xhtml"),
+            Map.entry("/admin/thesauri", "/admin/thesauri.xhtml"),
+            Map.entry("/admin/utilisateurs", "/admin/utilisateurs.xhtml"),
+            Map.entry("/setting/preference", "/setting/preference.xhtml"),
+            Map.entry("/setting/identifiants", "/setting/identifiants.xhtml"),
+            Map.entry("/setting/corpus", "/setting/corpus.xhtml"),
+            Map.entry("/setting/parametres", "/setting/parametres.xhtml"),
+            Map.entry("/project/projets", "/project/projets.xhtml"),
+            Map.entry("/user/compte", "/user/compte.xhtml"),
+            Map.entry("/user/preference", "/user/preference.xhtml"),
+            Map.entry("/proposition/propositions", "/proposition/propositions.xhtml"),
+            Map.entry("/candidat/candidats", "/candidat/candidats.xhtml"),
+            Map.entry("/toolbox/atelier", "/toolbox/atelier.xhtml"),
+            Map.entry("/toolbox/maintenance", "/toolbox/maintenance.xhtml"),
+            Map.entry("/toolbox/statistiques", "/toolbox/statistiques.xhtml"),
+            Map.entry("/toolbox/synchronisation", "/toolbox/synchronisation.xhtml"),
+            Map.entry("/toolbox/portail", "/toolbox/portail.xhtml"),
+            Map.entry("/toolbox/actions-lot", "/toolbox/actions-lot.xhtml"),
+            Map.entry("/graph/graphe", "/graph/graphe.xhtml"),
+            Map.entry("/thesaurus/consultation", "/thesaurus/consultation.xhtml"),
+            Map.entry("/preference.xhtml", "/setting/preference.xhtml"),
+            Map.entry("/identifiants.xhtml", "/setting/identifiants.xhtml"),
+            Map.entry("/corpus.xhtml", "/setting/corpus.xhtml"),
+            Map.entry("/parametres.xhtml", "/setting/parametres.xhtml"),
+            Map.entry("/statistiques.xhtml", "/toolbox/statistiques.xhtml"),
+            Map.entry("/atelier.xhtml", "/toolbox/atelier.xhtml"),
+            Map.entry("/maintenance.xhtml", "/toolbox/maintenance.xhtml"),
+            Map.entry("/synchronisation.xhtml", "/toolbox/synchronisation.xhtml"),
+            Map.entry("/portail.xhtml", "/toolbox/portail.xhtml"),
+            Map.entry("/actions-lot.xhtml", "/toolbox/actions-lot.xhtml"),
+            Map.entry("/candidats.xhtml", "/candidat/candidats.xhtml"),
+            Map.entry("/graphe.xhtml", "/graph/graphe.xhtml"),
+            Map.entry("/compte.xhtml", "/user/compte.xhtml"),
+            Map.entry("/preference-user.xhtml", "/user/preference.xhtml"),
+            Map.entry("/projets.xhtml", "/project/projets.xhtml"),
+            Map.entry("/admin-utilisateurs.xhtml", "/admin/utilisateurs.xhtml"),
+            Map.entry("/admin-projets.xhtml", "/admin/projets.xhtml"),
+            Map.entry("/admin-thesauri.xhtml", "/admin/thesauri.xhtml"),
+            Map.entry("/consultation.xhtml", "/thesaurus/consultation.xhtml"),
+            Map.entry("/target.xhtml", "/prototype/target.xhtml")
     );
 
     @Override
@@ -98,13 +93,26 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
         if (servletPath == null) {
             return null;
         }
-        String target = FORWARD_TARGETS.get(servletPath);
-        if (target != null) {
-            return target;
+        return FORWARD_TARGETS.get(normalize(servletPath));
+    }
+
+    /**
+     * Les adresses {@code /v2/...} et {@code /v2-preview/...} restent acceptées
+     * le temps que les liens déjà publiés basculent.
+     */
+    private static String normalize(String servletPath) {
+        if (FORMER_UI_PREFIX.equals(servletPath)) {
+            return "/";
         }
-        if (servletPath.startsWith(V2_PREVIEW_PREFIX + "/")) {
-            return V2_PREVIEW_PAGES.get(servletPath.substring(V2_PREVIEW_PREFIX.length()));
+        if (servletPath.startsWith(FORMER_UI_PREFIX + "/")) {
+            return servletPath.substring(FORMER_UI_PREFIX.length());
         }
-        return null;
+        if (FORMER_PREVIEW_PREFIX.equals(servletPath)) {
+            return "/";
+        }
+        if (servletPath.startsWith(FORMER_PREVIEW_PREFIX + "/")) {
+            return servletPath.substring(FORMER_PREVIEW_PREFIX.length());
+        }
+        return servletPath;
     }
 }

@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.services;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
 import fr.cnrs.opentheso.entites.Note;
 import fr.cnrs.opentheso.entites.CandidatMessages;
 import fr.cnrs.opentheso.entites.CandidatStatus;
@@ -71,7 +70,6 @@ public class CandidatService {
     private final NoteService noteService;
     private final RelationService relationService;
     private final GroupService groupService;
-    private final LanguageBean languageBean;
     private final NonPreferredTermService nonPreferredTermService;
     private final CandidatMessageRepository candidatMessageRepository;
     private final CandidatVoteRepository candidatVoteRepository;
@@ -736,9 +734,9 @@ public class CandidatService {
     public void sendMailInvitation(String email) {
         try {
             mailService.sendMail(email, "Invitation à une conversation !", "C'est le body du message");
-            MessageUtils.showInformationMessage(languageBean.getMsg("candidat.send_message.msg5"));
+            MessageUtils.showInformationMessage("Invitation envoyée !");
         } catch (Exception mex) {
-            MessageUtils.showWarnMessage(languageBean.getMsg(mex.getMessage() + "candidat.send_message.msg6"));
+            MessageUtils.showWarnMessage("L'invitation n'a pas pu être envoyée.");
         }
    /*     try {
             var properties = System.getProperties();
@@ -761,13 +759,13 @@ public class CandidatService {
 
         log.debug("Vérification de l'existance du term (recherche dans prefLabels)");
         if (termService.existsPrefLabel(candidatSelected.getNomPref().trim(), idLang, idThesaurus)) {
-            MessageUtils.showWarnMessage(languageBean.getMsg("candidat.save.msg3"));
+            MessageUtils.showWarnMessage("Un libellé identique existe déjà dans le thésaurus ou dans les candidats !");
             return false;
         }
 
         log.debug("Vérification de l'existance du term (recherche dans altLabels)");
         if (termService.isAltLabelExist(candidatSelected.getNomPref().trim(), idThesaurus, idLang)) {
-            MessageUtils.showWarnMessage(languageBean.getMsg("candidat.save.msg4"));
+            MessageUtils.showWarnMessage("Une variante identique existe déjà dans le thésaurus ou dans les candidats !");
             return false;
         }
 
@@ -783,7 +781,7 @@ public class CandidatService {
                 .build());
 
         if (idNewConcept == null) {
-            MessageUtils.showErrorMessage(languageBean.getMsg("candidat.save.msg5"));
+            MessageUtils.showErrorMessage("Erreur pendant la création du candidat !");
             return false;
         }
         candidatSelected.setIdConcepte(idNewConcept);

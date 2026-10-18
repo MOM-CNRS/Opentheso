@@ -1,210 +1,43 @@
-<!DOCTYPE HTML>
-<HTML xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
-
-    <f:view>
-        <f:metadata>
-            <f:viewParam name="idc" value="#{selectedThesaurus.idConceptFromUri}"/>
-            <f:viewParam name="idg" value="#{selectedThesaurus.idGroupFromUri}"/>
-            <f:viewParam name="idt" value="#{selectedThesaurus.idThesoFromUri}"/>
-
-            <!--- Ne surtout pas enlever cette action, les Uris qui arrivent de l'extérieur ne marchent plus -->
-            <f:viewAction action="#{selectedThesaurus.preRenderView()}"/>
-            <f:event type="preRenderView" listener="#{currentUser.onPageLoad}" />
-        </f:metadata>
-    </f:view>
-
-    <h:head>
-        <link href="resources/img/O.png" rel="icon" />
-
-        <!-- Pour la carte GPS OpenStreetMap basée sur Leaflet-->
-        <link rel="stylesheet" href="#{resource['webjars:leaflet/1.8.0/leaflet.css']}" />
-        <script src="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"></script>
-
-        <link rel="stylesheet" type="text/css" href="resources/css/all.css" />
-        <link rel="stylesheet" type="text/css" href="resources/css/theme_general.css" />
-        <link rel="stylesheet" type="text/css" href="resources/css/theme_opentheso.css" />
-        <link rel="stylesheet" type="text/css" href="resources/css/composants_opentheso.css" />
-
-        <script type="text/javascript" src="resources/js/scrollToSelectedScript.js"></script>
-
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
-
-        <h:outputText value="#{preferenceBean.googleAnalytics}" escape="false"/>
-
-        <h:panelGroup id="indexTitle" >
-            <title>
-                <h:outputText rendered="#{conceptView.nodeConcept != null or conceptView.nodeConcept.term.lexicalValue != ''}"
-                              value="#{conceptView.nodeConcept.term.lexicalValue}"/>
-                <h:outputText rendered="#{conceptView.nodeConcept == null or conceptView.nodeConcept.term.lexicalValue == ''}"
-                              value="Opentheso"/>
-            </title>
-            <meta name="description" content="#{langueBean.getMsg('index.Opentheso_info')}"/>
-        </h:panelGroup>
-    </h:head>
-
-    <h:body id="page-top" onload="initMenu();" style="overflow-x: hidden;">
-
-        <!-- Message pour controler les connexions de KeyCloak -->
-        <p:growl id="messageConnect"
-                 globalOnly="true"
-                 showDetail="true"
-                 sticky="false"
-                 life="5000"
-                 autoUpdate="true" />
-        <!-- Optional : afficher le message dans le corps si besoin -->
-        <h:outputText value="#{currentUser.loginError}"
-                      rendered="#{not empty currentUser.loginError}"
-                      style="color:red;" />
-
-
-
-        <h:panelGroup class="notification-bar" id="listPropositionsBar">
-            <ui:include src="/thesaurus/rightBodyView/proposition/listPropositions.xhtml" class="card py-3"  />
-        </h:panelGroup>
-
-        <h:panelGroup class="notification-bar" id="resultSearchBar">
-            <ui:include src="/thesaurus/rightBodyView/resultSearch.xhtml" class="card py-3" />
-        </h:panelGroup>
-
-        <ui:include src="dialog/new-version.xhtml" />
-
-        <p:growl id="messageIndex" globalOnly="true" showDetail="true" />
-
-        <h:panelGroup id="wrapper" layout="block" style="height: 100%">
-            <ui:include src="commun/menu.xhtml" />
-
-            <div id="content-wrapper" style="width: 100%">
-
-                <h:form id="containerIndex">
-
-                    <p:remoteCommand name="update_page" process="@this" actionListener="#{searchBean.setBarSearchStatus()}" />
-
-                    <h:panelGroup id="header">
-                        <ui:include src="commun/header.xhtml" />
-                    </h:panelGroup>
-
-                    <div id="boutonNotification" style="top: 85px; right: 0; position: absolute; z-index: 10; margin-top: -25px" >
-                        <h:panelGroup id="resultSearch" style="z-index: 10">
-                            <div style="margin-top: 5px; margin-bottom: -5px; right: 0; margin-right: 11px; z-index: 11;">
-                                <p:commandButton icon="fa-solid fa-magnifying-glass-arrow-right" style="height: 25px;"
-                                                 styleClass="ui-button-raised"
-                                                 update="messageIndex resultSearchBar"
-                                                 actionListener="#{searchBean.afficherResultatRecherche()}" />
-                            </div>
-                        </h:panelGroup>
-                    </div>
-
-                    <p:panel id="thesorusContent" style="margin-left: 10px; margin-right: 10px; position: relative; padding-bottom: 25px">
-
-                        <p:panel id="searchBar">
-                            <div class="d-sm-flex align-items-center justify-content-between mb-4" style="height: 45px;
-                            width: 100%; margin: 20px;">
-                                <div style="position: relative; height: 100%; width: 100%;" >
-                                    <div style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; ">
-                                        <ui:include src="thesaurus/search.xhtml"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </p:panel>
-
-                        <div id="contenuPrincipale" style="margin-top: -8px">
-
-                            <h:panelGroup id="contentConcept">
-                                <h:panelGroup rendered="#{indexSetting.projectSelected}">
-                                    <ui:include src="thesaurus/project.xhtml" />
-                                </h:panelGroup>
-                                <h:panelGroup rendered="#{!indexSetting.projectSelected}">
-                                    <h:panelGroup rendered="#{!indexSetting.selectedTheso}" >
-                                        <ui:include src="thesaurus/main_thesaurus.xhtml" />
-                                    </h:panelGroup>
-                                    <h:panelGroup rendered="#{indexSetting.selectedTheso}" >
-                                        <ui:include src="thesaurus/details_thesaurus.xhtml" />
-                                    </h:panelGroup>
-                                </h:panelGroup>
-                            </h:panelGroup>
-                        </div>
-                    </p:panel>
-                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
-                </h:form>
-                <ui:include src="commun/footer.xhtml" />
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="accueil"/>
+  <ui:define name="viewActions">
+    <f:viewParam name="idt" value="#{thesaurusContext.idThesoFromUri}"/>
+    <f:viewAction action="#{consultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
+    <f:viewAction action="#{thesaurusViewBean.showThesaurusHome}" onPostback="false"/>
+    <f:viewAction action="#{thesaurusViewBean.restoreOpenedConcept}" onPostback="false"/>
+    <f:viewAction action="#{propositionBean.restoreFromRequest}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="title">OpenTheso — #{consultationShellBean.thesaurusAccessDenied ? localeBean.getMsg('thesaurus.accessDenied.title') : thesaurusViewBean.title}</ui:define>
+  <ui:define name="detail">
+    <ui:fragment rendered="#{not consultationShellBean.thesaurusAccessDenied}">
+      <ui:include src="/includes/detail.xhtml"/>
+    </ui:fragment>
+  </ui:define>
+  <ui:define name="main">
+          <ui:fragment rendered="#{consultationShellBean.thesaurusAccessDenied}">
+            <h:form id="thesaurusAccessDeniedForm" prependId="false">
+              <ui:include src="/includes/access-denied.xhtml">
+                <ui:param name="deniedKicker" value="#{localeBean.getMsg('thesaurus.accessDenied.kicker')}"/>
+                <ui:param name="deniedTitle" value="#{localeBean.getMsg('thesaurus.accessDenied.title')}"/>
+                <ui:param name="deniedSub" value="#{localeBean.getMsg('thesaurus.accessDenied.sub')}"/>
+                <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('thesaurus.accessDenied.back')}"/>
+              </ui:include>
+            </h:form>
+          </ui:fragment>
+          <ui:fragment rendered="#{not consultationShellBean.thesaurusAccessDenied and empty thesaurusViewBean.id}">
+            <div class="empty">
+              <div class="empty-ico">◆</div>
+              <p class="empty-t">Aucun thésaurus sélectionné</p>
+              <p class="empty-s"><a href="#{request.contextPath}/thesauri">Choisir un thésaurus</a></p>
             </div>
-        </h:panelGroup>
-
-        <!-- Scroll to Top Button-->
-        <a class="scroll-to-top rounded" href="#page-top">
-            <i class="pi pi-angle-up" />
-        </a>
-
-        <p:ajaxStatus onstart="PF('waitDialog').show()" onsuccess="PF('waitDialog').hide()"/>
-        <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"  closable="false" resizable="false" showHeader="false" position="top" 
-                  style="margin-top: 250px; border: none;">
-            <p:graphicImage value="resources/img/wait.gif" width="100%" style="margin-top: 15px;" />
-        </p:dialog>  
-        
-        <p:dialog widgetVar="waitDialogModal" modal="true" draggable="false" width="80"  closable="false" resizable="false" showHeader="false" position="top" 
-                  style="margin-top: 250px; border: none;">
-            <p:graphicImage value="resources/img/wait.gif" width="100%" style="margin-top: 15px;" />
-        </p:dialog>          
-
-        <ui:include src="dialog/login/login.xhtml" />
-        <ui:include src="dialog/login/logout.xhtml" />
-
-        <ui:include src="dialog/login/forgetPass.xhtml" />
-
-        <script>
-            function showListPropositionsBar() {
-                const listPropositionsBar = document.getElementById("listPropositionsBar");
-                listPropositionsBar.style.transform = "translateX(0)"; // Glisse vers la gauche pour s'afficher
-            }
-
-            function hideListPropositionsBar() {
-                const listPropositionsBar = document.getElementById("listPropositionsBar");
-                listPropositionsBar.style.transform = "translateX(100%)"; // Glisse vers la droite pour se cacher
-            }
-
-            function showResultSearchBar() {
-                const resultSearchBar = document.getElementById("resultSearchBar");
-                resultSearchBar.style.transform = "translateX(0)"; // Glisse vers la gauche pour s'afficher
-            }
-
-            function hideResultSearchBar() {
-                const resultSearchBar = document.getElementById("resultSearchBar");
-                resultSearchBar.style.transform = "translateX(100%)"; // Glisse vers la droite pour se cacher
-            }
-        </script>
-
-        <!-- gestion de changement d'onglet pour éviter le conflit des données -->
-        <script>
-            // Un ID propre à chaque onglet
-            if (!sessionStorage.tabId) {
-                sessionStorage.tabId = crypto.randomUUID();
-            }
-        </script>
-        <p:remoteCommand name="registerTab"
-                         actionListener="#{sessionManager.registerTab}"
-                         autoRun="true">
-            <f:param name="tabId" value="#{null}"/>
-        </p:remoteCommand>
-        <script>
-            window.addEventListener("DOMContentLoaded", function () {
-                registerTab([{name: 'tabId', value: sessionStorage.tabId }]);
-            });
-        </script>
-        <script>
-            document.addEventListener("visibilitychange", function () {
-                if (!document.hidden) {
-                    // On revient sur cet onglet → vérifier l'état sur le serveur
-                    checkTabState([{name: 'tabId', value: sessionStorage.tabId }]);
-                }
-            });
-        </script>
-        <p:remoteCommand name="checkTabState"
-                         actionListener="#{sessionManager.checkTabState}"
-                         update="@none"/>
-    </h:body>
-</HTML>
+          </ui:fragment>
+          <ui:fragment rendered="#{not consultationShellBean.thesaurusAccessDenied and not empty thesaurusViewBean.id}">
+            <ui:include src="/includes/home.xhtml"/>
+          </ui:fragment>
+  </ui:define>
+</ui:composition>

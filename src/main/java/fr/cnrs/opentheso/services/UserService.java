@@ -13,7 +13,7 @@ import fr.cnrs.opentheso.models.users.NodeUserRole;
 import fr.cnrs.opentheso.models.users.NodeUserRoleGroup;
 import fr.cnrs.opentheso.repositories.*;
 import fr.cnrs.opentheso.utils.MD5Password;
-import fr.cnrs.opentheso.v2.user.policy.RoleLabels;
+import fr.cnrs.opentheso.user.policy.RoleLabels;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyMissingException;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;

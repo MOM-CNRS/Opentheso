@@ -1,0 +1,94 @@
+package fr.cnrs.opentheso.concept.write.persistence;
+
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
+import fr.cnrs.opentheso.concept.identifier.ConceptArkWriteService;
+import fr.cnrs.opentheso.concept.identifier.ConceptHandleWriteService;
+import fr.cnrs.opentheso.concept.write.model.MutationResult;
+import fr.cnrs.opentheso.concept.write.model.command.DeleteArkCommand;
+import fr.cnrs.opentheso.concept.write.model.command.DeleteHandleCommand;
+import fr.cnrs.opentheso.concept.write.model.command.GenerateArkCommand;
+import fr.cnrs.opentheso.concept.write.model.command.GenerateHandleCommand;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class ConceptIdentifierWritePersistence {
+
+    private static final String NO_SELECTION = "Aucune sélection !";
+
+    private final ConceptArkWriteService conceptArkWriteService;
+    private final ConceptHandleWriteService conceptHandleWriteService;
+    private final PreferencesRepository preferencesRepository;
+
+    public MutationResult generateArk(GenerateArkCommand command) {
+        if (CollectionUtils.isEmpty(command.conceptIds())) {
+            return MutationResult.validationError(NO_SELECTION);
+        }
+        if (preferencesRepository.findByIdThesaurus(command.thesaurusId()).isEmpty()) {
+            return MutationResult.failure("Pas de préférences pour le thésaurus !!");
+        }
+        var result = conceptArkWriteService.generateArkIds(
+                command.thesaurusId(), command.conceptIds(), command.lang());
+        if (result == null || result.isEmpty()) {
+            return MutationResult.ok("L'opération est terminée avec succès");
+        }
+        String firstMessage = StringUtils.defaultIfBlank(
+                result.get(0).getValue(),
+                "La génération Ark a échoué");
+        if (result.size() == 1 && StringUtils.isBlank(result.get(0).getId())) {
+            return MutationResult.failure(firstMessage);
+        }
+        if (command.conceptIds().size() == 1) {
+            return MutationResult.failure(firstMessage);
+        }
+        return MutationResult.okWithWarning(firstMessage);
+    }
+
+    public MutationResult deleteArk(DeleteArkCommand command) {
+        if (CollectionUtils.isEmpty(command.conceptIds())) {
+            return MutationResult.validationError(NO_SELECTION);
+        }
+        var preferences = preferencesRepository.findByIdThesaurus(command.thesaurusId()).orElse(null);
+        if (preferences == null) {
+            return MutationResult.failure("Pas de préférences pour le thésaurus !!");
+        }
+        if (!preferences.isUseOpenArk()) {
+            return MutationResult.forbidden("La suppression Ark n'est disponible que pour OpenArk");
+        }
+        String configError = conceptArkWriteService.validateOpenArkPreferences(preferences);
+        if (configError != null) {
+            return MutationResult.failure(configError);
+        }
+        if (!conceptArkWriteService.deleteOpenArkIds(command.thesaurusId(), command.conceptIds())) {
+            return MutationResult.failure("La suppression Ark a échoué !!");
+        }
+        return MutationResult.ok("L'opération est terminée avec succès !!");
+    }
+
+    public MutationResult generateHandle(GenerateHandleCommand command) {
+        if (CollectionUtils.isEmpty(command.conceptIds())) {
+            return MutationResult.validationError(NO_SELECTION);
+        }
+        if (!conceptHandleWriteService.generateHandleIds(command.conceptIds(), command.thesaurusId())) {
+            return MutationResult.failure("La génération de Handle a échoué !!");
+        }
+        return MutationResult.ok("La génération de Handle a réussi !!");
+    }
+
+    public MutationResult deleteHandle(DeleteHandleCommand command) {
+        if (StringUtils.isBlank(command.handleId())) {
+            return MutationResult.validationError("Pas d'identifiant Handle à supprimer !!");
+        }
+        if (!conceptHandleWriteService.deleteHandle(
+                command.conceptId(), command.thesaurusId(), command.handleId())) {
+            String message = StringUtils.defaultIfBlank(
+                    conceptHandleWriteService.lastErrorMessage(),
+                    "La suppression de Handle a échoué !!");
+            return MutationResult.failure(message);
+        }
+        return MutationResult.ok("La suppression de Handle a réussi !!");
+    }
+}

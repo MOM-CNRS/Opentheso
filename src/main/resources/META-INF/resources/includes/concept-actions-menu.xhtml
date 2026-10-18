@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="th-create cv-ctx" id="cvCtx">
+    <button type="button" class="th-create-btn" id="cvCtxBtn"
+            data-act="cv-ctx-toggle"
+            title="#{localeBean.getMsg('rightbody.concept.global_actions')}"
+            aria-label="#{localeBean.getMsg('rightbody.concept.global_actions')}"
+            aria-haspopup="menu"
+            aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    </button>
+    <div class="th-create-menu cv-ctx-menu" role="menu"
+         aria-label="#{localeBean.getMsg('rightbody.concept.global_actions')}">
+
+      <ui:fragment rendered="#{thesaurusViewBean.suggestionEnabled
+          and thesaurusViewBean.conceptSelected
+          and not thesaurusViewBean.candidateSelected}">
+        <div class="th-create-menu-h">#{localeBean.getMsg('proposition.submit.title')}</div>
+        <h:commandLink id="propSuggestCta" styleClass="th-create-item" role="menuitem"
+                       action="#{propositionSubmitBean.open}"
+                       title="#{localeBean.getMsg('proposition.cta.hint')}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('proposition.cta.menu')}</span>
+        </h:commandLink>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{conceptAttributeEditorBean.conceptTypeEditAvailable
+          or conceptTypeManagerBean.manageAvailable}">
+        <div class="th-create-menu-h">#{localeBean.getMsg('home.create')}</div>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptAttributeEditorBean.conceptTypeEditAvailable}"
+                       action="#{conceptFicheMenuBean.prepareEditConceptType}"
+                       title="#{localeBean.getMsg('concept.editTypeHint')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M20.59 13.41 13 21H4v-9l7.59-7.59a2 2 0 0 1 2.82 0l6.18 6.18a2 2 0 0 1 0 2.82z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('concept.editConceptType')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptTypeManagerBean.manageAvailable}"
+                       action="#{conceptFicheMenuBean.prepareManageConceptTypes}"
+                       title="#{localeBean.getMsg('concept.typeHint')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"/><path d="M8 7V5h8v2"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('concept.manageConceptType')}</span>
+        </h:commandLink>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{conceptTreeDragDropBean.cutActionsAvailable
+          or conceptTreeDragDropBean.pasteUnderAvailable
+          or conceptTreeDragDropBean.pasteAtRootAvailable
+          or conceptTreeDragDropBean.cutOn
+          or conceptLifecycleEditorBean.writeActionsAvailable
+          or conceptLifecycleEditorBean.statusActionsAvailable
+          or conceptCopyBetweenThesaurusBean.copyActionsAvailable
+          or conceptTransferEditorBean.transferActionsAvailable}">
+        <div class="th-create-menu-h">#{localeBean.getMsg('concept.menu.structure')}</div>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptTreeDragDropBean.cutActionsAvailable}"
+                       action="#{conceptFicheMenuBean.cutConcept}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.cut_move')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptTreeDragDropBean.pasteUnderAvailable}"
+                       action="#{conceptFicheMenuBean.pasteUnder}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 6h8"/><path d="M9 6V4h6v2"/><path d="M7 6h10v14H7z"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.paste')} #{conceptTreeDragDropBean.cutLabel} #{localeBean.getMsg('rightbody.concept.as_specific')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptTreeDragDropBean.pasteAtRootAvailable}"
+                       action="#{conceptFicheMenuBean.pasteAtRoot}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 6h8"/><path d="M9 6V4h6v2"/><path d="M7 6h10v14H7z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.paste')} #{conceptTreeDragDropBean.cutLabel} #{localeBean.getMsg('rightbody.concept.at_the_root')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptTreeDragDropBean.cutOn}"
+                       action="#{conceptFicheMenuBean.prepareCancelCut}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('tree.dnd.cancelCut')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item is-danger" role="menuitem"
+                       rendered="#{conceptLifecycleEditorBean.writeActionsAvailable}"
+                       action="#{conceptFicheMenuBean.prepareDelete}"
+                       title="#{localeBean.getMsg('rightbody.concept.toottip_delete_concept')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.delete_concept')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptLifecycleEditorBean.statusActionsAvailable and not thesaurusViewBean.selectedConceptDeprecated}"
+                       action="#{conceptFicheMenuBean.prepareDeprecate}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_deprecate_concept')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 8h16v11H4z"/><path d="M9 8V5h6v3"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.deprecate_concept')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptLifecycleEditorBean.statusActionsAvailable and thesaurusViewBean.selectedConceptDeprecated}"
+                       action="#{conceptFicheMenuBean.prepareApprove}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_approve_concept')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.approve_concept')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptCopyBetweenThesaurusBean.copyActionsAvailable}"
+                       action="#{conceptFicheMenuBean.prepareCopyToAnotherThesaurus}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_copy_to_another_thesaurus')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 8h12v12H8z"/><path d="M4 16V4h12"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.copy_to_another_thesaurus')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptTransferEditorBean.transferActionsAvailable}"
+                       action="#{conceptFicheMenuBean.prepareMoveToAnotherThesaurus}"
+                       title="#{localeBean.getMsg('concept.moveToAnotherThesoTooltip')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('concept.moveToAnotherThesoTooltip')}</span>
+        </h:commandLink>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{conceptIdentifierEditorBean.arkGenerationAvailable
+          or conceptIdentifierEditorBean.arkDeletionAvailable
+          or conceptIdentifierEditorBean.arkBatchGenerationAvailable
+          or conceptIdentifierEditorBean.handleGenerationAvailable
+          or conceptIdentifierEditorBean.handleDeletionAvailable
+          or conceptListCsvImportBean.importAvailable}">
+        <div class="th-create-menu-h">#{localeBean.getMsg('concept.menu.ids')}</div>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.arkGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.prepareGenerateArk}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_generate_ark')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_ark')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.arkDeletionAvailable}"
+                       action="#{conceptFicheMenuBean.prepareDeleteArk}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.delete_ark')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.arkBatchGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.prepareGenerateMissingArk}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_generate_missing_ark')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_missing_ark')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.arkBatchGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.prepareGenerateArkBranch}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_generate_ark_for_branch')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_ark_for_branch')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.arkBatchGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.prepareGenerateAllArk}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_generate_all_ark')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_all_ark')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.handleGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.prepareGenerateHandle}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_handle')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.handleDeletionAvailable}"
+                       action="#{conceptFicheMenuBean.prepareDeleteHandle}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.delete_handle')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.handleGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.generateMissingHandle}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_missing_handle')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.handleGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.prepareGenerateHandleBranch}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_handle_for_branch')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptIdentifierEditorBean.handleGenerationAvailable}"
+                       action="#{conceptFicheMenuBean.generateAllHandle}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.generate_all_handle')}</span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{conceptListCsvImportBean.importAvailable}"
+                       action="#{conceptFicheMenuBean.prepareImportCsv}"
+                       title="#{localeBean.getMsg('rightbody.concept.tooltip_import_tabulated_list')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/><path d="M4 14h16"/><path d="M9 6v12"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('rightbody.concept.import_tabulated_list')}</span>
+        </h:commandLink>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{conceptMaintenanceEditorBean.maintenanceActionsAvailable}">
+        <div class="th-create-menu-h">#{localeBean.getMsg('home.maint')}</div>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       action="#{conceptFicheMenuBean.prepareRepairLoopedRelationships}"
+                       title="#{localeBean.getMsg('actions.repairLoopedRelationshipsToolTip')}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4L15 12z"/></svg>
+          </span>
+          <span class="th-create-name">#{localeBean.getMsg('actions.repairLoopedRelationships')}</span>
+        </h:commandLink>
+      </ui:fragment>
+    </div>
+  </div>
+</ui:composition>

@@ -1,7 +1,5 @@
 package fr.cnrs.opentheso.services.exports;
 
-import fr.cnrs.opentheso.bean.importexport.ExportFileBean;
-import fr.cnrs.opentheso.bean.leftbody.viewtree.Tree;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.SkosConceptProjection;
 import fr.cnrs.opentheso.models.SkosFacetProjection;
@@ -72,7 +70,6 @@ public class ExportService {
     private final ExportRdf4jHelperNew exportRdf4jHelperNew;
     private final GroupService groupService;
     private final CsvWriteHelper csvWriteHelper;
-    private final Tree tree;
     private final WritePdfNewGen writePdfNewGen;
 
     private int sizeOfTheso;
@@ -731,7 +728,7 @@ public class ExportService {
             try {
                 skosxd = getThesoByGroup(nodeIdValueOfThesaurus.getId(), nodeGroup.getConceptGroup().getIdGroup(), isToogleClearHtmlCharacter);
             } catch (Exception ex) {
-                Logger.getLogger(ExportFileBean.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ExportService.class.getName()).log(Level.SEVERE, null, ex);
                 return null;
             }
             if(skosxd == null) continue;
@@ -787,7 +784,7 @@ public class ExportService {
             try {
                 skosxd = getThesoByGroup(idTheso, nodeGroup.getConceptGroup().getIdGroup(), isToogleClearHtmlCharacter);
             } catch (Exception ex) {
-                Logger.getLogger(ExportFileBean.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ExportService.class.getName()).log(Level.SEVERE, null, ex);
                 return null;
             }
             if(skosxd == null) continue;

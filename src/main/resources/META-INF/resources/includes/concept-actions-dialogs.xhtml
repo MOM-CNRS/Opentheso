@@ -1,0 +1,1637 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+
+  <div class="block-overlay confirm-overlay" id="cvDlgAddNt" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form is-theso is-add-nt" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgAddNtTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 8h16"/><path d="M12 4v16"/><path d="M9 12h6"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgAddNtTitle">#{conceptLifecycleEditorBean.addAsTopConcept
+              ? localeBean.getMsg('rightbody.concept.addTopConcept')
+              : localeBean.getMsg('rightbody.conceptdialog.add_specific_concept')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.addHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <h:panelGroup id="cvAddNtLive" layout="block" styleClass="cv-add-nt-live">
+          <span hidden="hidden"
+                data-flash-nt="#{conceptLifecycleEditorBean.createFlashMessage}"
+                data-flash-nt-token="#{conceptLifecycleEditorBean.createFlashToken}"
+                data-add-nt-dirty="#{conceptLifecycleEditorBean.createDirty}"
+                data-add-nt-dup="#{conceptLifecycleEditorBean.duplicateLabelWarning}"></span>
+          <div class="cv-add-composer">
+            <ui:fragment rendered="#{not conceptLifecycleEditorBean.addAsTopConcept}">
+            <div class="cv-add-composer-parent">
+              <span>#{localeBean.getMsg('concept.addScope')}</span>
+              <strong>#{conceptLifecycleEditorBean.currentPreferredLabel}</strong>
+            </div>
+            </ui:fragment>
+            <label class="cv-add-name">
+              <span>#{localeBean.getMsg('concept.addName')}
+                <em class="cv-facet-lang">#{conceptLifecycleEditorBean.workLanguage}</em>
+              </span>
+              <h:inputText id="cvAddNtName" styleClass="st-input cv-add-nt-name"
+                           value="#{conceptLifecycleEditorBean.preferredLabel}"
+                           pt:autocomplete="off"
+                           pt:placeholder="#{localeBean.getMsg('concept.addPreviewEmpty')}"/>
+              <span class="cv-add-ready" hidden="hidden">#{localeBean.getMsg('concept.addReady')}</span>
+            </label>
+            <div class="cv-add-preview" aria-live="polite">
+              <div class="cv-add-preview-tree">
+                <ui:fragment rendered="#{not conceptLifecycleEditorBean.addAsTopConcept}">
+                <div class="cv-add-preview-parent">#{conceptLifecycleEditorBean.currentPreferredLabel}</div>
+                </ui:fragment>
+                <div class="cv-add-preview-child is-empty" id="cvAddNtPreview"
+                     data-empty="#{localeBean.getMsg('concept.addPreviewEmpty')}">#{localeBean.getMsg('concept.addPreviewEmpty')}</div>
+                <div class="cv-add-preview-meta" id="cvAddNtMeta"></div>
+              </div>
+            </div>
+          </div>
+          <ui:fragment rendered="#{conceptLifecycleEditorBean.createdCount gt 0}">
+            <div class="cv-add-session">
+              <span class="cv-add-session-k">#{conceptLifecycleEditorBean.createdCount}
+                #{conceptLifecycleEditorBean.createdCount eq 1
+                    ? localeBean.getMsg('concept.addCountOne')
+                    : localeBean.getMsg('concept.addCountMany')}</span>
+              <div class="cv-add-chips">
+                <ui:repeat value="#{conceptLifecycleEditorBean.createdLabels}" var="lab">
+                  <span class="cv-add-chip">#{lab}</span>
+                </ui:repeat>
+              </div>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptLifecycleEditorBean.addAsTopConcept}">
+          <div class="cv-dlg-field">
+            <span>#{localeBean.getMsg('concept.addRel')}</span>
+            <h:inputHidden id="cvAddNtRel" value="#{conceptLifecycleEditorBean.selectedNarrowerRelationType}"/>
+            <div class="cv-add-rels" role="listbox" aria-label="#{localeBean.getMsg('concept.addRel')}">
+              <ui:repeat value="#{conceptLifecycleEditorBean.ntRelationTypes}" var="nt">
+                <button type="button" class="cv-add-rel#{conceptLifecycleEditorBean.isNtPicked(nt) ? ' is-on' : ''}"
+                        data-act="add-nt-rel" data-val="#{nt.relationType}"
+                        role="option"
+                        aria-selected="#{conceptLifecycleEditorBean.isNtPicked(nt)}"
+                        title="#{conceptLifecycleEditorBean.formatNtLabel(nt)}">
+                  <span class="cv-add-rel-k">#{nt.relationType}</span>
+                  <span class="cv-add-rel-v">#{conceptLifecycleEditorBean.formatNtLabel(nt)}</span>
+                </button>
+              </ui:repeat>
+            </div>
+          </div>
+          </ui:fragment>
+          <label class="cv-dlg-field">
+            <span>#{localeBean.getMsg('concept.addCollection')}</span>
+            <h:selectOneMenu id="cvAddNtGroup" styleClass="st-input cv-add-nt-group"
+                             value="#{conceptLifecycleEditorBean.selectedGroupId}">
+              <f:selectItem itemValue="" itemLabel="#{localeBean.getMsg('concept.addCollectionNone')}"/>
+              <f:selectItems value="#{conceptLifecycleEditorBean.availableCollections}" var="g"
+                             itemValue="#{g.id}" itemLabel="#{g.label}"/>
+            </h:selectOneMenu>
+          </label>
+          <details class="cv-add-more">
+            <summary>#{localeBean.getMsg('concept.addMore')}</summary>
+            <div class="cv-add-more-grid">
+              <label class="cv-dlg-field">
+                <span>#{localeBean.getMsg('concept.addNotation')}</span>
+                <h:inputText id="cvAddNtNotation" styleClass="st-input"
+                             value="#{conceptLifecycleEditorBean.notation}"
+                             pt:autocomplete="off"
+                             pt:placeholder="#{localeBean.getMsg('rightbody.concept.notation')}…"/>
+              </label>
+              <label class="cv-dlg-field">
+                <span>#{localeBean.getMsg('concept.addId')}</span>
+                <h:inputText id="cvAddNtId" styleClass="st-input"
+                             value="#{conceptLifecycleEditorBean.customConceptId}"
+                             pt:autocomplete="off"/>
+              </label>
+            </div>
+            <p class="cv-type-recip-hint cv-add-more-hint">#{localeBean.getMsg('concept.addIdHint')}</p>
+          </details>
+          <ui:fragment rendered="#{conceptLifecycleEditorBean.duplicateLabelWarning}">
+            <p class="confirm-p is-warn" role="alert">#{localeBean.getMsg('concept.addDup')}</p>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty conceptLifecycleEditorBean.createErrorMessage and not conceptLifecycleEditorBean.duplicateLabelWarning}">
+            <p class="confirm-p is-warn">#{conceptLifecycleEditorBean.createErrorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
+      <div class="confirm-actions cv-add-foot">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{localeBean.getMsg('cancel')}</button>
+        <h:panelGroup id="cvAddNtFoot" layout="block" styleClass="cv-add-foot-go">
+          <ui:fragment rendered="#{conceptLifecycleEditorBean.duplicateLabelWarning}">
+            <h:commandLink styleClass="abt-cancel sm" action="#{conceptFicheMenuBean.cancelAddChildDuplicate}">
+              <f:ajax execute="@this" render=":previewDetailForm:cvAddNtLive :previewDetailForm:cvAddNtFoot" onevent="onCvAddNtAjax"/>
+              #{localeBean.getMsg('concept.addDupEdit')}
+            </h:commandLink>
+            <h:commandLink id="cvAddNtForce" styleClass="abt-save"
+                           action="#{conceptFicheMenuBean.submitAddChildForced}">
+              <f:ajax execute=":previewDetailForm:cvAddNtLive" render=":previewDetailForm:cvAddNtLive :previewDetailForm:cvAddNtFoot" onevent="onCvAddNtAjax"/>
+              <span class="abt-save-label">#{localeBean.getMsg('concept.addDupForce')}</span>
+              <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+            </h:commandLink>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptLifecycleEditorBean.duplicateLabelWarning}">
+            <h:commandLink id="cvAddNtGo"
+                           styleClass="abt-save cv-add-nt-go#{conceptLifecycleEditorBean.createReady ? '' : ' is-off'}"
+                           action="#{conceptFicheMenuBean.submitAddChild}">
+              <f:ajax execute=":previewDetailForm:cvAddNtLive" render=":previewDetailForm:cvAddNtLive :previewDetailForm:cvAddNtFoot" onevent="onCvAddNtAjax"/>
+              <span class="abt-save-label">#{localeBean.getMsg('concept.addConfirm')}</span>
+              <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+            </h:commandLink>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
+    </div>
+    <h:commandButton id="cvAddNtAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterAddChild}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-run-dlg" id="cvDlgEditType" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form is-theso is-edit-type" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgEditTypeTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20.59 13.41 13 21H4v-9l7.59-7.59a2 2 0 0 1 2.82 0l6.18 6.18a2 2 0 0 1 0 2.82z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgEditTypeTitle">#{localeBean.getMsg('concept.editConceptType')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.editTypeHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <h:panelGroup id="cvEditTypeLive" layout="block" styleClass="cv-edit-type-live">
+          <span hidden="hidden"
+                data-flash-ctype="#{conceptAttributeEditorBean.typeFlashMessage}"
+                data-flash-ctype-token="#{conceptAttributeEditorBean.typeFlashToken}"
+                data-type-done="#{conceptAttributeEditorBean.typeDone}"></span>
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.editTypeScope')}</div>
+            <div class="cv-dlg-branch">
+              <strong>#{conceptAttributeEditorBean.currentConceptLabel}</strong>
+              <span>#{conceptAttributeEditorBean.currentConceptTypeLabel}</span>
+            </div>
+          </div>
+          <ui:fragment rendered="#{conceptAttributeEditorBean.typeDone}">
+            <div class="cv-ark-now is-ok">
+              #{conceptAttributeEditorBean.appliedToBranch
+                  ? localeBean.getMsg('concept.editTypeDoneBranch')
+                  : localeBean.getMsg('concept.editTypeDone')}
+              <strong>#{conceptAttributeEditorBean.currentConceptTypeLabel}</strong>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptAttributeEditorBean.typeDone}">
+            <div class="cv-dlg-card">
+              <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.editTypePick')}</div>
+              <ui:fragment rendered="#{empty conceptAttributeEditorBean.availableConceptTypes}">
+                <p class="cv-types-empty">#{localeBean.getMsg('concept.editTypeEmpty')}</p>
+              </ui:fragment>
+              <div class="cv-type-picks">
+                <ui:repeat value="#{conceptAttributeEditorBean.availableConceptTypes}" var="tp">
+                  <h:commandLink styleClass="cv-type-pick#{conceptAttributeEditorBean.isTypePicked(tp) ? ' is-on' : ''}#{conceptAttributeEditorBean.isTypeCurrent(tp) ? ' is-now' : ''}"
+                                 action="#{conceptFicheMenuBean.selectConceptType(tp.code)}">
+                    <f:ajax execute="@this" render=":previewDetailForm:cvEditTypeLive" onevent="onCvEditTypeAjax"/>
+                    <span class="cv-type-pick-main">
+                      <span class="cv-type-pick-lab">#{conceptAttributeEditorBean.formatConceptTypeLabel(tp)}</span>
+                      <span class="cv-type-pick-code">#{tp.code}</span>
+                    </span>
+                    <span class="cv-type-pick-badges">
+                      <ui:fragment rendered="#{conceptAttributeEditorBean.isTypeCurrent(tp)}">
+                        <span class="cv-type-pick-now">#{localeBean.getMsg('concept.editTypeNow')}</span>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{tp.reciprocal}">
+                        <span class="cv-type-pick-recip">#{localeBean.getMsg('concept.typeRecipShort')}</span>
+                      </ui:fragment>
+                    </span>
+                  </h:commandLink>
+                </ui:repeat>
+              </div>
+            </div>
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox id="cvEditTypeBranch"
+                                       value="#{conceptAttributeEditorBean.applyConceptTypeToBranch}"/>
+              <span>#{localeBean.getMsg('concept.changeTypeBranch')}</span>
+            </label>
+            <p class="cv-type-recip-hint">#{localeBean.getMsg('concept.editTypeBranchHint')}</p>
+            <p class="cv-type-recip-hint">#{localeBean.getMsg('concept.editTypeAction')}</p>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty conceptAttributeEditorBean.typeErrorMessage}">
+            <p class="confirm-p is-warn">#{conceptAttributeEditorBean.typeErrorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvEditTypeGo"
+                       styleClass="abt-save cv-ark-go#{conceptAttributeEditorBean.typeApplyReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitEditConceptType}">
+          <f:ajax execute=":previewDetailForm:cvEditTypeLive" render=":previewDetailForm:cvEditTypeLive" onevent="onCvEditTypeAjax"/>
+          <span class="abt-save-label">#{localeBean.getMsg('concept.editTypeConfirm')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+    <h:commandButton id="cvEditTypeAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterEditConceptType}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgManageTypes" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form is-theso is-types" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgManageTypesTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"/><path d="M8 7V5h8v2"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgManageTypesTitle">#{localeBean.getMsg('concept.manageConceptType')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.typeHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <h:panelGroup id="cvTypesLive" layout="block" styleClass="cv-types-live">
+          <span hidden="hidden"
+                data-flash-type="#{conceptTypeManagerBean.flashMessage}"
+                data-flash-type-token="#{conceptTypeManagerBean.flashToken}"
+                data-types-dirty="#{conceptTypeManagerBean.dirty}"></span>
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.typeList')}</div>
+            <ui:fragment rendered="#{empty conceptTypeManagerBean.conceptTypes}">
+              <p class="cv-types-empty">#{localeBean.getMsg('concept.typeEmpty')}</p>
+            </ui:fragment>
+            <ui:repeat value="#{conceptTypeManagerBean.conceptTypes}" var="ct">
+              <div class="cv-type-row#{ct.permanent ? ' is-sys' : ''}#{conceptTypeManagerBean.isPendingDelete(ct) ? ' is-del' : ''}">
+                <div class="cv-type-row-h">
+                  <span class="cv-type-code">#{ct.code}</span>
+                  <ui:fragment rendered="#{ct.permanent}">
+                    <span class="cv-type-sys">#{localeBean.getMsg('concept.typeSystem')}</span>
+                  </ui:fragment>
+                </div>
+                <ui:fragment rendered="#{ct.permanent}">
+                  <div class="cv-type-labels">
+                    <span>#{ct.labelFr}</span>
+                    <span>#{ct.labelEn}</span>
+                  </div>
+                </ui:fragment>
+                <ui:fragment rendered="#{not ct.permanent}">
+                  <ui:fragment rendered="#{not conceptTypeManagerBean.isPendingDelete(ct)}">
+                    <div class="cv-type-edit">
+                      <label class="cv-type-field">
+                        <span>FR</span>
+                        <h:inputText styleClass="st-input" value="#{ct.labelFr}"/>
+                      </label>
+                      <label class="cv-type-field">
+                        <span>EN</span>
+                        <h:inputText styleClass="st-input" value="#{ct.labelEn}"/>
+                      </label>
+                    </div>
+                    <label class="cv-dlg-check">
+                      <h:selectBooleanCheckbox value="#{ct.reciprocal}"/>
+                      <span>#{localeBean.getMsg('concept.isReciprocalRelationship')}</span>
+                    </label>
+                    <div class="cv-type-row-act">
+                      <h:commandLink styleClass="abt-save sm" action="#{conceptFicheMenuBean.applyConceptType(ct)}">
+                        <f:ajax execute=":previewDetailForm:cvTypesLive" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{localeBean.getMsg('save')}
+                      </h:commandLink>
+                      <h:commandLink styleClass="cv-type-del" action="#{conceptFicheMenuBean.prepareDeleteConceptType(ct)}">
+                        <f:ajax execute="@this" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{localeBean.getMsg('candidat.remove')}
+                      </h:commandLink>
+                    </div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{conceptTypeManagerBean.isPendingDelete(ct)}">
+                    <p class="cv-type-warn">#{localeBean.getMsg('concept.typeDeleteAsk')}
+                      <strong>#{ct.code}</strong>. #{localeBean.getMsg('concept.typeDeleteHint')}</p>
+                    <div class="cv-type-row-act">
+                      <h:commandLink styleClass="abt-cancel sm" action="#{conceptFicheMenuBean.cancelDeleteConceptType}">
+                        <f:ajax execute="@this" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{localeBean.getMsg('cancel')}
+                      </h:commandLink>
+                      <h:commandLink styleClass="abt-save is-danger sm" action="#{conceptFicheMenuBean.confirmDeleteConceptType}">
+                        <f:ajax execute="@this" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{localeBean.getMsg('candidat.remove')}
+                      </h:commandLink>
+                    </div>
+                  </ui:fragment>
+                </ui:fragment>
+              </div>
+            </ui:repeat>
+          </div>
+          <div class="cv-dlg-card cv-type-add">
+            <div class="cv-dlg-card-h">#{localeBean.getMsg('rightbody.concept.addNewConceptType')}</div>
+            <div class="cv-type-edit">
+              <label class="cv-type-field">
+                <span>#{localeBean.getMsg('concept.code')}</span>
+                <h:inputText id="cvTypeAddCode" styleClass="st-input"
+                             value="#{conceptTypeManagerBean.conceptTypeToAdd.code}"
+                             title="#{localeBean.getMsg('concept.typeCodeDescription')}"/>
+              </label>
+              <label class="cv-type-field">
+                <span>FR</span>
+                <h:inputText id="cvTypeAddFr" styleClass="st-input"
+                             value="#{conceptTypeManagerBean.conceptTypeToAdd.labelFr}"/>
+              </label>
+              <label class="cv-type-field">
+                <span>EN</span>
+                <h:inputText id="cvTypeAddEn" styleClass="st-input"
+                             value="#{conceptTypeManagerBean.conceptTypeToAdd.labelEn}"/>
+              </label>
+            </div>
+            <p class="cv-type-code-hint">#{localeBean.getMsg('concept.typeCodeDescription')}</p>
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox id="cvTypeAddRecip"
+                                       value="#{conceptTypeManagerBean.conceptTypeToAdd.reciprocal}"/>
+              <span>#{localeBean.getMsg('concept.isReciprocalRelationship')}</span>
+            </label>
+            <p class="cv-type-recip-hint">#{localeBean.getMsg('concept.typeRecipHint')}</p>
+            <div class="cv-type-row-act">
+              <h:commandLink styleClass="abt-save sm" action="#{conceptFicheMenuBean.addConceptType}">
+                <f:ajax execute=":previewDetailForm:cvTypesLive" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                #{localeBean.getMsg('concept.typeAdd')}
+              </h:commandLink>
+            </div>
+          </div>
+          <ui:fragment rendered="#{not empty conceptTypeManagerBean.errorMessage}">
+            <p class="confirm-p is-warn">#{conceptTypeManagerBean.errorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('candidat.close')}</button>
+      </div>
+    </div>
+    <h:commandButton id="cvTypesAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterManageConceptTypes}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgPaste" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form is-paste" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgPasteTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgPasteTitle">#{localeBean.getMsg('tree.dnd.confirmTitle')}</div>
+          <p class="th-create-hint">#{conceptTreeDragDropBean.pasteConfirmPending ? localeBean.getMsg('tree.dnd.confirmHint') : localeBean.getMsg('tree.dnd.pasteHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-move">
+          <div class="cv-dlg-move-node">
+            <span class="cv-dlg-move-k">#{localeBean.getMsg('tree.dnd.from')}</span>
+            <span class="cv-dlg-move-v">#{conceptTreeDragDropBean.dragLabel}</span>
+          </div>
+          <span class="cv-dlg-move-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          </span>
+          <div class="cv-dlg-move-node is-to">
+            <span class="cv-dlg-move-k">#{localeBean.getMsg('tree.dnd.to')}</span>
+            <span class="cv-dlg-move-v">#{conceptTreeDragDropBean.dropToRoot ? localeBean.getMsg('tree.dnd.toRoot') : conceptTreeDragDropBean.dropLabel}</span>
+          </div>
+        </div>
+        <ui:fragment rendered="#{conceptTreeDragDropBean.broadersToCut.size() gt 1}">
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{localeBean.getMsg('tree.dnd.poly')}</div>
+            <div class="cv-dlg-opts">
+              <ui:repeat value="#{conceptTreeDragDropBean.broadersToCut}" var="bt">
+                <label class="cv-dlg-opt">
+                  <h:selectBooleanCheckbox value="#{bt.selected}"/>
+                  <span>#{bt.title}</span>
+                </label>
+              </ui:repeat>
+            </div>
+          </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{conceptTreeDragDropBean.groupChangePending and not empty conceptTreeDragDropBean.groupsToCut}">
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{localeBean.getMsg('tree.dnd.groupsCut')}</div>
+            <div class="cv-dlg-opts">
+              <ui:repeat value="#{conceptTreeDragDropBean.groupsToCut}" var="g">
+                <label class="cv-dlg-opt">
+                  <h:selectBooleanCheckbox value="#{g.selected}"/>
+                  <span>#{g.title}</span>
+                </label>
+              </ui:repeat>
+            </div>
+          </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{conceptTreeDragDropBean.groupChangePending and not empty conceptTreeDragDropBean.groupsToAdd}">
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{localeBean.getMsg('tree.dnd.groupsAdd')}</div>
+            <div class="cv-dlg-opts">
+              <ui:repeat value="#{conceptTreeDragDropBean.groupsToAdd}" var="g">
+                <label class="cv-dlg-opt">
+                  <h:selectBooleanCheckbox value="#{g.selected}"/>
+                  <span>#{g.title}</span>
+                </label>
+              </ui:repeat>
+            </div>
+          </div>
+        </ui:fragment>
+      </div>
+      <div class="confirm-actions">
+        <h:commandLink styleClass="abt-cancel" action="#{conceptFicheMenuBean.cancelPaste}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('cancel')}
+        </h:commandLink>
+        <h:commandLink styleClass="abt-save" action="#{conceptFicheMenuBean.submitPaste}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{localeBean.getMsg('tree.dnd.confirm')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgCancelCut" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h">#{localeBean.getMsg('tree.dnd.cancelCutTitle')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('tree.dnd.cancelCutBody')}</p>
+        </div>
+      </div>
+      <p class="confirm-p">#{conceptTreeDragDropBean.cutLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{conceptFicheMenuBean.cancelCut}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('tree.dnd.cancelCutConfirm')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-run-dlg#{conceptLifecycleEditorBean.deleteRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgDelete" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-run-state="#{conceptLifecycleEditorBean.deleteRunState}">
+    <div class="confirm-modal is-form is-theso is-ark is-del" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgDeleteTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgDeleteTitle">#{localeBean.getMsg('rightbody.concept.delete_concept')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.delHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.delScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptLifecycleEditorBean.currentPreferredLabel}</strong>
+            <span class="cv-dlg-meta-v is-mono">#{conceptLifecycleEditorBean.deleteConceptId}</span>
+          </div>
+          <h:panelGroup id="cvDeleteLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-run-state="#{conceptLifecycleEditorBean.deleteRunState}"
+                  data-flash-del="#{conceptLifecycleEditorBean.deleteFlashMessage}"
+                  data-flash-del-token="#{conceptLifecycleEditorBean.deleteFlashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.delRoot')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{conceptLifecycleEditorBean.deleteConceptId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{conceptLifecycleEditorBean.branchDelete
+                    ? localeBean.getMsg('concept.delBranch')
+                    : localeBean.getMsg('concept.delLeaf')}</span>
+                <span class="cv-dlg-meta-v is-count">#{conceptLifecycleEditorBean.deleteBranchCount}</span>
+              </div>
+            </div>
+            <ui:fragment rendered="#{conceptLifecycleEditorBean.deleteRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{localeBean.getMsg('concept.delDone')}
+                <strong>
+                  #{conceptLifecycleEditorBean.deletedCount}
+                  #{conceptLifecycleEditorBean.deletedCount eq 1
+                      ? localeBean.getMsg('concept.delDoneOne')
+                      : localeBean.getMsg('concept.delDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptLifecycleEditorBean.deleteRunState ne 'done'}">
+              <div class="cv-ark-now#{conceptLifecycleEditorBean.branchDelete ? ' is-warn' : ''}">
+                <ui:fragment rendered="#{conceptLifecycleEditorBean.branchDelete}">
+                  #{localeBean.getMsg('concept.delActionBranch')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptLifecycleEditorBean.branchDelete}">
+                  #{localeBean.getMsg('concept.delAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{localeBean.getMsg('concept.delForever')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptLifecycleEditorBean.deleteErrorMessage}">
+              <p class="confirm-p is-warn">#{conceptLifecycleEditorBean.deleteErrorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+          <div class="cv-del-poly#{conceptLifecycleEditorBean.branchDelete ? '' : ' is-off'}">
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox id="cvDeletePoly"
+                                       value="#{conceptLifecycleEditorBean.forceDeletePolyhierarchy}"/>
+              <span>#{localeBean.getMsg('concept.deletePolyHierarchy')}</span>
+            </label>
+          </div>
+        </div>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.delProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.delProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.delProgFix')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.delProgFixD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.delProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.delProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvDeleteGo"
+                       styleClass="abt-save is-danger cv-ark-go#{conceptLifecycleEditorBean.deleteReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitDelete}">
+          <f:ajax execute="cvDeletePoly @this" render=":previewDetailForm:cvDeleteLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{localeBean.getMsg('candidat.remove')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+    <h:commandButton id="cvDeleteAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterDelete}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgDeprecate" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{localeBean.getMsg('rightbody.concept.deprecate_concept')}</div>
+      <p class="confirm-p">#{conceptLifecycleEditorBean.currentPreferredLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{conceptFicheMenuBean.submitDeprecate}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('rightbody.concept.deprecate_concept')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgApprove" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{localeBean.getMsg('rightbody.concept.approve_concept')}</div>
+      <p class="confirm-p">#{conceptLifecycleEditorBean.currentPreferredLabel}</p>
+      <label class="cv-dlg-check">
+        <h:selectBooleanCheckbox value="#{conceptLifecycleEditorBean.addReplacedByRelations}"/>
+        <span>#{localeBean.getMsg('rightbody.concept.keepRelatedRelation')}</span>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{conceptFicheMenuBean.submitApprove}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{localeBean.getMsg('rightbody.concept.approve_concept')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgCopyTheso" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form is-theso" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgCopyThesoTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 8h12v12H8z"/><path d="M4 16V4h12"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgCopyThesoTitle">#{localeBean.getMsg('rightbody.concept.copy_to_another_thesaurus')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.copyHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.conceptsToCopy')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptCopyBetweenThesaurusBean.sourceLabel}</strong>
+            <span>#{conceptCopyBetweenThesaurusBean.conceptsToCopy.size()} #{localeBean.getMsg('concept.branchUnit')}</span>
+          </div>
+        </div>
+        <ui:fragment rendered="#{empty conceptCopyBetweenThesaurusBean.availableThesauri}">
+          <p class="confirm-p">#{localeBean.getMsg('concept.copyNoTheso')}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty conceptCopyBetweenThesaurusBean.availableThesauri}">
+          <label class="cv-dlg-field">
+            <span>#{localeBean.getMsg('concept.toTheso')}</span>
+            <h:selectOneMenu id="cvCopyThesoTarget" styleClass="st-input"
+                             value="#{conceptCopyBetweenThesaurusBean.targetThesaurusId}">
+              <f:selectItem itemValue="" itemLabel="#{localeBean.getMsg('menu.select_thesaurus')}"/>
+              <f:selectItems value="#{conceptCopyBetweenThesaurusBean.availableThesauri}" var="th"
+                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+              <f:ajax event="valueChange" execute="@this"
+                      listener="#{conceptFicheMenuBean.onCopyTargetThesaurusChange}"
+                      render=":previewDetailForm:cvCopyThesoLive" onevent="onCvThesoTargetAjax"/>
+            </h:selectOneMenu>
+          </label>
+        </ui:fragment>
+        <h:panelGroup id="cvCopyThesoLive" layout="block" styleClass="cv-dlg-theso-live">
+          <div class="cv-dlg-move">
+            <div class="cv-dlg-move-node">
+              <span class="cv-dlg-move-k">#{localeBean.getMsg('concept.fromTheso')}</span>
+              <span class="cv-dlg-move-v">#{conceptCopyBetweenThesaurusBean.sourceThesaurusLabel}</span>
+            </div>
+            <span class="cv-dlg-move-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </span>
+            <div class="cv-dlg-move-node is-to">
+              <span class="cv-dlg-move-k">#{localeBean.getMsg('concept.toTheso')}</span>
+              <span class="cv-dlg-move-v">#{conceptCopyBetweenThesaurusBean.targetThesaurusSelected ? conceptCopyBetweenThesaurusBean.targetThesaurusLabel : localeBean.getMsg('menu.select_thesaurus')}</span>
+            </div>
+          </div>
+          <ui:fragment rendered="#{conceptCopyBetweenThesaurusBean.targetThesaurusSelected}">
+            <div class="cv-dlg-field">
+              <span>#{localeBean.getMsg('concept.dest')}</span>
+              <div class="cv-dlg-dest">
+                <button type="button" class="cv-dlg-dest-btn#{conceptCopyBetweenThesaurusBean.destMode eq 'root' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="root" data-prefix="cvCopy">
+                  #{localeBean.getMsg('concept.destRoot')}
+                </button>
+                <button type="button" class="cv-dlg-dest-btn#{conceptCopyBetweenThesaurusBean.destMode eq 'parent' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="parent" data-prefix="cvCopy">
+                  #{localeBean.getMsg('concept.destParent')}
+                </button>
+              </div>
+            </div>
+            <h:inputHidden id="cvCopyDestMode" styleClass="cv-theso-dest-mode"
+                           value="#{conceptCopyBetweenThesaurusBean.destMode}"/>
+            <div class="cv-theso-parent#{conceptCopyBetweenThesaurusBean.destMode eq 'parent' ? '' : ' is-off'}"
+                 id="cvCopyParentBox">
+              <div class="cv-dlg-field">
+                <span>#{localeBean.getMsg('concept.destParentHint')}</span>
+                <div class="coll-pick cv-theso-ac"
+                     data-theso="#{conceptCopyBetweenThesaurusBean.targetThesaurusId}"
+                     data-lang="#{thesaurusContext.currentLanguage}"
+                     data-empty="#{localeBean.getMsg('concept.destEmpty')}"
+                     data-hint="#{localeBean.getMsg('concept.destTypeHint')}">
+                  <h:inputHidden id="cvCopyParentId" styleClass="cv-theso-parent-id"
+                                 value="#{conceptCopyBetweenThesaurusBean.parentConceptId}"/>
+                  <h:inputHidden id="cvCopyParentLabel" styleClass="cv-theso-parent-label"
+                                 value="#{conceptCopyBetweenThesaurusBean.parentLabel}"/>
+                  <div class="coll-pick-chips" hidden="hidden"></div>
+                  <div class="search-field coll-pick-field">
+                    <span class="search-ico" aria-hidden="true">⌕</span>
+                    <input type="text" class="search-input cv-theso-ac-q"
+                           placeholder="#{localeBean.getMsg('concept.destParentHint')}"
+                           autocomplete="off" spellcheck="false"
+                           aria-autocomplete="list" aria-expanded="false"
+                           aria-label="#{localeBean.getMsg('concept.destParentHint')}"/>
+                    <button type="button" class="search-clear" hidden="hidden"
+                            data-act="theso-query-clear" title="#{localeBean.getMsg('cancel')}">×</button>
+                    <button type="button" class="coll-pick-caret" data-act="theso-parent-toggle" tabindex="-1"
+                            title="#{localeBean.getMsg('concept.destShowAll')}"
+                            aria-label="#{localeBean.getMsg('concept.destShowAll')}">
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                  </div>
+                  <div class="ac" hidden="hidden" role="listbox">
+                    <div class="ac-empty">#{localeBean.getMsg('concept.destTypeHint')}</div>
+                    <div class="coll-ac-list"></div>
+                    <button type="button" class="ac-footer" data-act="theso-parent-more" hidden="hidden">
+                      #{localeBean.getMsg('concept.destMorePrefix')} <strong class="cv-theso-ac-count">0</strong> #{localeBean.getMsg('concept.branchUnit')}<span class="ac-enter">↵</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty conceptCopyBetweenThesaurusBean.errorMessage}">
+            <p class="confirm-p is-warn">#{conceptCopyBetweenThesaurusBean.errorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+        <div class="cv-dlg-field">
+          <span>#{localeBean.getMsg('concept.idKeep')}</span>
+          <h:inputHidden id="cvCopyIdType" styleClass="cv-theso-id-type"
+                         value="#{conceptCopyBetweenThesaurusBean.identifierType}"/>
+          <div class="cv-dlg-dest">
+            <button type="button" class="cv-dlg-dest-btn#{conceptCopyBetweenThesaurusBean.identifierType eq 'sans' or empty conceptCopyBetweenThesaurusBean.identifierType ? ' is-on' : ''}"
+                    data-act="theso-id" data-type="sans">#{localeBean.getMsg('concept.idNone')}</button>
+            <button type="button" class="cv-dlg-dest-btn#{conceptCopyBetweenThesaurusBean.identifierType eq 'ark' ? ' is-on' : ''}"
+                    data-act="theso-id" data-type="ark">#{localeBean.getMsg('concept.idArk')}</button>
+            <button type="button" class="cv-dlg-dest-btn#{conceptCopyBetweenThesaurusBean.identifierType eq 'handle' ? ' is-on' : ''}"
+                    data-act="theso-id" data-type="handle">#{localeBean.getMsg('concept.idHandle')}</button>
+          </div>
+          <p class="cv-dlg-ark-warn#{conceptCopyBetweenThesaurusBean.identifierType eq 'ark' ? '' : ' is-off'}">
+            #{localeBean.getMsg('concept.idArkWarn')}
+          </p>
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save cv-theso-submit#{conceptCopyBetweenThesaurusBean.submitReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitCopyToAnotherThesaurus}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{localeBean.getMsg('concept.copyConfirm')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgMoveTheso" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form is-theso" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgMoveThesoTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgMoveThesoTitle">#{localeBean.getMsg('concept.moveToAnotherThesoTooltip')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.moveHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.conceptsToMove')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptTransferEditorBean.sourceLabel}</strong>
+            <span>#{conceptTransferEditorBean.branchConceptIds.size()} #{localeBean.getMsg('concept.branchUnit')}</span>
+          </div>
+        </div>
+        <ui:fragment rendered="#{empty conceptTransferEditorBean.availableThesauri}">
+          <p class="confirm-p">#{localeBean.getMsg('concept.moveNoTheso')}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty conceptTransferEditorBean.availableThesauri}">
+          <label class="cv-dlg-field">
+            <span>#{localeBean.getMsg('concept.toTheso')}</span>
+            <h:selectOneMenu id="cvMoveThesoTarget" styleClass="st-input"
+                             value="#{conceptTransferEditorBean.targetThesaurusId}">
+              <f:selectItem itemValue="" itemLabel="#{localeBean.getMsg('menu.select_thesaurus')}"/>
+              <f:selectItems value="#{conceptTransferEditorBean.availableThesauri}" var="th"
+                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+              <f:ajax event="valueChange" execute="@this"
+                      listener="#{conceptFicheMenuBean.onMoveTargetThesaurusChange}"
+                      render=":previewDetailForm:cvMoveThesoLive" onevent="onCvThesoTargetAjax"/>
+            </h:selectOneMenu>
+          </label>
+        </ui:fragment>
+        <h:panelGroup id="cvMoveThesoLive" layout="block" styleClass="cv-dlg-theso-live">
+          <div class="cv-dlg-move">
+            <div class="cv-dlg-move-node">
+              <span class="cv-dlg-move-k">#{localeBean.getMsg('concept.fromTheso')}</span>
+              <span class="cv-dlg-move-v">#{conceptTransferEditorBean.sourceThesaurusLabel}</span>
+            </div>
+            <span class="cv-dlg-move-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </span>
+            <div class="cv-dlg-move-node is-to">
+              <span class="cv-dlg-move-k">#{localeBean.getMsg('concept.toTheso')}</span>
+              <span class="cv-dlg-move-v">#{conceptTransferEditorBean.targetThesaurusSelected ? conceptTransferEditorBean.targetThesaurusLabel : localeBean.getMsg('menu.select_thesaurus')}</span>
+            </div>
+          </div>
+          <ui:fragment rendered="#{conceptTransferEditorBean.targetThesaurusSelected}">
+            <div class="cv-dlg-field">
+              <span>#{localeBean.getMsg('concept.dest')}</span>
+              <div class="cv-dlg-dest">
+                <button type="button" class="cv-dlg-dest-btn#{conceptTransferEditorBean.destMode eq 'root' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="root" data-prefix="cvMove">
+                  #{localeBean.getMsg('concept.destRoot')}
+                </button>
+                <button type="button" class="cv-dlg-dest-btn#{conceptTransferEditorBean.destMode eq 'parent' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="parent" data-prefix="cvMove">
+                  #{localeBean.getMsg('concept.destParent')}
+                </button>
+              </div>
+            </div>
+            <h:inputHidden id="cvMoveDestMode" styleClass="cv-theso-dest-mode"
+                           value="#{conceptTransferEditorBean.destMode}"/>
+            <div class="cv-theso-parent#{conceptTransferEditorBean.destMode eq 'parent' ? '' : ' is-off'}"
+                 id="cvMoveParentBox">
+              <div class="cv-dlg-field">
+                <span>#{localeBean.getMsg('concept.destParentHint')}</span>
+                <div class="coll-pick cv-theso-ac"
+                     data-theso="#{conceptTransferEditorBean.targetThesaurusId}"
+                     data-lang="#{thesaurusContext.currentLanguage}"
+                     data-empty="#{localeBean.getMsg('concept.destEmpty')}"
+                     data-hint="#{localeBean.getMsg('concept.destTypeHint')}">
+                  <h:inputHidden id="cvMoveParentId" styleClass="cv-theso-parent-id"
+                                 value="#{conceptTransferEditorBean.parentConceptId}"/>
+                  <h:inputHidden id="cvMoveParentLabel" styleClass="cv-theso-parent-label"
+                                 value="#{conceptTransferEditorBean.parentLabel}"/>
+                  <div class="coll-pick-chips" hidden="hidden"></div>
+                  <div class="search-field coll-pick-field">
+                    <span class="search-ico" aria-hidden="true">⌕</span>
+                    <input type="text" class="search-input cv-theso-ac-q"
+                           placeholder="#{localeBean.getMsg('concept.destParentHint')}"
+                           autocomplete="off" spellcheck="false"
+                           aria-autocomplete="list" aria-expanded="false"
+                           aria-label="#{localeBean.getMsg('concept.destParentHint')}"/>
+                    <button type="button" class="search-clear" hidden="hidden"
+                            data-act="theso-query-clear" title="#{localeBean.getMsg('cancel')}">×</button>
+                    <button type="button" class="coll-pick-caret" data-act="theso-parent-toggle" tabindex="-1"
+                            title="#{localeBean.getMsg('concept.destShowAll')}"
+                            aria-label="#{localeBean.getMsg('concept.destShowAll')}">
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                  </div>
+                  <div class="ac" hidden="hidden" role="listbox">
+                    <div class="ac-empty">#{localeBean.getMsg('concept.destTypeHint')}</div>
+                    <div class="coll-ac-list"></div>
+                    <button type="button" class="ac-footer" data-act="theso-parent-more" hidden="hidden">
+                      #{localeBean.getMsg('concept.destMorePrefix')} <strong class="cv-theso-ac-count">0</strong> #{localeBean.getMsg('concept.branchUnit')}<span class="ac-enter">↵</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty conceptTransferEditorBean.errorMessage}">
+            <p class="confirm-p is-warn">#{conceptTransferEditorBean.errorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save cv-theso-submit#{conceptTransferEditorBean.submitReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitMoveToAnotherThesaurus}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{localeBean.getMsg('concept.moveConfirm')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{conceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkGen" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{conceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkGenTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkGenTitle">#{localeBean.getMsg('rightbody.concept.generate_ark')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.arkHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.arkConcept')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptIdentifierEditorBean.currentConceptLabel}</strong>
+            <ui:include src="/includes/cv-ark-provider.xhtml"/>
+          </div>
+          <div class="cv-dlg-meta">
+            <div class="cv-dlg-meta-row">
+              <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkInternal')}</span>
+              <span class="cv-dlg-meta-v is-mono">#{conceptIdentifierEditorBean.currentConceptId}</span>
+            </div>
+          </div>
+          <h:panelGroup id="cvArkGenLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{conceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{conceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{conceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkCurrent')}</span>
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.existingArk}">
+                  <span class="cv-dlg-meta-v is-mono">#{conceptIdentifierEditorBean.currentArkId}</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptIdentifierEditorBean.existingArk}">
+                  <span class="cv-dlg-meta-v is-empty">#{localeBean.getMsg('concept.arkNone')}</span>
+                </ui:fragment>
+              </div>
+            </div>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{localeBean.getMsg('concept.arkProgDoneD')}
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.existingArk}">
+                  <strong class="is-mono">#{conceptIdentifierEditorBean.currentArkId}</strong>
+                </ui:fragment>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done'}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.existingArk and conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkActionLocalUpdate')}
+                </ui:fragment>
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.existingArk and not conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkActionUpdate')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptIdentifierEditorBean.existingArk and conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkActionLocalCreate')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptIdentifierEditorBean.existingArk and not conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkActionCreate')}
+                </ui:fragment>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{conceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.arkProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.arkProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.arkProgServer')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.arkProgServerD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.arkProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.arkProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvArkGenGo" styleClass="abt-save cv-ark-go" action="#{conceptFicheMenuBean.submitGenerateArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkGenLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.existingArk}">#{localeBean.getMsg('concept.arkConfirmUpdate')}</ui:fragment>
+            <ui:fragment rendered="#{not conceptIdentifierEditorBean.existingArk}">#{localeBean.getMsg('concept.arkConfirmCreate')}</ui:fragment>
+          </span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+    <h:commandButton id="cvArkAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterGenerateArk}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{conceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkMissing" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{conceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkMissingTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkMissingTitle">#{localeBean.getMsg('rightbody.concept.generate_missing_ark')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.arkMissingHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.arkMissingScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptIdentifierEditorBean.thesaurusLabel}</strong>
+            <ui:include src="/includes/cv-ark-provider.xhtml"/>
+          </div>
+          <h:panelGroup id="cvArkMissingLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{conceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{conceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{conceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkMissingTheso')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{conceptIdentifierEditorBean.thesaurusId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkMissingCount')}</span>
+                <span class="cv-dlg-meta-v is-count#{conceptIdentifierEditorBean.missingArkEmpty ? ' is-zero' : ''}">#{conceptIdentifierEditorBean.missingArkCount}</span>
+              </div>
+            </div>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{localeBean.getMsg('concept.arkMissingDone')}
+                <strong>
+                  #{conceptIdentifierEditorBean.missingArkCreated}
+                  #{conceptIdentifierEditorBean.missingArkCreated eq 1
+                      ? localeBean.getMsg('concept.arkMissingDoneOne')
+                      : localeBean.getMsg('concept.arkMissingDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done' and conceptIdentifierEditorBean.missingArkEmpty}">
+              <div class="cv-ark-now is-empty">#{localeBean.getMsg('concept.arkMissingEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done' and not conceptIdentifierEditorBean.missingArkEmpty}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkMissingActionLocal')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkMissingAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{localeBean.getMsg('concept.arkMissingWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{conceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.arkProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.arkProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.arkProgServer')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.arkProgServerD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.arkProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.arkMissingProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{conceptIdentifierEditorBean.missingArkEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{conceptIdentifierEditorBean.missingArkEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvArkMissingGo"
+                       styleClass="abt-save cv-ark-go#{conceptIdentifierEditorBean.missingArkSubmitReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitGenerateMissingArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkMissingLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{localeBean.getMsg('concept.arkConfirmCreate')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgArkDel" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{localeBean.getMsg('rightbody.concept.delete_ark')}</div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save is-danger" action="#{conceptFicheMenuBean.submitDeleteArk}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('rightbody.concept.delete_ark')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{conceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkBranch" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{conceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkBranchTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkBranchTitle">#{localeBean.getMsg('rightbody.concept.generate_ark_for_branch')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.arkBranchHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.arkBranchScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptIdentifierEditorBean.currentConceptLabel}</strong>
+            <ui:include src="/includes/cv-ark-provider.xhtml"/>
+          </div>
+          <h:panelGroup id="cvArkBranchLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{conceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{conceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{conceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkBranchRoot')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{conceptIdentifierEditorBean.currentConceptId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkBranchCount')}</span>
+                <span class="cv-dlg-meta-v is-count#{conceptIdentifierEditorBean.branchArkEmpty ? ' is-zero' : ''}">#{conceptIdentifierEditorBean.branchConceptCount}</span>
+              </div>
+              <ui:fragment rendered="#{not conceptIdentifierEditorBean.branchArkEmpty}">
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkBranchCreate')}</span>
+                  <span class="cv-dlg-meta-v#{conceptIdentifierEditorBean.branchArkMissing eq 0 ? ' is-empty' : ''}">#{conceptIdentifierEditorBean.branchArkMissing}</span>
+                </div>
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkBranchUpdate')}</span>
+                  <span class="cv-dlg-meta-v#{conceptIdentifierEditorBean.branchArkExisting eq 0 ? ' is-empty' : ''}">#{conceptIdentifierEditorBean.branchArkExisting}</span>
+                </div>
+              </ui:fragment>
+            </div>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{localeBean.getMsg('concept.arkBranchDone')}
+                <strong>
+                  #{conceptIdentifierEditorBean.branchProcessed}
+                  #{conceptIdentifierEditorBean.branchProcessed eq 1
+                      ? localeBean.getMsg('concept.arkBranchDoneOne')
+                      : localeBean.getMsg('concept.arkBranchDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done' and conceptIdentifierEditorBean.branchArkEmpty}">
+              <div class="cv-ark-now is-empty">#{localeBean.getMsg('concept.arkBranchEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done' and not conceptIdentifierEditorBean.branchArkEmpty}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkBranchActionLocal')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkBranchAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{localeBean.getMsg('concept.arkBranchWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{conceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.arkProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.arkProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.arkProgServer')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.arkProgServerD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.arkProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.arkBranchProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{conceptIdentifierEditorBean.branchArkEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{conceptIdentifierEditorBean.branchArkEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvArkBranchGo"
+                       styleClass="abt-save cv-ark-go#{conceptIdentifierEditorBean.branchArkSubmitReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitGenerateArkBranch}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkBranchLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.branchArkMissing eq 0 and conceptIdentifierEditorBean.branchArkExisting gt 0}">
+              #{localeBean.getMsg('concept.arkConfirmUpdate')}
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.branchArkMissing gt 0 or conceptIdentifierEditorBean.branchArkExisting eq 0}">
+              #{localeBean.getMsg('concept.arkConfirmCreate')}
+            </ui:fragment>
+          </span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{conceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkAll" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{conceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkAllTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkAllTitle">#{localeBean.getMsg('rightbody.concept.generate_all_ark')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.arkAllHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.arkAllScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptIdentifierEditorBean.thesaurusLabel}</strong>
+            <ui:include src="/includes/cv-ark-provider.xhtml"/>
+          </div>
+          <h:panelGroup id="cvArkAllLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{conceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{conceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{conceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkAllTheso')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{conceptIdentifierEditorBean.thesaurusId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkAllCount')}</span>
+                <span class="cv-dlg-meta-v is-count#{conceptIdentifierEditorBean.allArkEmpty ? ' is-zero' : ''}">#{conceptIdentifierEditorBean.allConceptCount}</span>
+              </div>
+              <ui:fragment rendered="#{not conceptIdentifierEditorBean.allArkEmpty}">
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkBranchCreate')}</span>
+                  <span class="cv-dlg-meta-v#{conceptIdentifierEditorBean.allArkMissing eq 0 ? ' is-empty' : ''}">#{conceptIdentifierEditorBean.allArkMissing}</span>
+                </div>
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.arkBranchUpdate')}</span>
+                  <span class="cv-dlg-meta-v#{conceptIdentifierEditorBean.allArkExisting eq 0 ? ' is-empty' : ''}">#{conceptIdentifierEditorBean.allArkExisting}</span>
+                </div>
+              </ui:fragment>
+            </div>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{localeBean.getMsg('concept.arkAllDone')}
+                <strong>
+                  #{conceptIdentifierEditorBean.allProcessed}
+                  #{conceptIdentifierEditorBean.allProcessed eq 1
+                      ? localeBean.getMsg('concept.arkAllDoneOne')
+                      : localeBean.getMsg('concept.arkAllDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done' and conceptIdentifierEditorBean.allArkEmpty}">
+              <div class="cv-ark-now is-empty">#{localeBean.getMsg('concept.arkAllEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.arkRunState ne 'done' and not conceptIdentifierEditorBean.allArkEmpty}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkAllActionLocal')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptIdentifierEditorBean.localArkProvider}">
+                  #{localeBean.getMsg('concept.arkAllAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{localeBean.getMsg('concept.arkAllWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{conceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.arkProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.arkProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.arkProgServer')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.arkProgServerD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.arkProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.arkAllProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{conceptIdentifierEditorBean.allArkEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{conceptIdentifierEditorBean.allArkEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvArkAllGo"
+                       styleClass="abt-save cv-ark-go#{conceptIdentifierEditorBean.allArkSubmitReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitGenerateAllArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkAllLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.allArkMissing eq 0 and conceptIdentifierEditorBean.allArkExisting gt 0}">
+              #{localeBean.getMsg('concept.arkConfirmUpdate')}
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptIdentifierEditorBean.allArkMissing gt 0 or conceptIdentifierEditorBean.allArkExisting eq 0}">
+              #{localeBean.getMsg('concept.arkConfirmCreate')}
+            </ui:fragment>
+          </span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgHandleGen" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{localeBean.getMsg('rightbody.concept.generate_handle')}</div>
+      <p class="confirm-p">#{conceptIdentifierEditorBean.currentConceptLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{conceptFicheMenuBean.submitGenerateHandle}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('rightbody.concept.generate_handle')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgHandleDel" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{localeBean.getMsg('rightbody.concept.delete_handle')}</div>
+      <p class="confirm-p">#{conceptIdentifierEditorBean.currentHandleId}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save is-danger" action="#{conceptFicheMenuBean.submitDeleteHandle}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('rightbody.concept.delete_handle')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgHandleBranch" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{localeBean.getMsg('rightbody.concept.generate_handle_for_branch')}</div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{conceptFicheMenuBean.submitGenerateHandleBranch}">
+          <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+          #{localeBean.getMsg('rightbody.concept.generate_handle_for_branch')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-run-dlg#{conceptListCsvImportBean.runState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgImportCsv" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-run-state="#{conceptListCsvImportBean.runState}">
+    <div class="confirm-modal is-form is-theso is-csv" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgImportCsvTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/><path d="M4 14h16"/><path d="M9 6v12"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgImportCsvTitle">#{localeBean.getMsg('rightbody.concept.import_tabulated_list')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.csvHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.csvScope')}</div>
+          <div class="cv-dlg-branch cv-csv-parent">
+            <strong>#{conceptListCsvImportBean.parentConceptLabel}</strong>
+            <span class="cv-dlg-meta-v is-mono">#{conceptListCsvImportBean.parentConceptId}</span>
+          </div>
+        </div>
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.csvFile')}</div>
+          <div class="cv-csv-cfg">
+            <span class="cv-csv-cfg-l">#{localeBean.getMsg('import.separatedValue')}</span>
+            <div class="cv-dlg-dest cv-csv-delim" role="group" aria-label="#{localeBean.getMsg('import.separatedValue')}">
+              <button type="button" class="cv-dlg-dest-btn" data-act="csv-delim" data-val="0">
+                <span class="cv-csv-delim-g">,</span>
+                <small>#{localeBean.getMsg('concept.csvComma')}</small>
+              </button>
+              <button type="button" class="cv-dlg-dest-btn" data-act="csv-delim" data-val="1">
+                <span class="cv-csv-delim-g">;</span>
+                <small>#{localeBean.getMsg('concept.csvSemicolon')}</small>
+              </button>
+              <button type="button" class="cv-dlg-dest-btn" data-act="csv-delim" data-val="2">
+                <span class="cv-csv-delim-g">⇥</span>
+                <small>#{localeBean.getMsg('concept.csvTab')}</small>
+              </button>
+            </div>
+            <h:inputHidden id="cvCsvDelim" value="#{conceptListCsvImportBean.choiceDelimiter}"/>
+          </div>
+          <div class="cv-csv-drop-wrap">
+            <button type="button" class="cv-csv-drop" data-act="csv-browse">
+              <span class="cv-csv-drop-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+              </span>
+              <span class="cv-csv-drop-copy">
+                <span class="cv-csv-drop-t">#{localeBean.getMsg('concept.csvDrop')}</span>
+                <span class="cv-csv-drop-t is-alt">#{localeBean.getMsg('concept.csvDropReplace')}</span>
+                <span class="cv-csv-drop-s">#{localeBean.getMsg('concept.csvDropTypes')}</span>
+              </span>
+            </button>
+            <h:inputFile id="cvCsvFile" styleClass="cv-file-input" value="#{conceptListCsvImportBean.csvUpload}"
+                         accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain">
+              <f:ajax event="valueChange" listener="#{conceptFicheMenuBean.loadImportCsv}"
+                      execute="cvCsvDelim cvCsvFile" render=":previewDetailForm:cvCsvLive" onevent="onCvCsvLoadAjax"/>
+            </h:inputFile>
+            <h:panelGroup id="cvCsvLive" layout="block" styleClass="cv-ark-live cv-csv-live">
+              <span hidden="hidden"
+                    data-run-state="#{conceptListCsvImportBean.runState}"
+                    data-import-ready="#{conceptListCsvImportBean.importReady}"
+                    data-csv-loaded="#{not empty conceptListCsvImportBean.fileName}"
+                    data-flash-csv="#{conceptListCsvImportBean.flashMessage}"
+                    data-flash-csv-token="#{conceptListCsvImportBean.flashToken}"></span>
+              <ui:fragment rendered="#{not empty conceptListCsvImportBean.fileName}">
+                <div class="cv-csv-filechip">
+                  <span class="cv-csv-filechip-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                  </span>
+                  <span class="cv-csv-filechip-n">#{conceptListCsvImportBean.fileName}</span>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{conceptListCsvImportBean.loadDone or conceptListCsvImportBean.importDone}">
+                <div class="cv-csv-stats">
+                  <div class="cv-csv-stat#{conceptListCsvImportBean.total eq 0 ? ' is-empty' : ''}">
+                    <span class="cv-csv-stat-n">#{conceptListCsvImportBean.total}</span>
+                    <span class="cv-csv-stat-l">#{localeBean.getMsg('concept.csvCount')}</span>
+                  </div>
+                  <div class="cv-csv-stat">
+                    <span class="cv-csv-stat-n">#{conceptListCsvImportBean.underParentCount}</span>
+                    <span class="cv-csv-stat-l">#{localeBean.getMsg('concept.csvUnderParent')}</span>
+                  </div>
+                  <div class="cv-csv-stat#{conceptListCsvImportBean.hierarchyCount eq 0 ? ' is-empty' : ''}">
+                    <span class="cv-csv-stat-n">#{conceptListCsvImportBean.hierarchyCount}</span>
+                    <span class="cv-csv-stat-l">#{localeBean.getMsg('concept.csvWithBroader')}</span>
+                  </div>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{conceptListCsvImportBean.runState eq 'done'}">
+                <div class="cv-ark-now is-ok">
+                  #{localeBean.getMsg('concept.csvDone')}
+                  <strong>
+                    #{conceptListCsvImportBean.importedCount}
+                    #{conceptListCsvImportBean.importedCount eq 1
+                        ? localeBean.getMsg('concept.csvDoneOne')
+                        : localeBean.getMsg('concept.csvDoneMany')}
+                  </strong>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{conceptListCsvImportBean.runState ne 'done' and conceptListCsvImportBean.loadDone}">
+                <div class="cv-ark-now">
+                  #{localeBean.getMsg('concept.csvAction')}
+                  <ui:fragment rendered="#{not empty conceptListCsvImportBean.sampleLabels}">
+                    <span class="cv-csv-sample">
+                      <ui:repeat value="#{conceptListCsvImportBean.sampleLabels}" var="sample">
+                        <span>#{sample}</span>
+                      </ui:repeat>
+                    </span>
+                  </ui:fragment>
+                  <span class="cv-ark-wait">#{localeBean.getMsg('concept.csvWait')}</span>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty conceptListCsvImportBean.warning and not conceptListCsvImportBean.warningEmpty}">
+                <p class="confirm-p is-warn">#{conceptListCsvImportBean.warning}</p>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty conceptListCsvImportBean.error}">
+                <p class="confirm-p is-warn">#{conceptListCsvImportBean.error}</p>
+              </ui:fragment>
+            </h:panelGroup>
+          </div>
+        </div>
+        <details class="cv-csv-help">
+          <summary>#{localeBean.getMsg('concept.csvFormat')}</summary>
+          <div class="cv-csv-rules">
+            <span>#{localeBean.getMsg('concept.csvRuleUri')}</span>
+            <span>#{localeBean.getMsg('concept.csvRuleId')}</span>
+            <span>#{localeBean.getMsg('concept.csvRuleMulti')}</span>
+            <span>#{localeBean.getMsg('concept.csvRuleBroader')}</span>
+          </div>
+          <div class="cv-csv-fmt-wrap">
+            <table class="cv-csv-fmt">
+              <thead>
+                <tr>
+                  <th>URI</th>
+                  <th>skos:prefLabel@fr</th>
+                  <th>skos:prefLabel@en</th>
+                  <th>skos:altLabel@fr</th>
+                  <th>skos:definition@fr</th>
+                  <th>skos:facet</th>
+                  <th>skos:broader</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>100</td>
+                  <td>France</td>
+                  <td>France_en</td>
+                  <td>l'Hexagone</td>
+                  <td>Pays de la liberté##fait partie de l'Europe</td>
+                  <td>F19</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>101</td>
+                  <td>Lyon</td>
+                  <td>Lyon_en</td>
+                  <td>Lugdunum</td>
+                  <td>Ville de la gastronomie</td>
+                  <td>F19##F10</td>
+                  <td>100</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.csvProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.csvProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.csvProgImport')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.csvProgImportD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.csvProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.csvProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvCsvAnalyze" styleClass="preview-open-btn" style="display:none"
+                       action="#{conceptFicheMenuBean.loadImportCsv}">
+          <f:ajax execute="cvCsvDelim cvCsvFile" render=":previewDetailForm:cvCsvLive" onevent="onCvCsvLoadAjax"/>
+        </h:commandLink>
+        <h:commandLink id="cvCsvGo"
+                       styleClass="abt-save cv-ark-go#{conceptListCsvImportBean.importReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitImportCsv}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvCsvLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{localeBean.getMsg('candidat.import')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+    <h:commandButton id="cvCsvAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterImportCsv}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-run-dlg#{conceptMaintenanceEditorBean.runState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgRepairLoop" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-run-state="#{conceptMaintenanceEditorBean.runState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgRepairLoopTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4L15 12z"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgRepairLoopTitle">#{localeBean.getMsg('actions.repairLoopedRelationships')}</div>
+          <p class="th-create-hint">#{localeBean.getMsg('concept.loopHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.loopScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{conceptMaintenanceEditorBean.conceptLabel}</strong>
+            <span class="cv-dlg-meta-v is-mono">#{conceptMaintenanceEditorBean.conceptId}</span>
+          </div>
+          <h:panelGroup id="cvLoopLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-run-state="#{conceptMaintenanceEditorBean.runState}"
+                  data-flash-loop="#{conceptMaintenanceEditorBean.flashMessage}"
+                  data-flash-loop-token="#{conceptMaintenanceEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.loopRoot')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{conceptMaintenanceEditorBean.conceptId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.loopBranch')}</span>
+                <span class="cv-dlg-meta-v is-count#{conceptMaintenanceEditorBean.branchCount eq 0 ? ' is-zero' : ''}">#{conceptMaintenanceEditorBean.branchCount}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{localeBean.getMsg('concept.loopFound')}</span>
+                <span class="cv-dlg-meta-v#{conceptMaintenanceEditorBean.loopEmpty ? ' is-empty' : ''}">#{conceptMaintenanceEditorBean.loopCount}</span>
+              </div>
+            </div>
+            <ui:fragment rendered="#{conceptMaintenanceEditorBean.runState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{localeBean.getMsg('concept.loopDone')}
+                <strong>
+                  #{conceptMaintenanceEditorBean.repairedCount}
+                  #{conceptMaintenanceEditorBean.repairedCount eq 1
+                      ? localeBean.getMsg('concept.loopDoneOne')
+                      : localeBean.getMsg('concept.loopDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptMaintenanceEditorBean.runState ne 'done' and conceptMaintenanceEditorBean.loopEmpty}">
+              <div class="cv-ark-now is-empty">#{localeBean.getMsg('concept.loopEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{conceptMaintenanceEditorBean.runState ne 'done' and not conceptMaintenanceEditorBean.loopEmpty}">
+              <div class="cv-ark-now">
+                #{localeBean.getMsg('concept.loopAction')}
+                <span class="cv-ark-wait">#{localeBean.getMsg('concept.loopWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptMaintenanceEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{conceptMaintenanceEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <ui:include src="/includes/cv-ark-progress.xhtml">
+          <ui:param name="step1" value="#{localeBean.getMsg('concept.loopProgPrep')}"/>
+          <ui:param name="step1Detail" value="#{localeBean.getMsg('concept.loopProgPrepD')}"/>
+          <ui:param name="step2" value="#{localeBean.getMsg('concept.loopProgFix')}"/>
+          <ui:param name="step2Detail" value="#{localeBean.getMsg('concept.loopProgFixD')}"/>
+          <ui:param name="step3" value="#{localeBean.getMsg('concept.loopProgSave')}"/>
+          <ui:param name="step3Detail" value="#{localeBean.getMsg('concept.loopProgSaveD')}"/>
+        </ui:include>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{conceptMaintenanceEditorBean.loopEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}"
+                data-done="#{localeBean.getMsg('candidat.close')}">#{conceptMaintenanceEditorBean.loopEmpty ? localeBean.getMsg('candidat.close') : localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="cvLoopGo"
+                       styleClass="abt-save cv-ark-go#{conceptMaintenanceEditorBean.repairReady ? '' : ' is-off'}"
+                       action="#{conceptFicheMenuBean.submitRepairLoopedRelationships}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvLoopLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{localeBean.getMsg('concept.loopConfirm')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+    <h:commandButton id="cvLoopAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{conceptFicheMenuBean.afterRepairLoopedRelationships}">
+      <ui:include src="/includes/cv-menu-ajax.xhtml"/>
+    </h:commandButton>
+  </div>
+</ui:composition>

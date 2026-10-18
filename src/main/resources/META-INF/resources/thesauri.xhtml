@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="thesauri"/>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{consultationShellBean.clearThesaurusAccessDenied}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="title">OpenTheso — Sélection de thésaurus</ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <h:panelGroup id="tpPage" layout="block" styleClass="tp-page">
+    <h:form id="thesaurusPickerForm" prependId="false" styleClass="tp-form-root">
+      <h:panelGroup id="tpRoot" layout="block"
+                    styleClass="tp#{thesaurusPickerBean.createMode or thesaurusPickerBean.editMode ? ' tp--create' : ''}#{thesaurusPickerBean.editMode ? ' tp--edit' : ''}#{thesaurusPickerBean.importMode or thesaurusPickerBean.exportMode ? ' tp--dormant' : ''}"
+                    pt:data-flash="#{thesaurusPickerBean.listFlashMessage}"
+                    pt:data-flash-token="#{thesaurusPickerBean.listFlashToken}"
+                    pt:data-flash-error="#{thesaurusPickerBean.listFlashError}"
+                    pt:data-flash-report="#{thesaurusPickerBean.listFlashReport}"
+                    pt:data-flash-report-url="#{request.contextPath}/api/v2/thesaurus-import/report"
+                    pt:data-flash-report-label="#{localeBean.getMsg('picker.import.report.download')}">
+        <ui:include src="/thesauri/includes/list.xhtml"/>
+        <ui:include src="/thesauri/includes/create.xhtml"/>
+        <ui:include src="/thesauri/includes/edit.xhtml"/>
+      </h:panelGroup>
+      <ui:include src="/thesauri/includes/overlays.xhtml"/>
+    </h:form>
+
+    <ui:include src="/thesauri/includes/import.xhtml"/>
+    <ui:include src="/thesauri/includes/export.xhtml"/>
+    </h:panelGroup>
+
+    <ui:include src="/thesauri/includes/scripts.xhtml"/>
+  </ui:define>
+</ui:composition>

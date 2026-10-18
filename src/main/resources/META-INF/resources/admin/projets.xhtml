@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/includes/layout.xhtml">
+  <!-- Même data-page que l’admin instance pour réutiliser CSS/JS (sans Ajax sur ce formulaire). -->
+  <ui:param name="page" value="admin-instance"/>
+  <ui:define name="title">OpenTheso — Gestion des projets</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{instanceAdminBean.initProjectsPage}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <h:form id="projectsAdminForm" prependId="false" styleClass="ia-form-root">
+      <ui:fragment rendered="#{not instanceAdminBean.accessAllowed}">
+        <ui:include src="/includes/access-denied.xhtml">
+          <ui:param name="deniedKicker" value="#{localeBean.getMsg('admin.accessDenied.kicker')}"/>
+          <ui:param name="deniedTitle" value="#{localeBean.getMsg('admin.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{localeBean.getMsg('admin.accessDenied.sub')}"/>
+          <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('admin.accessDenied.back')}"/>
+        </ui:include>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{instanceAdminBean.accessAllowed}">
+        <div class="ia-shell">
+          <div class="bo bo-solo">
+            <span id="iaFlashLive"
+                  hidden="hidden"
+                  data-ia-flash="#{instanceAdminBean.flashMessage}"
+                  data-ia-flash-token="#{instanceAdminBean.flashToken}"
+                  data-ia-flash-error="#{instanceAdminBean.flashError}"></span>
+            <nav class="bc" aria-label="Fil d'Ariane">
+              <h:commandLink styleClass="bc-lk" action="#{navigationBean.redirectToThesaurusPicker}">
+                Thésaurus
+              </h:commandLink>
+              <span class="bc-sep" aria-hidden="true">›</span>
+              <a class="bc-lk" href="#{instanceAdminBean.homeUrl}">Administration de l'instance</a>
+              <span class="bc-sep" aria-hidden="true">›</span>
+              <span class="bc-cur" aria-current="page">#{localeBean.getMsg('admin.section.projects')}</span>
+            </nav>
+
+            <ui:fragment rendered="#{not instanceAdminBean.createProjectOpen and not instanceAdminBean.renameProjectOpen}">
+              <a id="iaBack"
+                 class="bo-back"
+                 href="#{instanceAdminBean.homeUrl}"
+                 title="#{localeBean.getMsg('admin.back.admin')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+            </ui:fragment>
+            <ui:fragment rendered="#{instanceAdminBean.createProjectOpen or instanceAdminBean.renameProjectOpen}">
+              <h:commandButton id="iaBackCloseProjectForm"
+                               styleClass="bo-back"
+                               title="#{localeBean.getMsg('admin.projects.cancel')}"
+                               value="←"
+                               action="#{instanceAdminBean.closeProjectForms}"
+                               immediate="true"/>
+            </ui:fragment>
+
+            <div class="bo-head">
+              <div>
+                <h1 class="bo-title">
+                  #{instanceAdminBean.createProjectOpen
+                      ? localeBean.getMsg('admin.projects.create.title')
+                      : (instanceAdminBean.renameProjectOpen
+                          ? localeBean.getMsg('admin.projects.rename.title')
+                          : localeBean.getMsg('admin.section.projects'))}
+                </h1>
+                <ui:fragment rendered="#{not instanceAdminBean.createProjectOpen and not instanceAdminBean.renameProjectOpen}">
+                  <p class="bo-sub">#{localeBean.getMsg('admin.section.projects.desc')}</p>
+                  <div class="ia-head-meta">
+                    <span class="ia-chip"><b>#{instanceAdminBean.filteredProjectCount}</b> #{localeBean.getMsg('admin.projects.chip')}</span>
+                  </div>
+                </ui:fragment>
+              </div>
+            </div>
+
+            <div class="bo-full">
+              <ui:include src="/admin/includes/projects-panel.xhtml"/>
+            </div>
+          </div>
+
+          <h:panelGroup id="iaDeleteProjectConfirmWrap" layout="block">
+            <ui:fragment rendered="#{instanceAdminBean.deleteProjectConfirmOpen}">
+              <div class="block-overlay confirm-overlay ia-confirm-overlay" id="iaDeleteProjectConfirm" role="presentation">
+                <div class="confirm-modal" role="dialog" aria-modal="true"
+                     aria-labelledby="iaDeleteProjectConfirmTitle">
+                  <div class="confirm-h" id="iaDeleteProjectConfirmTitle">
+                    #{localeBean.getMsg('admin.projects.delete.title')}
+                  </div>
+                  <p class="confirm-p">
+                    #{localeBean.getMsg('admin.projects.delete.confirm')}
+                    <b>#{instanceAdminBean.deleteProjectName}</b>
+                  </p>
+                  <div class="confirm-actions">
+                    <button type="button"
+                            class="bo-btn ghost confirm-cancel"
+                            onclick="return iaClickProxy('iaDeleteProjectCancelGo');">
+                      #{localeBean.getMsg('admin.projects.delete.cancel')}
+                    </button>
+                    <button type="button"
+                            class="bo-btn primary danger"
+                            onclick="return iaClickProxy('iaDeleteProjectConfirmGo');">
+                      #{localeBean.getMsg('admin.projects.delete.submit')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ui:fragment>
+          </h:panelGroup>
+          <!-- Proxies stables hors fragment conditionnel (sinon le postback JSF échoue). -->
+          <div class="ia-ajax-proxy" aria-hidden="true">
+            <h:commandButton id="iaDeleteProjectCancelGo"
+                             value="go"
+                             action="#{instanceAdminBean.closeDeleteProjectConfirm}"
+                             immediate="true"/>
+            <h:commandButton id="iaDeleteProjectConfirmGo"
+                             value="go"
+                             action="#{instanceAdminBean.confirmDeleteProject}"/>
+          </div>
+        </div>
+      </ui:fragment>
+    </h:form>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,50 @@
+package fr.cnrs.opentheso.toolbox.fixtures;
+
+import fr.cnrs.opentheso.shared.repository.projection.EditionThesaurusRow;
+import fr.cnrs.opentheso.shared.repository.projection.LanguageOptionRow;
+import fr.cnrs.opentheso.shared.repository.projection.ProjectSummaryRow;
+import fr.cnrs.opentheso.toolbox.model.EditionStatistics;
+import fr.cnrs.opentheso.toolbox.model.EditionThesaurusSummary;
+
+import java.time.LocalDateTime;
+import java.time.Month;
+
+public final class ToolboxTestFixtures {
+
+    private ToolboxTestFixtures() {
+    }
+
+    public static EditionThesaurusSummary sampleThesaurus() {
+        return new EditionThesaurusSummary(
+                "TH1",
+                "Thésaurus test",
+                false,
+                LocalDateTime.of(2024, Month.JANUARY, 15, 10, 0)
+        );
+    }
+
+    public static EditionThesaurusSummary privateThesaurus() {
+        return new EditionThesaurusSummary(
+                "TH2",
+                "Thésaurus privé",
+                true,
+                LocalDateTime.of(2023, Month.MAY, 20, 8, 30)
+        );
+    }
+
+    public static EditionStatistics sampleStatistics() {
+        return new EditionStatistics(120, 5, 3);
+    }
+
+    public static EditionThesaurusRow sampleThesaurusRow() {
+        return new EditionThesaurusRow("TH1", "Thésaurus test", false, LocalDateTime.of(2024, Month.JANUARY, 15, 10, 0));
+    }
+
+    public static LanguageOptionRow sampleLanguageRow() {
+        return new LanguageOptionRow("fr", "fr", "Français", "French");
+    }
+
+    public static ProjectSummaryRow sampleProjectRow() {
+        return new ProjectSummaryRow(7, "Projet A");
+    }
+}

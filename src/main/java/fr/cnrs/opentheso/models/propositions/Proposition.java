@@ -1,9 +1,6 @@
 package fr.cnrs.opentheso.models.propositions;
 
 import fr.cnrs.opentheso.models.terms.Term;
-import fr.cnrs.opentheso.bean.proposition.NotePropBean;
-import fr.cnrs.opentheso.bean.proposition.SynonymPropBean;
-import fr.cnrs.opentheso.bean.proposition.TraductionPropBean;
 import lombok.Data;
 
 import java.io.Serializable;

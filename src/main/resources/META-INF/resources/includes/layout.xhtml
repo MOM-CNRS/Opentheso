@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+      lang="#{localeBean.idLangue}">
+<f:view encoding="UTF-8" contentType="text/html">
+<f:metadata>
+  <f:viewParam name="idt" value="#{thesaurusContext.idThesoFromUri}"/>
+  <f:viewParam name="prop" value="#{propositionBean.requestedPropositionId}"/>
+  <f:viewAction action="#{localeBean.applyToView}"/>
+  <f:viewAction action="#{consultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
+  <f:viewAction action="#{thesaurusViewBean.ensureSessionThesaurus}"/>
+  <f:viewAction action="#{propositionBean.refreshBadgeCount}" onPostback="false"/>
+  <f:viewAction action="#{propositionBean.openDedicatedReview}" onPostback="false"/>
+  <ui:insert name="viewActions"/>
+</f:metadata>
+<h:head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><ui:insert name="title">OpenTheso</ui:insert></title>
+  <base href="#{request.contextPath}/"/>
+  <link rel="icon" type="image/png" href="#{request.contextPath}/resources/img/O.png"/>
+  <link rel="apple-touch-icon" href="#{request.contextPath}/resources/img/O.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/prototype-recherche.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261017-list"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-picker.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-admin.css"/>
+</h:head>
+<h:body pt:data-page="#{page}" pt:data-ctx="#{request.contextPath}"
+      pt:data-logged-in="#{userSession.loggedIn ? '1' : '0'}"
+      pt:data-tree-select="#{consultationShellBean.adminOnCurrentThesaurus ? '1' : '0'}"
+      pt:data-session-timeout="#{navigationBean.sessionTimeoutInMilliseconds}"
+      pt:data-session-expire="#{navigationBean.sessionExpireUrl}"
+      pt:data-session-keepalive="#{navigationBean.sessionKeepAliveUrl}"
+      pt:data-tree-dnd="#{conceptTreeDragDropBean.cutActionsAvailable ? '1' : '0'}"
+      pt:data-username="#{userSession.loggedIn ? userSession.currentUsername : ''}"
+      pt:data-card-layout="#{conceptBlockLayoutBean.layoutJson}"
+      pt:data-tree-status="#{treeStatusBean.selectedJson}"
+      pt:data-table-cols="#{tableColBean.selectedJson}"
+      pt:data-msg-copied="#{localeBean.getMsg('ui.copied')}"
+      pt:data-msg-link="#{localeBean.getMsg('home.linkPrompt')}"
+      pt:data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
+      pt:data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
+<f:event type="preRenderView" listener="#{propositionBean.refreshBadgeCount}"/>
+<f:event type="preRenderView" listener="#{propositionBean.openDedicatedReview}"/>
+<div class="app" id="app">
+  <ui:include src="/includes/thesaurus.xhtml"/>
+  <div class="sb-scrim" id="sbScrim" hidden="hidden" data-act="sb-dismiss"></div>
+  <div class="main">
+    <div class="panes">
+      <ui:insert name="sidebar">
+        <ui:include src="/includes/sidebar.xhtml"/>
+      </ui:insert>
+      <div class="resizer" id="resizer" role="separator" aria-orientation="vertical"
+           title="Glisser pour redimensionner · double-clic pour réinitialiser">
+        <span class="resizer-grip"></span>
+      </div>
+      <main class="content">
+        <div class="view" id="previewView">
+          <h:panelGroup id="previewWorkLangRefresh" layout="block" styleClass="view-lang-refresh">
+            <ui:insert name="main"/>
+            <ui:insert name="detail">
+              <ui:include src="/includes/detail.xhtml"/>
+            </ui:insert>
+          </h:panelGroup>
+        </div>
+        <div class="view-rail" id="previewRail" aria-hidden="true">
+          <span class="view-rail-thumb" id="previewRailThumb"></span>
+        </div>
+        <button type="button" class="go-top is-off" id="previewGoTop" data-act="go-top"
+                title="Haut de page" aria-label="Haut de page" aria-hidden="true" tabindex="-1">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+          <span>Haut</span>
+        </button>
+      </main>
+    </div>
+  </div>
+</div>
+<div class="app-toast" id="appToast" hidden="hidden" role="status" aria-live="polite">
+  <svg class="app-toast-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+  <span class="app-toast-txt"></span>
+</div>
+<ui:fragment rendered="#{userSession.loggedIn}">
+  <div class="block-overlay confirm-overlay" id="sessionExpireConfirm" hidden="hidden"
+       data-act="session-expire-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+         aria-labelledby="sessionExpireTitle" data-act="session-expire-modal">
+      <div class="confirm-h" id="sessionExpireTitle">#{localeBean.getMsg('session.expire.warn.title')}</div>
+      <p class="confirm-p">#{localeBean.getMsg('session.expire.warn')}</p>
+      <div class="confirm-actions">
+        <button type="button" class="bo-btn ghost" data-act="session-expire">#{localeBean.getMsg('nav.logoutAction')}</button>
+        <button type="button" class="bo-btn primary confirm-cancel" data-act="session-stay">#{localeBean.getMsg('session.expire.stay')}</button>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="createChooser" hidden="hidden"
+       data-act="create-dismiss" role="presentation"
+       data-can-cand="#{candidateDraftBean.canCreate ? '1' : '0'}"
+       data-can-concept="#{conceptLifecycleEditorBean.writeActionsAvailable ? '1' : '0'}"
+       data-can-facet="#{facetDetailEditorBean.managerActionsAvailable ? '1' : '0'}"
+       data-need-parent="#{localeBean.getMsg('create.concept.needParent')}">
+    <div class="confirm-modal is-create-chooser" role="dialog" aria-modal="true"
+         aria-labelledby="createChooserTitle" data-act="create-modal">
+      <div class="confirm-h-block">
+        <div class="confirm-h" id="createChooserTitle">#{localeBean.getMsg('home.create')}</div>
+        <p class="confirm-s" id="createChooserSub"
+           data-root="#{localeBean.getMsg('create.sub.root')}"
+           data-under="#{localeBean.getMsg('create.sub.under')}"></p>
+      </div>
+      <div class="spl ck">
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="concept">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.59 13.41 13 21H4v-9l7.59-7.59a2 2 0 0 1 2.82 0l6.18 6.18a2 2 0 0 1 0 2.82z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{localeBean.getMsg('create.concept')}</span>
+            <span class="spl-d" data-ok="#{localeBean.getMsg('create.concept.desc')}" data-lock="#{localeBean.getMsg('create.concept.lock')}">#{localeBean.getMsg('create.concept.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="candidat">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{localeBean.getMsg('create.candidat')}</span>
+            <span class="spl-d" data-ok="#{localeBean.getMsg('create.candidat.desc')}" data-lock="#{localeBean.getMsg('create.candidat.lock')}">#{localeBean.getMsg('create.candidat.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="facet">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M16.5 13v7"/><path d="M13 16.5h7"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{localeBean.getMsg('create.facet')}</span>
+            <span class="spl-d"
+                  data-ok="#{localeBean.getMsg('create.facet.desc')}"
+                  data-lock="#{localeBean.getMsg('create.facet.lock')}"
+                  data-need-parent="#{localeBean.getMsg('create.facet.needParent')}">#{localeBean.getMsg('create.facet.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</ui:fragment>
+<h:outputScript library="jakarta.faces" name="faces.js"/>
+<script src="#{request.contextPath}/resources/js/core.js"></script>
+<script src="#{request.contextPath}/resources/js/settings.js"></script>
+<script src="#{request.contextPath}/resources/js/shell.js"></script>
+<script src="#{request.contextPath}/resources/js/search.js"></script>
+<script src="#{request.contextPath}/resources/js/tree.js"></script>
+<script src="#{request.contextPath}/resources/js/table.js"></script>
+<script src="#{request.contextPath}/resources/js/globe-ui.js?v=20261017-pref"></script>
+<script src="#{request.contextPath}/resources/js/collections.js"></script>
+<script src="#{request.contextPath}/resources/js/selection.js?v=20261017-list"></script>
+<script src="#{request.contextPath}/resources/js/export.js?v=20261017-list"></script>
+<script src="#{request.contextPath}/resources/js/about.js"></script>
+<script src="#{request.contextPath}/resources/js/stats.js"></script>
+<script src="#{request.contextPath}/resources/js/instance-stats.js"></script>
+<script src="#{request.contextPath}/resources/js/shell-narrow.js"></script>
+<script src="#{request.contextPath}/resources/js/dialogs.js"></script>
+<script src="#{request.contextPath}/resources/js/add-nt.js"></script>
+<script src="#{request.contextPath}/resources/js/ark-progress.js"></script>
+<script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
+<script src="#{request.contextPath}/resources/js/session.js"></script>
+<script src="#{request.contextPath}/resources/js/app.js?v=20261017-list"></script>
+</h:body>
+</f:view>
+</html>

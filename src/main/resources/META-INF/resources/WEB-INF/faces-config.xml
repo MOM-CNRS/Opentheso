@@ -61,7 +61,7 @@
     </application>
 
     <factory>
-        <exception-handler-factory>fr.cnrs.opentheso.bean.session.ViewExpiredExceptionHandlerFactory</exception-handler-factory>
+        <exception-handler-factory>fr.cnrs.opentheso.shared.session.ViewExpiredExceptionHandlerFactory</exception-handler-factory>
     </factory>    
 </faces-config>
 

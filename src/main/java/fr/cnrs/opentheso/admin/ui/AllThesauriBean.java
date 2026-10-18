@@ -1,0 +1,88 @@
+package fr.cnrs.opentheso.admin.ui;
+
+import fr.cnrs.opentheso.shared.ui.LocaleBean;
+import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.admin.model.AdminThesaurus;
+import fr.cnrs.opentheso.admin.service.AdminCatalogService;
+import fr.cnrs.opentheso.project.model.ProjectSummary;
+import fr.cnrs.opentheso.shared.ui.UserSession;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.Setter;
+import org.primefaces.PrimeFaces;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@Getter
+@Setter
+@ViewScoped
+@Named("allThesauriBean")
+public class AllThesauriBean implements Serializable {
+
+    private final transient UserSession userSession;
+    private final transient LocaleBean localeBean;
+    private final transient AdminCatalogService adminCatalogService;
+
+    public AllThesauriBean(
+            UserSession userSession,
+            LocaleBean localeBean,
+            AdminCatalogService adminCatalogService
+    ) {
+        this.userSession = userSession;
+        this.localeBean = localeBean;
+        this.adminCatalogService = adminCatalogService;
+    }
+
+    private List<AdminThesaurus> thesauri = Collections.emptyList();
+    private String selectedThesaurusId;
+    private String selectedThesaurusTitle;
+    private ProjectSummary targetProject;
+
+    public void load() {
+        if (!userSession.canAccessSuperAdminScreen()) {
+            clearState();
+            return;
+        }
+        thesauri = new ArrayList<>(adminCatalogService.listAllThesauri(true, localeBean.getIdLangue()));
+    }
+
+    public void prepareMoveDialog(String thesaurusId, String thesaurusTitle) {
+        selectedThesaurusId = thesaurusId;
+        selectedThesaurusTitle = thesaurusTitle;
+        targetProject = null;
+    }
+
+    public List<ProjectSummary> autocompleteProjects(String query) {
+        if (!userSession.canAccessSuperAdminScreen()) {
+            return List.of();
+        }
+        return adminCatalogService.searchProjects(true, query);
+    }
+
+    public void moveThesaurus() {
+        if (!userSession.canAccessSuperAdminScreen() || selectedThesaurusId == null) {
+            return;
+        }
+        if (targetProject == null) {
+            MessageUtils.showErrorMessage("Aucun projet sélectionné !!!");
+            PrimeFaces.current().ajax().update("messageIndex");
+            return;
+        }
+        adminCatalogService.moveThesaurus(true, selectedThesaurusId, targetProject.id());
+        MessageUtils.showInformationMessage(localeBean.getMsg("project.thesaurusMovedSuccess"));
+        load();
+        PrimeFaces.current().ajax().update("containerIndex messageIndex");
+    }
+
+    public boolean isSuperAdminScreen() {
+        return userSession.canAccessSuperAdminScreen();
+    }
+
+    private void clearState() {
+        thesauri = Collections.emptyList();
+    }
+}

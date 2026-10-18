@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="view-panel" id="viewFacetDraft"
+       data-more="#{localeBean.getMsg('facet.draft.more')}"
+       data-more-hide="#{localeBean.getMsg('facet.draft.more.hide')}"
+       data-created-msg="#{localeBean.getMsg('facet.draft.created')}"
+       data-confirm-create="#{localeBean.getMsg('facet.draft.confirm.create')}"
+       data-confirm-go="#{localeBean.getMsg('facet.draft.create')}">
+    <h:form id="facetDraftForm" prependId="false" styleClass="cand-draft-form" acceptcharset="UTF-8">
+      <span id="fctResult" hidden="hidden"
+            data-created="#{facetDetailEditorBean.created ? '1' : '0'}"
+            data-id="#{facetDetailEditorBean.createdFacetId}"></span>
+      <h:inputHidden id="fctParentId" value="#{facetDetailEditorBean.parentConceptId}"/>
+      <h:inputHidden id="fctParentLabel" value="#{facetDetailEditorBean.parentConceptLabel}"/>
+      <h:commandButton id="fctPrepare" styleClass="preview-open-btn" style="display:none"
+                       value="prepare" action="#{facetDetailEditorBean.prepareFacetDraft}">
+        <f:ajax execute="fctParentId fctParentLabel" render="@form" onevent="onFacetDraftPrepare"/>
+      </h:commandButton>
+      <div class="cv is-on is-draft is-facet" data-status="facet">
+        <div class="cv-head">
+          <h1 class="cv-pref">
+            <h:inputText id="fctTitle" styleClass="cv-draft-input"
+                         value="#{facetDetailEditorBean.label}"
+                         pt:placeholder="#{localeBean.getMsg('facet.draft.namePlaceholder')}"
+                         pt:aria-label="#{localeBean.getMsg('facet.draft.namePlaceholder')}"
+                         pt:autocomplete="off"
+                         pt:oninput="if(window.syncFacetDraftPref)syncFacetDraftPref()"/>
+            <span class="cv-lang">#{facetDetailEditorBean.workLanguage}</span>
+            <span class="cv-status is-direct">#{localeBean.getMsg('facet.draft.status')}</span>
+          </h1>
+          <div class="df-err" id="fctTitleErr" hidden="hidden">#{localeBean.getMsg('facet.draft.nameRequired')}</div>
+        </div>
+
+        <div class="cv-blocks">
+          <section class="cblock">
+            <div class="cblock-head">#{localeBean.getMsg('facet.draft.def')}</div>
+            <div class="cblock-body">
+              <div class="crow">
+                <div class="crow-lbl">#{localeBean.getMsg('facet.draft.def')}</div>
+                <div class="crow-val">
+                  <h:inputTextarea id="fctDef" styleClass="disc-input"
+                                   value="#{facetDetailEditorBean.definition}"
+                                   pt:placeholder="#{localeBean.getMsg('facet.draft.defPlaceholder')}"/>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <button type="button" class="df-more-toggle" id="fctMoreToggle" data-act="fct-more"
+                aria-expanded="false" aria-controls="fctMore">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span id="fctMoreLabel">#{localeBean.getMsg('facet.draft.more')}</span>
+        </button>
+
+        <div class="cv-blocks" id="fctMore" hidden="hidden">
+          <section class="cblock">
+            <div class="cblock-head">#{localeBean.getMsg('facet.draft.translations')}</div>
+            <div class="cblock-body">
+              <div class="te" id="fctTrEditor"
+                   data-empty="#{localeBean.getMsg('candidat.draft.tr.empty')}"
+                   data-drop="#{localeBean.getMsg('candidat.draft.tr.drop')}"
+                   data-ph="#{localeBean.getMsg('candidat.draft.tr.namePh')}"
+                   data-alt="#{localeBean.getMsg('candidat.draft.tr.altPh')}"
+                   data-remove="#{localeBean.getMsg('candidat.draft.tr.remove')}"
+                   data-no="#{localeBean.getMsg('candidat.draft.tr.no')}"
+                   data-yes="#{localeBean.getMsg('candidat.draft.tr.yes')}"
+                   data-used="#{localeBean.getMsg('concept.translation.langUsed')}">
+                <div class="re-none" id="fctTrEmpty">#{localeBean.getMsg('candidat.draft.tr.empty')}</div>
+                <div id="fctTrList"></div>
+                <div class="te-add">
+                  <div class="tp-lang-pick te-pick" id="fctTrPick">
+                    <button type="button"
+                            class="tree-lang-btn tp-lang-btn"
+                            id="fctTrBtn"
+                            data-act="fct-tr-toggle"
+                            title="#{localeBean.getMsg('candidat.draft.tr.add')}"
+                            aria-label="#{localeBean.getMsg('candidat.draft.tr.add')}"
+                            aria-haspopup="listbox"
+                            aria-expanded="false">
+                      <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                      <span class="tree-lang-name">#{localeBean.getMsg('candidat.draft.tr.add')}</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu tp-lang-menu" id="fctTrMenu" role="listbox"
+                         aria-label="#{localeBean.getMsg('candidat.draft.tr.add')}">
+                      <div class="tree-lang-menu-h">#{localeBean.getMsg('candidat.draft.tr.add')}</div>
+                      <ui:repeat value="#{facetDetailEditorBean.translationLanguages}" var="lang">
+                        <button type="button"
+                                class="tree-lang-opt"
+                                data-act="fct-tr-add"
+                                data-lang="#{lang.code}"
+                                data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                                data-name="#{lang.value}"
+                                role="option"
+                                aria-selected="false">
+                          <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                          <span class="tree-lang-opt-name">#{lang.value}</span>
+                          <span class="tree-lang-opt-code">#{lang.code}</span>
+                        </button>
+                      </ui:repeat>
+                    </div>
+                  </div>
+                </div>
+                <h:inputHidden id="fctTrPayload" value="#{facetDetailEditorBean.translationsPayload}"/>
+              </div>
+            </div>
+          </section>
+
+          <section class="cblock" id="fctNoteEditor"
+                   data-empty="#{localeBean.getMsg('concept.note.emptyLang')}"
+                   data-add="#{localeBean.getMsg('concept.note.add')}"
+                   data-add-lang="#{localeBean.getMsg('concept.note.addLang')}"
+                   data-compare="#{localeBean.getMsg('concept.note.compare')}"
+                   data-remove="#{localeBean.getMsg('concept.note.remove')}"
+                   data-text-ph="#{localeBean.getMsg('concept.note.textPh')}"
+                   data-source-ph="#{localeBean.getMsg('concept.note.sourcePh')}"
+                   data-used="#{localeBean.getMsg('concept.note.langUsed')}"
+                   data-work-lang="#{facetDetailEditorBean.workLanguage}">
+            <div class="cblock-head">#{localeBean.getMsg('facet.draft.notes')}</div>
+            <div class="cblock-body">
+              <div class="note-ed">
+                <div class="note-ed-bar">
+                  <div class="note-ed-tabs" id="fctNoteTabs" role="tablist"></div>
+                  <div class="note-ed-actions">
+                    <div class="note-ed-pick" id="fctNotePick">
+                      <button type="button"
+                              class="note-ed-addl"
+                              id="fctNoteBtn"
+                              data-act="fct-note-toggle"
+                              aria-haspopup="listbox"
+                              aria-expanded="false">
+                        #{localeBean.getMsg('concept.note.addLang')}
+                      </button>
+                      <div class="tree-lang-menu tp-lang-menu" id="fctNoteMenu" role="listbox"
+                           aria-label="#{localeBean.getMsg('concept.note.addLang')}">
+                        <div class="tree-lang-menu-h">#{localeBean.getMsg('concept.note.addLang')}</div>
+                        <ui:repeat value="#{thesaurusViewBean.languages}" var="lang">
+                          <button type="button"
+                                  class="tree-lang-opt"
+                                  data-act="fct-note-add-lang"
+                                  data-lang="#{lang.code}"
+                                  data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                                  data-name="#{lang.value}"
+                                  role="option"
+                                  aria-selected="false">
+                            <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                            <span class="tree-lang-opt-name">#{lang.value}</span>
+                            <span class="tree-lang-opt-code">#{lang.code}</span>
+                          </button>
+                        </ui:repeat>
+                      </div>
+                    </div>
+                    <button type="button" class="note-ed-cmp" id="fctNoteCmp" data-act="fct-note-cmp">
+                      #{localeBean.getMsg('concept.note.compare')}
+                    </button>
+                  </div>
+                </div>
+                <div id="fctNoteBody"></div>
+              </div>
+              <div id="fctNoteTypeOpts" hidden="hidden">
+                <ui:repeat value="#{facetDetailEditorBean.draftNoteTypes}" var="type">
+                  <span data-code="#{type}" data-label="#{thesaurusViewBean.noteTypeLabel(type)}"></span>
+                </ui:repeat>
+              </div>
+              <div id="fctNoteLangOpts" hidden="hidden">
+                <ui:repeat value="#{thesaurusViewBean.languages}" var="lang">
+                  <span data-code="#{lang.code}"
+                        data-name="#{lang.value}"
+                        data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"></span>
+                </ui:repeat>
+              </div>
+              <h:inputHidden id="fctNotesPayload" value="#{facetDetailEditorBean.notesPayload}"/>
+            </div>
+          </section>
+
+          <section class="cblock">
+            <div class="cblock-head">#{localeBean.getMsg('facet.draft.members')}</div>
+            <div class="cblock-body">
+              <div class="re" id="fctMemEditor"
+                   data-none="#{localeBean.getMsg('facet.draft.members.none')}"
+                   data-remove="#{localeBean.getMsg('facet.draft.members.remove')}"
+                   data-exists="#{localeBean.getMsg('facet.draft.members.exists')}">
+                <div class="re-rows" id="fctMemRows"></div>
+                <div class="re-row re-new" id="fctMemNew">
+                  <div class="re-field">
+                    <input type="text" class="st-input re-q" id="fctMemQ" autocomplete="off" spellcheck="false"
+                           placeholder="#{localeBean.getMsg('facet.draft.members.search')}"
+                           aria-label="#{localeBean.getMsg('facet.draft.members.search')}"/>
+                    <div class="re-drop" id="fctMemDrop" hidden="hidden"></div>
+                    <div class="re-none" id="fctMemEmpty" hidden="hidden">#{localeBean.getMsg('facet.draft.members.none')}</div>
+                  </div>
+                </div>
+                <div class="re-msg re-error" id="fctMemMsg" hidden="hidden"></div>
+                <h:inputHidden id="fctMembersPayload" value="#{facetDetailEditorBean.membersPayload}"/>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <ui:fragment rendered="#{not empty facetDetailEditorBean.createErrorMessage}">
+          <p class="confirm-p is-warn" role="alert">#{facetDetailEditorBean.createErrorMessage}</p>
+        </ui:fragment>
+
+        <div class="fsave">
+          <button type="button" class="bo-btn ghost" data-act="fct-leave">#{localeBean.getMsg('facet.draft.cancel')}</button>
+          <ui:fragment rendered="#{facetDetailEditorBean.managerActionsAvailable}">
+            <button type="button" class="bo-btn primary" data-act="fct-create-ask">#{localeBean.getMsg('facet.draft.create')}</button>
+            <h:commandButton id="fctCreate" styleClass="preview-open-btn" style="display:none"
+                             value="#{localeBean.getMsg('facet.draft.create')}"
+                             action="#{facetDetailEditorBean.createFacetDraft}">
+              <f:ajax execute="@form" render="@form" onevent="onFacetDraftAjax"/>
+            </h:commandButton>
+          </ui:fragment>
+          <h:commandButton id="fctCancel" styleClass="preview-open-btn" style="display:none"
+                           value="#{localeBean.getMsg('facet.draft.cancel')}"
+                           action="#{facetDetailEditorBean.cancelFacetDraft}" immediate="true">
+            <f:ajax execute="@this" render="@form" onevent="function(d){if(d.status==='success'&amp;&amp;window.resolveFacetDraftUi)window.resolveFacetDraftUi('annulé');}"/>
+          </h:commandButton>
+        </div>
+      </div>
+    </h:form>
+
+    <div class="block-overlay confirm-overlay" id="fctCreateConfirm" hidden="hidden"
+         data-act="fct-create-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="fctCreateTitle" data-act="fct-create-modal">
+        <div class="confirm-h" id="fctCreateTitle">#{localeBean.getMsg('facet.draft.confirm.title')}</div>
+        <p class="confirm-p" id="fctCreateText">#{localeBean.getMsg('facet.draft.confirm.create')}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost confirm-cancel" data-act="fct-create-dismiss">#{localeBean.getMsg('facet.draft.cancel')}</button>
+          <button type="button" class="bo-btn primary" id="fctCreateGo" data-act="fct-create-go">#{localeBean.getMsg('facet.draft.create')}</button>
+        </div>
+      </div>
+    </div>
+    <div class="block-overlay confirm-overlay" id="fctLeaveConfirm" hidden="hidden"
+         data-act="fct-leave-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="fctLeaveTitle" data-act="fct-leave-modal">
+        <div class="confirm-h" id="fctLeaveTitle">#{localeBean.getMsg('facet.draft.leave.title')}</div>
+        <p class="confirm-p mo-warn">#{localeBean.getMsg('facet.draft.leave.warn')}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost" data-act="fct-leave-stay">#{localeBean.getMsg('facet.draft.leave.stay')}</button>
+          <button type="button" class="bo-btn danger" data-act="fct-leave-quit">#{localeBean.getMsg('facet.draft.leave.quit')}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ui:composition>

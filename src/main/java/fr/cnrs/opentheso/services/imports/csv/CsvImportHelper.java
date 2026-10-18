@@ -14,7 +14,6 @@ import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
 import fr.cnrs.opentheso.models.relations.NodeReplaceValueByValue;
 import fr.cnrs.opentheso.models.users.NodeUser;
-import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
 import fr.cnrs.opentheso.entites.Gps;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.repositories.ConceptFacetRepository;
@@ -559,7 +558,7 @@ public class CsvImportHelper {
             } else {
                 gps += gps + SEPERATEUR;
             }
-            var gpsList = ConceptView.readGps(conceptObject.getGps(), "", "");
+            var gpsList = ConceptGpsReader.readGps(conceptObject.getGps(), "", "");
             if (CollectionUtils.isNotEmpty(gpsList)) {
                 for (Gps gpsValue : gpsList) {
                     gps += SEPERATEUR + gpsValue.getLatitude() + SOUS_SEPERATEUR + gpsValue.getLongitude();
@@ -1488,7 +1487,7 @@ public class CsvImportHelper {
             
         } else {
             if (StringUtils.isNotEmpty(conceptObject.getGps())) {
-                var gpsList = ConceptView.readGps(conceptObject.getGps(), "", "");
+                var gpsList = ConceptGpsReader.readGps(conceptObject.getGps(), "", "");
                 if (CollectionUtils.isNotEmpty(gpsList)) {
                     for (Gps gpsValue : gpsList) {
                         NodeGps nodeGps = new NodeGps();
@@ -1525,7 +1524,7 @@ public class CsvImportHelper {
     }
 
     private static java.sql.Date toSqlDate(Date date) {
-        return fr.cnrs.opentheso.v2.shared.time.V2Dates.toSqlDate(
-                fr.cnrs.opentheso.v2.shared.time.V2Dates.toInstant(date));
+        return fr.cnrs.opentheso.shared.time.Dates.toSqlDate(
+                fr.cnrs.opentheso.shared.time.Dates.toInstant(date));
     }
 }

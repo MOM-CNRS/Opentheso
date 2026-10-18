@@ -1,0 +1,1452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="cv is-on"
+       data-id="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
+       data-pref="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}"
+       data-status="#{thesaurusViewBean.conceptDisplayStatus}"
+       data-flash="#{conceptLabelBlockEditorBean.flashMessage}"
+       data-flash-token="#{conceptLabelBlockEditorBean.flashToken}"
+       data-flash-coll="#{conceptCollectionBlockEditorBean.flashMessage}"
+       data-flash-coll-token="#{conceptCollectionBlockEditorBean.flashToken}"
+       data-flash-rel="#{conceptRelationBlockEditorBean.flashMessage}"
+       data-flash-rel-token="#{conceptRelationBlockEditorBean.flashToken}"
+       data-flash-tr="#{conceptTranslationBlockEditorBean.flashMessage}"
+       data-flash-tr-token="#{conceptTranslationBlockEditorBean.flashToken}"
+       data-flash-note="#{conceptNoteBlockEditorBean.flashMessage}"
+       data-flash-note-token="#{conceptNoteBlockEditorBean.flashToken}"
+       data-flash-res="#{conceptResourceBlockEditorBean.flashMessage}"
+       data-flash-res-token="#{conceptResourceBlockEditorBean.flashToken}"
+       data-flash-align="#{conceptAlignmentAutoSearchBean.flashMessage}"
+       data-flash-align-token="#{conceptAlignmentAutoSearchBean.flashToken}"
+       data-flash-align-edit="#{conceptAlignmentBlockEditorBean.flashMessage}"
+       data-flash-align-edit-token="#{conceptAlignmentBlockEditorBean.flashToken}"
+       data-flash-cand="#{candidateFicheBean.flashMessage}"
+       data-flash-cand-token="#{candidateFicheBean.flashToken}"
+       data-flash-prop="#{not empty propositionSubmitBean.flashMessage ? propositionSubmitBean.flashMessage : propositionBean.flashMessage}"
+       data-flash-prop-token="#{propositionSubmitBean.flashToken gt 0 ? propositionSubmitBean.flashToken : propositionBean.flashToken}"
+       data-rel-tree="#{conceptRelationBlockEditorBean.treeReload ? '1' : ''}"
+       data-msg-fold="#{localeBean.getMsg('block.collapse')}"
+       data-msg-unfold="#{localeBean.getMsg('block.expand')}">
+    <ui:fragment rendered="#{thesaurusViewBean.breadcrumbEnabled and not empty thesaurusViewBean.selectedConcept.breadcrumb and thesaurusViewBean.selectedConcept.breadcrumb.size() gt 1}">
+      <nav class="cv-path" aria-label="#{localeBean.getMsg('concept.breadcrumb')}">
+        <ui:repeat value="#{thesaurusViewBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="pst">
+          <ui:fragment rendered="#{path.size() gt 1}">
+            <span class="path">
+              <ui:repeat value="#{path}" var="step" varStatus="st">
+                <ui:fragment rendered="#{not st.last}">
+                  <a class="path-link" href="thesaurus/consultation.xhtml?id=#{step.conceptId}"
+                     data-act="open" data-id="#{step.conceptId}" data-type="concept"
+                     title="#{step.label}">#{step.label}</a>
+                  <span class="path-sep" aria-hidden="true">›</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{st.last}">
+                  <span class="path-current" aria-current="page">#{step.label}</span>
+                </ui:fragment>
+              </ui:repeat>
+            </span>
+          </ui:fragment>
+        </ui:repeat>
+      </nav>
+    </ui:fragment>
+    <h:messages id="messageIndex" styleClass="cv-msgs"
+                infoClass="cv-msg is-info" warnClass="cv-msg is-warn" errorClass="cv-msg is-error"/>
+    <ui:fragment rendered="#{conceptTreeDragDropBean.cutOn}">
+      <div class="cv-cut-bar">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/></svg>
+        </span>
+        <div class="cv-cut-bar-txt">
+          <strong>#{conceptTreeDragDropBean.cutLabel}</strong>
+          <span>#{localeBean.getMsg('tree.dnd.cutBarHint')}</span>
+        </div>
+      </div>
+    </ui:fragment>
+    <div class="cv-head">
+      <div class="cv-head-bar">
+      <h1 class="cv-pref">
+        <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-dot" aria-hidden="true"></span></ui:fragment>
+        <span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
+        <span class="cv-lang">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.lang)}</span>
+        <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-status">#{localeBean.getMsg('concept.badge.candidate')}</span></ui:fragment>
+        <ui:fragment rendered="#{thesaurusViewBean.rejectedSelected}"><span class="cv-status is-rej">#{localeBean.getMsg('concept.badge.rejected')}</span></ui:fragment>
+        <ui:fragment rendered="#{thesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">#{localeBean.getMsg('concept.badge.deprecated')}</span></ui:fragment>
+      </h1>
+      <ui:fragment rendered="#{(thesaurusViewBean.conceptActionsVisible
+          or (thesaurusViewBean.suggestionEnabled
+              and thesaurusViewBean.conceptSelected
+              and not thesaurusViewBean.candidateSelected))
+          and not propositionBean.consultation
+          and not propositionSubmitBean.composing}">
+        <ui:include src="/includes/concept-actions-menu.xhtml"/>
+      </ui:fragment>
+      </div>
+    </div>
+    <ui:fragment rendered="#{propositionSubmitBean.composing}">
+      <h:panelGroup id="propComposePanel" layout="block" styleClass="cv-blocks prop-compose"
+                    pt:data-flash-prop="#{propositionSubmitBean.flashMessage}"
+                    pt:data-flash-prop-token="#{propositionSubmitBean.flashToken}">
+        <ui:include src="/includes/proposition-submit.xhtml"/>
+      </h:panelGroup>
+    </ui:fragment>
+    <ui:fragment rendered="#{propositionBean.consultation and not propositionSubmitBean.composing}">
+      <div class="cv-blocks prop-review">
+        <ui:include src="/includes/proposition-review.xhtml"/>
+      </div>
+    </ui:fragment>
+    <ui:fragment rendered="#{not propositionSubmitBean.composing and not propositionBean.consultation}">
+    <div class="cv-blocks">
+      <ui:include src="/includes/candidate-governance.xhtml"/>
+      <section class="cblock#{conceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Libellé</span><div class="cblock-tools"><h:commandButton id="labelEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptLabelBlockEditorBean.editable and not conceptLabelBlockEditorBean.editing}" action="#{conceptLabelBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptLabelBlockEditorBean.editing}">
+          <div class="crow cblock-edit-row">
+            <div class="crow-lbl">Libellé</div>
+            <div class="crow-val">
+              <h:inputText id="labelPrefInput" styleClass="st-input"
+                           value="#{conceptLabelBlockEditorBean.preferredLabel}"
+                           pt:autocomplete="off"/>
+              <span class="val-lang">(#{thesaurusViewBean.selectedConcept.summary.lang})</span>
+            </div>
+          </div>
+          <div class="crow cblock-edit-row">
+            <div class="crow-lbl">Formes alternatives</div>
+            <div class="crow-val">
+              <h:inputText id="labelAltsInput" styleClass="st-input"
+                           value="#{conceptLabelBlockEditorBean.altLabels}"
+                           pt:autocomplete="off"
+                           pt:placeholder="séparées par des virgules"/>
+            </div>
+          </div>
+          <div class="crow cblock-edit-row">
+            <div class="crow-lbl">Formes cachées</div>
+            <div class="crow-val">
+              <h:inputText id="labelHiddenInput" styleClass="st-input"
+                           value="#{conceptLabelBlockEditorBean.hiddenLabels}"
+                           pt:autocomplete="off"
+                           pt:placeholder="séparées par des virgules"/>
+            </div>
+          </div>
+          <div class="crow cblock-edit-row">
+            <div class="crow-lbl">Facettes</div>
+            <div class="crow-val">
+              <div class="coll-pick" id="labelFacetPick">
+                <div class="coll-pick-chips" id="labelFacetChips" hidden="hidden"></div>
+                <div class="search-field coll-pick-field" id="labelFacetCombo">
+                  <span class="search-ico" aria-hidden="true">⌕</span>
+                  <input type="text" class="search-input" id="labelFacetQuery"
+                         placeholder="Rechercher une facette…"
+                         autocomplete="off" spellcheck="false"
+                         aria-autocomplete="list" aria-expanded="false"
+                         aria-controls="labelFacetMenu" aria-label="Rechercher une facette"/>
+                  <button type="button" class="search-clear" id="labelFacetClear" hidden="hidden"
+                          data-act="facet-pick-clear" title="Effacer">×</button>
+                  <button type="button" class="coll-pick-caret" id="labelFacetCaret"
+                          data-act="facet-pick-toggle" tabindex="-1"
+                          title="Afficher toutes les facettes" aria-label="Afficher toutes les facettes">
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                </div>
+                <div class="ac" id="labelFacetMenu" hidden="hidden" role="listbox">
+                  <div class="ac-empty">Aucune facette pour « <span id="labelFacetEmptyQuery"></span> »</div>
+                  <div class="coll-ac-list" id="labelFacetList"></div>
+                  <button type="button" class="ac-footer" id="labelFacetMore" data-act="facet-pick-more">
+                    Voir les <strong id="labelFacetCount">0</strong> facettes<span class="ac-enter">↵</span>
+                  </button>
+                </div>
+                <h:inputHidden id="labelFacetJson" value="#{conceptLabelBlockEditorBean.selectedFacetsJson}"/>
+              </div>
+            </div>
+          </div>
+          <ui:fragment rendered="#{not empty conceptLabelBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{conceptLabelBlockEditorBean.errorMessage}</p>
+              <h:commandLink id="labelEditSaveForced" styleClass="abt-save"
+                             rendered="#{conceptLabelBlockEditorBean.duplicateWarning}"
+                             action="#{conceptLabelBlockEditorBean.saveForced}">
+                <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span class="abt-save-label">Enregistrer quand même</span>
+                <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+              </h:commandLink>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="labelEditCancel" styleClass="abt-cancel" immediate="true"
+                           action="#{conceptLabelBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <span>#{localeBean.getMsg('cancel')}</span>
+            </h:commandLink>
+            <button type="button" class="abt-save" id="labelSaveAsk"
+                    data-act="label-save-ask">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+              <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+            </button>
+          </div>
+          <div class="block-overlay confirm-overlay" id="labelSaveConfirm" hidden="hidden"
+               data-act="label-save-dismiss" role="presentation">
+            <div class="confirm-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="labelSaveConfirmTitle" data-act="label-save-modal">
+              <div class="confirm-h" id="labelSaveConfirmTitle">#{localeBean.getMsg('concept.label.confirmTitle')}</div>
+              <p class="confirm-p">#{localeBean.getMsg('concept.label.confirm')}</p>
+              <div class="confirm-actions">
+                <button type="button" class="abt-cancel confirm-cancel"
+                        data-act="label-save-dismiss">#{localeBean.getMsg('cancel')}</button>
+                <h:commandLink id="labelEditSave" styleClass="abt-save abt-save-ok"
+                               action="#{conceptLabelBlockEditorBean.save}">
+                  <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+                  <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+                </h:commandLink>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
+          <div class="crow">
+            <div class="crow-lbl">Libellé</div>
+            <div class="crow-val">
+              <span class="val-strong">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
+              <span class="val-lang">(#{thesaurusViewBean.selectedConcept.summary.lang})</span>
+              <button type="button" class="copy-btn" title="Copier"
+                      data-act="copy"
+                      data-copy="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}">⧉</button>
+            </div>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Formes alternatives</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.synonyms}"><span class="muted">—</span></ui:fragment>
+              <ui:repeat value="#{thesaurusViewBean.selectedConcept.synonyms}" var="syn" varStatus="st">
+                <h:outputText value="#{syn}"/><h:outputText value=", " rendered="#{not st.last}"/>
+              </ui:repeat>
+            </div>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Formes cachées</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.hiddenSynonyms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.hiddenSynonyms}">
+              <span class="alts-hidden">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.hiddenSynonyms}" var="hid" varStatus="st">
+                  <h:outputText value="#{hid}"/><h:outputText value=", " rendered="#{not st.last}"/>
+                </ui:repeat>
+              </span>
+              </ui:fragment>
+            </div>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Facettes</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.facets}"><span class="muted">—</span></ui:fragment>
+              <ui:repeat value="#{thesaurusViewBean.selectedConcept.facets}" var="facet" varStatus="st">
+                <button type="button" class="link" data-act="open" data-id="#{facet.conceptId}" data-type="facet">#{facet.displayLabel}</button>
+                <h:outputText value=", " rendered="#{not st.last}"/>
+              </ui:repeat>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
+          <div class="crow">
+            <div class="crow-lbl">Total de la branche</div>
+            <div class="crow-val"><span>#{thesaurusViewBean.branchConceptCount} concept#{thesaurusViewBean.branchConceptCount gt 1 ? 's' : ''}</span></div>
+          </div>
+          <div class="cv-corpus">
+            <ui:fragment rendered="#{not thesaurusViewBean.corpusSearched}">
+              <h:commandButton value="Afficher les corpus liés" styleClass="bo-btn primary sm"
+                               action="#{thesaurusViewBean.searchCorpusLinks}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              </h:commandButton>
+            </ui:fragment>
+            <ui:fragment rendered="#{thesaurusViewBean.corpusNoResult}">
+              <div class="muted">Aucun corpus lié.</div>
+            </ui:fragment>
+            <ui:repeat value="#{thesaurusViewBean.displayedCorpusLinks}" var="corpus">
+              <div class="crow">
+                <div class="crow-lbl">#{corpus.corpusName}</div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{corpus.hasLink()}">
+                    <a class="link" href="#{corpus.uriLink}" target="_blank" rel="noopener">
+                      #{corpus.onlyUriLink ? corpus.uriLink : (corpus.noticeCount gt 0 ? corpus.noticeCount : corpus.uriLink)}
+                    </a>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not corpus.hasLink()}"><span class="muted">—</span></ui:fragment>
+                </div>
+              </div>
+            </ui:repeat>
+          </div>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{conceptCollectionBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="collections">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Collections</span><div class="cblock-tools"><h:commandButton id="collEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptCollectionBlockEditorBean.editable and not conceptCollectionBlockEditorBean.editing}" action="#{conceptCollectionBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptCollectionBlockEditorBean.editing}">
+          <div class="coll-pick" id="cvCollPick">
+            <div class="coll-pick-chips" id="cvCollChips" hidden="hidden"></div>
+            <div class="search-field coll-pick-field" id="cvCollCombo">
+              <span class="search-ico" aria-hidden="true">⌕</span>
+              <input type="text" class="search-input" id="cvCollQuery"
+                     placeholder="Rechercher une collection…"
+                     autocomplete="off" spellcheck="false"
+                     aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="cvCollMenu" aria-label="Rechercher une collection"/>
+              <button type="button" class="search-clear" id="cvCollClear" hidden="hidden"
+                      data-act="cv-coll-pick-clear" title="Effacer">×</button>
+              <button type="button" class="coll-pick-caret" id="cvCollCaret"
+                      data-act="cv-coll-pick-toggle" tabindex="-1"
+                      title="Afficher toutes les collections" aria-label="Afficher toutes les collections">
+                <span aria-hidden="true">▾</span>
+              </button>
+            </div>
+            <div class="ac" id="cvCollMenu" hidden="hidden" role="listbox">
+              <div class="ac-empty">Aucune collection pour « <span id="cvCollEmptyQuery"></span> »</div>
+              <div class="coll-ac-list" id="cvCollList"></div>
+              <button type="button" class="ac-footer" id="cvCollMore" data-act="cv-coll-pick-more">
+                Voir les <strong id="cvCollCount">0</strong> collections<span class="ac-enter">↵</span>
+              </button>
+            </div>
+            <h:inputHidden id="cvCollJson" value="#{conceptCollectionBlockEditorBean.selectedCollectionsJson}"/>
+          </div>
+          <ui:fragment rendered="#{not empty conceptCollectionBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{conceptCollectionBlockEditorBean.errorMessage}</p>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="collEditCancel" styleClass="abt-cancel" immediate="true"
+                           action="#{conceptCollectionBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <span>#{localeBean.getMsg('cancel')}</span>
+            </h:commandLink>
+            <button type="button" class="abt-save" id="collSaveAsk"
+                    data-act="coll-save-ask">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+              <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+            </button>
+          </div>
+          <div class="block-overlay confirm-overlay" id="collSaveConfirm" hidden="hidden"
+               data-act="coll-save-dismiss" role="presentation">
+            <div class="confirm-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="collSaveConfirmTitle" data-act="coll-save-modal">
+              <div class="confirm-h" id="collSaveConfirmTitle">#{localeBean.getMsg('concept.collection.confirmTitle')}</div>
+              <p class="confirm-p">#{localeBean.getMsg('concept.collection.confirm')}</p>
+              <div class="confirm-actions">
+                <button type="button" class="abt-cancel confirm-cancel"
+                        data-act="coll-save-dismiss">#{localeBean.getMsg('cancel')}</button>
+                <h:commandLink id="collEditSave" styleClass="abt-save abt-save-ok"
+                               action="#{conceptCollectionBlockEditorBean.save}">
+                  <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+                  <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+                </h:commandLink>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptCollectionBlockEditorBean.editing}">
+          <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.collections}">
+            <div class="muted">Ce concept n'appartient à aucune collection.</div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.collections}">
+          <div class="coll-list">
+            <ui:repeat value="#{thesaurusViewBean.selectedConcept.collections}" var="coll">
+              <button type="button" class="coll-item" data-act="open" data-id="#{coll.conceptId}" data-type="group">
+                <span class="coll-name link">#{coll.displayLabel}</span>
+                <span class="coll-id is-mono">id=#{coll.conceptId}</span>
+              </button>
+            </ui:repeat>
+          </div>
+          </ui:fragment>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{conceptRelationBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="relations">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Relations sémantiques</span><div class="cblock-tools"><h:commandButton id="relEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptRelationBlockEditorBean.editing}">
+          <div class="re" id="cvRelEditor"
+               data-none="#{localeBean.getMsg('candidat.draft.rel.none')}"
+               data-remove="#{localeBean.getMsg('candidat.draft.rel.remove')}"
+               data-exists="#{localeBean.getMsg('candidat.draft.rel.exists')}"
+               data-self="#{localeBean.getMsg('concept.rel.self')}"
+               data-other="#{localeBean.getMsg('concept.rel.other')}"
+               data-loop-nt="#{localeBean.getMsg('concept.rel.loopNt')}"
+               data-loop-bt="#{localeBean.getMsg('concept.rel.loopBt')}"
+               data-poly="#{localeBean.getMsg('concept.rel.poly')}"
+               data-kind-bt="#{localeBean.getMsg('candidat.draft.bt')}"
+               data-kind-nt="#{localeBean.getMsg('candidat.draft.nt')}"
+               data-kind-rt="#{localeBean.getMsg('candidat.draft.rt')}">
+            <div class="re-rows" id="cvRelRows">
+              <div class="re-group" data-kind="bt">
+                <div class="re-group-h"><span class="rel-code rel-bt">TG</span>#{localeBean.getMsg('candidat.draft.bt')}
+                  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedBroader}">
+                    <span class="rel-count">#{conceptRelationBlockEditorBean.selectedBroader.size()}</span>
+                  </ui:fragment>
+                </div>
+                <ui:repeat value="#{conceptRelationBlockEditorBean.selectedBroader}" var="row">
+                  <div class="re-row" data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}">
+                    <span class="re-type"><span class="re-pill rel-bt">TG</span></span>
+                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+                  </div>
+                </ui:repeat>
+                <ui:fragment rendered="#{empty conceptRelationBlockEditorBean.selectedBroader}">
+                  <div class="re-empty"><span class="muted">—</span></div>
+                </ui:fragment>
+              </div>
+              <div class="re-group" data-kind="nt">
+                <div class="re-group-h"><span class="rel-code rel-nt">TS</span>#{localeBean.getMsg('candidat.draft.nt')}
+                  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedNarrower}">
+                    <span class="rel-count">#{conceptRelationBlockEditorBean.selectedNarrower.size()}</span>
+                  </ui:fragment>
+                </div>
+                <ui:repeat value="#{conceptRelationBlockEditorBean.selectedNarrower}" var="row">
+                  <div class="re-row" data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}">
+                    <span class="re-type"><span class="re-pill rel-nt">TS</span></span>
+                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+                  </div>
+                </ui:repeat>
+                <ui:fragment rendered="#{empty conceptRelationBlockEditorBean.selectedNarrower}">
+                  <div class="re-empty"><span class="muted">—</span></div>
+                </ui:fragment>
+              </div>
+              <div class="re-group" data-kind="rt">
+                <div class="re-group-h"><span class="rel-code rel-rt">TA</span>#{localeBean.getMsg('candidat.draft.rt')}
+                  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedRelated}">
+                    <span class="rel-count">#{conceptRelationBlockEditorBean.selectedRelated.size()}</span>
+                  </ui:fragment>
+                </div>
+                <ui:repeat value="#{conceptRelationBlockEditorBean.selectedRelated}" var="row">
+                  <div class="re-row" data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}">
+                    <span class="re-type"><span class="re-pill rel-rt">TA</span></span>
+                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+                  </div>
+                </ui:repeat>
+                <ui:fragment rendered="#{empty conceptRelationBlockEditorBean.selectedRelated}">
+                  <div class="re-empty"><span class="muted">—</span></div>
+                </ui:fragment>
+              </div>
+            </div>
+            <div class="re-row re-new" id="cvRelNew">
+              <span class="re-type">
+                <button type="button" class="re-pill rel-nt" id="cvRelKindBtn"
+                        data-act="cv-rel-kind-toggle" aria-haspopup="listbox" aria-expanded="false">
+                  TS<span class="re-caret" aria-hidden="true"></span>
+                </button>
+                <div class="re-menu" id="cvRelKindMenu" hidden="hidden" role="listbox">
+                  <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="bt">
+                    <span class="rel-code rel-bt">TG</span>#{localeBean.getMsg('candidat.draft.bt')}
+                  </button>
+                  <button type="button" class="re-mi on" role="option" data-act="cv-rel-kind" data-kind="nt">
+                    <span class="rel-code rel-nt">TS</span>#{localeBean.getMsg('candidat.draft.nt')}
+                  </button>
+                  <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="rt">
+                    <span class="rel-code rel-rt">TA</span>#{localeBean.getMsg('candidat.draft.rt')}
+                  </button>
+                </div>
+              </span>
+              <div class="re-field">
+                <input type="text" class="st-input re-q" id="cvRelQ" autocomplete="off" spellcheck="false"
+                       placeholder="#{localeBean.getMsg('candidat.draft.rel.add')}"
+                       aria-label="#{localeBean.getMsg('candidat.draft.rel.add')}"/>
+                <div class="re-drop" id="cvRelDrop" hidden="hidden"></div>
+                <div class="re-none" id="cvRelEmpty" hidden="hidden">#{localeBean.getMsg('candidat.draft.rel.none')}</div>
+              </div>
+            </div>
+            <div class="re-msg" id="cvRelMsg" hidden="hidden"></div>
+            <div id="cvRelSeed" hidden="hidden">
+              <ui:repeat value="#{conceptRelationBlockEditorBean.selectedBroader}" var="row">
+                <span data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+              </ui:repeat>
+              <ui:repeat value="#{conceptRelationBlockEditorBean.selectedNarrower}" var="row">
+                <span data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+              </ui:repeat>
+              <ui:repeat value="#{conceptRelationBlockEditorBean.selectedRelated}" var="row">
+                <span data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+              </ui:repeat>
+            </div>
+            <h:inputHidden id="cvRelBtJson" pt:id="cvRelBtJson"
+                           value="#{conceptRelationBlockEditorBean.selectedBroaderJson}"/>
+            <h:inputHidden id="cvRelNtJson" pt:id="cvRelNtJson"
+                           value="#{conceptRelationBlockEditorBean.selectedNarrowerJson}"/>
+            <h:inputHidden id="cvRelRtJson" pt:id="cvRelRtJson"
+                           value="#{conceptRelationBlockEditorBean.selectedRelatedJson}"/>
+          </div>
+          <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{conceptRelationBlockEditorBean.errorMessage}</p>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="relEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                           action="#{conceptRelationBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <span>#{localeBean.getMsg('cancel')}</span>
+            </h:commandLink>
+            <h:commandLink id="relEditSave" styleClass="bo-btn primary sm"
+                           action="#{conceptRelationBlockEditorBean.save}">
+              <f:ajax execute="cvRelBtJson cvRelNtJson cvRelRtJson @this"
+                      render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+              <span>#{localeBean.getMsg('concept.translation.done')}</span>
+            </h:commandLink>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editing}">
+          <div class="crow crow-rel">
+            <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.broaderTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.broaderTerms}">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.broaderTerms}" var="rel">
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'BT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
+                </ui:repeat>
+              </div>
+              </ui:fragment>
+            </div>
+          </div>
+          <div class="crow crow-rel">
+            <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.narrowerTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.narrowerTerms}">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.narrowerTerms}" var="rel">
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'NT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
+                </ui:repeat>
+              </div>
+              </ui:fragment>
+            </div>
+          </div>
+          <div class="crow crow-rel">
+            <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.relatedTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.relatedTerms}">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.relatedTerms}" var="rel">
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                </ui:repeat>
+              </div>
+              </ui:fragment>
+            </div>
+          </div>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{conceptTranslationBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="traductions">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Traductions</span><div class="cblock-tools"><h:commandButton id="trEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptTranslationBlockEditorBean.editable and not conceptTranslationBlockEditorBean.editing}" action="#{conceptTranslationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptTranslationBlockEditorBean.editing}">
+              <div class="te" id="cvTrEditor"
+               data-empty="#{localeBean.getMsg('candidat.draft.tr.empty')}"
+               data-drop="#{localeBean.getMsg('candidat.draft.tr.drop')}"
+               data-ph="#{localeBean.getMsg('candidat.draft.tr.namePh')}"
+               data-alt="#{localeBean.getMsg('candidat.draft.tr.altPh')}"
+               data-remove="#{localeBean.getMsg('candidat.draft.tr.remove')}"
+               data-no="#{localeBean.getMsg('candidat.draft.tr.no')}"
+               data-yes="#{localeBean.getMsg('candidat.draft.tr.yes')}"
+               data-used="#{localeBean.getMsg('concept.translation.langUsed')}">
+            <div class="re-none" id="cvTrEmpty">#{localeBean.getMsg('candidat.draft.tr.empty')}</div>
+            <div id="cvTrList"></div>
+            <div id="cvTrSeed" hidden="hidden">
+              <ui:repeat value="#{conceptTranslationBlockEditorBean.rows}" var="row">
+                <span data-lang="#{row.lang}" data-value="#{row.value}" data-alts="#{row.alts}"></span>
+              </ui:repeat>
+            </div>
+            <div class="te-add">
+              <div class="tp-lang-pick te-pick" id="cvTrPick">
+                <button type="button"
+                        class="tree-lang-btn tp-lang-btn"
+                        id="cvTrBtn"
+                        data-act="cv-tr-toggle"
+                        title="#{localeBean.getMsg('candidat.draft.tr.add')}"
+                        aria-label="#{localeBean.getMsg('candidat.draft.tr.add')}"
+                        aria-haspopup="listbox"
+                        aria-expanded="false">
+                  <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                  <span class="tree-lang-name">#{localeBean.getMsg('candidat.draft.tr.add')}</span>
+                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="tree-lang-menu tp-lang-menu" id="cvTrMenu" role="listbox"
+                     aria-label="#{localeBean.getMsg('candidat.draft.tr.add')}">
+                  <div class="tree-lang-menu-h">#{localeBean.getMsg('candidat.draft.tr.add')}</div>
+                  <ui:repeat value="#{conceptTranslationBlockEditorBean.pickerLanguages}" var="lang">
+                    <button type="button"
+                            class="tree-lang-opt"
+                            data-act="cv-tr-add"
+                            data-lang="#{lang.code}"
+                            data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                            data-name="#{lang.value}"
+                            role="option"
+                            aria-selected="false">
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      <span class="tree-lang-opt-name">#{lang.value}</span>
+                      <span class="tree-lang-opt-code">#{lang.code}</span>
+                    </button>
+                  </ui:repeat>
+                </div>
+              </div>
+            </div>
+            <h:inputHidden id="cvTrPayload" pt:id="cvTrPayload"
+                           value="#{conceptTranslationBlockEditorBean.translationsPayload}"/>
+          </div>
+          <ui:fragment rendered="#{not empty conceptTranslationBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{conceptTranslationBlockEditorBean.errorMessage}</p>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="trEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                           action="#{conceptTranslationBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <span>#{localeBean.getMsg('cancel')}</span>
+            </h:commandLink>
+            <h:commandLink id="trEditSave" styleClass="bo-btn primary sm"
+                           action="#{conceptTranslationBlockEditorBean.save}">
+              <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+              <span>#{localeBean.getMsg('concept.translation.done')}</span>
+            </h:commandLink>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptTranslationBlockEditorBean.editing}">
+          <ui:fragment rendered="#{empty thesaurusViewBean.translationViewItems}">
+            <div class="muted">#{localeBean.getMsg('concept.translation.none')}</div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.translationViewItems}">
+          <div class="tr-list">
+            <ui:repeat value="#{thesaurusViewBean.translationViewItems}" var="tr">
+              <div class="tr-block">
+                <div class="tr-item">
+                  <span class="tr-dot #{tr.todo ? 'tr-dot-todo' : 'tr-dot-ok'}"
+                        aria-hidden="true"></span>
+                  <ui:fragment rendered="#{thesaurusViewBean.hasLanguageFlag(tr.lang)}">
+                    <span class="tr-flag">#{thesaurusViewBean.flagEmoji(tr.lang)}</span>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not thesaurusViewBean.hasLanguageFlag(tr.lang)}">
+                    <span class="tr-code">#{tr.lang}</span>
+                  </ui:fragment>
+                  <h:commandLink styleClass="tr-label"
+                                 action="#{thesaurusViewBean.openConceptInTranslationLanguage(tr.lang)}"
+                                 title="#{localeBean.getMsg('view.termLang')} · #{thesaurusViewBean.languageLabel(tr.lang)}"
+                                 pt:lang="#{tr.lang}"
+                                 pt:dir="#{thesaurusViewBean.textDirection(tr.lang)}">
+                    <f:ajax execute="@this"
+                            render=":previewDetailForm:previewDetail :previewThTitle :previewTreeMetaBox :previewTermLangUi :termLang"
+                            onevent="onPreviewTermLang"/>
+                    #{tr.value}
+                  </h:commandLink>
+                  <span class="tr-lang">#{thesaurusViewBean.languageLabel(tr.lang)}</span>
+                  <ui:fragment rendered="#{tr.todo}">
+                    <span class="tr-todo">#{localeBean.getMsg('concept.translation.todo')}</span>
+                  </ui:fragment>
+                </div>
+                <ui:fragment rendered="#{not empty tr.alts}">
+                  <div class="tr-alts">
+                    <span class="tr-alts-lbl">#{localeBean.getMsg('concept.translation.alts')}</span>
+                    <span lang="#{tr.lang}" dir="#{thesaurusViewBean.textDirection(tr.lang)}">#{tr.alts}</span>
+                  </div>
+                </ui:fragment>
+              </div>
+            </ui:repeat>
+          </div>
+          </ui:fragment>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{conceptNoteBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="notes">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Notes</span><div class="cblock-tools"><h:commandLink id="noteLangToggle" styleClass="vo-sw cblock-note-sw#{thesaurusViewBean.showAllNoteLanguages ? ' on' : ''}" title="#{localeBean.getMsg('concept.showNotesOtherLang')}" rendered="#{thesaurusViewBean.noteLanguageToggleVisible and not conceptNoteBlockEditorBean.editing}" action="#{thesaurusViewBean.toggleNoteLanguages}" pt:role="switch" pt:aria-checked="#{thesaurusViewBean.showAllNoteLanguages}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandLink><h:commandButton id="noteEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptNoteBlockEditorBean.editable and not conceptNoteBlockEditorBean.editing}" action="#{conceptNoteBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptNoteBlockEditorBean.editing}">
+          <div class="note-ed" id="cvNoteEditor"
+               data-empty="#{localeBean.getMsg('concept.note.emptyLang')}"
+               data-add="#{localeBean.getMsg('concept.note.add')}"
+               data-add-lang="#{localeBean.getMsg('concept.note.addLang')}"
+               data-compare="#{localeBean.getMsg('concept.note.compare')}"
+               data-remove="#{localeBean.getMsg('concept.note.remove')}"
+               data-text-ph="#{localeBean.getMsg('concept.note.textPh')}"
+               data-source-ph="#{localeBean.getMsg('concept.note.sourcePh')}"
+               data-used="#{localeBean.getMsg('concept.note.langUsed')}"
+               data-work-lang="#{conceptNoteBlockEditorBean.editingLang}">
+            <div class="note-ed-bar">
+              <div class="note-ed-tabs" id="cvNoteTabs" role="tablist"></div>
+              <div class="note-ed-actions">
+              <div class="note-ed-pick" id="cvNotePick">
+                <button type="button"
+                        class="note-ed-addl"
+                        id="cvNoteBtn"
+                        data-act="cv-note-toggle"
+                        aria-haspopup="listbox"
+                        aria-expanded="false">
+                  #{localeBean.getMsg('concept.note.addLang')}
+                </button>
+                <div class="tree-lang-menu tp-lang-menu" id="cvNoteMenu" role="listbox"
+                     aria-label="#{localeBean.getMsg('concept.note.addLang')}">
+                  <div class="tree-lang-menu-h">#{localeBean.getMsg('concept.note.addLang')}</div>
+                  <ui:repeat value="#{conceptNoteBlockEditorBean.pickerLanguages}" var="lang">
+                    <button type="button"
+                            class="tree-lang-opt"
+                            data-act="cv-note-add-lang"
+                            data-lang="#{lang.code}"
+                            data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                            data-name="#{lang.value}"
+                            role="option"
+                            aria-selected="false">
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      <span class="tree-lang-opt-name">#{lang.value}</span>
+                      <span class="tree-lang-opt-code">#{lang.code}</span>
+                    </button>
+                  </ui:repeat>
+                </div>
+              </div>
+              <button type="button" class="note-ed-cmp" id="cvNoteCmp" data-act="cv-note-cmp">
+                #{localeBean.getMsg('concept.note.compare')}
+              </button>
+              </div>
+            </div>
+            <div id="cvNoteBody"></div>
+            <div id="cvNoteSeed" hidden="hidden">
+              <ui:repeat value="#{conceptNoteBlockEditorBean.rows}" var="row">
+                <span data-type="#{row.typeCode}" data-lang="#{row.lang}"
+                      data-value="#{row.value}" data-source="#{row.source}"></span>
+              </ui:repeat>
+            </div>
+            <div id="cvNoteTypeOpts" hidden="hidden">
+              <ui:repeat value="#{conceptNoteBlockEditorBean.noteTypes}" var="type">
+                <span data-code="#{type.code}" data-label="#{thesaurusViewBean.noteTypeLabel(type.code)}"></span>
+              </ui:repeat>
+            </div>
+            <div id="cvNoteLangOpts" hidden="hidden">
+              <ui:repeat value="#{conceptNoteBlockEditorBean.pickerLanguages}" var="lang">
+                <span data-code="#{lang.code}"
+                      data-name="#{lang.value}"
+                      data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"></span>
+              </ui:repeat>
+            </div>
+            <h:inputHidden id="cvNotePayload" pt:id="cvNotePayload"
+                           value="#{conceptNoteBlockEditorBean.notesPayload}"/>
+          </div>
+          <ui:fragment rendered="#{not empty conceptNoteBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{conceptNoteBlockEditorBean.errorMessage}</p>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="noteEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                           action="#{conceptNoteBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <span>#{localeBean.getMsg('cancel')}</span>
+            </h:commandLink>
+            <h:commandLink id="noteEditSave" styleClass="bo-btn primary sm"
+                           action="#{conceptNoteBlockEditorBean.save}">
+              <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+              <span>#{localeBean.getMsg('concept.translation.done')}</span>
+            </h:commandLink>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptNoteBlockEditorBean.editing}">
+          <ui:fragment rendered="#{not thesaurusViewBean.hasDisplayedNotes}">
+            <div class="muted">#{localeBean.getMsg('concept.note.none')}</div>
+          </ui:fragment>
+          <ui:repeat value="#{thesaurusViewBean.selectedNoteTypeCodes}" var="typeCode">
+            <div class="note-grp">
+              <div class="note-grp-t">#{thesaurusViewBean.noteTypeLabel(typeCode)}</div>
+              <ui:repeat value="#{thesaurusViewBean.notesOfType(typeCode)}" var="note">
+                <div class="note-line">
+                  <ui:fragment rendered="#{thesaurusViewBean.hasLanguageFlag(note.lang)}">
+                    <span class="tr-flag">#{thesaurusViewBean.flagEmoji(note.lang)}</span>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not thesaurusViewBean.hasLanguageFlag(note.lang)}">
+                    <span class="tr-code">#{note.lang}</span>
+                  </ui:fragment>
+                  <div class="note-line-b">
+                    <p class="cv-def" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}">#{note.value}
+                      <span class="note-lang">(#{note.lang})</span></p>
+                    <ui:fragment rendered="#{not empty note.source}">
+                      <span class="note-src">#{note.source}</span>
+                    </ui:fragment>
+                  </div>
+                </div>
+              </ui:repeat>
+            </div>
+          </ui:repeat>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock#{conceptResourceBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="ressources">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Ressources externes</span><div class="cblock-tools"><h:commandButton id="resEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptResourceBlockEditorBean.editable and not conceptResourceBlockEditorBean.editing}" action="#{conceptResourceBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptResourceBlockEditorBean.editing}">
+          <div class="cv-res-ed" id="cvResEditor"
+               data-link-ph="https://…"
+               data-link-label="#{localeBean.getMsg('candidat.draft.linkLabel')}"
+               data-link-remove="#{localeBean.getMsg('candidat.draft.removeLink')}"
+               data-img-ph="https://…"
+               data-img-name="#{localeBean.getMsg('candidat.draft.imageName')}"
+               data-img-creator="#{localeBean.getMsg('candidat.draft.imageCreator')}"
+               data-img-copy="#{localeBean.getMsg('candidat.draft.imageCopyright')}"
+               data-img-remove="#{localeBean.getMsg('candidat.draft.removeImage')}"
+               data-gps-lat="#{localeBean.getMsg('candidat.draft.gpsLat')}"
+               data-gps-lng="#{localeBean.getMsg('candidat.draft.gpsLng')}"
+               data-gps-remove="#{localeBean.getMsg('candidat.draft.removeGps')}"
+               data-gps-empty="#{localeBean.getMsg('candidat.draft.gpsEmpty')}"
+               data-img-open="#{localeBean.getMsg('candidat.draft.imageOpen')}"
+               data-img-orig="#{localeBean.getMsg('candidat.draft.imageOrig')}">
+            <div class="crow is-editing">
+              <div class="crow-lbl">Liens</div>
+              <div class="crow-val">
+                <div id="cvResLinks"></div>
+                <button type="button" class="note-add-btn" data-act="cv-res-add">
+                  #{localeBean.getMsg('candidat.draft.addLink')}
+                </button>
+              </div>
+            </div>
+            <div class="crow crow-gallery is-editing">
+              <div class="crow-lbl">Image</div>
+              <div class="crow-val">
+                <div id="cvResImgs"></div>
+                <button type="button" class="note-add-btn" data-act="cv-res-img-add">
+                  #{localeBean.getMsg('candidat.draft.addImage')}
+                </button>
+              </div>
+            </div>
+            <div class="crow crow-gps is-editing">
+              <div class="crow-lbl">Coordonnées GPS</div>
+              <div class="crow-val">
+                <div class="gps-map is-edit" id="cvResGpsMap">
+                  <div class="gps-map-stage">
+                    <div class="gps-map-canvas" id="cvResGpsCanvas" role="img"
+                         aria-label="#{localeBean.getMsg('candidat.draft.gps')}"></div>
+                  </div>
+                  <div class="gps-map-meta">
+                    <span class="gps-map-badge" id="cvResGpsBadge">#{localeBean.getMsg('candidat.draft.gpsEmpty')}</span>
+                    <span class="gps-map-hint-inline">#{localeBean.getMsg('candidat.draft.gpsHint')}</span>
+                  </div>
+                  <ol class="gps-map-pts" id="cvResGpsPts"></ol>
+                  <div class="media-edit-actions">
+                    <button type="button" class="note-add-btn" data-act="cv-res-gps-add">
+                      #{localeBean.getMsg('candidat.draft.addGps')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="cvResLinkSeed" hidden="hidden">
+              <ui:repeat value="#{conceptResourceBlockEditorBean.resourceRows}" var="row">
+                <span data-old="#{row.oldUri}" data-uri="#{row.uri}" data-label="#{row.description}"></span>
+              </ui:repeat>
+            </div>
+            <div id="cvResImgSeed" hidden="hidden">
+              <ui:repeat value="#{conceptResourceBlockEditorBean.imageRows}" var="row">
+                <span data-id="#{row.id}" data-uri="#{row.uri}" data-name="#{row.name}"
+                      data-creator="#{row.creator}" data-copy="#{row.copyright}"></span>
+              </ui:repeat>
+            </div>
+            <div id="cvResGpsSeed" hidden="hidden">
+              <ui:repeat value="#{conceptResourceBlockEditorBean.gpsRows}" var="row">
+                <span data-lat="#{row.latitude}" data-lng="#{row.longitude}"></span>
+              </ui:repeat>
+            </div>
+            <h:inputHidden id="cvResLinksPayload" pt:id="cvResLinksPayload"
+                           value="#{conceptResourceBlockEditorBean.linksPayload}"/>
+            <h:inputHidden id="cvResImagesPayload" pt:id="cvResImagesPayload"
+                           value="#{conceptResourceBlockEditorBean.imagesPayload}"/>
+            <h:inputHidden id="cvResGpsPayload" pt:id="cvResGpsPayload"
+                           value="#{conceptResourceBlockEditorBean.gpsPayload}"/>
+            <div class="img-lightbox" id="cvResImgLightbox" hidden="hidden"
+                 data-act="cv-res-img-lightbox-dismiss" role="presentation" aria-hidden="true">
+              <div class="img-lightbox-frame" role="dialog" aria-modal="true"
+                   aria-labelledby="cvResImgLightboxCap" data-act="cv-res-img-lightbox-modal" tabindex="-1">
+                <div class="img-lightbox-stage">
+                  <img id="cvResImgLightboxImg" alt=""/>
+                  <button type="button" class="img-gallery-nav img-gallery-prev" data-act="cv-res-img-lightbox-prev"
+                          title="Image précédente" aria-label="Image précédente">‹</button>
+                  <button type="button" class="img-gallery-nav img-gallery-next" data-act="cv-res-img-lightbox-next"
+                          title="Image suivante" aria-label="Image suivante">›</button>
+                </div>
+                <div class="img-lightbox-bar">
+                  <div class="img-lightbox-cap" id="cvResImgLightboxCap"></div>
+                  <a class="img-lightbox-orig" id="cvResImgLightboxOrig" href="#" target="_blank" rel="noopener">#{localeBean.getMsg('candidat.draft.imageOrig')}</a>
+                  <button type="button" class="img-lightbox-close" data-act="cv-res-img-lightbox-close"
+                          title="#{localeBean.getMsg('cancel')}" aria-label="#{localeBean.getMsg('cancel')}">×</button>
+                </div>
+              </div>
+            </div>
+            <ui:fragment rendered="#{not empty conceptResourceBlockEditorBean.errorMessage}">
+              <div class="cblock-edit-warn" role="alert">
+                <p>#{conceptResourceBlockEditorBean.errorMessage}</p>
+              </div>
+            </ui:fragment>
+            <div class="cblock-edit-foot">
+              <h:commandLink id="resEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                             action="#{conceptResourceBlockEditorBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <span>#{localeBean.getMsg('cancel')}</span>
+              </h:commandLink>
+              <h:commandLink id="resEditSave" styleClass="bo-btn primary sm"
+                             action="#{conceptResourceBlockEditorBean.save}">
+                <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                <span>#{localeBean.getMsg('concept.translation.done')}</span>
+              </h:commandLink>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptResourceBlockEditorBean.editing}">
+          <div class="crow">
+            <div class="crow-lbl">Liens</div>
+            <div class="crow-val">
+                <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.externalResources}"><span class="muted">—</span></ui:fragment>
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.externalResources}" var="res" varStatus="st">
+                  <a class="link" href="#{res.uri}" target="_blank" rel="noopener">#{empty res.description ? res.uri : res.description}</a>
+                  <h:outputText value=", " rendered="#{not st.last}"/>
+                </ui:repeat>
+            </div>
+          </div>
+          <div class="crow crow-gallery">
+            <div class="crow-lbl">Image</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.images}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.images}">
+              <div class="img-gallery#{thesaurusViewBean.selectedConcept.images.size() lt 2 ? ' is-single' : ''}"
+                   id="cvImgGallery">
+                <div class="img-gallery-stage">
+                  <button type="button" class="img-gallery-main" id="cvImgGalleryOpen"
+                          data-act="img-gallery-open" title="Agrandir l'image" aria-label="Agrandir l'image">
+                    <img id="cvImgGalleryMain"
+                         src="#{thesaurusViewBean.selectedConcept.images[0].uri}"
+                         alt="#{empty thesaurusViewBean.selectedConcept.images[0].imageName ? 'Image du concept' : thesaurusViewBean.selectedConcept.images[0].imageName}"/>
+                  </button>
+                  <button type="button" class="img-gallery-nav img-gallery-prev" data-act="img-gallery-prev"
+                          title="Image précédente" aria-label="Image précédente">‹</button>
+                  <button type="button" class="img-gallery-nav img-gallery-next" data-act="img-gallery-next"
+                          title="Image suivante" aria-label="Image suivante">›</button>
+                  <span class="img-gallery-count" id="cvImgGalleryCount" hidden="hidden"></span>
+                </div>
+                <div class="img-gallery-cap" id="cvImgGalleryCap"></div>
+                <div class="img-gallery-thumbs" id="cvImgGalleryThumbs">
+                  <ui:repeat value="#{thesaurusViewBean.selectedConcept.images}" var="img" varStatus="st">
+                    <button type="button" class="img-gallery-thumb#{st.first ? ' is-on' : ''}"
+                            data-act="img-gallery-thumb" data-index="#{st.index}"
+                            data-src="#{img.uri}"
+                            data-name="#{img.imageName}"
+                            data-copy="#{img.copyright}"
+                            data-creator="#{img.creator}"
+                            title="#{empty img.imageName ? 'Image' : img.imageName}"
+                            aria-label="#{empty img.imageName ? 'Image' : img.imageName}">
+                      <img src="#{img.uri}" alt=""/>
+                    </button>
+                  </ui:repeat>
+                </div>
+                <div class="img-lightbox" id="cvImgLightbox" hidden="hidden"
+                     data-act="img-lightbox-dismiss" role="presentation" aria-hidden="true">
+                  <div class="img-lightbox-frame" role="dialog" aria-modal="true"
+                       aria-labelledby="cvImgLightboxCap" data-act="img-lightbox-modal" tabindex="-1">
+                    <div class="img-lightbox-stage">
+                      <img id="cvImgLightboxImg" alt=""/>
+                      <button type="button" class="img-gallery-nav img-gallery-prev" data-act="img-lightbox-prev"
+                              title="Image précédente" aria-label="Image précédente">‹</button>
+                      <button type="button" class="img-gallery-nav img-gallery-next" data-act="img-lightbox-next"
+                              title="Image suivante" aria-label="Image suivante">›</button>
+                    </div>
+                    <div class="img-lightbox-bar">
+                      <div class="img-lightbox-cap" id="cvImgLightboxCap"></div>
+                      <a class="img-lightbox-orig" id="cvImgLightboxOrig" href="#" target="_blank" rel="noopener">Ouvrir l'original</a>
+                      <button type="button" class="img-lightbox-close" data-act="img-lightbox-close"
+                              title="Fermer" aria-label="Fermer">×</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </ui:fragment>
+            </div>
+          </div>
+          <div class="crow crow-gps">
+            <div class="crow-lbl">Coordonnées GPS</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.gpsPoints}">
+                <span class="muted">Ex. : 48.922548 2.145240</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.gpsPoints}">
+              <div class="gps-map" id="cvGpsMap">
+                <div class="gps-map-stage">
+                  <div class="gps-map-canvas" id="cvGpsCanvas" role="img" aria-label="Carte des coordonnées GPS"></div>
+                  <button type="button" class="gps-map-fab" data-act="gps-map-expand"
+                          title="Agrandir la carte" aria-label="Agrandir la carte">⤢</button>
+                </div>
+                <div class="gps-map-meta">
+                  <span class="gps-map-badge" id="cvGpsBadge"></span>
+                  <a class="gps-map-osm" id="cvGpsOsm" href="#" target="_blank" rel="noopener">OpenStreetMap</a>
+                </div>
+                <ol class="gps-map-pts" id="cvGpsPts">
+                  <ui:repeat value="#{thesaurusViewBean.selectedConcept.gpsPoints}" var="pt" varStatus="st">
+                    <li>
+                      <button type="button" class="gps-pt#{st.first ? ' is-on' : ''}"
+                              data-act="gps-map-goto" data-index="#{st.index}"
+                              data-lat="#{pt.latText}" data-lng="#{pt.lngText}">
+                        <span class="gps-pt-n" aria-hidden="true">#{st.index + 1}</span>
+                        <span class="gps-pt-coord is-mono">#{pt.latText}<span class="gps-pt-sep"> </span>#{pt.lngText}</span>
+                      </button>
+                    </li>
+                  </ui:repeat>
+                </ol>
+                <div class="gps-lightbox" id="cvGpsLightbox" hidden="hidden"
+                     data-act="gps-lightbox-dismiss" role="presentation" aria-hidden="true">
+                  <div class="gps-lightbox-frame" role="dialog" aria-modal="true"
+                       aria-label="Carte des coordonnées GPS" data-act="gps-lightbox-modal" tabindex="-1">
+                    <div class="gps-lightbox-stage">
+                      <div class="gps-map-canvas is-wide" id="cvGpsLightboxCanvas"></div>
+                    </div>
+                    <div class="gps-lightbox-bar">
+                      <div class="gps-lightbox-cap" id="cvGpsLightboxCap"></div>
+                      <a class="gps-map-osm" id="cvGpsLightboxOsm" href="#" target="_blank" rel="noopener">OpenStreetMap</a>
+                      <button type="button" class="gps-lightbox-close" data-act="gps-lightbox-close"
+                              title="Fermer" aria-label="Fermer">×</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </ui:fragment>
+            </div>
+          </div>
+          </ui:fragment>
+        </div>
+      </section>
+
+
+      <section class="cblock#{conceptAlignmentBlockEditorBean.editing or conceptAlignmentAutoSearchBean.open ? ' is-editing' : ''}" data-card-id="alignement">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Alignement</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:fragment rendered="#{conceptAlignmentBlockEditorBean.editing}">
+          <div class="align-edit">
+            <ui:repeat value="#{conceptAlignmentBlockEditorBean.rows}" var="row" varStatus="st">
+              <div class="align-edit-card">
+                <div class="align-edit-head">
+                  <details class="align-type-menu">
+                    <summary class="align-type-now align-#{conceptAlignmentAutoSearchBean.typeKey(row.typeId)}"
+                             title="#{localeBean.getMsg('concept.alignment.typePick')}">
+                      #{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(row.typeId))}
+                    </summary>
+                    <div class="align-type-opts" role="listbox">
+                      <ui:repeat value="#{conceptAlignmentBlockEditorBean.alignmentTypes}" var="type">
+                        <h:commandLink styleClass="align-type-opt align-#{type.labelSkos}#{row.typeId eq type.id ? ' is-on' : ''}"
+                                       action="#{conceptAlignmentBlockEditorBean.setRowType(st.index, type.id)}">
+                          <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+                          <span class="align-type-opt-dot" aria-hidden="true"></span>
+                          #{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(type.labelSkos))}
+                        </h:commandLink>
+                      </ui:repeat>
+                    </div>
+                  </details>
+                  <h:inputText id="alignSource" styleClass="st-input align-source-input"
+                               value="#{row.source}"
+                               pt:autocomplete="off"
+                               pt:placeholder="#{localeBean.getMsg('concept.alignment.source')}"/>
+                  <h:commandLink id="alignRemove" styleClass="tr-edit-remove"
+                                 title="#{localeBean.getMsg('rightbody.concept.delete_alignment')}"
+                                 action="#{conceptAlignmentBlockEditorBean.removeRow(st.index)}">
+                    <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+                    <span aria-hidden="true">×</span>
+                  </h:commandLink>
+                </div>
+                <div class="crow cblock-edit-row">
+                  <div class="crow-lbl">URI</div>
+                  <div class="crow-val">
+                    <h:inputText id="alignUri" styleClass="st-input"
+                                 value="#{row.uri}"
+                                 pt:autocomplete="off"
+                                 pt:placeholder="#{localeBean.getMsg('concept.alignment.uriPlaceholder')}"/>
+                  </div>
+                </div>
+              </div>
+            </ui:repeat>
+            <h:commandLink id="alignAddRow" styleClass="tr-add-btn"
+                           action="#{conceptAlignmentBlockEditorBean.addRow}">
+              <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+              <span>#{localeBean.getMsg('concept.alignment.addRow')}</span>
+            </h:commandLink>
+          </div>
+          <ui:fragment rendered="#{not empty conceptAlignmentBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{conceptAlignmentBlockEditorBean.errorMessage}</p>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="alignEditCancel" styleClass="abt-cancel" immediate="true"
+                           action="#{conceptAlignmentBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <span>#{localeBean.getMsg('cancel')}</span>
+            </h:commandLink>
+            <button type="button" class="abt-save" id="alignSaveAsk"
+                    data-act="align-save-ask">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+              <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+            </button>
+          </div>
+          <div class="block-overlay confirm-overlay" id="alignSaveConfirm" hidden="hidden"
+               data-act="align-save-dismiss" role="presentation">
+            <div class="confirm-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="alignSaveConfirmTitle" data-act="align-save-modal">
+              <div class="confirm-h" id="alignSaveConfirmTitle">#{localeBean.getMsg('concept.alignment.confirmTitle')}</div>
+              <p class="confirm-p">#{localeBean.getMsg('concept.alignment.confirm')}</p>
+              <div class="confirm-actions">
+                <button type="button" class="abt-cancel confirm-cancel"
+                        data-act="align-save-dismiss">#{localeBean.getMsg('cancel')}</button>
+                <h:commandLink id="alignEditSave" styleClass="abt-save abt-save-ok"
+                               action="#{conceptAlignmentBlockEditorBean.save}">
+                  <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+                  <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+                </h:commandLink>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptAlignmentBlockEditorBean.editing}">
+          <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.alignmentGroups}">
+            <div class="muted">Aucun alignement vers un référentiel externe.</div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.alignmentGroups}">
+          <div class="align-list">
+            <ui:repeat value="#{thesaurusViewBean.selectedConcept.alignmentGroups}" var="group">
+              <ui:repeat value="#{group.items}" var="align">
+                <div class="align-item">
+                  <span class="align-type align-#{group.typeKey}">#{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(group.typeKey))}</span>
+                  <span class="align-src">#{align.sourceName}</span>
+                  <a class="align-uri" href="#{align.uri}" target="_blank" rel="noopener">#{align.uri}</a>
+                  <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.available}">
+                    <button type="button" class="align-del"
+                            data-act="align-delete-ask"
+                            data-id="#{align.id}"
+                            data-uri="#{align.uri}"
+                            title="#{localeBean.getMsg('rightbody.concept.delete_alignment')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                  </ui:fragment>
+                </div>
+              </ui:repeat>
+            </ui:repeat>
+          </div>
+          </ui:fragment>
+          </ui:fragment>
+          <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.available}">
+          <h:inputHidden id="alignDeleteId" value="#{conceptAlignmentAutoSearchBean.alignmentToDeleteId}"/>
+          <h:inputHidden id="alignReplaceIndex" value="#{conceptAlignmentAutoSearchBean.propositionToReplaceIndex}"/>
+          <div class="block-overlay confirm-overlay" id="alignDeleteConfirm" hidden="hidden"
+               data-act="align-delete-dismiss" role="presentation">
+            <div class="confirm-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="alignDeleteConfirmTitle" data-act="align-delete-modal">
+              <div class="confirm-h" id="alignDeleteConfirmTitle">#{localeBean.getMsg('concept.alignment.deleteTitle')}</div>
+              <p class="confirm-p">#{localeBean.getMsg('concept.alignment.delete')}</p>
+              <p class="confirm-p align-delete-uri" id="alignDeleteUri"></p>
+              <div class="confirm-actions">
+                <button type="button" class="abt-cancel confirm-cancel"
+                        data-act="align-delete-dismiss">#{localeBean.getMsg('cancel')}</button>
+                <h:commandLink id="alignDeleteSave" styleClass="abt-save"
+                               action="#{conceptAlignmentAutoSearchBean.deleteAlignment}">
+                  <f:ajax execute="@this alignDeleteId" render=":previewDetailForm:previewDetail" onevent="onAlignDelete"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <span class="abt-save-label">#{localeBean.getMsg('concept.alignment.deleteAction')}</span>
+                  <span class="abt-save-wait">#{localeBean.getMsg('processing')}</span>
+                </h:commandLink>
+              </div>
+            </div>
+          </div>
+          <div class="block-overlay confirm-overlay" id="alignReplaceConfirm" hidden="hidden"
+               data-act="align-replace-dismiss" role="presentation">
+            <div class="confirm-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="alignReplaceConfirmTitle" data-act="align-replace-modal">
+              <div class="confirm-h" id="alignReplaceConfirmTitle">#{localeBean.getMsg('concept.alignment.replaceTitle')}</div>
+              <p class="confirm-p">#{localeBean.getMsg('concept.alignment.replace')}</p>
+              <p class="confirm-p align-delete-uri" id="alignReplaceUri"></p>
+              <div class="confirm-actions">
+                <button type="button" class="abt-cancel confirm-cancel"
+                        data-act="align-replace-dismiss">#{localeBean.getMsg('cancel')}</button>
+                <h:commandLink id="alignReplaceSave" styleClass="abt-save"
+                               action="#{conceptAlignmentAutoSearchBean.replaceProposition}">
+                  <f:ajax execute="@this alignReplaceIndex" render=":previewDetailForm:previewDetail" onevent="onAlignReplace"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span class="abt-save-label">#{localeBean.getMsg('concept.alignment.replaceAction')}</span>
+                  <span class="abt-save-wait">#{localeBean.getMsg('processing')}</span>
+                </h:commandLink>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.available and not conceptAlignmentBlockEditorBean.editing}">
+          <div class="align-auto-actions">
+            <h:commandLink id="alignAutoStart" styleClass="bo-btn sm#{conceptAlignmentAutoSearchBean.open and not conceptAlignmentAutoSearchBean.comparing ? ' active' : ''}"
+                           action="#{conceptAlignmentAutoSearchBean.startSearching}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onAlignAutoSearch"/>
+              <span class="aa-ic" aria-hidden="true">⌕</span>
+              <h:outputText value="#{localeBean.getMsg('alignment.automaticSearch')}"/>
+            </h:commandLink>
+            <h:commandLink id="alignEditStart" styleClass="bo-btn sm align-manual"
+                           action="#{conceptAlignmentBlockEditorBean.startEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <span class="aa-ic" aria-hidden="true">✎</span>
+              <h:outputText value="#{localeBean.getMsg('concept.alignment.manual')}"/>
+            </h:commandLink>
+            <h:commandLink id="alignCompareStart" styleClass="bo-btn sm#{conceptAlignmentAutoSearchBean.open and conceptAlignmentAutoSearchBean.comparing ? ' active' : ''}"
+                           action="#{conceptAlignmentAutoSearchBean.startComparing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onAlignAutoSearch"/>
+              <span class="aa-ic" aria-hidden="true">⇄</span>
+              <h:outputText value="#{localeBean.getMsg('concept.alignment.compareAuto')}"/>
+            </h:commandLink>
+            <a class="align-src-settings" href="#{thesaurusViewBean.alignmentSourcesUrl}">#{localeBean.getMsg('concept.alignment.sourcesSettings')}</a>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.open}">
+          <div class="align-auto" id="alignAutoPanel">
+            <div class="align-auto-head">
+              <span>
+                <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.comparing}">
+                  #{localeBean.getMsg('concept.alignment.compareTitle', conceptAlignmentAutoSearchBean.searchLabel)}
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptAlignmentAutoSearchBean.comparing}">
+                  #{localeBean.getMsg('concept.alignment.searchTitle', conceptAlignmentAutoSearchBean.searchLabel)}
+                </ui:fragment>
+              </span>
+              <h:commandLink id="alignAutoClose" styleClass="align-auto-close" immediate="true"
+                             title="#{localeBean.getMsg('concept.alignment.close')}"
+                             pt:aria-label="#{localeBean.getMsg('concept.alignment.close')}"
+                             action="#{conceptAlignmentAutoSearchBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </h:commandLink>
+            </div>
+            <ui:fragment rendered="#{not empty conceptAlignmentAutoSearchBean.sources}">
+            <div class="align-src-list">
+              <ui:repeat value="#{conceptAlignmentAutoSearchBean.sources}" var="src">
+                <h:commandLink styleClass="align-src-card#{conceptAlignmentAutoSearchBean.isSelectedSource(src.sourceId) ? ' sel' : ''}"
+                               action="#{conceptAlignmentAutoSearchBean.selectSource(src.sourceId)}">
+                  <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onAlignAutoSearch"/>
+                  <span class="asc-name">#{src.label}</span>
+                  <span class="asc-kind">#{conceptAlignmentAutoSearchBean.sourceKind(src)}</span>
+                </h:commandLink>
+              </ui:repeat>
+            </div>
+            <div class="align-src-track" aria-hidden="true"><span class="align-src-ind"></span></div>
+            <a class="align-src-settings align-src-settings-panel" href="#{thesaurusViewBean.alignmentSourcesUrl}">#{localeBean.getMsg('concept.alignment.sourcesSettings')}</a>
+            </ui:fragment>
+            <ui:fragment rendered="#{empty conceptAlignmentAutoSearchBean.sources}">
+              <a class="align-src-settings align-src-settings-panel" href="#{thesaurusViewBean.alignmentSourcesUrl}">#{localeBean.getMsg('concept.alignment.sourcesSettings')}</a>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptAlignmentAutoSearchBean.statusMessage}">
+              <p class="align-res-done#{empty conceptAlignmentAutoSearchBean.propositions ? ' is-empty' : ''}" role="status">
+                #{conceptAlignmentAutoSearchBean.statusMessage}
+              </p>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty conceptAlignmentAutoSearchBean.errorMessage and empty conceptAlignmentAutoSearchBean.statusMessage}">
+              <p class="align-res-empty" role="status">#{conceptAlignmentAutoSearchBean.errorMessage}</p>
+            </ui:fragment>
+            <div class="align-res-load" role="status" aria-live="polite">
+              <span class="align-res-spin" aria-hidden="true"></span>
+              <span>#{conceptAlignmentAutoSearchBean.comparing
+                  ? localeBean.getMsg('concept.alignment.comparing')
+                  : localeBean.getMsg('concept.alignment.searching')}</span>
+              <span class="align-res-load-src"></span>
+            </div>
+            <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.sourceSelected and not empty conceptAlignmentAutoSearchBean.propositions}">
+            <div class="align-res">
+              <ui:repeat value="#{conceptAlignmentAutoSearchBean.propositions}" var="prop" varStatus="st">
+                <ui:fragment rendered="#{conceptAlignmentAutoSearchBean.comparing}">
+                <div class="align-cmp">
+                  <div class="align-cmp-col">
+                    <div class="align-cmp-h">#{localeBean.getMsg('rightbody.concept.alignement.local-label')}</div>
+                    <div class="ari-label">#{empty prop.localLabel ? '—' : prop.localLabel}</div>
+                    <ui:fragment rendered="#{not empty prop.localDefinition}">
+                      <div class="ari-def">#{prop.localDefinition}</div>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{not empty prop.localUri}">
+                      <a class="ari-uri" href="#{prop.localUri}" target="_blank" rel="noopener">#{prop.localUri}</a>
+                    </ui:fragment>
+                  </div>
+                  <div class="align-cmp-col">
+                    <div class="align-cmp-h">#{localeBean.getMsg('rightbody.concept.alignement.remote-label')}</div>
+                    <div class="ari-label">#{empty prop.targetLabel ? prop.targetUri : prop.targetLabel}</div>
+                    <ui:fragment rendered="#{not empty prop.targetDefinition}">
+                      <div class="ari-def">#{prop.targetDefinition}</div>
+                    </ui:fragment>
+                    <a class="ari-uri" href="#{prop.targetUri}" target="_blank" rel="noopener">#{prop.targetUri}</a>
+                  </div>
+                  <div class="align-cmp-act">
+                    <details class="align-type-menu">
+                      <summary class="align-type-now align-#{conceptAlignmentAutoSearchBean.propositionTypeKey(prop)}"
+                               title="#{localeBean.getMsg('concept.alignment.typePick')}">
+                        #{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(prop.alignmentTypeId))}
+                      </summary>
+                      <div class="align-type-opts" role="listbox">
+                        <ui:repeat value="#{conceptAlignmentAutoSearchBean.alignmentTypes}" var="type">
+                          <h:commandLink styleClass="align-type-opt align-#{type.labelSkos}#{prop.alignmentTypeId eq type.id ? ' is-on' : ''}"
+                                         action="#{conceptAlignmentAutoSearchBean.selectPropositionType(st.index, type.id)}">
+                            <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                            <span class="align-type-opt-dot" aria-hidden="true"></span>
+                            #{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(type.labelSkos))}
+                          </h:commandLink>
+                        </ui:repeat>
+                      </div>
+                    </details>
+                    <ui:fragment rendered="#{prop.alreadyAligned}">
+                      <span class="ari-done">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        #{localeBean.getMsg('concept.alignment.current')}
+                      </span>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{not prop.alreadyAligned}">
+                      <button type="button" class="ari-add"
+                              data-act="align-replace-ask"
+                              data-index="#{st.index}"
+                              data-uri="#{prop.targetUri}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        <span>#{localeBean.getMsg('alignment.remplace')}</span>
+                      </button>
+                    </ui:fragment>
+                  </div>
+                </div>
+                </ui:fragment>
+                <ui:fragment rendered="#{not conceptAlignmentAutoSearchBean.comparing}">
+                <div class="align-res-item">
+                  <details class="align-type-menu">
+                    <summary class="align-type-now align-#{conceptAlignmentAutoSearchBean.propositionTypeKey(prop)}"
+                             title="#{localeBean.getMsg('concept.alignment.typePick')}">
+                      #{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(prop.alignmentTypeId))}
+                    </summary>
+                    <div class="align-type-opts" role="listbox">
+                      <ui:repeat value="#{conceptAlignmentAutoSearchBean.alignmentTypes}" var="type">
+                        <h:commandLink styleClass="align-type-opt align-#{type.labelSkos}#{prop.alignmentTypeId eq type.id ? ' is-on' : ''}"
+                                       action="#{conceptAlignmentAutoSearchBean.selectPropositionType(st.index, type.id)}">
+                          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                          <span class="align-type-opt-dot" aria-hidden="true"></span>
+                          #{localeBean.getMsg(conceptAlignmentAutoSearchBean.typeMessageKey(type.labelSkos))}
+                        </h:commandLink>
+                      </ui:repeat>
+                    </div>
+                  </details>
+                  <div class="ari-main">
+                    <span class="ari-label">#{empty prop.targetLabel ? prop.targetUri : prop.targetLabel}</span>
+                    <ui:fragment rendered="#{not empty prop.targetDefinition}">
+                      <div class="ari-def">#{prop.targetDefinition}</div>
+                    </ui:fragment>
+                    <a class="align-uri" href="#{prop.targetUri}" target="_blank" rel="noopener">#{prop.targetUri}</a>
+                  </div>
+                  <ui:fragment rendered="#{prop.alreadyAligned}">
+                    <span class="ari-done">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                      #{localeBean.getMsg('concept.alignment.aligned')}
+                    </span>
+                  </ui:fragment>
+                  <h:commandLink id="alignAutoAdd" styleClass="bo-btn primary sm ari-add"
+                                 rendered="#{not prop.alreadyAligned}"
+                                 action="#{conceptAlignmentAutoSearchBean.addProposition(st.index)}">
+                    <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                    <span>#{localeBean.getMsg('concept.alignment.add')}</span>
+                  </h:commandLink>
+                </div>
+                </ui:fragment>
+              </ui:repeat>
+            </div>
+            </ui:fragment>
+            <div class="cblock-edit-foot align-auto-foot">
+              <h:commandLink id="alignAutoCancelFoot" styleClass="abt-cancel" immediate="true"
+                             action="#{conceptAlignmentAutoSearchBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <span>#{localeBean.getMsg('concept.alignment.close')}</span>
+              </h:commandLink>
+            </div>
+          </div>
+          </ui:fragment>
+        </div>
+      </section>
+
+      <section class="cblock" data-card-id="identifiants">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Identifiants &amp; notation</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <div class="cv-ids">
+            <div class="cv-ids-main">
+              <div class="crow">
+                <div class="crow-lbl">Notation</div>
+                <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.notation)}</span></div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">ID interne</div>
+                <div class="crow-val is-mono"><span class="link">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span></div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">URI</div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{empty thesaurusViewBean.conceptUri}">
+                    <span class="muted">—</span>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.conceptUri}">
+                    <a class="link" href="#{thesaurusViewBean.conceptUri}">#{thesaurusViewBean.conceptUri}</a>
+                  </ui:fragment>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">Identifiant permanent</div>
+                <div class="crow-val is-mono">
+                  <span>#{thesaurusViewBean.selectedConcept.identifiers == null ? '—' : thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.identifiers.permanentId)}</span>
+                  <ui:fragment rendered="#{thesaurusViewBean.selectedConcept.identifiers != null and not empty thesaurusViewBean.selectedConcept.identifiers.permanentId}">
+                    <button type="button" class="copy-btn" title="Copier"
+                            data-act="copy"
+                            data-copy="#{thesaurusViewBean.selectedConcept.identifiers.permanentId}">⧉</button>
+                  </ui:fragment>
+                </div>
+              </div>
+            </div>
+            <ui:fragment rendered="#{thesaurusViewBean.showQrCode}">
+              <div class="cv-qr">
+                <h:outputText value="#{thesaurusViewBean.qrSvg}" escape="false"/>
+              </div>
+            </ui:fragment>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Exporter en SKOS</div>
+            <div class="crow-val">
+              <div class="skos-links">
+                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('rdf')}" target="_blank" rel="noopener">RDF/XML</a>
+                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('json')}" target="_blank" rel="noopener">JSON</a>
+                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('jsonld')}" target="_blank" rel="noopener">JSON-LD</a>
+                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('turtle')}" target="_blank" rel="noopener">Turtle</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cblock" data-card-id="temporel">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Information temporelle</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <div class="crow">
+            <div class="crow-lbl">Créé le</div>
+            <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.created)}</span></div>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Dernière modification</div>
+            <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.modified)}</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    </ui:fragment>
+  </div>
+</ui:composition>

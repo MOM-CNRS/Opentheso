@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.ws.openapi.v2;
 import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.models.skos.SkosConceptDto;
 import fr.cnrs.opentheso.skos.api.OpenApiConceptCreateOperations;
-import fr.cnrs.opentheso.v2.shared.auth.ThesaurusWriteAuthorizationService;
+import fr.cnrs.opentheso.shared.auth.ThesaurusWriteAuthorizationService;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.UserCantWriteOnThesaurusException;
 import org.springframework.http.MediaType;

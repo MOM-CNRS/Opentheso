@@ -29,8 +29,8 @@ public class ApiKeyInterceptor implements HandlerInterceptor {
 
         String uri = request.getRequestURI();
 
-        // 🔥 EXCLUSION OPENREFINE RECONCILIATION
-        if (uri.contains("/reconcile")) {
+        // Réconciliation OpenRefine et export lancé depuis l'interface (session, pas de clé API).
+        if (uri.contains("/reconcile") || uri.contains("/api/selection-export")) {
             return true;
         }
 

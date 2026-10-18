@@ -1,0 +1,36 @@
+package fr.cnrs.opentheso.concept.model;
+
+import java.io.Serializable;
+
+public record ConceptLabel(
+        String lang,
+        String value,
+        boolean preferred,
+        boolean hidden,
+        String codeFlag
+) implements Serializable {
+
+    public ConceptLabel(String lang, String value, boolean preferred, boolean hidden) {
+        this(lang, value, preferred, hidden, "");
+    }
+
+    public String getLang() {
+        return lang;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public boolean isPreferred() {
+        return preferred;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public String getCodeFlag() {
+        return codeFlag;
+    }
+}

@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.ws.openapi.v2;
 
 import fr.cnrs.opentheso.entites.User;
-import fr.cnrs.opentheso.v2.shared.auth.SsoTokenService;
+import fr.cnrs.opentheso.shared.auth.SsoTokenService;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import io.swagger.v3.oas.annotations.Operation;

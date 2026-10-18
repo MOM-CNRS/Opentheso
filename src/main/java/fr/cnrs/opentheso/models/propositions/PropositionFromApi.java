@@ -1,8 +1,5 @@
 package fr.cnrs.opentheso.models.propositions;
 
-import fr.cnrs.opentheso.bean.proposition.NotePropBean;
-import fr.cnrs.opentheso.bean.proposition.SynonymPropBean;
-import fr.cnrs.opentheso.bean.proposition.TraductionPropBean;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

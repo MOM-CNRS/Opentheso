@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.services;
 
-import fr.cnrs.opentheso.bean.importexport.newcsvimport.SkosConceptImageDto;
+import fr.cnrs.opentheso.models.skos.SkosConceptImageDto;
 import fr.cnrs.opentheso.entites.Gps;
 import fr.cnrs.opentheso.entites.PreferredTerm;
 import fr.cnrs.opentheso.models.skos.SkosConceptDto;

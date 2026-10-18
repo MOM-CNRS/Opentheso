@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.config;
 
-import fr.cnrs.opentheso.v2.shared.auth.SsoTokenService;
+import fr.cnrs.opentheso.shared.auth.SsoTokenService;
 import fr.cnrs.opentheso.ws.openapi.filter.SsoTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

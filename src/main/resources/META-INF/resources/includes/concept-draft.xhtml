@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="view-panel" id="viewConceptDraft"
+       data-loc-root="#{localeBean.getMsg('concept.draft.loc.root')}"
+       data-loc-under="#{localeBean.getMsg('concept.draft.loc.under')}"
+       data-more="#{localeBean.getMsg('concept.draft.more')}"
+       data-more-hide="#{localeBean.getMsg('concept.draft.more.hide')}"
+       data-created-msg="#{localeBean.getMsg('concept.draft.created')}"
+       data-confirm-create="#{localeBean.getMsg('concept.draft.confirm.create')}"
+       data-confirm-chain="#{localeBean.getMsg('concept.draft.confirm.chain')}"
+       data-confirm-go="#{localeBean.getMsg('concept.draft.create')}"
+       data-confirm-go-chain="#{localeBean.getMsg('concept.draft.chain')}">
+    <h:form id="conceptDraftForm" prependId="false" styleClass="cand-draft-form" acceptcharset="UTF-8">
+      <span id="cptResult" hidden="hidden"
+            data-created="#{conceptLifecycleEditorBean.created ? '1' : '0'}"
+            data-chain="#{conceptLifecycleEditorBean.chainNext ? '1' : '0'}"
+            data-id="#{conceptLifecycleEditorBean.lastCreatedId}"
+            data-dup="#{conceptLifecycleEditorBean.duplicateLabelWarning ? '1' : '0'}"></span>
+      <h:inputHidden id="cptCreateMode" value="#{conceptLifecycleEditorBean.createMode}"/>
+      <h:inputHidden id="cptParentId" value="#{conceptLifecycleEditorBean.createParentId}"/>
+      <h:inputHidden id="cptParentLabel" value="#{conceptLifecycleEditorBean.createParentLabel}"/>
+      <h:commandButton id="cptPrepare" styleClass="preview-open-btn" style="display:none"
+                       value="prepare" action="#{conceptLifecycleEditorBean.prepareConceptDraft}">
+        <f:ajax execute="cptParentId cptParentLabel" render="@form" onevent="onConceptDraftPrepare"/>
+      </h:commandButton>
+      <div class="cv is-on is-draft" data-status="concept">
+        <div class="cv-head df-head">
+          <div class="df-title-row">
+            <h1 class="cv-pref">
+              <h:inputText id="cptTitle" styleClass="cv-draft-input"
+                           value="#{conceptLifecycleEditorBean.preferredLabel}"
+                           pt:placeholder="#{localeBean.getMsg('concept.draft.namePlaceholder')}"
+                           pt:aria-label="#{localeBean.getMsg('concept.draft.namePlaceholder')}"
+                           pt:autocomplete="off"
+                           pt:oninput="if(window.syncConceptDraftPref)syncConceptDraftPref()"/>
+            </h1>
+          </div>
+          <div class="df-err" id="cptTitleErr" hidden="hidden">#{localeBean.getMsg('concept.draft.nameRequired')}</div>
+          <div class="df-meta">
+            <span class="df-chip df-lang"
+                  title="#{thesaurusViewBean.languageLabel(conceptLifecycleEditorBean.workLanguage)}">
+              <span class="tr-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(conceptLifecycleEditorBean.workLanguage)}</span>
+              <span class="df-lang-name">#{thesaurusViewBean.languageLabel(conceptLifecycleEditorBean.workLanguage)}</span>
+              <span class="df-lang-code">#{conceptLifecycleEditorBean.workLanguage}</span>
+            </span>
+            <span class="df-chip cv-status">#{localeBean.getMsg('concept.draft.status')}</span>
+            <p class="cv-draft-loc" id="cptLoc">#{localeBean.getMsg('concept.draft.loc.root')}</p>
+          </div>
+        </div>
+
+        <div class="cv-blocks">
+          <section class="cblock">
+            <div class="cblock-head">#{localeBean.getMsg('concept.draft.def')}</div>
+            <div class="cblock-body">
+              <div class="crow">
+                <div class="crow-lbl">#{localeBean.getMsg('concept.draft.def')}</div>
+                <div class="crow-val">
+                  <h:inputTextarea id="cptDef" styleClass="disc-input"
+                                   value="#{conceptLifecycleEditorBean.definition}"
+                                   pt:placeholder="#{localeBean.getMsg('concept.draft.defPlaceholder')}"/>
+                </div>
+              </div>
+              <div class="df-warn" id="cptRootWarn">#{localeBean.getMsg('concept.draft.noBt')}</div>
+            </div>
+          </section>
+        </div>
+
+        <button type="button" class="df-more-toggle" id="cptMoreToggle" data-act="cpt-more"
+                aria-expanded="false" aria-controls="cptMore">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span id="cptMoreLabel">#{localeBean.getMsg('concept.draft.more')}</span>
+        </button>
+
+        <div class="cv-blocks" id="cptMore" hidden="hidden">
+          <section class="cblock">
+            <div class="cblock-head">#{localeBean.getMsg('concept.draft.identity')}</div>
+            <div class="cblock-body">
+              <ui:fragment rendered="#{not empty conceptLifecycleEditorBean.ntRelationTypes}">
+                <div class="crow" id="cptRelRow">
+                  <div class="crow-lbl">#{localeBean.getMsg('concept.addRel')}</div>
+                  <div class="crow-val">
+                    <h:inputHidden id="cptNtRel" value="#{conceptLifecycleEditorBean.selectedNarrowerRelationType}"/>
+                    <div class="cv-add-rels" role="listbox" aria-label="#{localeBean.getMsg('concept.addRel')}">
+                      <ui:repeat value="#{conceptLifecycleEditorBean.ntRelationTypes}" var="nt">
+                        <button type="button" class="cv-add-rel#{conceptLifecycleEditorBean.isNtPicked(nt) ? ' is-on' : ''}"
+                                data-act="cpt-nt-rel" data-val="#{nt.relationType}"
+                                role="option"
+                                aria-selected="#{conceptLifecycleEditorBean.isNtPicked(nt)}"
+                                title="#{conceptLifecycleEditorBean.formatNtLabel(nt)}">
+                          <span class="cv-add-rel-k">#{nt.relationType}</span>
+                          <span class="cv-add-rel-v">#{conceptLifecycleEditorBean.formatNtLabel(nt)}</span>
+                        </button>
+                      </ui:repeat>
+                    </div>
+                    <p class="cv-type-recip-hint">#{localeBean.getMsg('concept.addRelHint')}</p>
+                  </div>
+                </div>
+              </ui:fragment>
+              <div class="crow">
+                <div class="crow-lbl">#{localeBean.getMsg('concept.addCollection')}</div>
+                <div class="crow-val">
+                  <h:selectOneMenu id="cptGroup" styleClass="st-input"
+                                   value="#{conceptLifecycleEditorBean.selectedGroupId}">
+                    <f:selectItem itemValue="" itemLabel="#{localeBean.getMsg('concept.addCollectionNone')}"/>
+                    <f:selectItems value="#{conceptLifecycleEditorBean.availableCollections}" var="g"
+                                   itemValue="#{g.id}" itemLabel="#{g.label}"/>
+                  </h:selectOneMenu>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">#{localeBean.getMsg('concept.addNotation')}</div>
+                <div class="crow-val">
+                  <h:inputText id="cptNotation" styleClass="st-input"
+                               value="#{conceptLifecycleEditorBean.notation}"
+                               pt:autocomplete="off"
+                               pt:placeholder="#{localeBean.getMsg('rightbody.concept.notation')}…"/>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">#{localeBean.getMsg('concept.addId')}</div>
+                <div class="crow-val">
+                  <h:inputText id="cptCustomId" styleClass="st-input"
+                               value="#{conceptLifecycleEditorBean.customConceptId}"
+                               pt:autocomplete="off"/>
+                  <p class="cv-type-recip-hint">#{localeBean.getMsg('concept.addIdHint')}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <ui:fragment rendered="#{conceptLifecycleEditorBean.duplicateLabelWarning}">
+          <p class="confirm-p is-warn" role="alert">#{localeBean.getMsg('concept.addDup')}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty conceptLifecycleEditorBean.createErrorMessage and not conceptLifecycleEditorBean.duplicateLabelWarning}">
+          <p class="confirm-p is-warn">#{conceptLifecycleEditorBean.createErrorMessage}</p>
+        </ui:fragment>
+
+        <div class="fsave">
+          <button type="button" class="bo-btn ghost" data-act="cpt-leave">#{localeBean.getMsg('concept.draft.cancel')}</button>
+          <ui:fragment rendered="#{conceptLifecycleEditorBean.writeActionsAvailable}">
+            <ui:fragment rendered="#{conceptLifecycleEditorBean.duplicateLabelWarning}">
+              <h:commandButton id="cptDupEdit" styleClass="bo-btn ghost"
+                               value="#{localeBean.getMsg('concept.addDupEdit')}"
+                               action="#{conceptLifecycleEditorBean.cancelDuplicate}">
+                <f:ajax execute="@this" render="@form" onevent="onConceptDraftAjax"/>
+              </h:commandButton>
+              <h:commandButton id="cptCreateForce" styleClass="bo-btn primary"
+                               value="#{localeBean.getMsg('concept.addDupForce')}"
+                               action="#{conceptLifecycleEditorBean.createConceptDraftForced}">
+                <f:ajax execute="@form" render="@form" onevent="onConceptDraftAjax"/>
+              </h:commandButton>
+            </ui:fragment>
+            <ui:fragment rendered="#{not conceptLifecycleEditorBean.duplicateLabelWarning}">
+              <button type="button" class="bo-btn ghost" data-act="cpt-create-ask" data-kind="chain">#{localeBean.getMsg('concept.draft.chain')}</button>
+              <button type="button" class="bo-btn primary" data-act="cpt-create-ask" data-kind="create">#{localeBean.getMsg('concept.draft.create')}</button>
+              <h:commandButton id="cptCreateNext" styleClass="preview-open-btn" style="display:none"
+                               value="#{localeBean.getMsg('concept.draft.chain')}"
+                               action="#{conceptLifecycleEditorBean.createConceptDraftAndContinue}">
+                <f:ajax execute="@form" render="@form" onevent="onConceptDraftAjax"/>
+              </h:commandButton>
+              <h:commandButton id="cptCreate" styleClass="preview-open-btn" style="display:none"
+                               value="#{localeBean.getMsg('concept.draft.create')}"
+                               action="#{conceptLifecycleEditorBean.createConceptDraft}">
+                <f:ajax execute="@form" render="@form" onevent="onConceptDraftAjax"/>
+              </h:commandButton>
+            </ui:fragment>
+          </ui:fragment>
+          <h:commandButton id="cptCancel" styleClass="preview-open-btn" style="display:none"
+                           value="#{localeBean.getMsg('concept.draft.cancel')}"
+                           action="#{conceptLifecycleEditorBean.cancelConceptDraft}" immediate="true">
+            <f:ajax execute="@this" render="@form" onevent="function(d){if(d.status==='success'&amp;&amp;window.resolveConceptDraftUi)window.resolveConceptDraftUi('annulé');}"/>
+          </h:commandButton>
+        </div>
+      </div>
+    </h:form>
+
+    <div class="block-overlay confirm-overlay" id="cptCreateConfirm" hidden="hidden"
+         data-act="cpt-create-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="cptCreateTitle" data-act="cpt-create-modal">
+        <div class="confirm-h" id="cptCreateTitle">#{localeBean.getMsg('concept.draft.confirm.title')}</div>
+        <p class="confirm-p" id="cptCreateText">#{localeBean.getMsg('concept.draft.confirm.create')}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost confirm-cancel" data-act="cpt-create-dismiss">#{localeBean.getMsg('concept.draft.cancel')}</button>
+          <button type="button" class="bo-btn primary" id="cptCreateGo" data-act="cpt-create-go">#{localeBean.getMsg('concept.draft.create')}</button>
+        </div>
+      </div>
+    </div>
+    <div class="block-overlay confirm-overlay" id="cptLeaveConfirm" hidden="hidden"
+         data-act="cpt-leave-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="cptLeaveTitle" data-act="cpt-leave-modal">
+        <div class="confirm-h" id="cptLeaveTitle">#{localeBean.getMsg('concept.draft.leave.title')}</div>
+        <p class="confirm-p mo-warn">#{localeBean.getMsg('concept.draft.leave.warn')}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost" data-act="cpt-leave-stay">#{localeBean.getMsg('concept.draft.leave.stay')}</button>
+          <button type="button" class="bo-btn danger" data-act="cpt-leave-quit">#{localeBean.getMsg('concept.draft.leave.quit')}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ui:composition>

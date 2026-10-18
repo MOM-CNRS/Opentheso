@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+
+  <div class="prop-banner">
+    <div class="prop-banner-row">
+      <span class="prop-banner-dot" aria-hidden="true"></span>
+      <div class="prop-banner-main">
+        <div class="prop-banner-t">#{localeBean.getMsg('proposition.submit.title')}</div>
+        <div class="prop-banner-s">#{localeBean.getMsg('proposition.submit.info')}</div>
+        <div class="prop-head-meta">
+          <span class="prop-chip is-theso">
+            <span class="prop-chip-t">#{propositionSubmitBean.currentPreferredLabel}</span>
+          </span>
+          <span class="prop-chip">#{thesaurusViewBean.selectedConcept.summary.lang}</span>
+        </div>
+      </div>
+      <div class="prop-banner-actions">
+        <h:commandLink styleClass="bo-btn ghost sm" immediate="true"
+                       action="#{propositionSubmitBean.cancel}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+          #{localeBean.getMsg('cancel')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <section class="prop-compose-card is-required" data-card-id="prop-author">
+    <div class="prop-compose-card-h">
+      <div>
+        <div class="prop-compose-card-t">#{localeBean.getMsg('proposition.submit.stepComment')}</div>
+        <p class="prop-compose-card-s">#{localeBean.getMsg('proposition.submit.stepCommentHint')}</p>
+      </div>
+      <span class="prop-req is-on">#{localeBean.getMsg('proposition.submit.required')}</span>
+    </div>
+    <div class="prop-compose-card-b">
+      <div class="prop-compose-field#{propositionSubmitBean.commentInvalid ? ' is-invalid' : ''}">
+        <h:outputLabel styleClass="prop-compose-lbl" for="propComment">
+          #{localeBean.getMsg('proposition.commentaire')}
+          <span class="is-star" aria-hidden="true">*</span>
+        </h:outputLabel>
+        <h:inputTextarea id="propComment"
+                         styleClass="st-input prop-compose-comment#{propositionSubmitBean.commentInvalid ? ' is-invalid' : ''}"
+                         value="#{propositionSubmitBean.comment}" rows="5"
+                         pt:autocomplete="off"
+                         pt:aria-invalid="#{propositionSubmitBean.commentInvalid}"
+                         pt:aria-describedby="propCommentError"
+                         pt:placeholder="#{localeBean.getMsg('proposition.commentPlaceholder')}"/>
+        <p class="prop-field-error#{propositionSubmitBean.commentInvalid ? ' is-on' : ''}"
+           id="propCommentError" role="alert">
+          #{localeBean.getMsg('proposition.submit.commentRequired')}
+        </p>
+      </div>
+
+      <div class="prop-compose-id">
+        <div class="prop-compose-field">
+          <span class="prop-compose-lbl">
+            #{localeBean.getMsg('rightbody.conceptdialog.name')}
+            <span class="is-star" aria-hidden="true">*</span>
+          </span>
+          <ui:fragment rendered="#{propositionSubmitBean.authorNameEditable}">
+            <h:inputText id="propAuthorName" styleClass="st-input"
+                         value="#{propositionSubmitBean.authorName}"
+                         pt:autocomplete="name"/>
+          </ui:fragment>
+          <ui:fragment rendered="#{not propositionSubmitBean.authorNameEditable}">
+            <span class="prop-compose-readonly">#{propositionSubmitBean.authorName}</span>
+          </ui:fragment>
+        </div>
+        <div class="prop-compose-field">
+          <span class="prop-compose-lbl">
+            #{localeBean.getMsg('profile.email')}
+            <span class="is-star" aria-hidden="true">*</span>
+          </span>
+          <ui:fragment rendered="#{propositionSubmitBean.authorEmailEditable}">
+            <h:inputText id="propAuthorEmail" styleClass="st-input"
+                         value="#{propositionSubmitBean.authorEmail}"
+                         pt:autocomplete="email"/>
+          </ui:fragment>
+          <ui:fragment rendered="#{not propositionSubmitBean.authorEmailEditable}">
+            <span class="prop-compose-readonly">#{propositionSubmitBean.authorEmail}</span>
+          </ui:fragment>
+        </div>
+      </div>
+      <p class="prop-hint">#{localeBean.getMsg('proposition.submit.mailHint')}</p>
+    </div>
+  </section>
+
+  <div class="prop-compose-section">
+    <div class="prop-compose-section-h">
+      <div>
+        <div class="prop-compose-card-t">#{localeBean.getMsg('proposition.submit.stepChanges')}</div>
+        <p class="prop-compose-card-s">#{localeBean.getMsg('proposition.submit.stepChangesHint')}</p>
+      </div>
+      <span class="prop-req is-off">#{localeBean.getMsg('proposition.submit.optional')}</span>
+    </div>
+  </div>
+
+  <section class="prop-compose-card#{propositionSubmitBean.preferredLabelChanged ? ' is-changed' : ''}" data-card-id="prop-label">
+    <div class="prop-compose-card-h">
+      <div>
+        <div class="prop-compose-card-t">#{localeBean.getMsg('proposition.renameLabel')}</div>
+        <p class="prop-compose-card-s">#{localeBean.getMsg('proposition.submit.labelHint')}</p>
+      </div>
+    </div>
+    <div class="prop-compose-card-b">
+      <div class="prop-diff">
+        <div class="prop-diff-col is-old">
+          <div class="prop-diff-k">#{localeBean.getMsg('proposition.field.current')}</div>
+          <div class="prop-diff-v">#{propositionSubmitBean.currentPreferredLabel}</div>
+          <span class="val-lang">#{thesaurusViewBean.selectedConcept.summary.lang}</span>
+        </div>
+        <span class="prop-diff-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+        <div class="prop-diff-col is-new">
+          <h:outputLabel styleClass="prop-diff-k" for="propPrefLabel">#{localeBean.getMsg('proposition.field.proposed')}</h:outputLabel>
+          <h:inputText id="propPrefLabel" styleClass="st-input prop-diff-input"
+                       value="#{propositionSubmitBean.proposedPreferredLabel}"
+                       pt:autocomplete="off"/>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="prop-compose-card" data-card-id="prop-syn">
+    <div class="prop-compose-card-h">
+      <div class="prop-compose-card-t">#{localeBean.getMsg('proposition.synonyms')}</div>
+    </div>
+    <div class="prop-compose-card-b">
+      <ui:fragment rendered="#{empty propositionSubmitBean.synonymOptions}">
+        <p class="prop-compose-empty">#{localeBean.getMsg('proposition.submit.emptySynonyms')}</p>
+      </ui:fragment>
+      <ui:repeat value="#{propositionSubmitBean.synonymOptions}" var="syn">
+        <div class="prop-compose-item#{syn.toRemove ? ' is-removed' : ''}#{syn.toAdd or syn.toUpdate ? ' is-changed' : ''}">
+          <ui:fragment rendered="#{not syn.toRemove}">
+            <div class="prop-compose-item-row">
+              <h:inputText styleClass="st-input" value="#{syn.value}" pt:autocomplete="off"/>
+              <h:commandLink styleClass="bo-btn ghost sm danger"
+                             action="#{propositionSubmitBean.removeSynonymOption(syn)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{localeBean.getMsg('btnDelete')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{syn.lang}</span>
+              <label class="prop-check">
+                <h:selectBooleanCheckbox value="#{syn.hidden}"/>
+                #{localeBean.getMsg('proposition.hidden')}
+              </label>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{syn.toRemove}">
+            <div class="prop-compose-item-row">
+              <span class="muted">#{syn.oldValue}</span>
+              <h:commandLink styleClass="bo-btn ghost sm"
+                             action="#{propositionSubmitBean.undoRemoveSynonymOption(syn)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{localeBean.getMsg('proposition.undoRemove')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{syn.lang}</span>
+              <ui:fragment rendered="#{syn.hidden}">
+                <span class="prop-tag">#{localeBean.getMsg('proposition.hidden')}</span>
+              </ui:fragment>
+            </div>
+          </ui:fragment>
+        </div>
+      </ui:repeat>
+      <div class="prop-compose-add">
+        <h:selectOneMenu id="propSynLang" styleClass="st-input"
+                         value="#{propositionSubmitBean.newSynonymLang}">
+          <f:selectItem itemValue="" itemLabel="#{localeBean.getMsg('proposition.submit.lang')}"/>
+          <f:selectItems value="#{propositionSubmitBean.availableLanguages}"
+                         var="lg" itemValue="#{lg.code}" itemLabel="#{lg.label} (#{lg.code})"/>
+        </h:selectOneMenu>
+        <h:inputText id="propSynVal" styleClass="st-input"
+                     value="#{propositionSubmitBean.newSynonymValue}"
+                     pt:autocomplete="off"
+                     pt:placeholder="#{localeBean.getMsg('proposition.synonymPlaceholder')}"/>
+        <label class="prop-check">
+          <h:selectBooleanCheckbox id="propSynHidden" value="#{propositionSubmitBean.newSynonymHidden}"/>
+          #{localeBean.getMsg('proposition.hidden')}
+        </label>
+        <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
+                       action="#{propositionSubmitBean.addSynonymOption}">
+          <f:ajax execute="propSynLang propSynVal propSynHidden @this" render=":previewDetailForm:previewDetail"/>
+          #{localeBean.getMsg('proposition.add')}
+        </h:commandLink>
+      </div>
+    </div>
+  </section>
+
+  <section class="prop-compose-card" data-card-id="prop-tr">
+    <div class="prop-compose-card-h">
+      <div class="prop-compose-card-t">#{localeBean.getMsg('proposition.translations')}</div>
+    </div>
+    <div class="prop-compose-card-b">
+      <ui:fragment rendered="#{empty propositionSubmitBean.translationOptions}">
+        <p class="prop-compose-empty">#{localeBean.getMsg('proposition.submit.emptyTranslations')}</p>
+      </ui:fragment>
+      <ui:repeat value="#{propositionSubmitBean.translationOptions}" var="tr">
+        <div class="prop-compose-item#{tr.toRemove ? ' is-removed' : ''}#{tr.toAdd or tr.toUpdate ? ' is-changed' : ''}">
+          <ui:fragment rendered="#{not tr.toRemove}">
+            <div class="prop-compose-item-row">
+              <h:inputText styleClass="st-input" value="#{tr.value}" pt:autocomplete="off"/>
+              <h:commandLink styleClass="bo-btn ghost sm danger"
+                             action="#{propositionSubmitBean.removeTranslationOption(tr)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{localeBean.getMsg('btnDelete')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{tr.lang}</span>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{tr.toRemove}">
+            <div class="prop-compose-item-row">
+              <span class="muted">#{tr.oldValue}</span>
+              <h:commandLink styleClass="bo-btn ghost sm"
+                             action="#{propositionSubmitBean.undoRemoveTranslationOption(tr)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{localeBean.getMsg('proposition.undoRemove')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{tr.lang}</span>
+            </div>
+          </ui:fragment>
+        </div>
+      </ui:repeat>
+      <div class="prop-compose-add is-simple">
+        <h:selectOneMenu id="propTrLang" styleClass="st-input"
+                         value="#{propositionSubmitBean.newTranslationLang}">
+          <f:selectItem itemValue="" itemLabel="#{localeBean.getMsg('proposition.submit.lang')}"/>
+          <f:selectItems value="#{propositionSubmitBean.languagesWithoutTranslation}"
+                         var="lg" itemValue="#{lg.code}" itemLabel="#{lg.label} (#{lg.code})"/>
+        </h:selectOneMenu>
+        <h:inputText id="propTrVal" styleClass="st-input"
+                     value="#{propositionSubmitBean.newTranslationValue}"
+                     pt:autocomplete="off"
+                     pt:placeholder="#{localeBean.getMsg('proposition.translationPlaceholder')}"/>
+        <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
+                       action="#{propositionSubmitBean.addTranslationOption}">
+          <f:ajax execute="propTrLang propTrVal @this" render=":previewDetailForm:previewDetail"/>
+          #{localeBean.getMsg('proposition.add')}
+        </h:commandLink>
+      </div>
+    </div>
+  </section>
+
+  <section class="prop-compose-card" data-card-id="prop-notes">
+    <div class="prop-compose-card-h">
+      <div class="prop-compose-card-t">#{localeBean.getMsg('proposition.notes')}</div>
+    </div>
+    <div class="prop-compose-card-b">
+      <ui:fragment rendered="#{empty propositionSubmitBean.visibleNoteOptions}">
+        <p class="prop-compose-empty">#{localeBean.getMsg('proposition.submit.emptyNotes')}</p>
+      </ui:fragment>
+      <ui:repeat value="#{propositionSubmitBean.visibleNoteOptions}" var="note">
+        <div class="prop-compose-item#{note.hasChanged() ? ' is-changed' : ''}">
+          <div class="prop-compose-item-meta">
+            <span class="prop-compose-lbl">#{localeBean.getMsg(note.messageKey)}</span>
+            <h:commandLink styleClass="bo-btn ghost sm danger"
+                           action="#{propositionSubmitBean.clearNote(note)}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              #{localeBean.getMsg('btnDelete')}
+            </h:commandLink>
+          </div>
+          <h:inputTextarea styleClass="st-input prop-compose-note" value="#{note.value}" rows="3"/>
+        </div>
+      </ui:repeat>
+      <div class="prop-compose-add is-note">
+        <h:selectOneMenu id="propNoteType" styleClass="st-input"
+                         value="#{propositionSubmitBean.newNoteTypeCode}">
+          <f:selectItem itemValue="note" itemLabel="#{localeBean.getMsg('rightbody.concept.note')}"/>
+          <f:selectItem itemValue="definition" itemLabel="#{localeBean.getMsg('rightbody.concept.definition')}"/>
+          <f:selectItem itemValue="scopeNote" itemLabel="#{localeBean.getMsg('rightbody.concept.scope_note')}"/>
+          <f:selectItem itemValue="example" itemLabel="#{localeBean.getMsg('rightbody.concept.example_note')}"/>
+          <f:selectItem itemValue="historyNote" itemLabel="#{localeBean.getMsg('rightbody.concept.history_note')}"/>
+          <f:selectItem itemValue="editorialNote" itemLabel="#{localeBean.getMsg('rightbody.concept.editorial_note')}"/>
+          <f:selectItem itemValue="changeNote" itemLabel="#{localeBean.getMsg('rightbody.concept.change_note')}"/>
+        </h:selectOneMenu>
+        <h:inputTextarea id="propNoteVal" styleClass="st-input"
+                         value="#{propositionSubmitBean.newNoteValue}" rows="3"
+                         pt:placeholder="#{localeBean.getMsg('proposition.notePlaceholder')}"/>
+        <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
+                       action="#{propositionSubmitBean.addNoteOption}">
+          <f:ajax execute="propNoteType propNoteVal @this" render=":previewDetailForm:previewDetail"/>
+          #{localeBean.getMsg('proposition.add')}
+        </h:commandLink>
+      </div>
+    </div>
+  </section>
+
+  <div class="prop-compose-foot">
+    <h:commandLink styleClass="abt-cancel" immediate="true"
+                   action="#{propositionSubmitBean.cancel}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+      #{localeBean.getMsg('cancel')}
+    </h:commandLink>
+    <button type="button" class="abt-save" data-act="prop-send-ask">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      <span class="abt-save-label">#{localeBean.getMsg('proposition.submit.send')}</span>
+    </button>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="propSendConfirm" hidden="hidden"
+       data-act="prop-send-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+         aria-labelledby="propSendConfirmTitle" data-act="prop-send-modal">
+      <div class="confirm-h" id="propSendConfirmTitle">#{localeBean.getMsg('proposition.submit.confirmTitle')}</div>
+      <p class="confirm-p">#{localeBean.getMsg('proposition.submit.confirm')}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel"
+                data-act="prop-send-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="propSendOk" styleClass="abt-save abt-save-ok"
+                       action="#{propositionSubmitBean.send}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewPropBadge" onevent="onPropSend"/>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          <span class="abt-save-label">#{localeBean.getMsg('proposition.submit.send')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+</ui:composition>

@@ -1,11 +1,5 @@
 package fr.cnrs.opentheso.services;
 
-import fr.cnrs.opentheso.bean.leftbody.TreeNodeData;
-import fr.cnrs.opentheso.bean.leftbody.viewtree.Tree;
-import fr.cnrs.opentheso.bean.menu.theso.RoleOnThesaurusBean;
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
-import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
 import fr.cnrs.opentheso.entites.*;
 import fr.cnrs.opentheso.models.concept.Concept;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
@@ -19,12 +13,10 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.ws.ark.ArkHelper2;
 
-import jakarta.faces.application.FacesMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import java.beans.Transient;
@@ -43,11 +35,7 @@ public class ConceptAddService {
     private final GroupService groupService;
     private final PreferenceService preferenceService;
 
-    private final Tree tree;
     private final ArkService arkService;
-    private final ConceptView conceptBean;
-    private final SelectedTheso selectedTheso;
-    private final RoleOnThesaurusBean roleOnThesaurusBean;
     private final ConceptRepository conceptRepository;
     private final RelationService relationService;
     private final UserRepository userRepository;
@@ -56,116 +44,7 @@ public class ConceptAddService {
     private final HandleConceptService handleConceptService;
     private final FacetService facetService;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
-    private final CurrentUser currentUser;
     private final CryptoService cryptoService;
-
-
-    public boolean addNewConcept(String idThesaurus, String idNewConcept, String idGroup, String idLang, String prefLabel,
-                                 String status, String source, String idFacet, String idConceptParent, String notation,
-                                 String idBTfacet, String relationType, int idUser, boolean isConceptUnderFacet,
-                                 CurrentUser currentUser) {
-
-        log.debug("Début de l'ajout du nouveau concept");
-        if (roleOnThesaurusBean.getNodePreference() == null) {
-            MessageUtils.showMessage(FacesMessage.SEVERITY_ERROR, "Erreur !", "Le thésaurus n'a pas de préférences !");
-            return false;
-        }
-
-        if (StringUtils.isNotEmpty(idNewConcept)) {
-            if (isIdExiste(idNewConcept, idThesaurus)) {
-                MessageUtils.showMessage(FacesMessage.SEVERITY_ERROR, "Attention !", "Identifiant déjà attribué, veuillez choisir un autre ou laisser vide !!");
-                return false;
-            }
-        } else {
-            idNewConcept = null;
-        }
-
-        // si le group est à null ou vide, on créé le concept sans l'ajouter à aucun groupe
-        // c'est dans ConceptHelper que ca se passe.
-        var concept = Concept.builder()
-                .idGroup(idGroup)
-                .idThesaurus(idThesaurus)
-                .idConcept(idNewConcept)
-                .topConcept(false)
-                .status(status)
-                .notation(notation)
-                .build();
-
-        var terme = Term.builder()
-                .idThesaurus(idThesaurus)
-                .lang(idLang)
-                .status(status)
-                .lexicalValue(prefLabel.trim())
-                .source(StringUtils.isEmpty(source) ? "" : source)
-                .build();
-
-
-        log.debug("Vérification : le nouveau concept est sous une Facette (le BT est celui du parent de la Facette)");
-        if (isConceptUnderFacet) {
-            log.debug("Le concept est sous une Facette");
-            idConceptParent = idBTfacet;
-        }
-
-        log.debug("Enregistrement du concept dans la base");
-        idNewConcept = addConcept(idConceptParent, relationType, concept, terme, idUser);
-
-        if (idNewConcept == null) {
-            MessageUtils.showErrorMessage("Erreur pendant l'enregistrement du nouveau concept !");
-            return false;
-        }
-
-        log.debug("Enregistrement du trace de l'action");
-        conceptDcTermRepository.save(ConceptDcTerm.builder()
-                .name(DCMIResource.CREATOR)
-                .value(currentUser.getNodeUser().getName())
-                .idConcept(idNewConcept)
-                .idThesaurus(idThesaurus)
-                .build());
-        // ajout de l'info de la dernière modification du concept dans les DC du thésaurus
-        createAndSaveDcTerm(idThesaurus, DCMIResource.MODIFIED,
-                new SimpleDateFormat("yyyy-MM-dd").format(new Date()), "", "date");
-
-        if (isConceptUnderFacet) {
-            facetService.addConceptToFacet(idFacet, idThesaurus, idNewConcept);
-
-            var data = new TreeNodeData(idNewConcept, prefLabel, "", false, false, true, false, "term");
-            data.setIdFacetParent(idFacet);
-
-            tree.getDataService().addNodeWithoutChild("file", data, tree.getSelectedNode());
-            tree.initialise(selectedTheso.getCurrentIdTheso(), selectedTheso.getSelectedLang());
-            tree.expandTreeToPath2(idBTfacet, selectedTheso.getCurrentIdTheso(), selectedTheso.getSelectedLang(), idFacet);
-
-            PrimeFaces.current().ajax().update("containerIndex");
-            MessageUtils.showMessage(FacesMessage.SEVERITY_INFO, "", "Concept ajouté avec succès !");
-            return true;
-        }
-
-        if (tree.getSelectedNode() != null) {
-            // si le concept en cours n'est pas celui sélectionné dans l'arbre, on se positionne sur le concept en cours dans l'arbre
-            if (!((TreeNodeData) tree.getSelectedNode().getData()).getNodeId().equalsIgnoreCase(idConceptParent)) {
-                tree.expandTreeToPath(idConceptParent, idThesaurus, idLang);
-            }
-
-            // cas où l'arbre est déjà déplié ou c'est un concept sans fils
-            /// attention, cette condition permet d'éviter une erreur dans l'arbre si :
-            // un concept est sélectionné dans l'arbre mais non déployé, puis, on ajoute un TS, alors ca produit une erreur
-            if (tree.getSelectedNode().getChildCount() == 0) {
-                tree.getSelectedNode().setType("concept");
-            }
-            if (tree.getSelectedNode().isExpanded() || tree.getSelectedNode().getChildCount() == 0) {
-                PrimeFaces.current().executeScript("srollToSelected()");
-                tree.addNewChild(tree.getSelectedNode(), idNewConcept, idThesaurus, idLang, notation);
-                tree.getSelectedNode().setExpanded(true);
-            }
-        }
-
-        conceptBean.getConcept(idThesaurus, idConceptParent, idLang, currentUser);
-
-        MessageUtils.showInformationMessage("Le concept a bien été ajouté");
-
-        log.debug("Fin de l'ajout du nouveau concept");
-        return true;
-    }
 
     @Transient
     public String addConcept(String idParent, String relationType, Concept concept, Term term, int idUser) {
@@ -232,8 +111,9 @@ public class ConceptAddService {
                 ArrayList<String> idConcepts = new ArrayList<>();
                 idConcepts.add(idConcept);
                 String apiKeyOpenArk = cryptoService.decrypt(preferences.getApiKeyOpenArk());
+                String contributor = userRepository.findById(idUser).map(User::getUsername).orElse("");
                 if(generateOpenArkId(concept.getIdThesaurus(), idConcepts,
-                        selectedTheso.getCurrentLang(), preferences, apiKeyOpenArk) == null){
+                        term.getLang(), preferences, apiKeyOpenArk, contributor) == null){
                     MessageUtils.showErrorMessage("La création du Ark a échoué");
                 }
             }
@@ -344,10 +224,10 @@ public class ConceptAddService {
 
 
     // nouvelle version pour OpenArk
-    public List<NodeIdValue> generateOpenArkId(String idThesaurus, List<String> idConcepts, String idLang, Preferences preferences, String apiKey) {
+    public List<NodeIdValue> generateOpenArkId(String idThesaurus, List<String> idConcepts, String idLang, Preferences preferences, String apiKey, String userName) {
         if (preferences.isUseOpenArk()) {
             if(!arkService.generateArkWithOpenArk(idThesaurus, idConcepts, idLang,
-                    currentUser.getNodeUser().getName(), apiKey, preferenceService.getThesaurusPreferences(idThesaurus))){
+                    userName, apiKey, preferenceService.getThesaurusPreferences(idThesaurus))){
                 return null;
             }
             return new ArrayList<>();

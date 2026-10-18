@@ -1,0 +1,12 @@
+package fr.cnrs.opentheso.concept.search.model;
+
+public enum ConceptSearchMode {
+    FULL_TEXT,
+    START_WITH,
+    EXACT,
+    NOTE,
+    IDENTIFIER,
+    PREFERRED,
+    SYNONYM,
+    NOTATION
+}

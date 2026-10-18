@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-head">
+          <div class="th-id-row">
+            <a class="th-id#{page eq 'accueil' ? ' is-active' : ''}" id="thIdBtn" href="index.xhtml" title="#{thesaurusViewBean.title}">
+              <span class="th-id-ico" aria-hidden="true">▤</span>
+              <h:panelGroup id="previewThTitle" styleClass="th-id-name">#{thesaurusViewBean.title}</h:panelGroup>
+              <span class="th-id-meta">#{thesaurusViewBean.conceptCountLabel}</span>
+            </a>
+            <h:form id="previewLangForm" prependId="false" styleClass="tree-lang-form">
+              <h:inputHidden id="termLang" value="#{thesaurusViewBean.selectedLang}"/>
+              <h:commandButton id="previewTermLangGo" value="lang" styleClass="st-jsf-go"
+                               action="#{thesaurusViewBean.onLanguageChange}">
+                <f:ajax execute="@form"
+                        render=":previewThTitle :previewTreeMetaBox :previewWorkLangRefresh :previewTermLangUi"
+                        onevent="onPreviewTermLang"/>
+              </h:commandButton>
+              <h:panelGroup id="previewTermLangUi" layout="block" styleClass="tree-lang">
+                <ui:fragment rendered="#{thesaurusViewBean.workLanguageSwitchable}">
+                <button type="button"
+                        class="tree-lang-btn"
+                        id="treeLangBtn"
+                        data-act="term-lang-toggle"
+                        title="#{localeBean.getMsg('view.termLang')}"
+                        aria-label="#{localeBean.getMsg('view.termLang')} · #{thesaurusViewBean.selectedLangLabel}"
+                        aria-haspopup="listbox"
+                        aria-expanded="false">
+                  <span class="tree-lang-flag" aria-hidden="true">#{thesaurusViewBean.selectedLangFlag}</span>
+                  <span class="tree-lang-code">#{thesaurusViewBean.selectedLangCode}</span>
+                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="tree-lang-menu" role="listbox" aria-label="#{localeBean.getMsg('view.termLang')}">
+                  <div class="tree-lang-menu-h">#{localeBean.getMsg('view.termLang')}</div>
+                  <ui:repeat value="#{thesaurusViewBean.languages}" var="lang">
+                    <button type="button"
+                            class="tree-lang-opt#{thesaurusViewBean.currentWorkLangIs(lang.code) ? ' is-on' : ''}"
+                            data-act="term-lang"
+                            data-lang="#{lang.code}"
+                            role="option"
+                            aria-selected="#{thesaurusViewBean.currentWorkLangIs(lang.code)}">
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      <span class="tree-lang-opt-name">#{lang.value}</span>
+                      <span class="tree-lang-opt-code">#{lang.code}</span>
+                      <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                    </button>
+                  </ui:repeat>
+                </div>
+                </ui:fragment>
+                <ui:fragment rendered="#{not thesaurusViewBean.workLanguageSwitchable and not empty thesaurusViewBean.languages}">
+                  <span class="tree-lang-chip"
+                        title="#{localeBean.getMsg('view.termLang')} · #{thesaurusViewBean.selectedLangLabel}">
+                    <span class="tree-lang-flag" aria-hidden="true">#{thesaurusViewBean.selectedLangFlag}</span>
+                    <span class="tree-lang-name">#{thesaurusViewBean.selectedLangLabel}</span>
+                  </span>
+                </ui:fragment>
+              </h:panelGroup>
+            </h:form>
+          </div>
+
+          <ui:include src="/includes/searchbox.xhtml"/>
+
+          <div class="view-pick-row">
+            <div class="view-pick" id="viewPick" data-view="arbo">
+              <button type="button" class="view-pick-btn" id="viewPickBtn" aria-expanded="false">
+                <span class="view-pick-eyebrow">#{localeBean.getMsg('view.label')}</span>
+                <span class="view-pick-cur" id="viewPickCur">
+                  <span class="vpc" data-view="arbo">#{localeBean.getMsg('view.tree')}</span>
+                  <span class="vpc" data-view="tableau">#{localeBean.getMsg('view.table')}</span>
+                  <span class="vpc" data-view="hyper">#{localeBean.getMsg('view.graph')}</span>
+                  <span class="vpc" data-view="collection">#{localeBean.getMsg('view.collection')}</span>
+                  <span class="vpc" data-view="recherche">#{localeBean.getMsg('view.search')}</span>
+                </span>
+                <span class="vswitch-badge" id="viewPickBadge" hidden="hidden">0</span>
+                <span class="view-pick-caret" aria-hidden="true">▾</span>
+              </button>
+              <div class="view-pick-menu" id="viewPickMenu">
+                <button type="button" class="view-pick-item is-on" data-act="set-view" data-view="arbo">
+                  <span class="view-pick-il">#{localeBean.getMsg('view.tree')}</span><span class="view-pick-check">✓</span>
+                </button>
+                <button type="button" class="view-pick-item" data-act="set-view" data-view="tableau">
+                  <span class="view-pick-il">#{localeBean.getMsg('view.table')}</span><span class="view-pick-check">✓</span>
+                </button>
+                <button type="button" class="view-pick-item" data-act="set-view" data-view="hyper">
+                  <span class="view-pick-il">#{localeBean.getMsg('view.graph')}</span><span class="view-pick-check">✓</span>
+                </button>
+                <button type="button" class="view-pick-item" data-act="set-view" data-view="collection">
+                  <span class="view-pick-il">#{localeBean.getMsg('view.collection')}</span><span class="view-pick-check">✓</span>
+                </button>
+                <button type="button" class="view-pick-item" data-act="set-view" data-view="recherche">
+                  <span class="view-pick-il">#{localeBean.getMsg('view.search')}</span>
+                  <span class="vswitch-badge" id="viewMenuBadge" hidden="hidden">0</span>
+                  <span class="view-pick-check">✓</span>
+                </button>
+              </div>
+            </div>
+            <div class="vo-pop-wrap" id="voWrap">
+              <button type="button" class="vo-gear" id="voGear" title="#{localeBean.getMsg('view.options')}" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+              <div class="vo-pop" id="voPop">
+                <div class="vo-pop-h">Options · <span id="voPopView">Arborescence</span></div>
+                <div class="vo-pop-stk">
+                  <div class="stk">
+                    <div class="stk-title">#{localeBean.getMsg('view.options.status')}</div>
+                    <div class="stk-group#{treeStatusBean.groupOn('actif') ? ' on' : ''}" data-group="actif">
+                      <button type="button" class="stk-ghead#{treeStatusBean.groupOn('actif') ? ' on' : ''}" data-act="st-group" data-group="actif">
+                        <span class="stk-box#{treeStatusBean.groupMixed('actif') ? ' mixed' : ''}">#{treeStatusBean.groupMixed('actif') ? '–' : (treeStatusBean.groupOn('actif') ? '✓' : '')}</span>
+                        <span class="stk-glabel">#{localeBean.getMsg('view.status.actif')}</span>
+                        <span class="stk-n">#{treeStatusBean.groupCount('actif')}</span>
+                      </button>
+                      <div class="stk-list"><button type="button" class="stk-item#{treeStatusBean.selected('valide') ? ' on' : ''}" data-act="st-item" data-status="valide">
+                          <span class="stk-box">#{treeStatusBean.selected('valide') ? '✓' : ''}</span>
+                          <span class="st-dot st-valide"></span>
+                          <span class="stk-l">#{localeBean.getMsg('view.status.valide')}</span>
+                          <span class="stk-n">#{treeStatusBean.count('valide')}</span>
+                        </button><button type="button" class="stk-item#{treeStatusBean.selected('insere') ? ' on' : ''}" data-act="st-item" data-status="insere">
+                          <span class="stk-box">#{treeStatusBean.selected('insere') ? '✓' : ''}</span>
+                          <span class="st-dot st-insere"></span>
+                          <span class="stk-l">#{localeBean.getMsg('view.status.insere')}</span>
+                          <span class="stk-n">#{treeStatusBean.count('insere')}</span>
+                        </button></div>
+                      
+                    </div><ui:fragment rendered="#{userSession.loggedIn}"><div class="stk-group#{treeStatusBean.groupOn('candidat') ? ' on' : ''}" data-group="candidat">
+                      <button type="button" class="stk-ghead#{treeStatusBean.groupOn('candidat') ? ' on' : ''}" data-act="st-group" data-group="candidat">
+                        <span class="stk-box">#{treeStatusBean.groupOn('candidat') ? '✓' : ''}</span>
+                        <span class="stk-glabel">#{localeBean.getMsg('view.status.candidat')}</span>
+                        <span class="stk-n">#{treeStatusBean.groupCount('candidat')}</span>
+                      </button>
+                      
+                      <div class="cf">
+                      <div class="cf-fld">
+                        <span class="cf-l">#{localeBean.getMsg('view.cand.by')}</span>
+                        <div class="cf-combo" id="cfCombo"
+                             data-everyone="#{localeBean.getMsg('view.cand.everyone')}"
+                             data-everyone-hint="#{localeBean.getMsg('view.cand.everyoneHint')}"
+                             data-me="#{localeBean.getMsg('view.cand.me')}"
+                             data-me-hint="#{localeBean.getMsg('view.cand.meHint')}"
+                             data-empty="#{localeBean.getMsg('view.cand.empty')}">
+                          <button type="button" class="cf-in" id="cfByLabel" data-act="cf-toggle">#{localeBean.getMsg('view.cand.everyone')}</button>
+                          <span class="cf-combo-caret">▾</span>
+                          <div class="cf-menu" id="cfMenu">
+                            <input type="search" class="cf-search" id="cfByQuery"
+                                   placeholder="#{localeBean.getMsg('view.cand.search')}"
+                                   autocomplete="off"/>
+                            <div class="cf-opt-list" id="cfByList">
+                              <button type="button" class="cf-opt on" data-act="cf-by" data-by=""
+                                      data-label="#{localeBean.getMsg('view.cand.everyone')}">#{localeBean.getMsg('view.cand.everyone')}<small>#{localeBean.getMsg('view.cand.everyoneHint')}</small></button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cf-fld">
+                        <span class="cf-l">Déposé entre</span>
+                        <div class="cf-range">
+                          <input type="date" class="cf-in" id="cfFrom"/>
+                          <span class="cf-arrow">→</span>
+                          <input type="date" class="cf-in" id="cfTo"/>
+                        </div>
+                      </div>
+                      <button type="button" class="cf-clear" id="cfClear" hidden="hidden" data-act="cf-clear">#{localeBean.getMsg('view.cand.clear')}</button>
+                    </div>
+                    </div></ui:fragment><div class="stk-group#{treeStatusBean.groupOn('inactif') ? ' on' : ''}" data-group="inactif">
+                      <button type="button" class="stk-ghead#{treeStatusBean.groupOn('inactif') ? ' on' : ''}" data-act="st-group" data-group="inactif">
+                        <span class="stk-box#{treeStatusBean.groupMixed('inactif') ? ' mixed' : ''}">#{treeStatusBean.groupMixed('inactif') ? '–' : (treeStatusBean.groupOn('inactif') ? '✓' : '')}</span>
+                        <span class="stk-glabel">#{localeBean.getMsg('view.status.inactif')}</span>
+                        <span class="stk-n">#{treeStatusBean.groupCount('inactif')}</span>
+                      </button>
+                      <div class="stk-list"><button type="button" class="stk-item#{treeStatusBean.selected('rejete') ? ' on' : ''}" data-act="st-item" data-status="rejete">
+                          <span class="stk-box">#{treeStatusBean.selected('rejete') ? '✓' : ''}</span>
+                          <span class="st-dot st-rejete"></span>
+                          <span class="stk-l">#{localeBean.getMsg('view.status.rejete')}</span>
+                          <span class="stk-n">#{treeStatusBean.count('rejete')}</span>
+                        </button><button type="button" class="stk-item#{treeStatusBean.selected('deprecie') ? ' on' : ''}" data-act="st-item" data-status="deprecie">
+                          <span class="stk-box">#{treeStatusBean.selected('deprecie') ? '✓' : ''}</span>
+                          <span class="st-dot st-deprecie"></span>
+                          <span class="stk-l">#{localeBean.getMsg('view.status.deprecie')}</span>
+                          <span class="stk-n">#{treeStatusBean.count('deprecie')}</span>
+                        </button></div>
+                      
+                    </div>
+                  </div>
+                </div>
+                <div class="vo-sort" id="voSortRow">
+                  <div class="vo-sort-h">Tri</div>
+                  <h:form id="previewTreeSortForm" prependId="false" styleClass="vo-sort-opts">
+                    <span id="previewTreeSortState" hidden="hidden"
+                          data-tree-sort="#{thesaurusViewBean.sortByNotation ? 'nota' : 'alpha'}"></span>
+                    <h:commandLink id="previewTreeSortAlphaGo"
+                                   styleClass="vo-sort-b#{thesaurusViewBean.sortByNotation ? '' : ' is-on'}"
+                                   action="#{thesaurusViewBean.setAlphabeticSort}"
+                                   pt:data-sort="alpha"
+                                   title="Trier par ordre alphabétique">
+                      <f:ajax execute="@this" render="previewTreeSortForm :previewTree"/>
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Alphabétique</span>
+                        <span class="vo-sort-d">A → Z, selon le libellé</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </h:commandLink>
+                    <h:commandLink id="previewTreeSortNotaGo"
+                                   styleClass="vo-sort-b#{thesaurusViewBean.sortByNotation ? ' is-on' : ''}"
+                                   action="#{thesaurusViewBean.setNotationSort}"
+                                   pt:data-sort="nota"
+                                   title="Trier par notation">
+                      <f:ajax execute="@this" render="previewTreeSortForm :previewTree"/>
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h16"/><path d="M16 10v8"/><path d="m13 15 3 3 3-3"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Notation</span>
+                        <span class="vo-sort-d">Code documentaire</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </h:commandLink>
+                  </h:form>
+                </div>
+                <div class="vo-sort" id="voColSortRow" hidden="hidden">
+                  <div class="vo-sort-h">Tri</div>
+                  <div class="vo-sort-opts">
+                    <button type="button" class="vo-sort-b is-on" data-act="col-sort" data-sort="alpha" title="Trier par ordre alphabétique">
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Alphabétique</span>
+                        <span class="vo-sort-d">A → Z, selon le libellé</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="vo-sort-b" data-act="col-sort" data-sort="nota" title="Trier par notation">
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h16"/><path d="M16 10v8"/><path d="m13 15 3 3 3-3"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Notation</span>
+                        <span class="vo-sort-d">Code documentaire</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                </div>
+                <div class="vo-pop-row" id="voSearchOpts" hidden="hidden">
+                  <span class="vo-pop-l">Densité</span>
+                  <div class="vo-seg">
+                    <button type="button" class="vo-seg-b" data-act="density" data-density="compact">Compacte</button>
+                    <button type="button" class="vo-seg-b is-on" data-act="density" data-density="regular">Aérée</button>
+                  </div>
+                </div>
+                <div class="vo-pop-row" id="voPathRow" hidden="hidden">
+                  <span class="vo-pop-l">Afficher le chemin</span>
+                  <button type="button" class="vo-sw on" id="voPath" data-act="toggle-path" role="switch" aria-checked="true"></button>
+                </div>
+                <div class="vo-pop-row" id="voHlRow" hidden="hidden">
+                  <span class="vo-pop-l">Surligner le terme</span>
+                  <button type="button" class="vo-sw on" id="voHl" data-act="toggle-hl" role="switch" aria-checked="true"></button>
+                </div>
+                <div class="vo-pop-stk" id="voTableOpts" hidden="hidden">
+                  <div class="topt">
+                    <div class="topt-h">#{localeBean.getMsg('view.table.cols')}</div>
+                    <div class="tbl-collist">
+                      <label class="tbl-colrow is-locked on"><span class="tbl-colbox">✓</span><span>#{localeBean.getMsg('view.table.col.concept')}</span><span class="tbl-lock">#{localeBean.getMsg('view.table.col.locked')}</span></label>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('status') ? ' on' : ''}" data-act="tbl-col" data-col="status" aria-pressed="#{tableColBean.selected('status') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('status') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.status')}</span></button>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('type') ? ' on' : ''}" data-act="tbl-col" data-col="type" aria-pressed="#{tableColBean.selected('type') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('type') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.type')}</span></button>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('notation') ? ' on' : ''}" data-act="tbl-col" data-col="notation" aria-pressed="#{tableColBean.selected('notation') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('notation') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.notation')}</span></button>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('path') ? ' on' : ''}" data-act="tbl-col" data-col="path" aria-pressed="#{tableColBean.selected('path') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('path') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.path')}</span></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <ui:fragment rendered="#{userSession.loggedIn}">
+              <button type="button" class="view-add" id="viewAdd" data-act="create-open"
+                      title="#{localeBean.getMsg('create.more')}"
+                      aria-label="#{localeBean.getMsg('create.more')}"
+                      aria-haspopup="dialog" aria-expanded="false" aria-controls="createChooser">+</button>
+            </ui:fragment>
+          </div>
+        </div>
+
+        <div class="sidebar-body sb-tree sidebar-panel is-on" id="panelTree">
+          <div class="tree-body">
+            <h:panelGroup id="previewTreeMetaBox" layout="block">
+            <div id="previewTreeMeta"
+                 data-concept-count="#{thesaurusViewBean.conceptCount}"
+                 data-thesaurus-id="#{thesaurusViewBean.id}"
+                 data-thesaurus-title="#{thesaurusViewBean.title}"
+                 data-lang="#{thesaurusViewBean.selectedLang}"
+                 data-dnd="#{conceptTreeDragDropBean.dragDropEnabled ? '1' : ''}"
+                 data-msg-dnd-root="#{localeBean.getMsg('tree.dnd.root')}">
+            <h:form id="previewTreeRevealForm" styleClass="preview-open-form">
+              <h:inputHidden id="revealId" value="#{thesaurusViewBean.revealId}"/>
+              <h:commandButton id="revealBtn" value="Révéler" styleClass="preview-open-btn"
+                               action="#{thesaurusViewBean.revealInTree}">
+                <f:ajax execute="@form" render=":previewTree"/>
+              </h:commandButton>
+              <h:commandButton id="clearRevealBtn" value="Effacer" styleClass="preview-open-btn"
+                               action="#{thesaurusViewBean.clearTreeReveal}">
+                <f:ajax execute="@this"/>
+              </h:commandButton>
+            </h:form>
+            <h:form id="previewTreeForm" prependId="false">
+              <h:panelGroup id="previewTree" layout="block">
+                <ui:fragment rendered="#{thesaurusViewBean.treeEmpty}">
+                  <div class="tree-empty">Aucun concept à afficher dans cette langue.</div>
+                </ui:fragment>
+                <ui:include src="/includes/tree-nodes.xhtml"/>
+              </h:panelGroup>
+            </h:form>
+            </div>
+            </h:panelGroup>
+          </div>
+        </div>
+
+        <div class="sidebar-body sb-tree sidebar-panel" id="panelCollection">
+          <div class="flat-loading" id="panelCollectionLoading" hidden="hidden" aria-live="polite">
+            <div class="mg-bars-loading">
+              <span class="mg-kpi-spin" aria-hidden="true"></span>
+              <span class="flat-loading-lbl">Chargement des collections…</span>
+            </div>
+          </div>
+          <div class="tree-body" id="panelCollectionTree"></div>
+        </div>
+
+        <div class="sidebar-body sidebar-panel" id="panelResults">
+          <div class="rl is-idle" id="resultsList">
+            <div class="rl-empty rl-idle">
+              <div class="rl-empty-ico">⌕</div>
+              <p>Lancez une recherche depuis la barre.</p>
+              <p class="rl-empty-sub">Les résultats s’affichent ici, la fiche à droite.</p>
+              <ui:fragment rendered="#{userSession.loggedIn}">
+                <div class="rl-programs" id="rlPrograms">
+                  <div class="smm-h">#{localeBean.getMsg('search.preprogrammedSearch')}</div>
+                  <button type="button" class="smm-item" data-search-programmed="deprecated">
+                    <span class="smm-l">#{localeBean.getMsg('search.deprecated')}</span>
+                  </button>
+                  <button type="button" class="smm-item" data-search-programmed="polyhierarchy">
+                    <span class="smm-l">#{localeBean.getMsg('search.polyhierarchy')}</span>
+                  </button>
+                  <button type="button" class="smm-item" data-search-programmed="multi-groups">
+                    <span class="smm-l">#{localeBean.getMsg('search.multiGroups')}</span>
+                  </button>
+                  <button type="button" class="smm-item" data-search-programmed="without-groups">
+                    <span class="smm-l">#{localeBean.getMsg('search.withoutGroups')}</span>
+                  </button>
+                  <button type="button" class="smm-item" data-search-programmed="duplicates">
+                    <span class="smm-l">#{localeBean.getMsg('search.duplicates')}</span>
+                  </button>
+                  <button type="button" class="smm-item" data-search-programmed="forbidden">
+                    <span class="smm-l">#{localeBean.getMsg('search.forbiddenRelationships')}</span>
+                  </button>
+                </div>
+              </ui:fragment>
+            </div>
+            <div class="rl-empty rl-none">
+              <div class="rl-empty-ico">⌕</div>
+              <p>#{localeBean.getMsg('search.noResult')} « <span id="rlQuery"></span> »</p>
+            </div>
+            <div class="rl-head">
+              <div class="rl-count"><span class="rl-n" id="rlN">0</span><span class="rl-lbl" id="rlLbl">#{localeBean.getMsg('search.result_found')}</span></div>
+              <span class="rl-q" id="rlHeadQ"></span>
+            </div>
+            <ul class="rl-list" id="rlList"></ul>
+            <button type="button" class="rl-more" id="rlMore" hidden="hidden">#{localeBean.getMsg('search.seeAll')} <span class="rl-more-n" id="rlMoreN">+24</span></button>
+          </div>
+        </div>
+
+        <div class="sidebar-body sb-tree sidebar-panel" id="panelTable">
+          <div class="flat-loading" id="panelTableLoading" hidden="hidden" aria-live="polite">
+            <div class="mg-bars-loading">
+              <span class="mg-kpi-spin" aria-hidden="true"></span>
+              <span class="flat-loading-lbl">Chargement du tableau…</span>
+            </div>
+          </div>
+          <div class="flat-wrap">
+            <table class="flat">
+              <thead>
+                <tr>
+                  <ui:fragment rendered="#{consultationShellBean.adminOnCurrentThesaurus}">
+                    <th class="flat-check-h"><span class="tn-check" data-act="sel-all"></span></th>
+                  </ui:fragment>
+                  <th class="flat-th is-sorted" data-act="tbl-sort" data-col="concept"><span class="flat-th-l">Concept</span><span class="flat-th-s">▲</span></th>
+                  <th class="flat-th col-status" data-act="tbl-sort" data-col="status"><span class="flat-th-l">Statut</span><span class="flat-th-s">↕</span></th>
+                  <th class="flat-th col-type" data-act="tbl-sort" data-col="type"><span class="flat-th-l">Type</span><span class="flat-th-s">↕</span></th>
+                  <th class="flat-th col-notation" data-act="tbl-sort" data-col="notation"><span class="flat-th-l">Notation</span><span class="flat-th-s">↕</span></th>
+                  <th class="flat-th col-path" data-act="tbl-sort" data-col="path"><span class="flat-th-l">Chemin</span><span class="flat-th-s">↕</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="flat-empty-row" data-empty="1">
+                  <td colspan="#{consultationShellBean.adminOnCurrentThesaurus ? 6 : 5}">Aucun concept à afficher.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flat-foot">
+            <div class="flat-count"></div>
+            <label class="flat-pagesz" title="Nombre de lignes par page">
+              <select id="panelTablePageSize" aria-label="Lignes par page">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+              <span>par page</span>
+            </label>
+            <div class="st-pager" id="panelTablePager" hidden="hidden"></div>
+          </div>
+        </div>
+
+        <ui:fragment rendered="#{consultationShellBean.adminOnCurrentThesaurus}">
+        <div class="bulksel bulksel-mini" id="bulkSel">
+          <span class="bulksel-mini-n"><b id="bulkN">0</b> sélectionné<span id="bulkPlural">s</span></span>
+          <button type="button" class="bulksel-all" data-act="sel-all-visible" title="Sélectionner tous les concepts du thésaurus">Tout</button>
+          <button type="button" class="bulksel-mini-x" data-act="clear-sel" title="Tout désélectionner" aria-label="Tout désélectionner">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+          </button>
+        </div>
+        </ui:fragment>
+      </aside>
+</ui:composition>

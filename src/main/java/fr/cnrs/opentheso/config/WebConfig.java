@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.config;
 
 import fr.cnrs.opentheso.listeners.ApiKeyInterceptor;
-import fr.cnrs.opentheso.v2.stats.intercept.ApiStatInterceptor;
+import fr.cnrs.opentheso.stats.intercept.ApiStatInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,10 +23,11 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(apiStatInterceptor)
                 .addPathPatterns("/api/**", "/openapi/**");
 
-        // 2️⃣ ApiKeyInterceptor sur toutes les routes /api/**
-        // uniquement pour POST, PUT, DELETE (déjà géré dans l’interceptor)
+        // Clé API pour les écritures /api/** (POST, PUT, DELETE).
+        // L'export lancé depuis l'interface utilise la session, pas une clé API.
         registry.addInterceptor(apiKeyInterceptor)
-                .addPathPatterns("/api/**");
+                .addPathPatterns("/api/**")
+                .excludePathPatterns("/api/selection-export", "/api/selection-export/**");
     }
 
     // CORS

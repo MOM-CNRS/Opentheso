@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+    <h:form id="thesaurusImportForm" prependId="false"
+            styleClass="tp-form-root tp-form-root--file"
+            enctype="multipart/form-data"
+            rendered="#{thesaurusPickerBean.importMode}">
+      <div id="tpImportRoot" class="tp tp--create tp--import" data-tp-screen="import"
+           data-load-done="#{thesaurusPickerImportBean.loadDone}"
+           data-has-upload="#{thesaurusPickerImportBean.hasUpload}"
+           data-import-ready="#{thesaurusPickerImportBean.importReady}"
+           data-msg-analyzing="#{localeBean.getMsg('picker.import.analyzing')}"
+           data-msg-pending="#{localeBean.getMsg('picker.import.filePending')}">
+        <button type="button"
+                class="bo-back"
+                title="#{localeBean.getMsg('picker.import.back')}"
+                aria-label="#{localeBean.getMsg('picker.import.back')}"
+                onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpImportCancel'));">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+        <div class="tp-head">
+          <div class="tp-head-copy">
+            <h1 class="tp-title">#{localeBean.getMsg('picker.import.title')}</h1>
+            <p class="tp-sub">#{localeBean.getMsg('picker.import.subtitle')}</p>
+          </div>
+        </div>
+
+        <div class="tp-io-identity" aria-label="#{localeBean.getMsg('picker.import.title')}">
+          <span class="tp-io-identity-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <path d="m7 10 5 5 5-5"/>
+              <path d="M12 15V3"/>
+            </svg>
+          </span>
+          <div class="tp-io-identity-body">
+            <span class="tp-io-identity-l">#{localeBean.getMsg('picker.import.format')}</span>
+            <strong class="tp-io-identity-t">#{localeBean.getMsg('picker.import.bannerTitle')}</strong>
+            <span class="tp-io-identity-id">#{localeBean.getMsg('picker.import.bannerHint')}</span>
+          </div>
+          <ui:fragment rendered="#{thesaurusPickerImportBean.loadDone}">
+            <div class="tp-io-identity-stat" title="#{localeBean.getMsg('picker.import.preview')}">
+              <b>#{thesaurusPickerImportBean.totalConcepts}</b>
+              <span>#{localeBean.getMsg('picker.import.concepts')}</span>
+            </div>
+          </ui:fragment>
+        </div>
+
+        <h:panelGroup id="tpImportPanel" layout="block" styleClass="tp-form tp-import-layout">
+          <div class="tp-import-main">
+          <div class="tp-form-card tp-import-card">
+            <h:panelGroup id="tpImportAlerts" layout="block">
+            <ui:fragment rendered="#{not empty thesaurusPickerImportBean.error}">
+              <div class="tp-form-alert is-err is-enter" role="alert">#{thesaurusPickerImportBean.error}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty thesaurusPickerImportBean.info}">
+              <div class="tp-form-alert is-ok is-enter" role="status">#{thesaurusPickerImportBean.info}</div>
+            </ui:fragment>
+            </h:panelGroup>
+
+            <div class="tp-form-row tp-form-row--formats">
+              <div class="tp-import-formats"
+                   id="tpImportFormats"
+                   role="tablist"
+                   data-accept-skos=".rdf,.xml,.ttl,.json,.jsonld,.owl,application/rdf+xml,text/turtle,application/ld+json"
+                   data-accept-csv=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                   data-hint-skos="#{localeBean.getMsg('picker.import.acceptSkos')}"
+                   data-hint-csv="#{localeBean.getMsg('picker.import.acceptCsv')}">
+                <h:inputHidden id="tpImportFormat" value="#{thesaurusPickerImportBean.format}"/>
+                <button type="button"
+                        class="tp-import-fmt#{thesaurusPickerImportBean.isFormat('skos') ? ' is-on' : ''}"
+                        data-tp-format="skos"
+                        onclick="return window.tpSelectImportFormat &amp;&amp; window.tpSelectImportFormat(this);">
+                  <h:outputText value="SKOS / RDF"/>
+                </button>
+                <button type="button"
+                        class="tp-import-fmt#{thesaurusPickerImportBean.isFormat('csv') ? ' is-on' : ''}"
+                        data-tp-format="csv"
+                        onclick="return window.tpSelectImportFormat &amp;&amp; window.tpSelectImportFormat(this);">
+                  <h:outputText value="CSV"/>
+                </button>
+                <button type="button"
+                        class="tp-import-fmt#{thesaurusPickerImportBean.isFormat('csvStructured') ? ' is-on' : ''}"
+                        data-tp-format="csvStructured"
+                        onclick="return window.tpSelectImportFormat &amp;&amp; window.tpSelectImportFormat(this);">
+                  <h:outputText value="#{localeBean.getMsg('picker.import.csvStructured')}"/>
+                </button>
+              </div>
+            </div>
+
+            <div class="tp-form-row tp-fmt-panel#{thesaurusPickerImportBean.isFormat('skos') ? '' : ' is-off'}"
+                 data-tp-fmt-panel="skos">
+              <label class="tp-form-l" for="tpImportSkosType">#{localeBean.getMsg('picker.import.skosType')}</label>
+              <h:selectOneMenu id="tpImportSkosType" styleClass="tp-form-i"
+                               value="#{thesaurusPickerImportBean.skosTypeImport}"
+                               pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();">
+                <f:selectItem itemValue="#{0}" itemLabel="RDF/XML"/>
+                <f:selectItem itemValue="#{1}" itemLabel="JSON-LD"/>
+                <f:selectItem itemValue="#{2}" itemLabel="Turtle"/>
+                <f:selectItem itemValue="#{3}" itemLabel="RDF/JSON"/>
+              </h:selectOneMenu>
+            </div>
+
+            <div class="tp-fmt-panel#{thesaurusPickerImportBean.isFormat('skos') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="csv,csvStructured">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportName">#{localeBean.getMsg('picker.import.name')} <span class="tp-req">*</span></label>
+                <h:inputText id="tpImportName" styleClass="tp-form-i"
+                             value="#{thesaurusPickerImportBean.thesaurusName}"
+                             pt:placeholder="Ex. PACTOLS…"
+                             pt:oninput="window.tpSyncImportSubmit &amp;&amp; window.tpSyncImportSubmit();"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportDelim">#{localeBean.getMsg('picker.import.delimiter')}</label>
+                <h:selectOneMenu id="tpImportDelim" styleClass="tp-form-i"
+                                 value="#{thesaurusPickerImportBean.csvDelimiter}"
+                                 pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();">
+                  <f:selectItem itemValue="#{0}" itemLabel=","/>
+                  <f:selectItem itemValue="#{1}" itemLabel=";"/>
+                  <f:selectItem itemValue="#{2}" itemLabel="Tab"/>
+                </h:selectOneMenu>
+              </div>
+            </div>
+
+            <div class="tp-form-row tp-fmt-panel#{thesaurusPickerImportBean.isFormat('csvStructured') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="skos,csv">
+              <label class="tp-form-l" for="tpImportDate">#{localeBean.getMsg('picker.import.dateFormat')}</label>
+              <h:inputText id="tpImportDate" styleClass="tp-form-i"
+                           value="#{thesaurusPickerImportBean.formatDate}"
+                           pt:placeholder="#{localeBean.getMsg('picker.import.dateFormatPh')}"
+                           pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();"/>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{localeBean.getMsg('picker.import.sourceLang')} <span class="tp-req">*</span></span>
+              <h:panelGroup id="tpImportLangUi" layout="block" styleClass="tp-lang-pick">
+                <button type="button"
+                        class="tree-lang-btn tp-lang-btn"
+                        data-act="tp-lang-toggle"
+                        title="#{localeBean.getMsg('picker.import.sourceLang')}"
+                        aria-haspopup="listbox"
+                        aria-expanded="false">
+                  <span class="tree-lang-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(thesaurusPickerImportBean.selectedLang)}</span>
+                  <span class="tree-lang-name">#{thesaurusPickerBean.languageLabel(thesaurusPickerImportBean.selectedLang)}</span>
+                  <span class="tree-lang-code">#{thesaurusPickerImportBean.selectedLang}</span>
+                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="tree-lang-menu tp-lang-menu" role="listbox"
+                     aria-label="#{localeBean.getMsg('picker.import.sourceLang')}">
+                  <div class="tree-lang-menu-h">#{localeBean.getMsg('picker.import.sourceLang')}</div>
+                  <ui:repeat value="#{thesaurusPickerImportBean.languages}" var="lg">
+                    <h:commandLink styleClass="tree-lang-opt#{thesaurusPickerImportBean.isLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                   action="#{thesaurusPickerImportBean.selectLanguage}"
+                                   onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false);">
+                      <f:param name="importLangCode" value="#{lg.code}"/>
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
+                      <span class="tree-lang-opt-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
+                      <span class="tree-lang-opt-code">#{lg.code}</span>
+                      <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                    </h:commandLink>
+                  </ui:repeat>
+                </div>
+              </h:panelGroup>
+            </div>
+
+            <div class="tp-form-row tp-fmt-panel#{thesaurusPickerImportBean.isFormat('csvStructured') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="skos,csv">
+              <label class="tp-form-l" for="tpImportAcronym">#{localeBean.getMsg('picker.import.acronym')}</label>
+              <h:inputText id="tpImportAcronym" styleClass="tp-form-i"
+                           value="#{thesaurusPickerImportBean.persistentName}"
+                           pt:placeholder="#{localeBean.getMsg('picker.import.acronymPh')}"/>
+            </div>
+
+            <div class="tp-fmt-panel#{thesaurusPickerImportBean.isFormat('skos') ? '' : ' is-off'}"
+                 data-tp-fmt-panel="skos">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportIdType">#{localeBean.getMsg('picker.import.idType')}</label>
+                <h:selectOneMenu id="tpImportIdType" styleClass="tp-form-i"
+                                 value="#{thesaurusPickerImportBean.selectedIdentifier}"
+                                 pt:onchange="window.tpSyncImportIdType &amp;&amp; window.tpSyncImportIdType();">
+                  <f:selectItem itemValue="sans" itemLabel="#{localeBean.getMsg('picker.import.id.none')}"/>
+                  <f:selectItem itemValue="ark" itemLabel="ARK"/>
+                  <f:selectItem itemValue="handle" itemLabel="Handle"/>
+                  <f:selectItem itemValue="doi" itemLabel="DOI"/>
+                </h:selectOneMenu>
+              </div>
+              <div id="tpImportHandlePrefixRow"
+                   class="tp-form-row#{thesaurusPickerImportBean.selectedIdentifier eq 'handle' ? '' : ' is-off'}">
+                <label class="tp-form-l" for="tpImportHandlePrefix">#{localeBean.getMsg('picker.import.handlePrefix')}</label>
+                <h:inputText id="tpImportHandlePrefix" styleClass="tp-form-i"
+                             value="#{thesaurusPickerImportBean.prefixHandle}"
+                             pt:placeholder="#{localeBean.getMsg('picker.import.handlePrefixPh')}"/>
+              </div>
+            </div>
+
+            <div class="tp-form-row">
+              <label class="tp-form-l" for="tpImportProject">#{localeBean.getMsg('picker.import.project')}</label>
+              <h:selectOneMenu id="tpImportProject" styleClass="tp-form-i"
+                               value="#{thesaurusPickerImportBean.selectedProjectId}">
+                <f:selectItem itemValue=""
+                              itemLabel="#{thesaurusPickerImportBean.superAdmin ? localeBean.getMsg('picker.import.noProject') : localeBean.getMsg('picker.import.chooseProject')}"/>
+                <f:selectItems value="#{thesaurusPickerImportBean.projects}" var="proj"
+                               itemValue="#{proj.idAsString()}" itemLabel="#{proj.name}"/>
+              </h:selectOneMenu>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{localeBean.getMsg('picker.import.visibility')}</span>
+              <label class="tp-import-check">
+                <h:selectBooleanCheckbox id="tpImportPrivate"
+                                         value="#{thesaurusPickerImportBean.privateThesaurus}"/>
+                <span>#{localeBean.getMsg('picker.import.private')}</span>
+              </label>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{localeBean.getMsg('picker.import.file')} <span class="tp-req">*</span></span>
+              <h:panelGroup id="tpImportFileBlock" layout="block"
+                            styleClass="tp-import-dropzone#{not empty thesaurusPickerImportBean.uploadedFileName ? ' has-file' : ''}#{thesaurusPickerImportBean.loadDone ? ' is-analyzed' : ''}"
+                            pt:data-accept="#{thesaurusPickerImportBean.fileAccept}">
+                <label class="tp-drop tp-drop-empty" for="tpImportFile" data-tp-drop="1">
+                  <span class="tp-drop-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  </span>
+                  <span class="tp-drop-t">#{localeBean.getMsg('picker.import.drop')}
+                    <span class="tp-drop-lk">#{localeBean.getMsg('picker.import.browse')}</span>
+                  </span>
+                  <span class="tp-drop-s">#{thesaurusPickerImportBean.fileAcceptHint}</span>
+                </label>
+                <h:inputFile id="tpImportFile" styleClass="tp-file-input"
+                             value="#{thesaurusPickerImportBean.upload}"/>
+                <h:commandButton id="tpImportFileCommit"
+                                 styleClass="tp-file-commit"
+                                 style="display:none"
+                                 action="#{thesaurusPickerImportBean.onFileSelected}"
+                                 onclick="return window.tpBeginImportAnalyze &amp;&amp; window.tpBeginImportAnalyze();">
+                </h:commandButton>
+                <div class="tp-drop tp-drop-filled">
+                  <span class="tp-drop-file-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                  </span>
+                  <div class="tp-drop-file">
+                    <div class="tp-drop-file-n">#{thesaurusPickerImportBean.uploadedFileName}</div>
+                    <div class="tp-drop-file-m">#{thesaurusPickerImportBean.uploadedFileMeta}</div>
+                  </div>
+                  <h:commandButton id="tpImportAnalyze"
+                                   styleClass="tp-drop-reanalyze#{thesaurusPickerImportBean.loadDone ? '' : ' is-primary-analyze'}"
+                                   value="#{thesaurusPickerImportBean.loadDone ? localeBean.getMsg('picker.import.reanalyze') : localeBean.getMsg('picker.import.load')}"
+                                   action="#{thesaurusPickerImportBean.loadFile}"
+                                   title="#{localeBean.getMsg('picker.import.load')}"
+                                   onclick="return window.tpBeginImportAnalyze &amp;&amp; window.tpBeginImportAnalyze();">
+                  </h:commandButton>
+                  <span class="tp-drop-x" title="#{localeBean.getMsg('picker.import.clearFile')}">
+                    <h:commandButton id="tpImportClearFile"
+                                     styleClass="tp-drop-x-in"
+                                     action="#{thesaurusPickerImportBean.clearUploadedFile}"
+                                     value="×"
+                                     title="#{localeBean.getMsg('picker.import.clearFile')}"
+                                     aria-label="#{localeBean.getMsg('picker.import.clearFile')}"
+                                     onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false); return true;">
+                    </h:commandButton>
+                    <span class="tp-drop-x-ui" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </h:panelGroup>
+            </div>
+
+            <h:panelGroup id="tpImportPreview" layout="block"
+                          styleClass="#{thesaurusPickerImportBean.loadDone ? 'is-ready' : ''}">
+            <ui:fragment rendered="#{thesaurusPickerImportBean.loadDone}">
+              <div class="tp-form-row tp-form-row--preview">
+                <span class="tp-form-l">#{localeBean.getMsg('picker.import.preview')}</span>
+                <div class="tp-import-preview">
+                  <div class="tp-import-stat">
+                    <b>#{thesaurusPickerImportBean.totalConcepts}</b>
+                    <span>#{localeBean.getMsg('picker.import.concepts')}</span>
+                  </div>
+                  <ui:fragment rendered="#{not empty thesaurusPickerImportBean.skosUri}">
+                    <div class="tp-import-meta">URI · #{thesaurusPickerImportBean.skosUri}</div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{thesaurusPickerImportBean.previewIssueCount == 0}">
+                    <div class="tp-import-meta is-ready">#{localeBean.getMsg('picker.import.issues.none')}</div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{thesaurusPickerImportBean.previewIssueCount gt 0}">
+                    <p class="tp-import-issues-h">#{localeBean.getMsg('picker.import.issues.title', thesaurusPickerImportBean.previewIssueCount)}</p>
+                    <ul class="tp-import-issues">
+                      <ui:repeat value="#{thesaurusPickerImportBean.previewIssuesShown}" var="issue">
+                        <li>
+                          <ui:fragment rendered="#{issue.line gt 0}">
+                            <span class="tp-import-issue-line">#{localeBean.getMsg('picker.import.issue.line', issue.line)}</span>
+                          </ui:fragment>
+                          <span>#{issue.message}</span>
+                        </li>
+                      </ui:repeat>
+                    </ul>
+                    <ui:fragment rendered="#{thesaurusPickerImportBean.previewIssueHidden gt 0}">
+                      <p class="tp-import-issues-more">#{localeBean.getMsg('picker.import.issues.more', thesaurusPickerImportBean.previewIssueHidden)}</p>
+                    </ui:fragment>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{thesaurusPickerImportBean.importReady and thesaurusPickerImportBean.previewIssueCount == 0}">
+                    <div class="tp-import-meta is-ready">#{localeBean.getMsg('picker.import.readyHint')}</div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{thesaurusPickerImportBean.importReady and thesaurusPickerImportBean.previewIssueCount gt 0}">
+                    <div class="tp-import-meta is-warn">#{localeBean.getMsg('picker.import.readyWithIssues', thesaurusPickerImportBean.previewIssueCount)}</div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{thesaurusPickerImportBean.reportReady}">
+                    <a class="tp-import-report" href="#{request.contextPath}/api/v2/thesaurus-import/report">#{localeBean.getMsg('picker.import.report.download')}</a>
+                  </ui:fragment>
+                </div>
+              </div>
+            </ui:fragment>
+            </h:panelGroup>
+
+            <h:panelGroup id="tpImportExisting" layout="block">
+              <ui:fragment rendered="#{thesaurusPickerImportBean.existingThesaurusDetected}">
+                <div class="tp-form-row">
+                  <span class="tp-form-l">#{localeBean.getMsg('picker.import.existing')}</span>
+                  <div class="tp-import-existing">
+                    <p>#{localeBean.getMsg('picker.import.existingHint')}
+                      <code>#{thesaurusPickerImportBean.existingThesaurusId}</code>
+                    </p>
+                    <label class="tp-import-check">
+                      <h:selectBooleanCheckbox id="tpImportAsMaster"
+                                               value="#{thesaurusPickerImportBean.importAsMaster}"/>
+                      <span>#{localeBean.getMsg('picker.import.asMaster')}</span>
+                    </label>
+                  </div>
+                </div>
+              </ui:fragment>
+            </h:panelGroup>
+          </div>
+          <div class="tp-form-run tp-import-run">
+            <button type="button"
+                    class="tp-form-cancel"
+                    onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpImportCancel'));">
+              #{localeBean.getMsg('picker.import.back')}
+            </button>
+            <h:commandButton id="tpImportCancel"
+                             styleClass="tp-create-go"
+                             value="#{localeBean.getMsg('picker.import.cancel')}"
+                             action="#{thesaurusPickerBean.cancelImportThesaurus}"
+                             immediate="true"
+                             tabindex="-1"
+                             aria-hidden="true">
+            </h:commandButton>
+            <div class="tp-import-actions">
+              <h:panelGroup id="tpImportSubmit" layout="span">
+              <h:commandButton id="tpImportGo"
+                               styleClass="tp-form-submit#{thesaurusPickerImportBean.importReady ? ' is-ready-pulse' : ' is-disabled'}"
+                               value="#{localeBean.getMsg('picker.import.submit')}"
+                               action="#{thesaurusPickerImportBean.submitImport}"
+                               pt:data-loading-msg="#{localeBean.getMsg('picker.import.running')}"
+                               pt:aria-disabled="#{thesaurusPickerImportBean.importReady ? 'false' : 'true'}"
+                               onclick="return window.tpPrepareImportSubmit &amp;&amp; window.tpPrepareImportSubmit(this);">
+              </h:commandButton>
+              </h:panelGroup>
+            </div>
+          </div>
+          </div>
+        </h:panelGroup>
+      </div>
+    </h:form>
+</ui:composition>

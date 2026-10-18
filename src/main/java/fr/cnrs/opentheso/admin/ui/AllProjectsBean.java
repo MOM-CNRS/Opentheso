@@ -1,0 +1,41 @@
+package fr.cnrs.opentheso.admin.ui;
+
+import fr.cnrs.opentheso.admin.service.AdminCatalogService;
+import fr.cnrs.opentheso.project.model.ProjectSummary;
+import fr.cnrs.opentheso.shared.ui.UserSession;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import lombok.Getter;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@Getter
+@ViewScoped
+@Named("allProjectsBean")
+public class AllProjectsBean implements Serializable {
+
+    private final transient UserSession userSession;
+    private final transient AdminCatalogService adminCatalogService;
+
+    public AllProjectsBean(UserSession userSession, AdminCatalogService adminCatalogService) {
+        this.userSession = userSession;
+        this.adminCatalogService = adminCatalogService;
+    }
+
+    private List<ProjectSummary> projects = Collections.emptyList();
+
+    public void load() {
+        if (!userSession.canAccessSuperAdminScreen()) {
+            projects = Collections.emptyList();
+            return;
+        }
+        projects = new ArrayList<>(adminCatalogService.listAllProjects(true));
+    }
+
+    public boolean isSuperAdminScreen() {
+        return userSession.canAccessSuperAdminScreen();
+    }
+}

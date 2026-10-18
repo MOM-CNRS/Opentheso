@@ -1,8 +1,7 @@
 package fr.cnrs.opentheso.config;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.repositories.UserRepository;
-import fr.cnrs.opentheso.v2.shared.session.SessionAuthenticatedUserSource;
+import fr.cnrs.opentheso.shared.session.SessionAuthenticatedUserSource;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,6 @@ public class SecurityConfig {
     @Value("${app.security.keycloak-enabled}")
     private boolean keycloakEnabled;
 
-    private final CurrentUser currentUser;
     private final UserRepository userRepository;
 
     @Bean
@@ -60,8 +58,7 @@ public class SecurityConfig {
                                 "/openapi/v1/**",
                                 "/api/v2/**",
                                 "/api/v2/auth/token",
-                                "/v2/api/**",
-                                "/v2-preview/api/**"
+                                "/api/**"
                         )
                         .ignoringRequestMatchers(
                                 request -> request.getServletPath().endsWith(".xhtml")

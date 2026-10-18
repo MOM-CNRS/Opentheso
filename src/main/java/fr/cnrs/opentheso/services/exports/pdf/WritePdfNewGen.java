@@ -2,8 +2,8 @@ package fr.cnrs.opentheso.services.exports.pdf;
 
 import com.itextpdf.text.DocumentException;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.v2.toolbox.edition.io.pdf.ThesaurusPdfExportType;
-import fr.cnrs.opentheso.v2.toolbox.edition.io.pdf.ThesaurusPdfWriter;
+import fr.cnrs.opentheso.toolbox.edition.io.pdf.ThesaurusPdfExportType;
+import fr.cnrs.opentheso.toolbox.edition.io.pdf.ThesaurusPdfWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+
+  <div class="prop-banner is-review">
+    <div class="prop-banner-row">
+      <span class="prop-banner-dot" aria-hidden="true"></span>
+      <div class="prop-banner-main">
+        <div class="prop-banner-t">#{localeBean.getMsg('proposition.review.title')}</div>
+        <div class="prop-banner-s">
+          #{localeBean.getMsg('candidat.banner.proposedBy')}
+          <b>#{propositionBean.selectedProposition.authorName}</b>
+          (#{propositionBean.selectedProposition.authorEmail})
+          #{localeBean.getMsg('candidat.banner.on')}
+          #{propositionBean.selectedProposition.publishedAt}
+          <span class="cand-banner-sep">·</span>
+          #{propositionBean.selectedProposition.lang}
+        </div>
+      </div>
+    </div>
+    <div class="prop-review-comment-box">
+      <div class="prop-review-comment-label">#{localeBean.getMsg('proposition.commentaire')}</div>
+      <div class="prop-review-comment">#{propositionBean.selectedProposition.comment}</div>
+    </div>
+  </div>
+
+  <ui:fragment rendered="#{propositionBean.consultation and (not empty propositionBean.reviewFields or propositionBean.canMakeAction)}">
+    <section class="cblock is-editing" data-card-id="prop-review-changes">
+      <div class="cblock-head">
+        <span class="cblock-title">#{localeBean.getMsg('proposition.changes.title')}</span>
+      </div>
+      <div class="cblock-body">
+        <ui:repeat value="#{propositionBean.reviewFields}" var="field">
+          <div class="prop-change-block#{field.removed ? ' is-removed' : ''}">
+            <div class="prop-change-head">
+              <label class="prop-change-accept">
+                <h:selectBooleanCheckbox value="#{field.accepted}"
+                                         disabled="#{not propositionBean.canMakeAction or field.removed}"/>
+                #{field.title}
+              </label>
+              <span class="prop-change-meta">
+                <span class="prop-tag">#{field.actionLabel}</span>
+                <ui:fragment rendered="#{not empty field.lang}">
+                  <span class="val-lang">#{field.lang}</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{field.hidden}">
+                  <span class="prop-tag">#{localeBean.getMsg('proposition.hidden')}</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{propositionBean.canMakeAction and not field.removed}">
+                  <h:commandLink styleClass="bo-btn ghost sm danger"
+                                 action="#{propositionBean.removeReviewField(field)}">
+                    <f:ajax execute="@this" render="@form"/>
+                    #{localeBean.getMsg('btnDelete')}
+                  </h:commandLink>
+                </ui:fragment>
+                <ui:fragment rendered="#{propositionBean.canMakeAction and field.removed}">
+                  <h:commandLink styleClass="bo-btn ghost sm"
+                                 action="#{propositionBean.undoRemoveReviewField(field)}">
+                    <f:ajax execute="@this" render="@form"/>
+                    #{localeBean.getMsg('proposition.undoRemove')}
+                  </h:commandLink>
+                </ui:fragment>
+              </span>
+            </div>
+            <div class="prop-diff #{field.actionCss}">
+              <div class="prop-diff-col is-old#{field.oldPresent ? '' : ' is-empty'}">
+                <div class="prop-diff-k">#{localeBean.getMsg('proposition.diff.old')}</div>
+                <div class="prop-diff-v is-old">#{field.oldPresent ? field.oldValue : localeBean.getMsg('proposition.diff.empty')}</div>
+              </div>
+              <span class="prop-diff-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+              </span>
+              <div class="prop-diff-col is-new#{field.newPresent ? '' : ' is-empty'}">
+                <div class="prop-diff-k">#{localeBean.getMsg('proposition.diff.new')}</div>
+                <ui:fragment rendered="#{propositionBean.canMakeAction and field.valueEditable and not field.removed}">
+                  <h:inputText styleClass="st-input prop-diff-input"
+                               value="#{field.newValue}"
+                               pt:autocomplete="off"/>
+                </ui:fragment>
+                <ui:fragment rendered="#{not (propositionBean.canMakeAction and field.valueEditable and not field.removed)}">
+                  <div class="prop-diff-v is-new">#{field.newPresent ? field.newValue : localeBean.getMsg('proposition.diff.empty')}</div>
+                </ui:fragment>
+              </div>
+            </div>
+          </div>
+        </ui:repeat>
+        <ui:fragment rendered="#{propositionBean.canMakeAction}">
+          <div class="crow cblock-edit-row prop-add-row">
+            <div class="crow-lbl">#{localeBean.getMsg('proposition.add')}</div>
+            <div class="crow-val prop-row">
+              <h:selectOneMenu id="propReviewAddCat" styleClass="st-input"
+                               value="#{propositionBean.newReviewCategory}">
+                <f:selectItems value="#{propositionBean.addableCategories}" var="cat"
+                               itemValue="#{cat.name()}" itemLabel="#{propositionBean.categoryLabel(cat)}"/>
+              </h:selectOneMenu>
+              <h:selectOneMenu id="propReviewAddLang" styleClass="st-input"
+                               value="#{propositionBean.newReviewLang}">
+                <f:selectItems value="#{thesaurusViewBean.languages}" var="lg"
+                               itemValue="#{lg.code}" itemLabel="#{lg.displayLabel} (#{lg.code})"/>
+              </h:selectOneMenu>
+              <h:inputText id="propReviewAddVal" styleClass="st-input"
+                           value="#{propositionBean.newReviewValue}"
+                           pt:autocomplete="off"
+                           pt:placeholder="#{localeBean.getMsg('proposition.review.addPlaceholder')}"/>
+              <h:commandLink styleClass="bo-btn primary sm"
+                             action="#{propositionBean.addReviewField}">
+                <f:ajax execute="propReviewAddCat propReviewAddLang propReviewAddVal @this" render="@form"/>
+                #{localeBean.getMsg('proposition.add')}
+              </h:commandLink>
+            </div>
+          </div>
+        </ui:fragment>
+      </div>
+    </section>
+  </ui:fragment>
+  <ui:fragment rendered="#{propositionBean.consultation and empty propositionBean.reviewFields and not propositionBean.canMakeAction}">
+    <div class="prop-empty" role="status">
+      <p class="cand-empty-t">#{localeBean.getMsg('proposition.review.noChanges')}</p>
+      <p class="cand-empty-s">#{localeBean.getMsg('proposition.review.noChangesHint')}</p>
+    </div>
+  </ui:fragment>
+
+  <ui:fragment rendered="#{propositionBean.showDecisionButtons}">
+    <section class="cblock is-editing" data-card-id="prop-review-decision">
+      <div class="cblock-head">
+        <span class="cblock-title">#{localeBean.getMsg('proposition.reponse')}</span>
+      </div>
+      <div class="cblock-body">
+        <div class="prop-footer-act">
+          <button type="button" class="bo-btn ghost danger sm" data-act="prop-delete-ask">
+            #{localeBean.getMsg('btnDelete')}
+          </button>
+          <button type="button" class="bo-btn ghost sm" data-act="prop-refuse-ask">
+            #{localeBean.getMsg('proposition.refuser')}
+          </button>
+          <button type="button" class="bo-btn primary sm" data-act="prop-approve-ask">
+            #{localeBean.getMsg('proposition.approuver')}
+          </button>
+        </div>
+      </div>
+    </section>
+  </ui:fragment>
+
+  <ui:fragment rendered="#{propositionBean.showAuthorCannotDecide}">
+    <div class="prop-author-alert" role="status">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <div>
+        <p class="prop-author-alert-t">#{localeBean.getMsg('proposition.alertSameUser')}</p>
+        <p class="prop-author-alert-s">#{localeBean.getMsg('proposition.review.ownProposalHint')}</p>
+      </div>
+    </div>
+  </ui:fragment>
+
+  <div class="block-overlay confirm-overlay" id="propDecisionConfirm" hidden="hidden"
+       data-act="prop-decision-dismiss" role="presentation"
+       data-title-approve="#{localeBean.getMsg('proposition.approuver')}"
+       data-title-refuse="#{localeBean.getMsg('proposition.refuser')}"
+       data-text-approve="#{localeBean.getMsg('rightbody.proposal.confirmValidateProposal')}"
+       data-text-refuse="#{localeBean.getMsg('rightbody.proposal.confirmRejectProposal')}">
+    <div class="confirm-modal prop-decision-modal" role="dialog" aria-modal="true"
+         aria-labelledby="propDecisionConfirmTitle" data-act="prop-decision-modal">
+      <div class="confirm-h" id="propDecisionConfirmTitle">#{localeBean.getMsg('proposition.approuver')}</div>
+      <p class="confirm-p" id="propDecisionConfirmText">#{localeBean.getMsg('rightbody.proposal.confirmValidateProposal')}</p>
+      <div class="prop-decision-comment">
+        <label class="prop-decision-comment-lbl" for="propReviewReply">
+          #{localeBean.getMsg('proposition.review.decisionComment')}
+        </label>
+        <p class="prop-decision-comment-hint">#{localeBean.getMsg('proposition.review.decisionCommentHint')}</p>
+        <h:inputTextarea id="propReviewReply" styleClass="st-input prop-decision-comment-input"
+                         value="#{propositionBean.reviewComment}" rows="4"
+                         pt:placeholder="#{localeBean.getMsg('proposition.review.replyPlaceholder')}"/>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel"
+                data-act="prop-decision-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink id="propApproveConfirmGo" styleClass="abt-save abt-save-ok prop-decision-go is-approve"
+                       action="#{propositionBean.approveSelected}">
+          <f:ajax execute="@form" render="@form :previewPropBadge" onevent="onPropReview"/>
+          <span class="abt-save-label">#{localeBean.getMsg('proposition.approuver')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+        </h:commandLink>
+        <h:commandLink id="propRefuseConfirmGo" styleClass="abt-save abt-save-ok prop-decision-go is-refuse"
+                       action="#{propositionBean.refuseSelected}">
+          <f:ajax execute="@form" render="@form :previewPropBadge" onevent="onPropReview"/>
+          <span class="abt-save-label">#{localeBean.getMsg('proposition.refuser')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="propDeleteConfirm" hidden="hidden"
+       data-act="prop-delete-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+         aria-labelledby="propDeleteConfirmTitle" data-act="prop-delete-modal">
+      <div class="confirm-h" id="propDeleteConfirmTitle">#{localeBean.getMsg('btnDelete')}</div>
+      <p class="confirm-p">#{localeBean.getMsg('rightbody.proposal.confirmDeleteProposal')}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel"
+                data-act="prop-delete-dismiss">#{localeBean.getMsg('cancel')}</button>
+        <h:commandLink styleClass="abt-save abt-save-ok"
+                       action="#{propositionBean.deleteSelected}">
+          <f:ajax execute="@this" render="@form :previewPropBadge" onevent="onPropReview"/>
+          <span class="abt-save-label">#{localeBean.getMsg('btnDelete')}</span>
+          <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+</ui:composition>

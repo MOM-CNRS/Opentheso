@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+
+  <nav class="thesaurus" id="navThesaurus" aria-label="Navigation OpenTheso">
+    <a class="thesaurus-logo" href="#{request.contextPath}/thesauri" title="OpenTheso — sélection de thésaurus" aria-label="OpenTheso">
+      <img src="#{request.contextPath}/resources/img/O_blanc_arrondi.png"
+           alt="OpenTheso"
+           width="40"
+           height="40"
+           decoding="async"/>
+    </a>
+    <button type="button" class="thesaurus-btn sb-rail-btn" id="sbOpenBtn" data-act="sb-toggle"
+            title="#{localeBean.getMsg('shell.treeOpen')}"
+            aria-label="#{localeBean.getMsg('shell.treeOpen')}"
+            data-open="#{localeBean.getMsg('shell.treeOpen')}"
+            data-close="#{localeBean.getMsg('shell.treeClose')}"
+            aria-controls="sidebar" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+    </button>
+    <div class="thesaurus-group">
+      <h:panelGroup id="previewHeaderAuth" layout="block" styleClass="thesaurus-auth">
+        <div class="thesaurus-item">
+          <button type="button" class="thesaurus-btn#{userSession.loggedIn ? ' is-avatar' : ''}#{not userSession.loggedIn and not empty loginBean.loginError ? ' is-on' : ''}"
+                  data-act="thesaurus" data-thesaurus="account"
+                  title="#{userSession.loggedIn ? localeBean.getMsg('nav.account') : localeBean.getMsg('menu.login')}"
+                  aria-label="#{userSession.loggedIn ? localeBean.getMsg('nav.account') : localeBean.getMsg('menu.login')}"
+                  aria-expanded="#{not userSession.loggedIn and not empty loginBean.loginError}">
+            <ui:fragment rendered="#{not userSession.loggedIn}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg>
+            </ui:fragment>
+            <ui:fragment rendered="#{userSession.loggedIn}">
+              <span class="thesaurus-avatar" aria-hidden="true">#{userSession.currentUserInitials}</span>
+            </ui:fragment>
+          </button>
+          <div class="menu-pop menu-pop--top menu-pop--login#{not userSession.loggedIn and not empty loginBean.loginError ? ' is-open' : ''}"
+               id="menu-login">
+            <h:panelGroup id="previewLoginBox" layout="block">
+              <span id="previewLoginDone" hidden="hidden"
+                    data-ok="#{userSession.loggedIn ? '1' : '0'}"
+                    data-after-login="#{loginBean.afterLoginUrl}"></span>
+              <ui:fragment rendered="#{not userSession.loggedIn}">
+                <h:form id="previewLoginForm" prependId="false"
+                        styleClass="login-form#{not empty loginBean.loginError ? ' is-error' : ''}"
+                        pt:data-after-login="#{loginBean.afterLoginUrl}">
+                  <div class="menu-h">#{localeBean.getMsg('menu.login')}</div>
+                  <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty loginBean.loginError}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span>#{loginBean.loginError}</span>
+                  </h:panelGroup>
+                  <h:outputLabel for="previewLoginUser" styleClass="login-l" value="#{localeBean.getMsg('menu.username')}"/>
+                  <h:inputText id="previewLoginUser" value="#{loginBean.username}"
+                               styleClass="st-input#{loginBean.usernameInvalid ? ' is-invalid' : ''}"
+                               autocomplete="username"/>
+                  <h:outputLabel for="previewLoginPass" styleClass="login-l" value="#{localeBean.getMsg('menu.password')}"/>
+                  <h:inputSecret id="previewLoginPass" value="#{loginBean.password}"
+                                 styleClass="st-input#{loginBean.passwordInvalid ? ' is-invalid' : ''}"
+                                 autocomplete="current-password"
+                                 redisplay="false"/>
+                  <h:commandLink action="#{loginBean.login}" styleClass="login-go">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+                    <span>#{localeBean.getMsg('menu.login')}</span>
+                  </h:commandLink>
+                  <button type="button" class="login-forgot" data-act="login-forgot">#{localeBean.getMsg('menu.forgotten_pass')}</button>
+                  <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                </h:form>
+                <h:form id="previewForgotForm" prependId="false" styleClass="login-form login-forgot-form">
+                  <div class="menu-h">#{localeBean.getMsg('menu.forgotten_pass')}</div>
+                  <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty forgotPasswordBean.error}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span>#{forgotPasswordBean.error}</span>
+                  </h:panelGroup>
+                  <h:panelGroup layout="block" styleClass="login-msg-ok" rendered="#{not empty forgotPasswordBean.message}">
+                    #{forgotPasswordBean.message}
+                  </h:panelGroup>
+                  <h:outputLabel for="previewForgotMail" styleClass="login-l" value="#{localeBean.getMsg('nav.email')}"/>
+                  <h:inputText id="previewForgotMail" value="#{forgotPasswordBean.sendTo}"
+                               styleClass="st-input#{not empty forgotPasswordBean.error ? ' is-invalid' : ''}"
+                               autocomplete="email"/>
+                  <h:commandLink actionListener="#{forgotPasswordBean.sendMail}" styleClass="login-go">
+                    <f:ajax execute="@form" render="@form" onevent="onPreviewForgotAjax"/>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9Z"/></svg>
+                    <span>#{localeBean.getMsg('nav.send')}</span>
+                  </h:commandLink>
+                  <button type="button" class="menu-foot login-forgot-back" data-act="login-forgot-back">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                    #{localeBean.getMsg('nav.backToLogin')}
+                  </button>
+                  <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                </h:form>
+                <h:outputLink value="#{request.contextPath}/oauth2/authorization/keycloak"
+                              styleClass="menu-foot login-sso"
+                              rendered="#{appConfigBean.keycloakEnabled}">
+                  #{localeBean.getMsg('nav.sso')}
+                </h:outputLink>
+              </ui:fragment>
+            </h:panelGroup>
+          </div>
+          <ui:fragment rendered="#{userSession.loggedIn}">
+            <div class="menu-pop menu-pop--top" id="menu-account">
+              <div class="menu-h">#{localeBean.getMsg('nav.account')}</div>
+              <div class="acct-head">
+                <span class="avatar">#{userSession.currentUserInitials}</span>
+                <div class="acct-id">
+                  <div class="acct-name">#{userSession.currentUsername}</div>
+                  <div class="acct-mail">#{userSession.currentUserEmail}</div>
+                </div>
+              </div>
+              <div class="role-badge">#{userSession.currentRoleLabel}</div>
+              <div class="menu-list">
+                <a class="menu-row" href="user/compte.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg><span>#{localeBean.getMsg('nav.profile')}</span></a>
+                <a class="menu-row" href="user/preference.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>#{localeBean.getMsg('menu.preference')}</span></a>
+              </div>
+            </div>
+          </ui:fragment>
+        </div>
+        <ui:fragment rendered="#{userSession.loggedIn}">
+          <div class="thesaurus-item">
+            <h:outputLink value="#{request.contextPath}/admin/instance"
+                          styleClass="thesaurus-btn#{page eq 'admin-instance' ? ' is-on' : ''}"
+                          title="#{localeBean.getMsg('admin.instance.title')}"
+                          rendered="#{userSession.canAccessSuperAdminScreen()}"
+                          onclick="return window.iaAnimateRailToAdmin &amp;&amp; window.iaAnimateRailToAdmin(this, event);">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
+            </h:outputLink>
+            <ui:fragment rendered="#{not userSession.canAccessSuperAdminScreen()}">
+              <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
+                      title="#{localeBean.getMsg('nav.projects')}" aria-label="#{localeBean.getMsg('nav.projects')}" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
+              </button>
+              <div class="menu-pop menu-pop--top" id="menu-projects">
+                <div class="menu-h">#{localeBean.getMsg('nav.projects')}</div>
+                <div class="proj-list">
+                  <a class="proj-row is-active" href="index.xhtml">
+                    <span class="proj-dot" style="background:#1f7a5c"></span>
+                    <div class="proj-main">
+                      <div class="proj-name">PACTOLS<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+                      <div class="proj-sub">Gestionnaire · 438 concepts</div>
+                    </div>
+                  </a>
+                </div>
+                <h:outputLink value="project/projets.xhtml" styleClass="menu-foot">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                  #{localeBean.getMsg('nav.manageAccess')}
+                </h:outputLink>
+              </div>
+            </ui:fragment>
+          </div>
+        </ui:fragment>
+      </h:panelGroup>
+      <h:panelGroup id="previewPropBadge">
+        <ui:fragment rendered="#{propositionBean.boardLinkVisible}">
+          <div class="thesaurus-item">
+            <h:form id="propNavForm" prependId="false" styleClass="prop-nav-form">
+              <h:commandLink id="notificationProp"
+                             styleClass="thesaurus-btn prop-nav-btn#{page eq 'propositions' ? ' is-on' : ''}#{propositionBean.pendingCount gt 0 ? ' has-count' : ''}"
+                             action="#{propositionBean.openBoard}"
+                             title="#{localeBean.getMsg('proposition.board.title')}"
+                             pt:aria-label="#{localeBean.getMsg('proposition.board.title')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+                <ui:fragment rendered="#{propositionBean.pendingCount gt 0}">
+                  <span class="prop-rail-n">#{propositionBean.pendingCount}</span>
+                </ui:fragment>
+              </h:commandLink>
+              <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+            </h:form>
+          </div>
+        </ui:fragment>
+      </h:panelGroup>
+    </div>
+    <div class="thesaurus-spacer"></div>
+    <div class="thesaurus-group">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="lang" title="#{localeBean.getMsg('nav.interfaceLanguage')}" aria-label="#{localeBean.getMsg('nav.interfaceLanguage')}" aria-expanded="false">
+          <span class="thesaurus-flag">#{localeBean.flagEmoji}</span>
+        </button>
+        <div class="menu-pop menu-pop--bottom" id="menu-lang">
+        <div class="menu-h">#{localeBean.getMsg('nav.interfaceLanguage')}</div>
+        <h:form id="previewUiLangForm" prependId="false">
+          <h:inputHidden id="previewUiLangCode" value="#{localeBean.pendingLang}"/>
+          <h:commandButton id="previewUiLangGo" value="lang" styleClass="st-jsf-go"
+                           action="#{localeBean.applyPendingLang}">
+            <f:ajax execute="@form" onevent="onPreviewUiLang"/>
+          </h:commandButton>
+          <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+        </h:form>
+        <div class="lang-opts">
+          <button type="button" class="lang-opt#{localeBean.currentLangIs('fr') ? ' is-on' : ''}" data-act="ui-lang" data-lang="fr">
+            <span class="lang-opt-flag">🇫🇷</span>Français
+          </button>
+          <button type="button" class="lang-opt#{localeBean.currentLangIs('en') ? ' is-on' : ''}" data-act="ui-lang" data-lang="en">
+            <span class="lang-opt-flag">🇬🇧</span>English
+          </button>
+          <button type="button" class="lang-opt#{localeBean.currentLangIs('de') ? ' is-on' : ''}" data-act="ui-lang" data-lang="de">
+            <span class="lang-opt-flag">🇩🇪</span>Deutsch
+          </button>
+          <button type="button" class="lang-opt#{localeBean.currentLangIs('es') ? ' is-on' : ''}" data-act="ui-lang" data-lang="es">
+            <span class="lang-opt-flag">🇪🇸</span>Español
+          </button>
+          <button type="button" class="lang-opt#{localeBean.currentLangIs('ar') ? ' is-on' : ''}" data-act="ui-lang" data-lang="ar">
+            <span class="lang-opt-flag">🇸🇦</span>العربية
+          </button>
+        </div></div>
+      </div>
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="api" title="#{localeBean.getMsg('nav.apiRest')}" aria-label="#{localeBean.getMsg('nav.apiRest')}" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/></svg>
+        </button>
+        <div class="menu-pop menu-pop--bottom" id="menu-api">
+        <div class="menu-h">#{localeBean.getMsg('nav.apiRest')}</div>
+        <p class="menu-desc">#{localeBean.getMsg('nav.apiRestDesc')}</p>
+        <div class="api-endpoint-k">#{localeBean.getMsg('nav.apiBase')}</div>
+        <div class="api-endpoint">
+          <code title="#{navigationBean.openApiUrl}">#{navigationBean.openApiUrl}</code>
+          <button type="button" class="api-copy" data-act="copy" data-copy="#{navigationBean.openApiUrl}" title="#{localeBean.getMsg('ui.copy')}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="api-copied"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+        </div>
+        <a class="menu-foot" href="#{navigationBean.swaggerUrl}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>#{localeBean.getMsg('nav.apiDocs')}</a></div>
+      </div>
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="graph" title="#{localeBean.getMsg('nav.apiGraph')}" aria-label="#{localeBean.getMsg('nav.apiGraph')}" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="4" r="2"/><circle cx="4.6" cy="17.5" r="2"/><circle cx="19.4" cy="17.5" r="2"/><path d="M12 6.3v3.3M10.3 13.4 6.3 16M13.7 13.4l4 2.6"/></svg>
+        </button>
+        <div class="menu-pop menu-pop--bottom" id="menu-graph">
+        <div class="menu-h">#{localeBean.getMsg('nav.apiGraph')}</div>
+        <p class="menu-desc">#{localeBean.getMsg('nav.apiGraphDesc')}</p>
+        <div class="api-endpoint">
+          <code title="#{navigationBean.graphQlUrl}">#{navigationBean.graphQlUrl}</code>
+          <button type="button" class="api-copy" data-act="copy" data-copy="#{navigationBean.graphQlUrl}" title="#{localeBean.getMsg('ui.copy')}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="api-copied"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+        </div>
+        <a class="menu-foot" href="#{navigationBean.graphiqlUrl}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>#{localeBean.getMsg('nav.apiExplorer')}</a></div>
+      </div>
+    </div>
+    <ui:fragment rendered="#{userSession.loggedIn}">
+      <button type="button" class="thesaurus-btn" data-act="logout-ask"
+              title="#{localeBean.getMsg('menu.logout')}" aria-label="#{localeBean.getMsg('menu.logout')}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+      <div class="block-overlay confirm-overlay" id="logoutConfirm" hidden="hidden"
+           data-act="logout-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="logoutConfirmTitle" data-act="logout-modal">
+          <div class="confirm-h" id="logoutConfirmTitle">#{localeBean.getMsg('menu.logout')}</div>
+          <p class="confirm-p">#{localeBean.getMsg('menu.validateLogout')}</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="logout-dismiss">#{localeBean.getMsg('cancel')}</button>
+            <h:form id="previewLogoutForm" styleClass="confirm-ok-form">
+              <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+              <h:commandLink styleClass="bo-btn danger" actionListener="#{loginBean.logoutToV2}">
+                #{localeBean.getMsg('nav.logoutAction')}
+              </h:commandLink>
+            </h:form>
+          </div>
+        </div>
+      </div>
+    </ui:fragment>
+    <div class="thesaurus-ver" title="OpenTheso #{connect.openthesoVersion}">#{connect.openthesoVersion}</div>
+  </nav>
+</ui:composition>

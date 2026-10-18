@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+  <div class="searchbox" id="searchBox"
+       data-msg-via-note="#{localeBean.getMsg('search.viaNote')}"
+       data-msg-via-syn="#{localeBean.getMsg('search.viaSyn')}"
+       data-msg-results="#{localeBean.getMsg('search.result_found')}"
+       data-msg-none="#{localeBean.getMsg('search.noResult')}"
+       data-kind-concept="#{localeBean.getMsg('leftbody.concept')}"
+       data-kind-group="#{localeBean.getMsg('leftbody.collection')}"
+       data-kind-facet="#{localeBean.getMsg('leftbody.facet')}"
+       data-hint-full="#{localeBean.getMsg('search.elastic')}"
+       data-hint-exact="#{localeBean.getMsg('search.exact')}"
+       data-hint-id="#{localeBean.getMsg('search.identifier')}"
+       data-hint-note="#{localeBean.getMsg('search.note')}"
+       data-hint-ops="#{localeBean.getMsg('search.combined')}"
+       data-hint-start="#{localeBean.getMsg('search.startWith')}"
+       data-hint-start-offer="#{localeBean.getMsg('search.startOffer')}"
+       data-placeholder="#{localeBean.getMsg('search.search')}…"
+       data-placeholder-note="#{localeBean.getMsg('search.search_only_note')}">
+    <div class="search-field" id="searchField">
+      <input type="text" class="search-input" id="searchInput" autocomplete="off" spellcheck="false"
+             placeholder="#{localeBean.getMsg('search.search')}…"
+             aria-label="#{localeBean.getMsg('search.search')}"
+             aria-autocomplete="list" aria-controls="acList"/>
+      <button type="button" class="search-clear" id="searchClear" hidden="hidden"
+              title="#{localeBean.getMsg('search.clear')}"
+              aria-label="#{localeBean.getMsg('search.clear')}">×</button>
+      <button type="button" class="search-go" id="searchGo">#{localeBean.getMsg('search.search')}</button>
+    </div>
+    <div class="ac" id="ac">
+      <ui:fragment rendered="#{userSession.loggedIn}">
+        <div class="ac-programs" id="acPrograms" hidden="hidden">
+          <div class="smm-h">#{localeBean.getMsg('search.preprogrammedSearch')}</div>
+          <button type="button" class="smm-item" data-search-programmed="deprecated">
+            <span class="smm-l">#{localeBean.getMsg('search.deprecated')}</span>
+            <span class="smm-d">#{localeBean.getMsg('search.tooltip_deprecated')}</span>
+          </button>
+          <button type="button" class="smm-item" data-search-programmed="polyhierarchy">
+            <span class="smm-l">#{localeBean.getMsg('search.polyhierarchy')}</span>
+            <span class="smm-d">#{localeBean.getMsg('search.tooltip_polyhierarchy')}</span>
+          </button>
+          <button type="button" class="smm-item" data-search-programmed="multi-groups">
+            <span class="smm-l">#{localeBean.getMsg('search.multiGroups')}</span>
+            <span class="smm-d">#{localeBean.getMsg('search.tooltip_multiGroups')}</span>
+          </button>
+          <button type="button" class="smm-item" data-search-programmed="without-groups">
+            <span class="smm-l">#{localeBean.getMsg('search.withoutGroups')}</span>
+            <span class="smm-d">#{localeBean.getMsg('search.tooltip_withoutGroups')}</span>
+          </button>
+          <button type="button" class="smm-item" data-search-programmed="duplicates">
+            <span class="smm-l">#{localeBean.getMsg('search.duplicates')}</span>
+            <span class="smm-d">#{localeBean.getMsg('search.tooltip_duplicates')}</span>
+          </button>
+          <button type="button" class="smm-item" data-search-programmed="forbidden">
+            <span class="smm-l">#{localeBean.getMsg('search.forbiddenRelationships')}</span>
+            <span class="smm-d">#{localeBean.getMsg('search.tooltip_forbiddenRrelationships')}</span>
+          </button>
+        </div>
+      </ui:fragment>
+      <div class="ac-head" id="acHead" hidden="hidden">
+        <div class="ac-head-main">
+          <span class="ac-head-word">« <b id="acQuery"></b> »</span>
+          <span class="ac-head-mode" id="acHeadMode"></span>
+        </div>
+        <span class="ac-head-n" id="acHeadN" hidden="hidden"></span>
+      </div>
+      <div class="ac-empty">
+        <p class="ac-empty-msg">#{localeBean.getMsg('search.noResult')}</p>
+      </div>
+      <button type="button" class="ac-start" id="acStartWith" hidden="hidden">
+        <span class="ac-start-kicker" id="acStartWithLabel">#{localeBean.getMsg('search.startOffer')}</span>
+        <span class="ac-start-q">« <b id="acStartWithQ"></b> »</span>
+      </button>
+      <div id="acList" role="listbox"></div>
+      <button type="button" class="ac-footer" id="acSeeAll" hidden="hidden">
+        <span>#{localeBean.getMsg('search.seeAll')} <strong id="acSeeAllN"></strong></span>
+        <span class="ac-enter">↵</span>
+      </button>
+      <div class="ac-ops" id="searchOpsBar">
+        <span class="search-hint" id="searchModeHint">#{localeBean.getMsg('search.elastic')}</span>
+        <div class="search-ops" id="searchOps" role="group" aria-label="#{localeBean.getMsg('search.combined')}">
+          <button type="button" class="search-chip search-op" data-search-op="note" aria-pressed="false"
+                  title="#{localeBean.getMsg('search.op.note.title')}">note:</button>
+          <button type="button" class="search-chip search-op" data-search-op="id" aria-pressed="false"
+                  title="#{localeBean.getMsg('search.op.id.title')}">id:</button>
+          <button type="button" class="search-chip search-op" data-search-op="notation" aria-pressed="false"
+                  title="#{localeBean.getMsg('search.op.notation.title')}">notation:</button>
+          <button type="button" class="search-chip search-op" data-search-op="pref" aria-pressed="false"
+                  title="#{localeBean.getMsg('search.op.pref.title')}">pref:</button>
+          <button type="button" class="search-chip search-op" data-search-op="syn" aria-pressed="false"
+                  title="#{localeBean.getMsg('search.op.syn.title')}">syn:</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ui:composition>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="statistiques"/>
+  <ui:define name="title">OpenTheso — Statistiques</ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+
+          <div class="view-panel is-on" id="viewStats">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head"><div><h1 class="bo-title">Statistiques du thésaurus</h1><p class="bo-sub">Volumétrie, complétude et répartition de #{thesaurusViewBean.title}.</p></div></div>
+              <div class="bo-full">
+                <div class="st-group-head">Vue d'ensemble</div>
+                <div class="mg-kpis">
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="concepts" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Concepts</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="candidates" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Candidats</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="collections" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Micro-thésaurus</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="languages" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Langues</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="max-depth" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Profondeur max</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="without-definition" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Sans définition</div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h"><span class="bo-card-t">Répartition par micro-thésaurus</span>
+                    <span class="cs-cap right" data-stat-collections-cap=""></span></div>
+                  <div class="bo-card-b">
+                    <div class="mg-bars" data-stat-coverage="collections" aria-busy="true">
+                      <div class="mg-bars-loading">
+                        <span class="mg-kpi-spin" aria-hidden="true"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h"><span class="bo-card-t">Couverture linguistique</span></div>
+                  <div class="bo-card-b">
+                    <div class="mg-bars" data-stat-coverage="language" aria-busy="true">
+                      <div class="mg-bars-loading">
+                        <span class="mg-kpi-spin" aria-hidden="true"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="st-group-head">Vie des candidats</div>
+                <div class="mg-kpis">
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="pending" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Candidats en attente</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="accepted12m" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Insérés · 12 mois</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="rejected12m" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Rejetés · 12 mois</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="acceptanceRate" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Taux d'acceptation</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="medianDecisionDays" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Délai médian de décision</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="activeContributors" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Contributeurs actifs</div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h"><span class="bo-card-t">Devenir des propositions</span>
+                    <span class="cs-cap right" data-stat-outcome-cap=""></span></div>
+                  <div class="bo-card-b" data-stat-outcome="" aria-busy="true">
+                    <div class="mg-bars-loading">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h"><span class="bo-card-t">Propositions par mois</span>
+                    <span class="cs-cap right">12 derniers mois · empilées par issue actuelle</span></div>
+                  <div class="bo-card-b" data-stat-months="" aria-busy="true">
+                    <div class="mg-bars-loading">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,119 @@
+package fr.cnrs.opentheso.concept.search.ui;
+
+import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.concept.search.model.ConceptSearchKind;
+import fr.cnrs.opentheso.concept.search.model.ConceptSearchMode;
+import fr.cnrs.opentheso.concept.search.model.ConceptSearchResult;
+import fr.cnrs.opentheso.concept.search.model.ConceptSearchSuggestion;
+import fr.cnrs.opentheso.concept.search.service.ConceptSearchService;
+import fr.cnrs.opentheso.concept.ui.ConsultationShellBean;
+import fr.cnrs.opentheso.setting.service.ThesaurusWorkLanguageService;
+import fr.cnrs.opentheso.shared.ui.UserSession;
+import fr.cnrs.opentheso.shared.ui.LocaleBean;
+import fr.cnrs.opentheso.stats.service.StatEventService;
+import fr.cnrs.opentheso.test.support.PrimeFacesTestSupport;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class GlobalConceptSearchBeanTest {
+
+    @Mock
+    private ConceptSearchService conceptSearchService;
+    @Mock
+    private ConsultationShellBean consultationShellBean;
+    @Mock
+    private ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    @Mock
+    private UserSession userSession;
+    @Mock
+    private LocaleBean localeBean;
+    @Mock
+    private StatEventService statEventService;
+
+    private GlobalConceptSearchBean bean;
+
+    @BeforeEach
+    void setUp() {
+        bean = new GlobalConceptSearchBean(
+                conceptSearchService,
+                consultationShellBean,
+                thesaurusWorkLanguageService,
+                userSession,
+                localeBean,
+                statEventService
+        );
+    }
+
+    @Test
+    void init_setsDefaultLanguage() {
+        when(localeBean.getIdLangue()).thenReturn("fr");
+
+        bean.init();
+
+        assertEquals("fr", bean.getSearchLang());
+    }
+
+    @Test
+    void complete_returnsSuggestionsAcrossThesauri() {
+        bean.setSearchLang("fr");
+        when(consultationShellBean.getSearchableThesaurusIds()).thenReturn(List.of("TH1"));
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(conceptSearchService.autocomplete(
+                "chat",
+                ConceptSearchMode.FULL_TEXT,
+                "TH1",
+                "fr",
+                false
+        )).thenReturn(List.of(new ConceptSearchSuggestion("C1", "chat", "", ConceptSearchKind.CONCEPT, false)));
+
+        var suggestions = bean.complete("chat");
+
+        assertEquals(1, suggestions.size());
+        assertEquals("C1", suggestions.get(0).conceptId());
+    }
+
+    @Test
+    void complete_returnsEmptyWhenNoThesauri() {
+        when(consultationShellBean.getSearchableThesaurusIds()).thenReturn(List.of());
+
+        assertTrue(bean.complete("chat").isEmpty());
+    }
+
+    @Test
+    void applySearch_storesMultipleResults() throws IOException {
+        bean.setSearchValue("chat");
+        bean.setSearchLang("fr");
+        when(consultationShellBean.getSearchableThesaurusIds()).thenReturn(List.of("TH1"));
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(conceptSearchService.search(
+                "chat",
+                ConceptSearchMode.FULL_TEXT,
+                "TH1",
+                "fr",
+                true
+        )).thenReturn(List.of(
+                new ConceptSearchResult("TH1", "C1", "chat", "fr", false, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()),
+                new ConceptSearchResult("TH1", "C2", "chaton", "fr", false, Collections.emptyList(), Collections.emptyList(), Collections.emptyList())
+        ));
+
+        try (var primeFaces = PrimeFacesTestSupport.open();
+             var messages = mockStatic(MessageUtils.class)) {
+            bean.applySearch();
+        }
+
+        assertEquals(2, bean.getResults().size());
+    }
+}

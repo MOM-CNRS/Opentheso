@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="preference-user"/>
+  <ui:define name="title">OpenTheso — #{localeBean.getMsg('menu.preference')}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{myAccountBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <h:form id="previewUserPrefForm" prependId="false">
+      <ui:fragment rendered="#{not userSession.loggedIn}">
+        <ui:include src="/includes/access-denied.xhtml">
+          <ui:param name="deniedKicker" value="#{localeBean.getMsg('profile.prefs.accessDenied.kicker')}"/>
+          <ui:param name="deniedTitle" value="#{localeBean.getMsg('profile.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{localeBean.getMsg('profile.prefs.accessDenied.sub')}"/>
+          <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('profile.accessDenied.back')}"/>
+        </ui:include>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{userSession.loggedIn}">
+          <div class="view-panel is-on" id="viewSettings">
+            <div class="bo bo-solo">
+              <a class="bo-back"
+                 href="#{request.contextPath}/thesauri"
+                 title="#{localeBean.getMsg('profile.prefs.back')}"
+                 onclick="if (document.referrer &amp;&amp; document.referrer.indexOf(location.origin) === 0) { history.back(); return false; }">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+              <div class="bo-head"><div>
+                <h1 class="bo-title">#{localeBean.getMsg('profile.prefs.title')}</h1>
+                <p class="bo-sub">#{localeBean.getMsg('profile.prefs.subtitle')}</p>
+              </div></div>
+              <div class="bo-full st-scope">
+                <div class="bo-card" id="accTreeStatus"
+                     data-msg-reset-done="#{localeBean.getMsg('profile.treeStatus.resetDone')}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{localeBean.getMsg('profile.treeStatus.title')}</span>
+                    <button type="button" class="bo-btn ghost sm" data-act="acc-tree-reset">#{localeBean.getMsg('profile.treeStatus.reset')}</button>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="st-toggle-d acc-block-hint">#{localeBean.getMsg('profile.treeStatus.desc')}</p>
+                    <div class="stk acc-tree-stk">
+                      <div class="stk-title">#{localeBean.getMsg('view.options.status')}</div>
+                      <div class="stk-group#{treeStatusBean.groupOn('actif') ? ' on' : ''}" data-group="actif">
+                        <button type="button" class="stk-ghead#{treeStatusBean.groupOn('actif') ? ' on' : ''}" data-act="st-group" data-group="actif">
+                          <span class="stk-box#{treeStatusBean.groupMixed('actif') ? ' mixed' : ''}">#{treeStatusBean.groupMixed('actif') ? '–' : (treeStatusBean.groupOn('actif') ? '✓' : '')}</span>
+                          <span class="stk-glabel">#{localeBean.getMsg('view.status.actif')}</span>
+                        </button>
+                        <div class="stk-list">
+                          <button type="button" class="stk-item#{treeStatusBean.selected('valide') ? ' on' : ''}" data-act="st-item" data-status="valide">
+                            <span class="stk-box">#{treeStatusBean.selected('valide') ? '✓' : ''}</span>
+                            <span class="st-dot st-valide"></span>
+                            <span class="stk-l">#{localeBean.getMsg('view.status.valide')}</span>
+                          </button>
+                          <button type="button" class="stk-item#{treeStatusBean.selected('insere') ? ' on' : ''}" data-act="st-item" data-status="insere">
+                            <span class="stk-box">#{treeStatusBean.selected('insere') ? '✓' : ''}</span>
+                            <span class="st-dot st-insere"></span>
+                            <span class="stk-l">#{localeBean.getMsg('view.status.insere')}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="stk-group#{treeStatusBean.groupOn('candidat') ? ' on' : ''}" data-group="candidat">
+                        <button type="button" class="stk-ghead#{treeStatusBean.groupOn('candidat') ? ' on' : ''}" data-act="st-group" data-group="candidat">
+                          <span class="stk-box">#{treeStatusBean.groupOn('candidat') ? '✓' : ''}</span>
+                          <span class="stk-glabel">#{localeBean.getMsg('view.status.candidat')}</span>
+                        </button>
+                      </div>
+                      <div class="stk-group#{treeStatusBean.groupOn('inactif') ? ' on' : ''}" data-group="inactif">
+                        <button type="button" class="stk-ghead#{treeStatusBean.groupOn('inactif') ? ' on' : ''}" data-act="st-group" data-group="inactif">
+                          <span class="stk-box#{treeStatusBean.groupMixed('inactif') ? ' mixed' : ''}">#{treeStatusBean.groupMixed('inactif') ? '–' : (treeStatusBean.groupOn('inactif') ? '✓' : '')}</span>
+                          <span class="stk-glabel">#{localeBean.getMsg('view.status.inactif')}</span>
+                        </button>
+                        <div class="stk-list">
+                          <button type="button" class="stk-item#{treeStatusBean.selected('rejete') ? ' on' : ''}" data-act="st-item" data-status="rejete">
+                            <span class="stk-box">#{treeStatusBean.selected('rejete') ? '✓' : ''}</span>
+                            <span class="st-dot st-rejete"></span>
+                            <span class="stk-l">#{localeBean.getMsg('view.status.rejete')}</span>
+                          </button>
+                          <button type="button" class="stk-item#{treeStatusBean.selected('deprecie') ? ' on' : ''}" data-act="st-item" data-status="deprecie">
+                            <span class="stk-box">#{treeStatusBean.selected('deprecie') ? '✓' : ''}</span>
+                            <span class="st-dot st-deprecie"></span>
+                            <span class="stk-l">#{localeBean.getMsg('view.status.deprecie')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card" id="accTableCols"
+                     data-msg-reset-done="#{localeBean.getMsg('profile.tableCols.resetDone')}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{localeBean.getMsg('profile.tableCols.title')}</span>
+                    <button type="button" class="bo-btn ghost sm" data-act="acc-table-reset">#{localeBean.getMsg('profile.tableCols.reset')}</button>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="st-toggle-d acc-block-hint">#{localeBean.getMsg('profile.tableCols.desc')}</p>
+                    <div class="tbl-collist acc-table-cols">
+                      <label class="tbl-colrow is-locked on"><span class="tbl-colbox">✓</span><span>#{localeBean.getMsg('view.table.col.concept')}</span><span class="tbl-lock">#{localeBean.getMsg('view.table.col.locked')}</span></label>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('status') ? ' on' : ''}" data-act="tbl-col" data-col="status" aria-pressed="#{tableColBean.selected('status') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('status') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.status')}</span></button>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('type') ? ' on' : ''}" data-act="tbl-col" data-col="type" aria-pressed="#{tableColBean.selected('type') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('type') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.type')}</span></button>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('notation') ? ' on' : ''}" data-act="tbl-col" data-col="notation" aria-pressed="#{tableColBean.selected('notation') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('notation') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.notation')}</span></button>
+                      <button type="button" class="tbl-colrow#{tableColBean.selected('path') ? ' on' : ''}" data-act="tbl-col" data-col="path" aria-pressed="#{tableColBean.selected('path') ? 'true' : 'false'}"><span class="tbl-colbox">#{tableColBean.selected('path') ? '✓' : ''}</span><span>#{localeBean.getMsg('view.table.col.path')}</span></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card" id="accBlockLayout"
+                     data-msg-open="#{localeBean.getMsg('profile.blocks.open')}"
+                     data-msg-closed="#{localeBean.getMsg('profile.blocks.closed')}"
+                     data-msg-drag="#{localeBean.getMsg('profile.blocks.drag')}"
+                     data-msg-reset-done="#{localeBean.getMsg('profile.blocks.resetDone')}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{localeBean.getMsg('profile.blocks.title')}</span>
+                    <button type="button" class="bo-btn ghost sm acc-block-reset" data-act="acc-block-reset">#{localeBean.getMsg('profile.blocks.reset')}</button>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="st-toggle-d acc-block-hint">#{localeBean.getMsg('profile.blocks.desc')}</p>
+                    <div id="accBlockRows"></div>
+                    <div id="accBlockLabelSrc" hidden="hidden">
+                      <span data-id="contexte">#{localeBean.getMsg('block.contexte')}</span>
+                      <span data-id="collections">#{localeBean.getMsg('block.collections')}</span>
+                      <span data-id="relations">#{localeBean.getMsg('block.relations')}</span>
+                      <span data-id="traductions">#{localeBean.getMsg('block.traductions')}</span>
+                      <span data-id="notes">#{localeBean.getMsg('block.notes')}</span>
+                      <span data-id="ressources">#{localeBean.getMsg('block.ressources')}</span>
+                      <span data-id="alignement">#{localeBean.getMsg('block.alignement')}</span>
+                      <span data-id="identifiants">#{localeBean.getMsg('block.identifiants')}</span>
+                      <span data-id="temporel">#{localeBean.getMsg('block.temporel')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </ui:fragment>
+    </h:form>
+  </ui:define>
+</ui:composition>

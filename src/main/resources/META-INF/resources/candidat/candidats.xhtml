@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="candidats"/>
+  <ui:define name="title">OpenTheso — Candidats</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{candidatBoardBean.load(thesaurusViewBean.id)}" onPostback="false"/>
+    <f:viewAction action="#{candidateDraftBean.reset}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="main">
+
+          <div class="view-panel is-on" id="viewCandList">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head">
+                <div>
+                  <h1 class="bo-title">Candidats</h1>
+                  <p class="bo-sub">Propositions en attente, acceptés et rejetés.</p>
+                </div>
+                <ui:fragment rendered="#{candidatBoardBean.canCreate}">
+                  <a class="bo-btn primary cand-new" href="candidat/candidats.xhtml?new=1">#{localeBean.getMsg('candidat.board.create')}</a>
+                </ui:fragment>
+              </div>
+              <h:form id="candBoardForm" styleClass="cand-form" enctype="multipart/form-data">
+              <h:inputHidden id="activeTab" value="#{candidatBoardBean.activeTab}"/>
+              <div class="cand-board" id="candBoard" data-tab="#{candidatBoardBean.activeTab}">
+                <div class="cand-toolbar">
+                  <h:panelGroup id="candTabs" layout="block" styleClass="cand-tabs">
+                    <button type="button" class="cand-tab#{candidatBoardBean.activeTab eq 'attente' ? ' is-on' : ''}" data-act="cand-tab" data-tab="attente" role="tab" aria-selected="#{candidatBoardBean.activeTab eq 'attente'}">Propositions <span class="cand-tab-n">#{candidatBoardBean.pendingCount}</span></button>
+                    <button type="button" class="cand-tab#{candidatBoardBean.activeTab eq 'insere' ? ' is-on' : ''}" data-act="cand-tab" data-tab="insere" role="tab" aria-selected="#{candidatBoardBean.activeTab eq 'insere'}">Acceptés <span class="cand-tab-n">#{candidatBoardBean.acceptedCount}</span></button>
+                    <button type="button" class="cand-tab#{candidatBoardBean.activeTab eq 'rejete' ? ' is-on' : ''}" data-act="cand-tab" data-tab="rejete" role="tab" aria-selected="#{candidatBoardBean.activeTab eq 'rejete'}">Rejetés <span class="cand-tab-n">#{candidatBoardBean.rejectedCount}</span></button>
+                  </h:panelGroup>
+                  <div class="cand-tools">
+                    <div class="cand-search-wrap">
+                      <h:inputText id="candSearch" value="#{candidatBoardBean.searchTerm}"
+                                   styleClass="st-input cand-search"
+                                   pt:placeholder="Rechercher un libellé ou un auteur…"
+                                   pt:autocomplete="off"
+                                   pt:aria-label="Rechercher un candidat"/>
+                      <button type="button" class="cand-search-clear" id="candSearchClear" hidden="hidden"
+                              data-act="cand-search-clear" title="Effacer la recherche" aria-label="Effacer la recherche">×</button>
+                    </div>
+                    <h:commandButton id="candSearchGo" value="Rechercher"
+                                     styleClass="bo-btn ghost sm cand-search-go"
+                                     action="#{candidatBoardBean.search}">
+                      <f:ajax execute="@form" render="candTabs candPanes candMineBox candBoardTools"/>
+                    </h:commandButton>
+                    <h:panelGroup id="candMineBox">
+                      <ui:fragment rendered="#{candidatBoardBean.loggedIn}">
+                        <label class="cand-mine#{candidatBoardBean.mineOnly ? ' is-on' : ''}">
+                          <h:selectBooleanCheckbox id="candMine" value="#{candidatBoardBean.mineOnly}">
+                            <f:ajax event="change" execute="@form" listener="#{candidatBoardBean.toggleMine}"
+                                    render="candTabs candPanes candMineBox candBoardTools"/>
+                          </h:selectBooleanCheckbox>
+                          Mes candidats
+                        </label>
+                      </ui:fragment>
+                    </h:panelGroup>
+                    <h:panelGroup id="candBoardTools">
+                      <ui:fragment rendered="#{candidatBoardBean.canExport}">
+                        <h:commandButton id="candExportSkos"
+                                         value="#{localeBean.getMsg('candidat.board.export')}"
+                                         styleClass="bo-btn ghost sm"
+                                         action="#{candidatBoardBean.exportPendingSkos}"/>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{candidatBoardBean.canImport}">
+                        <h:inputFile id="candImportFile" styleClass="bo-file-input"
+                                     value="#{candidatBoardBean.importUpload}"/>
+                        <h:commandButton id="candImportSkos"
+                                         value="#{localeBean.getMsg('candidat.board.import')}"
+                                         styleClass="bo-btn ghost sm"
+                                         action="#{candidatBoardBean.importSkos}">
+                          <f:ajax execute="@form" render="candTabs candPanes candBoardTools"/>
+                        </h:commandButton>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{candidatBoardBean.canProcess and candidatBoardBean.activeTab eq 'attente'}">
+                        <h:inputText id="candBatchMsg" value="#{candidatBoardBean.batchMessage}"
+                                     styleClass="st-input"
+                                     pt:placeholder="#{localeBean.getMsg('candidat.board.batchMessage')}"/>
+                        <h:commandButton id="candAcceptSelected"
+                                         value="#{localeBean.getMsg('candidat.board.acceptSelected')}"
+                                         styleClass="bo-btn primary sm"
+                                         action="#{candidatBoardBean.acceptSelected}">
+                          <f:ajax execute="@form" render="candTabs candPanes candBoardTools"/>
+                        </h:commandButton>
+                        <h:commandButton id="candRejectSelected"
+                                         value="#{localeBean.getMsg('candidat.board.rejectSelected')}"
+                                         styleClass="bo-btn ghost sm"
+                                         action="#{candidatBoardBean.rejectSelected}">
+                          <f:ajax execute="@form" render="candTabs candPanes candBoardTools"/>
+                        </h:commandButton>
+                      </ui:fragment>
+                    </h:panelGroup>
+                  </div>
+                </div>
+                <h:panelGroup id="candPanes" layout="block">
+                <div class="cand-pane" data-tab="attente" role="tabpanel">
+                  <ui:fragment rendered="#{empty candidatBoardBean.pending}">
+                    <div class="cand-empty">
+                      <p class="cand-empty-t">Aucune proposition en attente</p>
+                      <p class="cand-empty-s">Les nouvelles propositions apparaîtront ici.</p>
+                    </div>
+                  </ui:fragment>
+                  <ui:repeat value="#{candidatBoardBean.pending}" var="item">
+                    <div class="cand-row-wrap">
+                      <ui:fragment rendered="#{candidatBoardBean.canProcess}">
+                        <h:commandLink styleClass="cand-row-check#{candidatBoardBean.isSelected(item.conceptId) ? ' is-on' : ''}"
+                                       action="#{candidatBoardBean.toggleSelect(item.conceptId)}"
+                                       title="Sélectionner">
+                          <f:ajax execute="@this" render="candBoardTools candPanes"/>
+                          <span aria-hidden="true">#{candidatBoardBean.isSelected(item.conceptId) ? '☑' : '☐'}</span>
+                        </h:commandLink>
+                      </ui:fragment>
+                    <a class="cand-row" href="thesaurus/consultation.xhtml?id=#{item.conceptId}&amp;type=#{item.openType}&amp;from=candidats"
+                       data-act="open" data-id="#{item.conceptId}" data-type="#{item.openType}" title="#{item.title}">
+                      <span class="cand-row-t">#{item.title}</span>
+                      <span class="cand-row-m">#{item.meta}</span>
+                      <span class="cand-row-v">#{item.votes}</span>
+                    </a>
+                    </div>
+                  </ui:repeat>
+                  <ui:fragment rendered="#{candidatBoardBean.isCapped('attente')}">
+                    <div class="cand-cap">Affichage limité aux 400 plus récents (#{candidatBoardBean.pendingCount} au total).</div>
+                  </ui:fragment>
+                </div>
+                <div class="cand-pane" data-tab="insere" role="tabpanel">
+                  <ui:fragment rendered="#{empty candidatBoardBean.accepted}">
+                    <div class="cand-empty">
+                      <p class="cand-empty-t">Aucun candidat accepté</p>
+                      <p class="cand-empty-s">Les propositions validées seront listées ici.</p>
+                    </div>
+                  </ui:fragment>
+                  <ui:repeat value="#{candidatBoardBean.accepted}" var="item">
+                    <a class="cand-row" href="thesaurus/consultation.xhtml?id=#{item.conceptId}&amp;type=#{item.openType}&amp;from=candidats"
+                       data-act="open" data-id="#{item.conceptId}" data-type="#{item.openType}" title="#{item.title}">
+                      <span class="cand-row-t">#{item.title}</span>
+                      <span class="cand-row-m">#{item.meta}</span>
+                      <span class="cand-row-v">#{item.votes}</span>
+                    </a>
+                  </ui:repeat>
+                  <ui:fragment rendered="#{candidatBoardBean.isCapped('insere')}">
+                    <div class="cand-cap">Affichage limité aux 400 plus récents (#{candidatBoardBean.acceptedCount} au total).</div>
+                  </ui:fragment>
+                </div>
+                <div class="cand-pane" data-tab="rejete" role="tabpanel">
+                  <ui:fragment rendered="#{empty candidatBoardBean.rejected}">
+                    <div class="cand-empty">
+                      <p class="cand-empty-t">Aucun candidat rejeté</p>
+                      <p class="cand-empty-s">Les propositions refusées seront listées ici.</p>
+                    </div>
+                  </ui:fragment>
+                  <ui:repeat value="#{candidatBoardBean.rejected}" var="item">
+                    <a class="cand-row" href="thesaurus/consultation.xhtml?id=#{item.conceptId}&amp;type=#{item.openType}&amp;from=candidats"
+                       data-act="open" data-id="#{item.conceptId}" data-type="#{item.openType}" title="#{item.title}">
+                      <span class="cand-row-t">#{item.title}</span>
+                      <span class="cand-row-m">#{item.meta}</span>
+                      <span class="cand-row-v">#{item.votes}</span>
+                    </a>
+                  </ui:repeat>
+                  <ui:fragment rendered="#{candidatBoardBean.isCapped('rejete')}">
+                    <div class="cand-cap">Affichage limité aux 400 plus récents (#{candidatBoardBean.rejectedCount} au total).</div>
+                  </ui:fragment>
+                </div>
+                </h:panelGroup>
+              </div>
+              </h:form>
+            </div>
+          </div>
+          <ui:include src="/includes/candidate-draft.xhtml"/>
+          <ui:include src="/includes/concept-draft.xhtml"/>
+          <ui:include src="/includes/facet-draft.xhtml"/>
+  </ui:define>
+</ui:composition>

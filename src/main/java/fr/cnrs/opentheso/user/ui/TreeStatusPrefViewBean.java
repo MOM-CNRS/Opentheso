@@ -1,0 +1,148 @@
+package fr.cnrs.opentheso.user.ui;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
+import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.shared.repository.ConceptQueryRepository;
+import fr.cnrs.opentheso.shared.session.AuthenticatedUserSource;
+import fr.cnrs.opentheso.user.api.dto.TreeStatusPrefDto;
+import fr.cnrs.opentheso.user.model.TreeStatusIds;
+import fr.cnrs.opentheso.user.model.TreeStatusPref;
+import fr.cnrs.opentheso.user.service.TreeStatusPrefService;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@Component("treeStatusBean")
+@Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
+@RequiredArgsConstructor
+public class TreeStatusPrefViewBean {
+
+    private final AuthenticatedUserSource authenticatedUserSource;
+    private final TreeStatusPrefService treeStatusPrefService;
+    private final ConceptQueryRepository conceptQueryRepository;
+    private final ThesaurusContext thesaurusContext;
+    private final PreferencesRepository preferencesRepository;
+    private final ObjectMapper objectMapper;
+
+    private TreeStatusPref pref;
+    private Map<String, Integer> counts;
+
+    public String getSelectedJson() {
+        try {
+            return objectMapper.writeValueAsString(new TreeStatusPrefDto(new ArrayList<>(pref().selected())));
+        } catch (JsonProcessingException e) {
+            return "{\"selected\":[]}";
+        }
+    }
+
+    public boolean isSelected(String statusId) {
+        return pref().contains(statusId);
+    }
+
+    public boolean selected(String statusId) {
+        return isSelected(statusId);
+    }
+
+    public boolean isGroupOn(String group) {
+        return selectedInGroup(group) > 0;
+    }
+
+    public boolean groupOn(String group) {
+        return isGroupOn(group);
+    }
+
+    public boolean isGroupMixed(String group) {
+        List<String> statuses = TreeStatusIds.GROUPS.getOrDefault(group, List.of());
+        int on = selectedInGroup(group);
+        return on > 0 && on < statuses.size();
+    }
+
+    public boolean groupMixed(String group) {
+        return isGroupMixed(group);
+    }
+
+    public int count(String statusId) {
+        return counts().getOrDefault(statusId, 0);
+    }
+
+    public int groupCount(String group) {
+        int total = 0;
+        for (String statusId : TreeStatusIds.GROUPS.getOrDefault(group, List.of())) {
+            total += count(statusId);
+        }
+        return total;
+    }
+
+    private int selectedInGroup(String group) {
+        int on = 0;
+        for (String statusId : TreeStatusIds.GROUPS.getOrDefault(group, List.of())) {
+            if (pref().contains(statusId)) {
+                on++;
+            }
+        }
+        return on;
+    }
+
+    private TreeStatusPref pref() {
+        if (pref == null) {
+            if (!authenticatedUserSource.isLoggedIn()) {
+                pref = guestPref();
+            } else {
+                Integer userId = authenticatedUserSource.getUserId().orElse(null);
+                TreeStatusPref loaded = userId == null
+                        ? TreeStatusPref.defaults()
+                        : treeStatusPrefService.getPref(userId);
+                // Connecté : les candidats restent visibles avec le reste des concepts.
+                if (!loaded.contains(TreeStatusIds.CANDIDAT)) {
+                    var selected = new LinkedHashSet<>(
+                            loaded.selected() == null ? Set.of() : loaded.selected());
+                    selected.add(TreeStatusIds.CANDIDAT);
+                    pref = new TreeStatusPref(Set.copyOf(selected));
+                } else {
+                    pref = loaded;
+                }
+            }
+        }
+        return pref;
+    }
+
+    private TreeStatusPref guestPref() {
+        TreeStatusPref guest = TreeStatusPref.guestDefaults();
+        String thesaurusId = thesaurusContext.getCurrentThesaurusId();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return guest;
+        }
+        boolean showCandidates = preferencesRepository.findByIdThesaurus(thesaurusId)
+                .map(Preferences::isShowCandidatesToGuests)
+                .orElse(false);
+        if (!showCandidates) {
+            return guest;
+        }
+        var selected = new LinkedHashSet<>(
+                guest.selected() == null ? Set.of() : guest.selected());
+        selected.add(TreeStatusIds.CANDIDAT);
+        return new TreeStatusPref(Set.copyOf(selected));
+    }
+
+    private Map<String, Integer> counts() {
+        if (counts == null) {
+            String thesaurusId = thesaurusContext.getCurrentThesaurusId();
+            counts = StringUtils.isBlank(thesaurusId)
+                    ? new HashMap<>()
+                    : new HashMap<>(conceptQueryRepository.countConceptsByUiStatus(thesaurusId));
+        }
+        return counts;
+    }
+}

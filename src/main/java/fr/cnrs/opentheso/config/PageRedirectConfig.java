@@ -10,36 +10,36 @@ public class PageRedirectConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/v2/thesauri.xhtml");
+        registry.addViewController("/").setViewName("forward:/thesauri.xhtml");
         registry.addViewController("/index").setViewName("forward:/index.xhtml");
+        registry.addViewController("/index.xhtml").setViewName("forward:/index.xhtml");
         registry.addViewController("/reset-password").setViewName("forward:/reset-password.xhtml");
-        registry.addViewController("/profile").setViewName("forward:/profile/myAccount.xhtml");
-        registry.addViewController("/candidat").setViewName("forward:/candidat/candidat.xhtml");
-        registry.addViewController("/toolbox/edition").setViewName("forward:/toolbox/edition.xhtml");
-        registry.addViewController("/v2").setViewName("forward:/v2/thesauri.xhtml");
-        registry.addViewController("/v2/thesauri").setViewName("forward:/v2/thesauri.xhtml");
-        registry.addViewController("/v2/admin/instance").setViewName("forward:/v2/admin/instance.xhtml");
-        registry.addViewController("/v2/admin/projets").setViewName("forward:/v2/admin/projets.xhtml");
-        registry.addViewController("/v2/admin/thesauri").setViewName("forward:/v2/admin/thesauri.xhtml");
-        registry.addViewController("/v2/admin/utilisateurs").setViewName("forward:/v2/admin/utilisateurs.xhtml");
-        registry.addViewController("/v2/setting/preference").setViewName("forward:/v2/setting/preference.xhtml");
-        registry.addViewController("/v2/setting/identifiants").setViewName("forward:/v2/setting/identifiants.xhtml");
-        registry.addViewController("/v2/setting/corpus").setViewName("forward:/v2/setting/corpus.xhtml");
-        registry.addViewController("/v2/setting/parametres").setViewName("forward:/v2/setting/parametres.xhtml");
-        registry.addViewController("/v2/project/projets").setViewName("forward:/v2/project/projets.xhtml");
-        registry.addViewController("/v2/user/compte").setViewName("forward:/v2/user/compte.xhtml");
-        registry.addViewController("/v2/user/preference").setViewName("forward:/v2/user/preference.xhtml");
-        registry.addViewController("/v2/proposition/propositions").setViewName("forward:/v2/proposition/propositions.xhtml");
-        registry.addViewController("/v2/candidat/candidats").setViewName("forward:/v2/candidat/candidats.xhtml");
-        registry.addViewController("/v2/toolbox/atelier").setViewName("forward:/v2/toolbox/atelier.xhtml");
-        registry.addViewController("/v2/toolbox/maintenance").setViewName("forward:/v2/toolbox/maintenance.xhtml");
-        registry.addViewController("/v2/toolbox/statistiques").setViewName("forward:/v2/toolbox/statistiques.xhtml");
-        registry.addViewController("/v2/toolbox/synchronisation").setViewName("forward:/v2/toolbox/synchronisation.xhtml");
-        registry.addViewController("/v2/toolbox/portail").setViewName("forward:/v2/toolbox/portail.xhtml");
-        registry.addViewController("/v2/toolbox/actions-lot").setViewName("forward:/v2/toolbox/actions-lot.xhtml");
-        registry.addViewController("/v2/graph/graphe").setViewName("forward:/v2/graph/graphe.xhtml");
-        registry.addViewController("/v2/thesaurus/consultation").setViewName("forward:/v2/thesaurus/consultation.xhtml");
-        registry.addViewController("/v2-preview").setViewName("forward:/v2/thesauri.xhtml");
+        registry.addViewController("/profile").setViewName("forward:/user/compte.xhtml");
+        registry.addViewController("/candidat").setViewName("forward:/candidat/candidats.xhtml");
+        registry.addViewController("/toolbox/edition").setViewName("forward:/toolbox/atelier.xhtml");
+        registry.addViewController("/v2").setViewName("forward:/thesauri.xhtml");
+        registry.addViewController("/thesauri").setViewName("forward:/thesauri.xhtml");
+        registry.addViewController("/admin/instance").setViewName("forward:/admin/instance.xhtml");
+        registry.addViewController("/admin/projets").setViewName("forward:/admin/projets.xhtml");
+        registry.addViewController("/admin/thesauri").setViewName("forward:/admin/thesauri.xhtml");
+        registry.addViewController("/admin/utilisateurs").setViewName("forward:/admin/utilisateurs.xhtml");
+        registry.addViewController("/setting/preference").setViewName("forward:/setting/preference.xhtml");
+        registry.addViewController("/setting/identifiants").setViewName("forward:/setting/identifiants.xhtml");
+        registry.addViewController("/setting/corpus").setViewName("forward:/setting/corpus.xhtml");
+        registry.addViewController("/setting/parametres").setViewName("forward:/setting/parametres.xhtml");
+        registry.addViewController("/project/projets").setViewName("forward:/project/projets.xhtml");
+        registry.addViewController("/user/compte").setViewName("forward:/user/compte.xhtml");
+        registry.addViewController("/user/preference").setViewName("forward:/user/preference.xhtml");
+        registry.addViewController("/proposition/propositions").setViewName("forward:/proposition/propositions.xhtml");
+        registry.addViewController("/candidat/candidats").setViewName("forward:/candidat/candidats.xhtml");
+        registry.addViewController("/toolbox/atelier").setViewName("forward:/toolbox/atelier.xhtml");
+        registry.addViewController("/toolbox/maintenance").setViewName("forward:/toolbox/maintenance.xhtml");
+        registry.addViewController("/toolbox/statistiques").setViewName("forward:/toolbox/statistiques.xhtml");
+        registry.addViewController("/toolbox/synchronisation").setViewName("forward:/toolbox/synchronisation.xhtml");
+        registry.addViewController("/toolbox/portail").setViewName("forward:/toolbox/portail.xhtml");
+        registry.addViewController("/toolbox/actions-lot").setViewName("forward:/toolbox/actions-lot.xhtml");
+        registry.addViewController("/graph/graphe").setViewName("forward:/graph/graphe.xhtml");
+        registry.addViewController("/thesaurus/consultation").setViewName("forward:/thesaurus/consultation.xhtml");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }
 }

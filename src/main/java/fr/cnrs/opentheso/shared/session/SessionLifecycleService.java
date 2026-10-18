@@ -1,0 +1,144 @@
+package fr.cnrs.opentheso.shared.session;
+
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+
+/**
+ * Cycle de vie HTTP session V2 : invalidation et redirections d'accueil unifiées
+ * (expiration idle, ViewExpired, logout, clear session).
+ */
+@Service
+public class SessionLifecycleService {
+
+    public static final String PARAM_SESSION_EXPIRED = "sessionExpired";
+    public static final String PARAM_LOGOUT = "logout";
+
+    private final String homePath;
+    private final String expirePath;
+    private final String keepAlivePath;
+
+    public SessionLifecycleService(
+            @Value("${opentheso.home-path}") String homePath,
+            @Value("${opentheso.expire-path}") String expirePath,
+            @Value("${opentheso.keepalive-path}") String keepAlivePath) {
+        this.homePath = homePath;
+        this.expirePath = expirePath;
+        this.keepAlivePath = keepAlivePath;
+    }
+
+    public String homePath() {
+        return homePath;
+    }
+
+    public String homeUrl(String contextPath) {
+        return normalizeContextPath(contextPath) + homePath;
+    }
+
+    public String homeUrlWithSessionExpired(String contextPath) {
+        return homeUrl(contextPath) + "?" + PARAM_SESSION_EXPIRED + "=1";
+    }
+
+    public String homeUrlWithLogout(String contextPath) {
+        return homeUrl(contextPath) + "?" + PARAM_LOGOUT + "=1";
+    }
+
+    public String expireUrl(String contextPath) {
+        return normalizeContextPath(contextPath) + expirePath;
+    }
+
+    public String keepAliveUrl(String contextPath) {
+        return normalizeContextPath(contextPath) + keepAlivePath;
+    }
+
+    public boolean touch(HttpServletRequest request) {
+        return request != null && request.getSession(false) != null;
+    }
+
+    public void invalidateQuietly(HttpSession session) {
+        if (session == null) {
+            return;
+        }
+        try {
+            session.invalidate();
+        } catch (IllegalStateException ignored) {
+            // déjà invalidée
+        }
+    }
+
+    public void invalidateCurrentFacesSessionQuietly() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        ExternalContext externalContext = facesContext.getExternalContext();
+        Object session = externalContext.getSession(false);
+        if (session instanceof HttpSession httpSession) {
+            invalidateQuietly(httpSession);
+        } else if (session != null) {
+            try {
+                externalContext.invalidateSession();
+            } catch (IllegalStateException ignored) {
+                // déjà invalidée
+            }
+        }
+    }
+
+    /**
+     * Invalide la session puis redirige vers l'accueil V2 avec un marqueur d'expiration.
+     * Compatible requêtes AJAX JSF/PrimeFaces ({@link ExternalContext#redirect}).
+     */
+    public void expireAndRedirectFromFaces() throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        ExternalContext externalContext = facesContext.getExternalContext();
+        String redirectUrl = homeUrlWithSessionExpired(externalContext.getRequestContextPath());
+        invalidateCurrentFacesSessionQuietly();
+        externalContext.redirect(redirectUrl);
+        facesContext.responseComplete();
+    }
+
+    public void logoutAndRedirectFromFaces() throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        ExternalContext externalContext = facesContext.getExternalContext();
+        String redirectUrl = homeUrlWithLogout(externalContext.getRequestContextPath());
+        invalidateCurrentFacesSessionQuietly();
+        externalContext.redirect(redirectUrl);
+        facesContext.responseComplete();
+    }
+
+    public void clearAndRedirectFromFaces() throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        ExternalContext externalContext = facesContext.getExternalContext();
+        String redirectUrl = homeUrl(externalContext.getRequestContextPath());
+        invalidateCurrentFacesSessionQuietly();
+        externalContext.redirect(redirectUrl);
+        facesContext.responseComplete();
+    }
+
+    public void expireAndRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        invalidateQuietly(request.getSession(false));
+        response.sendRedirect(homeUrlWithSessionExpired(request.getContextPath()));
+    }
+
+    private static String normalizeContextPath(String contextPath) {
+        if (contextPath == null || contextPath.isBlank() || "/".equals(contextPath)) {
+            return "";
+        }
+        return contextPath.endsWith("/") ? contextPath.substring(0, contextPath.length() - 1) : contextPath;
+    }
+}

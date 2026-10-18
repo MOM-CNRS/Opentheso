@@ -1,9 +1,9 @@
 package fr.cnrs.opentheso.ws.graphql;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.models.concept.NodeFullConcept;
 import fr.cnrs.opentheso.services.ResourceService;
 import fr.cnrs.opentheso.services.SearchService;
+import fr.cnrs.opentheso.shared.session.SessionAuthenticatedUserSource;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,14 +20,14 @@ public class GraphQLController {
 
     private final ResourceService resourceService;
     private final SearchService searchService;
-    private final CurrentUser currentUser;
+    private final SessionAuthenticatedUserSource authenticatedUserSource;
 
     @QueryMapping
     public NodeFullConcept getNodeFullConcept(@Argument String idTheso,
                                               @Argument String idConcept,
                                               @Argument String idLang) {
 
-        boolean isPrivate = currentUser.getNodeUser() == null;
+        boolean isPrivate = !authenticatedUserSource.isLoggedIn();
         return resourceService.getFullConcept(idTheso, idConcept, idLang, 0, 10, isPrivate);
     }
 
@@ -52,7 +52,7 @@ public class GraphQLController {
         }
         List<NodeFullConcept> nodeFullConcepts = new ArrayList<>();
         for (String idConcept : listIds) {
-            boolean isPrivate = currentUser.getNodeUser() == null;
+            boolean isPrivate = !authenticatedUserSource.isLoggedIn();
             nodeFullConcepts.add(resourceService.getFullConcept(idTheso, idConcept, idLang, 0, 10, isPrivate));
         }
         return nodeFullConcepts;
