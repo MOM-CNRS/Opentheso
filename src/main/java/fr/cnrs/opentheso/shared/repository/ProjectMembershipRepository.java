@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class ProjectMembershipRepository {
@@ -149,6 +150,41 @@ public class ProjectMembershipRepository {
             query.setParameter("t" + i, thesaurusIds.get(i));
         }
         query.executeUpdate();
+    }
+
+    public record ThesaurusProjectLink(int projectId, String thesaurusId) {
+    }
+
+    /**
+     * Projet du thésaurus, sans tenir compte de la casse ni des espaces.
+     * {@code preferredProjectId} est choisi quand le thésaurus appartient à plusieurs projets.
+     */
+    @SuppressWarnings("unchecked")
+    public Optional<ThesaurusProjectLink> findThesaurusProject(String thesaurusId, int preferredProjectId) {
+        if (thesaurusId == null || thesaurusId.isBlank()) {
+            return Optional.empty();
+        }
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                        SELECT id_group, id_thesaurus
+                        FROM user_group_thesaurus
+                        WHERE LOWER(BTRIM(id_thesaurus)) = LOWER(BTRIM(:thesaurusId))
+                          AND id_group > 0
+                        ORDER BY CASE WHEN id_group = :preferredProjectId THEN 0 ELSE 1 END, id_group
+                        LIMIT 1
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId.trim())
+                .setParameter("preferredProjectId", preferredProjectId)
+                .getResultList();
+        if (rows.isEmpty() || rows.get(0) == null || rows.get(0)[0] == null) {
+            return Optional.empty();
+        }
+        Object[] row = rows.get(0);
+        int projectId = ((Number) row[0]).intValue();
+        if (projectId <= 0) {
+            return Optional.empty();
+        }
+        String storedId = row[1] != null ? row[1].toString() : thesaurusId.trim();
+        return Optional.of(new ThesaurusProjectLink(projectId, storedId));
     }
 
     public boolean isThesaurusInProject(String thesaurusId, int projectId) {

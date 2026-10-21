@@ -25,6 +25,7 @@ import fr.cnrs.opentheso.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.user.policy.ApiKeyPolicy;
 import fr.cnrs.opentheso.user.service.UserProfileService;
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -45,6 +46,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -68,6 +70,7 @@ public class InstanceAdminBean implements Serializable {
     private static final DateTimeFormatter LAST_LOGIN_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final List<Integer> USERS_PAGE_SIZE_OPTIONS = List.of(10, 25, 50, 100);
     private static final int DEFAULT_USERS_PAGE_SIZE = 25;
+    private static final String SESSION_MEMBER_FLASH = "iaMemberCreateFlash";
 
     private final transient UserSession userSession;
     private final transient LocaleBean localeBean;
@@ -81,6 +84,10 @@ public class InstanceAdminBean implements Serializable {
 
     private String section;
     private String openThesaurusId;
+    private int openMemberProjectHint;
+    private int openMemberProjectId = -1;
+    private String openMemberThesaurusId;
+    private boolean openMemberProjectResolved;
     private String userQuery = "";
     private String usersRoleFilter = "";
     private String usersStatusFilter = "";
@@ -137,6 +144,17 @@ public class InstanceAdminBean implements Serializable {
     private String selectedMemberUsername;
     private int addMemberRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
     private String addMemberError;
+    private boolean createThesaurusMemberOpen;
+    private String newMemberUsername;
+    private String newMemberEmail;
+    private String newMemberInstitution;
+    private boolean newMemberAlertMail;
+    private String newMemberCreationMode = "EMAIL";
+    private String newMemberPassword;
+    private String newMemberPasswordConfirm;
+    private int newMemberRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
+    private String newMemberError;
+    private boolean memberRemoveFromProject;
     private boolean memberRemoveConfirmOpen;
     private Integer memberRemoveUserId;
     private Integer memberRemoveRoleId;
@@ -145,6 +163,7 @@ public class InstanceAdminBean implements Serializable {
     private int memberEditRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
     private int memberEditOldRoleId;
     private String memberEditUsername;
+    private boolean memberEditProjectWide;
 
     private boolean createUserOpen;
     private String newUsername;
@@ -194,6 +213,11 @@ public class InstanceAdminBean implements Serializable {
     private String pendingUserAction;
     private String pendingActionUserId;
     private String pendingActionUsername;
+    private String pendingMemberAction;
+    private String pendingMemberUserId;
+    private String pendingMemberRoleId;
+    private String pendingMemberUsername;
+    private String pendingMemberProjectWide;
 
     private String flashMessage = "";
     private String flashToken = "";
@@ -213,6 +237,7 @@ public class InstanceAdminBean implements Serializable {
         }
         reload();
         applySectionFromRequest();
+        consumeMemberCreateFlash();
     }
 
     public boolean isAccessAllowed() {
@@ -274,11 +299,19 @@ public class InstanceAdminBean implements Serializable {
     }
 
     public void openThesaurusMembers(String thesaurusId) {
+        openThesaurusMembers(thesaurusId, -1);
+    }
+
+    public void openThesaurusMembers(String thesaurusId, int projectHint) {
         if (!isAccessAllowed() || StringUtils.isBlank(thesaurusId)) {
             return;
         }
         section = SECTION_THESAURI;
-        openThesaurusId = thesaurusId;
+        openThesaurusId = thesaurusId.trim();
+        openMemberProjectHint = projectHint;
+        openMemberProjectResolved = false;
+        openMemberProjectId = -1;
+        openMemberThesaurusId = null;
         closeUserForms();
         closeMemberForms();
         if (thesauri == null || thesauri.isEmpty()) {
@@ -294,6 +327,10 @@ public class InstanceAdminBean implements Serializable {
         }
         if (memberEditUserId != null) {
             closeMemberEditRole();
+            return;
+        }
+        if (createThesaurusMemberOpen) {
+            closeCreateThesaurusMember();
             return;
         }
         if (addMemberOpen) {
@@ -351,10 +388,18 @@ public class InstanceAdminBean implements Serializable {
     }
 
     public String thesaurusMembersUrl(String thesaurusId) {
+        return thesaurusMembersUrl(thesaurusId, -1);
+    }
+
+    public String thesaurusMembersUrl(String thesaurusId, int projectId) {
         if (StringUtils.isBlank(thesaurusId)) {
             return sectionUrl(SECTION_THESAURI);
         }
-        return sectionUrl(SECTION_THESAURI) + "&th=" + encode(thesaurusId);
+        String url = sectionUrl(SECTION_THESAURI) + "&th=" + encode(thesaurusId);
+        if (projectId > 0) {
+            url += "&project=" + projectId;
+        }
+        return url;
     }
 
     public String projectThesauriUrl(int projectId) {
@@ -618,6 +663,44 @@ public class InstanceAdminBean implements Serializable {
         }
         if ("delete".equals(action)) {
             openDeleteConfirm(userId.intValue(), username);
+        }
+    }
+
+    public void runPendingMemberAction() {
+        String action = StringUtils.defaultString(pendingMemberAction).trim().toLowerCase(Locale.ROOT);
+        Integer userId = parsePendingInt(pendingMemberUserId);
+        Integer roleId = parsePendingInt(pendingMemberRoleId);
+        String username = pendingMemberUsername;
+        boolean projectWide = "true".equalsIgnoreCase(StringUtils.trimToEmpty(pendingMemberProjectWide));
+        pendingMemberAction = null;
+        pendingMemberUserId = null;
+        pendingMemberRoleId = null;
+        pendingMemberUsername = null;
+        pendingMemberProjectWide = null;
+        if (userId == null || !isAccessAllowed()) {
+            return;
+        }
+        if ("edit".equals(action)) {
+            openMemberEditRole(userId, roleId == null ? ProjectAccessPolicy.ROLE_CONTRIBUTOR : roleId, username, projectWide);
+            return;
+        }
+        if ("removeproject".equals(action)) {
+            openMemberRemoveFromProject(userId, username);
+            return;
+        }
+        if ("remove".equals(action) && roleId != null) {
+            openMemberRemoveConfirm(userId, roleId, username);
+        }
+    }
+
+    private static Integer parsePendingInt(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(raw.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 
@@ -1996,10 +2079,30 @@ public class InstanceAdminBean implements Serializable {
         if (StringUtils.isBlank(openThesaurusId) || thesauri == null) {
             return null;
         }
-        return thesauri.stream()
-                .filter(t -> Strings.CI.equals(t.id(), openThesaurusId))
-                .findFirst()
-                .orElse(null);
+        AdminThesaurus exact = null;
+        AdminThesaurus fallback = null;
+        for (AdminThesaurus thesaurus : thesauri) {
+            if (thesaurus == null || !sameThesaurus(thesaurus.id(), openThesaurusId)) {
+                continue;
+            }
+            if (thesaurus.id().equals(openThesaurusId)) {
+                if (exact == null || (exact.projectId() <= 0 && thesaurus.projectId() > 0)) {
+                    exact = thesaurus;
+                }
+            } else if (fallback == null || (fallback.projectId() <= 0 && thesaurus.projectId() > 0)) {
+                fallback = thesaurus;
+            }
+        }
+        return exact != null ? exact : fallback;
+    }
+
+    public String getOpenThesaurusProjectName() {
+        AdminThesaurus thesaurus = getOpenThesaurus();
+        int projectId = memberProjectId(thesaurus);
+        if (thesaurus != null && thesaurus.projectId() == projectId && StringUtils.isNotBlank(thesaurus.projectName())) {
+            return thesaurus.projectName();
+        }
+        return projectId > 0 ? projectName(projectId) : "";
     }
 
     public List<ThesaurusMember> getFilteredThesaurusMembers() {
@@ -2023,10 +2126,114 @@ public class InstanceAdminBean implements Serializable {
         // AJAX hook — filtering is computed in getFilteredThesaurusMembers().
     }
 
+    public Integer getCurrentUserId() {
+        return userSession.getCurrentUserId();
+    }
+
+    public boolean isNewMemberEmailInvite() {
+        return "EMAIL".equalsIgnoreCase(newMemberCreationMode);
+    }
+
+    public void selectNewMemberEmailMode() {
+        newMemberCreationMode = "EMAIL";
+        newMemberPassword = null;
+        newMemberPasswordConfirm = null;
+    }
+
+    public void selectNewMemberDirectMode() {
+        newMemberCreationMode = "DIRECT";
+        newMemberPassword = null;
+        newMemberPasswordConfirm = null;
+    }
+
+    public void openCreateThesaurusMember() {
+        if (!isAccessAllowed() || getOpenThesaurus() == null) {
+            return;
+        }
+        closeAddMember();
+        closeMemberEditRole();
+        closeMemberRemoveConfirm();
+        createThesaurusMemberOpen = true;
+        newMemberError = null;
+        newMemberUsername = null;
+        newMemberEmail = null;
+        newMemberInstitution = null;
+        newMemberAlertMail = false;
+        newMemberCreationMode = "EMAIL";
+        newMemberPassword = null;
+        newMemberPasswordConfirm = null;
+        newMemberRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
+    }
+
+    public void closeCreateThesaurusMember() {
+        createThesaurusMemberOpen = false;
+        newMemberError = null;
+        newMemberUsername = null;
+        newMemberEmail = null;
+        newMemberInstitution = null;
+        newMemberAlertMail = false;
+        newMemberPassword = null;
+        newMemberPasswordConfirm = null;
+        newMemberRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
+        newMemberCreationMode = "EMAIL";
+    }
+
+    public void createThesaurusMember() {
+        if (!isAccessAllowed()) {
+            return;
+        }
+        AdminThesaurus thesaurus = getOpenThesaurus();
+        Integer callerId = userSession.getCurrentUserId();
+        if (thesaurus == null || callerId == null) {
+            return;
+        }
+        newMemberError = null;
+        int projectId = memberProjectId(thesaurus);
+        if (projectId <= 0) {
+            newMemberError = localeBean.getMsg("admin.members.noProject");
+            return;
+        }
+        try {
+            projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
+                    callerId,
+                    userSession.isSuperAdmin(),
+                    projectId,
+                    newMemberUsername,
+                    newMemberEmail,
+                    newMemberInstitution,
+                    newMemberAlertMail,
+                    newMemberRoleId,
+                    true,
+                    List.of(memberThesaurusId(thesaurus)),
+                    newMemberPassword,
+                    newMemberPasswordConfirm,
+                    newMemberCreationMode
+            ));
+            String message = isNewMemberEmailInvite()
+                    ? localeBean.getMsg("admin.members.create.successEmail")
+                    : localeBean.getMsg("admin.members.create.success");
+            String mailProblem = consumeFacesMessages();
+            if (StringUtils.isNotBlank(mailProblem)) {
+                message = message + " " + mailProblem;
+            }
+            if (!redirectAfterMemberCreate(message)) {
+                flashInfo(message);
+                closeCreateThesaurusMember();
+                reloadThesaurusMembers();
+            }
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException
+                 | InvalidPasswordException | InvalidProfileDataException e) {
+            newMemberError = e.getMessage();
+        } catch (RuntimeException e) {
+            newMemberError = friendlyCreateError(e);
+        }
+    }
+
     public void openAddMember() {
         if (!isAccessAllowed() || getOpenThesaurus() == null) {
             return;
         }
+        closeCreateThesaurusMember();
         addMemberOpen = true;
         addMemberError = null;
         memberSearchQuery = "";
@@ -2059,11 +2266,17 @@ public class InstanceAdminBean implements Serializable {
             return;
         }
         addMemberError = null;
+        int projectId = memberProjectId(th);
+        if (projectId <= 0) {
+            addMemberError = localeBean.getMsg("admin.members.noProject");
+            memberSearchResults = Collections.emptyList();
+            return;
+        }
         try {
             memberSearchResults = projectMemberService.searchUsers(
                     callerId,
                     userSession.isSuperAdmin(),
-                    th.projectId(),
+                    projectId,
                     memberSearchQuery
             );
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
@@ -2094,14 +2307,19 @@ public class InstanceAdminBean implements Serializable {
             return;
         }
         addMemberError = null;
+        int projectId = memberProjectId(th);
+        if (projectId <= 0) {
+            addMemberError = localeBean.getMsg("admin.members.noProject");
+            return;
+        }
         try {
             projectMemberService.addLimitedExistingMember(
                     callerId,
                     userSession.isSuperAdmin(),
-                    th.projectId(),
+                    projectId,
                     selectedMemberUserId,
                     addMemberRoleId,
-                    th.id()
+                    memberThesaurusId(th)
             );
             flashInfo(localeBean.getMsg("admin.members.add.success"));
             closeAddMember();
@@ -2111,16 +2329,18 @@ public class InstanceAdminBean implements Serializable {
         }
     }
 
-    public void openMemberEditRole(int userId, int roleId, String username) {
+    public void openMemberEditRole(int userId, int roleId, String username, boolean projectWide) {
         if (!isAccessAllowed()) {
             return;
         }
         closeAddMember();
+        closeCreateThesaurusMember();
         closeMemberRemoveConfirm();
         memberEditUserId = userId;
         memberEditOldRoleId = roleId;
         memberEditRoleId = roleId;
         memberEditUsername = username;
+        memberEditProjectWide = projectWide;
     }
 
     public void closeMemberEditRole() {
@@ -2128,6 +2348,7 @@ public class InstanceAdminBean implements Serializable {
         memberEditOldRoleId = 0;
         memberEditRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
         memberEditUsername = null;
+        memberEditProjectWide = false;
     }
 
     public void saveMemberEditRole() {
@@ -2139,16 +2360,21 @@ public class InstanceAdminBean implements Serializable {
         if (th == null || callerId == null) {
             return;
         }
+        int projectId = memberProjectId(th);
+        if (projectId <= 0) {
+            flashError(localeBean.getMsg("admin.members.noProject"));
+            return;
+        }
         try {
             projectMemberService.updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
                     callerId,
                     userSession.isSuperAdmin(),
-                    th.projectId(),
+                    projectId,
                     memberEditUserId,
                     memberEditOldRoleId,
                     memberEditRoleId,
-                    th.id(),
-                    true
+                    memberThesaurusId(th),
+                    !memberEditProjectWide
             ));
             flashInfo(localeBean.getMsg("admin.members.edit.success"));
             closeMemberEditRole();
@@ -2163,22 +2389,46 @@ public class InstanceAdminBean implements Serializable {
             return;
         }
         closeAddMember();
+        closeCreateThesaurusMember();
         closeMemberEditRole();
+        memberRemoveFromProject = false;
         memberRemoveConfirmOpen = true;
         memberRemoveUserId = userId;
         memberRemoveRoleId = roleId;
         memberRemoveUsername = username;
     }
 
+    public void openMemberRemoveFromProject(int userId, String username) {
+        if (!isAccessAllowed()) {
+            return;
+        }
+        Integer currentId = userSession.getCurrentUserId();
+        if (currentId != null && currentId == userId) {
+            return;
+        }
+        closeAddMember();
+        closeCreateThesaurusMember();
+        closeMemberEditRole();
+        memberRemoveFromProject = true;
+        memberRemoveConfirmOpen = true;
+        memberRemoveUserId = userId;
+        memberRemoveRoleId = null;
+        memberRemoveUsername = username;
+    }
+
     public void closeMemberRemoveConfirm() {
         memberRemoveConfirmOpen = false;
+        memberRemoveFromProject = false;
         memberRemoveUserId = null;
         memberRemoveRoleId = null;
         memberRemoveUsername = null;
     }
 
     public void confirmRemoveThesaurusMember() {
-        if (!isAccessAllowed() || memberRemoveUserId == null || memberRemoveRoleId == null) {
+        if (!isAccessAllowed() || memberRemoveUserId == null) {
+            return;
+        }
+        if (!memberRemoveFromProject && memberRemoveRoleId == null) {
             return;
         }
         AdminThesaurus th = getOpenThesaurus();
@@ -2186,20 +2436,36 @@ public class InstanceAdminBean implements Serializable {
         if (th == null || callerId == null) {
             return;
         }
+        int projectId = memberProjectId(th);
+        if (projectId <= 0) {
+            flashError(localeBean.getMsg("admin.members.noProject"));
+            return;
+        }
         try {
-            projectMemberService.removeLimitedRole(
-                    callerId,
-                    userSession.isSuperAdmin(),
-                    th.projectId(),
-                    memberRemoveUserId,
-                    memberRemoveRoleId,
-                    th.id()
-            );
-            flashInfo(localeBean.getMsg("admin.members.remove.success"));
+            if (memberRemoveFromProject) {
+                projectMemberService.removeMember(
+                        callerId,
+                        userSession.isSuperAdmin(),
+                        projectId,
+                        memberRemoveUserId
+                );
+                flashInfo(localeBean.getMsg("admin.members.removeProject.success"));
+            } else {
+                projectMemberService.removeLimitedRole(
+                        callerId,
+                        userSession.isSuperAdmin(),
+                        projectId,
+                        memberRemoveUserId,
+                        memberRemoveRoleId,
+                        memberThesaurusId(th)
+                );
+                flashInfo(localeBean.getMsg("admin.members.remove.success"));
+            }
             closeMemberRemoveConfirm();
             reloadThesaurusMembers();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
             flashError(e.getMessage());
+            closeMemberRemoveConfirm();
         }
     }
 
@@ -2231,14 +2497,62 @@ public class InstanceAdminBean implements Serializable {
         }
         thesaurusMembersList = adminCatalogService.listThesaurusMembers(
                 userSession.isSuperAdmin(),
-                th.id(),
-                th.projectId(),
+                memberThesaurusId(th),
+                memberProjectId(th),
                 localeBean.getIdLangue()
         );
     }
 
+    private int memberProjectId(AdminThesaurus thesaurus) {
+        ensureMemberTarget(thesaurus);
+        return openMemberProjectId;
+    }
+
+    private String memberThesaurusId(AdminThesaurus thesaurus) {
+        ensureMemberTarget(thesaurus);
+        if (StringUtils.isNotBlank(openMemberThesaurusId)) {
+            return openMemberThesaurusId;
+        }
+        return thesaurus != null ? thesaurus.id() : openThesaurusId;
+    }
+
+    private void ensureMemberTarget(AdminThesaurus thesaurus) {
+        if (openMemberProjectResolved) {
+            return;
+        }
+        String requestedId = StringUtils.firstNonBlank(openThesaurusId, thesaurus == null ? null : thesaurus.id());
+        int projectId = -1;
+        String thesaurusId = thesaurus != null ? thesaurus.id() : requestedId;
+        boolean rowMatches = thesaurus != null
+                && thesaurus.projectId() > 0
+                && sameThesaurus(thesaurus.id(), requestedId);
+        if (rowMatches && (openMemberProjectHint <= 0 || openMemberProjectHint == thesaurus.projectId())) {
+            projectId = thesaurus.projectId();
+            thesaurusId = thesaurus.id();
+        } else if (StringUtils.isNotBlank(requestedId)) {
+            var link = adminCatalogService.findThesaurusProject(requestedId, openMemberProjectHint);
+            if (link != null && link.projectId() > 0) {
+                projectId = link.projectId();
+                thesaurusId = StringUtils.defaultIfBlank(link.thesaurusId(), thesaurusId);
+            } else if (rowMatches) {
+                projectId = thesaurus.projectId();
+                thesaurusId = thesaurus.id();
+            } else if (openMemberProjectHint > 0) {
+                projectId = openMemberProjectHint;
+            }
+        }
+        openMemberProjectId = projectId;
+        openMemberThesaurusId = thesaurusId;
+        openMemberProjectResolved = true;
+    }
+
+    private static boolean sameThesaurus(String left, String right) {
+        return left != null && right != null && left.trim().equalsIgnoreCase(right.trim());
+    }
+
     private void closeMemberForms() {
         closeAddMember();
+        closeCreateThesaurusMember();
         closeMemberEditRole();
         closeMemberRemoveConfirm();
     }
@@ -2250,6 +2564,10 @@ public class InstanceAdminBean implements Serializable {
         membersRoleFilter = "";
         membersStatusFilter = "";
         membersScopeFilter = "";
+        openMemberProjectHint = 0;
+        openMemberProjectId = -1;
+        openMemberThesaurusId = null;
+        openMemberProjectResolved = false;
     }
 
     private boolean matchesMemberQuery(ThesaurusMember member, String q) {
@@ -2310,7 +2628,7 @@ public class InstanceAdminBean implements Serializable {
         }
         openSection(sectionParam);
         if (SECTION_THESAURI.equals(sectionParam) && StringUtils.isNotBlank(thesaurusId)) {
-            openThesaurusMembers(thesaurusId);
+            openThesaurusMembers(thesaurusId, parseProjectHint(projectId));
         }
         if (SECTION_PROJECTS.equals(sectionParam) && StringUtils.isNotBlank(projectId)) {
             try {
@@ -2353,6 +2671,17 @@ public class InstanceAdminBean implements Serializable {
 
     private static String encode(String value) {
         return URLEncoder.encode(StringUtils.defaultString(value), StandardCharsets.UTF_8);
+    }
+
+    private static int parseProjectHint(String projectId) {
+        if (StringUtils.isBlank(projectId)) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(projectId.trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private void clear() {
@@ -2524,6 +2853,89 @@ public class InstanceAdminBean implements Serializable {
         flashMessage = StringUtils.defaultString(message);
         flashToken = String.valueOf(System.currentTimeMillis());
         flashError = false;
+    }
+
+    private void consumeMemberCreateFlash() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        Object message = facesContext.getExternalContext().getSessionMap().remove(SESSION_MEMBER_FLASH);
+        if (message != null && StringUtils.isNotBlank(message.toString())) {
+            flashInfo(message.toString());
+        }
+    }
+
+    /**
+     * Recharge la page des membres. Un simple rendu Ajax de tout l'écran
+     * laisse parfois le formulaire ouvert alors que le compte est déjà créé.
+     */
+    private boolean redirectAfterMemberCreate(String message) {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || StringUtils.isBlank(openThesaurusId)) {
+            return false;
+        }
+        consumeFacesMessages();
+        facesContext.getExternalContext().getSessionMap().put(SESSION_MEMBER_FLASH, StringUtils.defaultString(message));
+        try {
+            facesContext.getExternalContext().redirect(thesaurusMembersUrl(openThesaurusId, openMemberProjectId));
+            facesContext.responseComplete();
+            return true;
+        } catch (IOException e) {
+            facesContext.getExternalContext().getSessionMap().remove(SESSION_MEMBER_FLASH);
+            return false;
+        }
+    }
+
+    private String friendlyCreateError(RuntimeException exception) {
+        String text = exceptionText(exception);
+        if (text.contains("username")) {
+            return "Ce pseudo est déjà utilisé.";
+        }
+        if (text.contains("mail")) {
+            return "Cet email est déjà utilisé.";
+        }
+        if (text.contains("jdbc exception") || text.contains("duplicate key") || text.contains("error:")) {
+            return localeBean.getMsg("admin.members.create.failed");
+        }
+        return StringUtils.defaultIfBlank(exception.getMessage(), localeBean.getMsg("admin.members.create.failed"));
+    }
+
+    private static String exceptionText(Throwable exception) {
+        StringBuilder text = new StringBuilder();
+        Throwable current = exception;
+        while (current != null && text.length() < 4000) {
+            if (current.getMessage() != null) {
+                text.append(current.getMessage()).append(' ');
+            }
+            current = current.getCause();
+        }
+        return text.toString().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private String consumeFacesMessages() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return null;
+        }
+        StringBuilder text = new StringBuilder();
+        Iterator<FacesMessage> messages = facesContext.getMessages();
+        while (messages.hasNext()) {
+            FacesMessage message = messages.next();
+            messages.remove();
+            if (message == null) {
+                continue;
+            }
+            String detail = StringUtils.firstNonBlank(message.getDetail(), message.getSummary());
+            if (StringUtils.isBlank(detail)) {
+                continue;
+            }
+            if (!text.isEmpty()) {
+                text.append(' ');
+            }
+            text.append(detail.trim());
+        }
+        return text.isEmpty() ? null : text.toString();
     }
 
     private void flashError(String message) {

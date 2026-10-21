@@ -745,6 +745,9 @@ input.ia-mode-opt:focus-visible{
 .ia-row-acts{
   display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:nowrap
 }
+.ia-member-acts{flex-wrap:nowrap}
+.ia-create-grid .ia-member-password.is-off{display:none}
+.ia-confirm-note{display:block;margin-top:8px;font-size:13px;font-weight:500;color:var(--ink-2)}
 .ia-row-acts--spread{
   display:flex;width:100%;justify-content:flex-end;align-items:center;gap:10px
 }
@@ -1167,6 +1170,15 @@ body[data-page="admin-instance"] .bo-btn.ghost.sm{
 }
 body[data-page="admin-instance"] .bo-btn.ghost.sm:hover{
   border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)
+}
+body[data-page="admin-instance"] .bo-btn.ghost.sm.danger{
+  color:var(--danger, #b42318);
+  border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))
+}
+body[data-page="admin-instance"] .bo-btn.ghost.sm.danger:hover{
+  color:#7f1515;
+  background:color-mix(in srgb, #b42318 10%, var(--surface, #fff));
+  border-color:color-mix(in srgb, #b42318 46%, var(--line))
 }
 body[data-page="admin-instance"] .bo-btn.ghost.sm:active{transform:scale(.98)}
 

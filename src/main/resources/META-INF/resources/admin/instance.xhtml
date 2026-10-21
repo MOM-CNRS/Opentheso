@@ -928,7 +928,7 @@
                                   </td>
                                   <td class="st-td-act" data-label="">
                                     <a class="bo-btn ghost sm"
-                                       href="#{instanceAdminBean.thesaurusMembersUrl(t.id)}">
+                                       href="#{instanceAdminBean.thesaurusMembersUrl(t.id, t.projectId)}">
                                       Gérer les membres
                                     </a>
                                   </td>
@@ -1003,14 +1003,14 @@
                       <ui:fragment rendered="#{instanceAdminBean.openThesaurus ne null}">
                         <div class="ia-members-meta">
                           <span>#{instanceAdminBean.openThesaurus.title}</span>
-                          <ui:fragment rendered="#{not empty instanceAdminBean.openThesaurus.projectName}">
+                          <ui:fragment rendered="#{not empty instanceAdminBean.openThesaurusProjectName}">
                             <span class="ia-members-meta-sep">·</span>
-                            <span>#{instanceAdminBean.openThesaurus.projectName}</span>
+                            <span>#{instanceAdminBean.openThesaurusProjectName}</span>
                           </ui:fragment>
                         </div>
                       </ui:fragment>
                     </div>
-                    <ui:fragment rendered="#{not instanceAdminBean.addMemberOpen and instanceAdminBean.memberEditUserId eq null}">
+                    <ui:fragment rendered="#{not instanceAdminBean.addMemberOpen and not instanceAdminBean.createThesaurusMemberOpen and instanceAdminBean.memberEditUserId eq null}">
                       <div class="ia-toolbar" id="iaMembersToolbar">
                         <h:inputText id="iaMembersQuery"
                                      value="#{instanceAdminBean.membersQuery}"
@@ -1052,6 +1052,13 @@
                                     listener="#{instanceAdminBean.onMembersFilterChange}"
                                     render="iaMembersMeta iaMembersTable"/>
                           </h:selectOneMenu>
+                          <h:commandButton id="iaMemberCreateOpen"
+                                           styleClass="bo-btn ghost sm"
+                                           value="#{localeBean.getMsg('admin.members.create')}"
+                                           action="#{instanceAdminBean.openCreateThesaurusMember}"
+                                           immediate="true">
+                            <f:ajax execute="@this" render="iaShell"/>
+                          </h:commandButton>
                           <h:commandButton id="iaMemberAddOpen"
                                            styleClass="bo-btn primary sm ia-create-btn"
                                            value="#{localeBean.getMsg('admin.members.add')}"
@@ -1143,6 +1150,116 @@
                       </h:panelGroup>
                     </ui:fragment>
 
+                    <ui:fragment rendered="#{instanceAdminBean.createThesaurusMemberOpen}">
+                      <h:panelGroup id="iaMemberCreatePane" layout="block" styleClass="ia-create ia-member-add">
+                        <div class="ia-create-h">
+                          <div>
+                            <div class="ia-create-t">#{localeBean.getMsg('admin.members.create.title')}</div>
+                            <div class="ia-create-d">
+                              #{localeBean.getMsg('admin.members.create.sub')}
+                              <b>#{instanceAdminBean.openThesaurusProjectName}</b>
+                              ·
+                              <b>#{instanceAdminBean.openThesaurus.title}</b>
+                            </div>
+                          </div>
+                        </div>
+                        <ui:fragment rendered="#{not empty instanceAdminBean.newMemberError}">
+                          <div class="ia-create-err" role="alert">#{instanceAdminBean.newMemberError}</div>
+                        </ui:fragment>
+                        <div class="ia-member-mode">
+                          <h:inputHidden id="iaNewMemberMode"
+                                         value="#{instanceAdminBean.newMemberCreationMode}"
+                                         styleClass="ia-member-mode-value"/>
+                          <div class="ia-mode" role="group" aria-label="#{localeBean.getMsg('projects.invite.mode')}">
+                            <button type="button"
+                                    class="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? '' : ' is-on'}"
+                                    data-mode="DIRECT"
+                                    onclick="return iaMemberCreateMode(this);">#{localeBean.getMsg('projects.invite.mode.direct')}</button>
+                            <button type="button"
+                                    class="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? ' is-on' : ''}"
+                                    data-mode="EMAIL"
+                                    onclick="return iaMemberCreateMode(this);">#{localeBean.getMsg('projects.invite.mode.email')}</button>
+                          </div>
+                          <p class="ia-mode-hint ia-member-mode-hint"
+                             data-direct="#{localeBean.getMsg('projects.invite.mode.directHint')}"
+                             data-email="#{localeBean.getMsg('projects.invite.mode.emailHint')}">
+                            #{instanceAdminBean.newMemberEmailInvite
+                                ? localeBean.getMsg('projects.invite.mode.emailHint')
+                                : localeBean.getMsg('projects.invite.mode.directHint')}
+                          </p>
+                        </div>
+                        <div class="ia-create-grid">
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.username')}</span>
+                            <h:inputText id="iaNewMemberUsername"
+                                         value="#{instanceAdminBean.newMemberUsername}"
+                                         styleClass="st-input"
+                                         pt:autocomplete="username"/>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.email')}</span>
+                            <h:inputText id="iaNewMemberEmail"
+                                         value="#{instanceAdminBean.newMemberEmail}"
+                                         styleClass="st-input"
+                                         pt:type="email"
+                                         pt:autocomplete="email"/>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.institution')}</span>
+                            <h:inputText id="iaNewMemberInstitution"
+                                         value="#{instanceAdminBean.newMemberInstitution}"
+                                         styleClass="st-input"/>
+                          </label>
+                          <label class="ia-field ia-member-password#{instanceAdminBean.newMemberEmailInvite ? ' is-off' : ''}">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.password')}</span>
+                            <h:inputSecret id="iaNewMemberPassword"
+                                           value="#{instanceAdminBean.newMemberPassword}"
+                                           styleClass="st-input"
+                                           redisplay="false"
+                                           pt:autocomplete="new-password"/>
+                          </label>
+                          <label class="ia-field ia-member-password#{instanceAdminBean.newMemberEmailInvite ? ' is-off' : ''}">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.passwordConfirm')}</span>
+                            <h:inputSecret id="iaNewMemberPasswordConfirm"
+                                           value="#{instanceAdminBean.newMemberPasswordConfirm}"
+                                           styleClass="st-input"
+                                           redisplay="false"
+                                           pt:autocomplete="new-password"/>
+                          </label>
+                        </div>
+                        <label class="ia-check" style="margin-top:12px">
+                          <h:selectBooleanCheckbox value="#{instanceAdminBean.newMemberAlertMail}"/>
+                          <span>#{localeBean.getMsg('projects.invite.alertMail')}</span>
+                        </label>
+                        <label class="ia-field" style="max-width:240px;margin-top:12px">
+                          <span class="ia-field-l">#{localeBean.getMsg('admin.members.col.role')}</span>
+                          <h:selectOneMenu id="iaNewMemberRole"
+                                           value="#{instanceAdminBean.newMemberRoleId}"
+                                           styleClass="st-input ia-select">
+                            <f:selectItem itemValue="#{instanceAdminBean.roleAdminId}"
+                                          itemLabel="#{localeBean.getMsg('admin.users.role.admin')}"/>
+                            <f:selectItem itemValue="#{instanceAdminBean.roleManagerId}"
+                                          itemLabel="#{localeBean.getMsg('admin.users.role.manager')}"/>
+                            <f:selectItem itemValue="#{instanceAdminBean.roleContributorId}"
+                                          itemLabel="#{localeBean.getMsg('admin.users.role.contributor')}"/>
+                          </h:selectOneMenu>
+                        </label>
+                        <div class="ia-create-actions">
+                          <button type="button"
+                                  class="bo-btn ghost"
+                                  onclick="return iaClickProxy('iaMemberCreateCancelGo');">
+                            #{localeBean.getMsg('admin.members.add.cancel')}
+                          </button>
+                          <button type="button"
+                                  class="bo-btn primary"
+                                  data-ia-proxy="iaMemberCreateGo"
+                                  onclick="return iaClickProxy('iaMemberCreateGo');">
+                            #{localeBean.getMsg('admin.members.create.submit')}
+                          </button>
+                        </div>
+                      </h:panelGroup>
+                    </ui:fragment>
+
                     <ui:fragment rendered="#{instanceAdminBean.memberEditUserId ne null}">
                       <h:panelGroup id="iaMemberEditPane" layout="block" styleClass="ia-create ia-member-add">
                         <div class="ia-create-h">
@@ -1173,16 +1290,17 @@
                                   onclick="return iaClickProxy('iaMemberEditCancelGo');">
                             #{localeBean.getMsg('admin.members.edit.cancel')}
                           </button>
-                          <h:commandButton styleClass="bo-btn primary"
-                                           value="#{localeBean.getMsg('admin.members.edit.submit')}"
-                                           action="#{instanceAdminBean.saveMemberEditRole}">
-                            <f:ajax execute="iaMemberEditPane" render="iaShell"/>
-                          </h:commandButton>
+                          <button type="button"
+                                  class="bo-btn primary"
+                                  data-ia-proxy="iaMemberEditSaveGo"
+                                  onclick="return iaClickProxy('iaMemberEditSaveGo');">
+                            #{localeBean.getMsg('admin.members.edit.submit')}
+                          </button>
                         </div>
                       </h:panelGroup>
                     </ui:fragment>
 
-                    <ui:fragment rendered="#{not instanceAdminBean.addMemberOpen and instanceAdminBean.memberEditUserId eq null}">
+                    <ui:fragment rendered="#{not instanceAdminBean.addMemberOpen and not instanceAdminBean.createThesaurusMemberOpen and instanceAdminBean.memberEditUserId eq null}">
                       <h:panelGroup id="iaMembersMeta" layout="block" styleClass="ia-members-count">
                         #{instanceAdminBean.filteredThesaurusMemberCount}
                         #{localeBean.getMsg('admin.members.count')}
@@ -1211,23 +1329,51 @@
                                     </span>
                                   </td>
                                   <td class="st-td-act" data-label="">
-                                    <ui:fragment rendered="#{not m.projectWide}">
-                                      <div class="ia-row-acts">
-                                        <h:commandButton styleClass="bo-btn ghost sm"
-                                                         value="#{localeBean.getMsg('admin.members.edit')}"
-                                                         action="#{instanceAdminBean.openMemberEditRole(m.userId, m.roleId, m.username)}"
-                                                         immediate="true">
-                                          <f:ajax execute="@this" render="iaShell"/>
-                                        </h:commandButton>
-                                        <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
-                                                         title="#{localeBean.getMsg('admin.members.remove')}"
-                                                         value="×"
-                                                         action="#{instanceAdminBean.openMemberRemoveConfirm(m.userId, m.roleId, m.username)}"
-                                                         immediate="true">
-                                          <f:ajax execute="@this" render="iaShell"/>
-                                        </h:commandButton>
-                                      </div>
-                                    </ui:fragment>
+                                    <div class="ia-row-acts ia-member-acts">
+                                      <button type="button"
+                                              class="bo-btn ghost sm ia-icon-btn"
+                                              title="#{localeBean.getMsg('admin.members.edit')}"
+                                              aria-label="#{localeBean.getMsg('admin.members.edit')}"
+                                              data-ia-action="edit"
+                                              data-ia-user-id="#{m.userId}"
+                                              data-ia-role-id="#{m.roleId}"
+                                              data-ia-username="#{m.username}"
+                                              data-ia-project-wide="#{m.projectWide}"
+                                              onclick="return iaQueueMemberAction(this);">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                          <path d="M12 20h9"/>
+                                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                                        </svg>
+                                      </button>
+                                      <ui:fragment rendered="#{not m.projectWide}">
+                                        <button type="button"
+                                                class="bo-btn ghost sm ia-icon-btn is-danger"
+                                                title="#{localeBean.getMsg('admin.members.remove')}"
+                                                aria-label="#{localeBean.getMsg('admin.members.remove')}"
+                                                data-ia-action="remove"
+                                                data-ia-user-id="#{m.userId}"
+                                                data-ia-role-id="#{m.roleId}"
+                                                data-ia-username="#{m.username}"
+                                                onclick="return iaQueueMemberAction(this);">×</button>
+                                      </ui:fragment>
+                                      <ui:fragment rendered="#{instanceAdminBean.currentUserId eq null or instanceAdminBean.currentUserId ne m.userId}">
+                                        <button type="button"
+                                                class="bo-btn ghost sm ia-icon-btn is-danger"
+                                                title="#{localeBean.getMsg('admin.members.removeProject.action')}"
+                                                aria-label="#{localeBean.getMsg('admin.members.removeProject.action')}"
+                                                data-ia-action="removeProject"
+                                                data-ia-user-id="#{m.userId}"
+                                                data-ia-username="#{m.username}"
+                                                onclick="return iaQueueMemberAction(this);">
+                                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <path d="m17 8 5 5"/>
+                                            <path d="m22 8-5 5"/>
+                                          </svg>
+                                        </button>
+                                      </ui:fragment>
+                                    </div>
                                   </td>
                                 </tr>
                               </ui:repeat>
@@ -1338,11 +1484,18 @@
                 <div class="confirm-modal" role="dialog" aria-modal="true"
                      aria-labelledby="iaMemberRemoveConfirmTitle">
                   <div class="confirm-h" id="iaMemberRemoveConfirmTitle">
-                    #{localeBean.getMsg('admin.members.remove.title')}
+                    #{instanceAdminBean.memberRemoveFromProject
+                        ? localeBean.getMsg('admin.members.removeProject.title')
+                        : localeBean.getMsg('admin.members.remove.title')}
                   </div>
                   <p class="confirm-p">
-                    #{localeBean.getMsg('admin.members.remove.confirm')}
+                    #{instanceAdminBean.memberRemoveFromProject
+                        ? localeBean.getMsg('admin.members.removeProject.confirm')
+                        : localeBean.getMsg('admin.members.remove.confirm')}
                     <b>#{instanceAdminBean.memberRemoveUsername}</b>
+                    <ui:fragment rendered="#{instanceAdminBean.memberRemoveFromProject}">
+                      <span class="ia-confirm-note">#{localeBean.getMsg('admin.members.removeProject.detail')}</span>
+                    </ui:fragment>
                   </p>
                   <div class="confirm-actions">
                     <button type="button"
@@ -1415,6 +1568,20 @@
                              pt:data-ia-render="iaShell">
               <f:ajax execute="@this" render="iaShell"/>
             </h:commandButton>
+            <h:commandButton id="iaMemberCreateCancelGo"
+                             value="go"
+                             action="#{instanceAdminBean.closeCreateThesaurusMember}"
+                             immediate="true"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberCreateGo"
+                             value="go"
+                             action="#{instanceAdminBean.createThesaurusMember}"
+                             pt:formnovalidate="formnovalidate"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this iaMemberCreatePane" render="iaShell" onevent="iaMemberCreateAjax"/>
+            </h:commandButton>
             <h:commandButton id="iaMemberAddCancelGo"
                              value="go"
                              action="#{instanceAdminBean.closeAddMember}"
@@ -1428,6 +1595,24 @@
                              immediate="true"
                              pt:data-ia-render="iaShell">
               <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:inputHidden id="iaPendingMemberAction" value="#{instanceAdminBean.pendingMemberAction}"/>
+            <h:inputHidden id="iaPendingMemberUserId" value="#{instanceAdminBean.pendingMemberUserId}"/>
+            <h:inputHidden id="iaPendingMemberRoleId" value="#{instanceAdminBean.pendingMemberRoleId}"/>
+            <h:inputHidden id="iaPendingMemberUsername" value="#{instanceAdminBean.pendingMemberUsername}"/>
+            <h:inputHidden id="iaPendingMemberProjectWide" value="#{instanceAdminBean.pendingMemberProjectWide}"/>
+            <h:commandButton id="iaMemberRowActionGo"
+                             value="go"
+                             action="#{instanceAdminBean.runPendingMemberAction}">
+              <f:ajax execute="iaPendingMemberAction iaPendingMemberUserId iaPendingMemberRoleId iaPendingMemberUsername iaPendingMemberProjectWide @this"
+                      render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberEditSaveGo"
+                             value="go"
+                             action="#{instanceAdminBean.saveMemberEditRole}"
+                             pt:formnovalidate="formnovalidate"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this iaMemberEditPane" render="iaShell"/>
             </h:commandButton>
           </div>
         </h:panelGroup>

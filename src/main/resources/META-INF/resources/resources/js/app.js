@@ -2764,6 +2764,27 @@ if (SCREEN === "preference" && location.hash) {
     }
   };
 
+  window.iaMemberCreateMode = function (btn) {
+    const box = btn && btn.closest ? btn.closest(".ia-member-mode") : null;
+    if (!box) return false;
+    const mode = btn.getAttribute("data-mode") || "EMAIL";
+    const input = box.querySelector(".ia-member-mode-value");
+    if (input) input.value = mode;
+    box.querySelectorAll(".ia-mode-opt").forEach(function (el) {
+      el.classList.toggle("is-on", el.getAttribute("data-mode") === mode);
+    });
+    const email = mode === "EMAIL";
+    const pane = box.closest(".ia-member-add") || document;
+    pane.querySelectorAll(".ia-member-password").forEach(function (el) {
+      el.classList.toggle("is-off", email);
+    });
+    const hint = box.querySelector(".ia-member-mode-hint");
+    if (hint) {
+      hint.textContent = email ? (hint.getAttribute("data-email") || "") : (hint.getAttribute("data-direct") || "");
+    }
+    return false;
+  };
+
   window.iaFilterMoveProjects = function (input) {
     const box = input && input.closest ? input.closest(".ia-move-proj") : null;
     if (!box) return;
@@ -2827,9 +2848,24 @@ if (SCREEN === "preference" && location.hash) {
     }
   }
 
+  window.iaMemberCreateAjax = function (data) {
+    if (!data || data.status === "begin") return;
+    const go = document.getElementById("iaMemberCreateGo");
+    if (go) go.removeAttribute("data-ia-busy");
+    document.querySelectorAll('[data-ia-proxy="iaMemberCreateGo"]').forEach(function (visible) {
+      visible.disabled = false;
+      visible.removeAttribute("aria-busy");
+    });
+  };
+
   window.iaClickProxy = function (id) {
     const go = document.getElementById(id);
-    if (!go) return false;
+    if (!go || go.getAttribute("data-ia-busy") === "1") return false;
+    go.setAttribute("data-ia-busy", "1");
+    document.querySelectorAll('[data-ia-proxy="' + id + '"]').forEach(function (visible) {
+      visible.disabled = true;
+      visible.setAttribute("aria-busy", "true");
+    });
     // Déclencher le handler Mojarra du bouton (onclick généré) : un
     // faces.ajax.request manuel sans event 'action' n'invoque pas l'action.
     if (typeof go.click === "function") {
@@ -2853,6 +2889,26 @@ if (SCREEN === "preference" && location.hash) {
     event.preventDefault();
     const go = document.getElementById("iaNewProjectSubmit");
     if (go && typeof go.click === "function") go.click();
+    return false;
+  };
+
+  window.iaQueueMemberAction = function (el) {
+    if (!el) return false;
+    const action = el.getAttribute("data-ia-action");
+    const userId = el.getAttribute("data-ia-user-id");
+    const actionInput = document.getElementById("iaPendingMemberAction");
+    const idInput = document.getElementById("iaPendingMemberUserId");
+    const roleInput = document.getElementById("iaPendingMemberRoleId");
+    const nameInput = document.getElementById("iaPendingMemberUsername");
+    const wideInput = document.getElementById("iaPendingMemberProjectWide");
+    const go = document.getElementById("iaMemberRowActionGo");
+    if (!action || !userId || !actionInput || !idInput || !go) return false;
+    actionInput.value = action;
+    idInput.value = String(userId);
+    if (roleInput) roleInput.value = el.getAttribute("data-ia-role-id") || "";
+    if (nameInput) nameInput.value = el.getAttribute("data-ia-username") || "";
+    if (wideInput) wideInput.value = el.getAttribute("data-ia-project-wide") || "false";
+    go.click();
     return false;
   };
 

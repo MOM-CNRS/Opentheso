@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.project.model.ProjectSummary;
 import fr.cnrs.opentheso.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.project.service.ProjectManagementService;
 import fr.cnrs.opentheso.project.service.ProjectMemberService;
+import fr.cnrs.opentheso.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
@@ -832,6 +833,61 @@ class InstanceAdminBeanTest {
                 "Via le projet",
                 bean.memberScopeLabel(new ThesaurusMember(2, "b", true, 2, "Admin", true))
         );
+    }
+
+    @Test
+    void createThesaurusMember_usesLinkedProjectWhenCatalogIdIsMissing() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(localeBean.getMsg("admin.members.create.successEmail")).thenReturn("ok");
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", -1, "", false, null)
+        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.findThesaurusProject("th1", -1)).thenReturn(
+                new ProjectMembershipRepository.ThesaurusProjectLink(12, "TH1")
+        );
+        when(adminCatalogService.listThesaurusMembers(true, "TH1", 12, "fr")).thenReturn(List.of());
+
+        bean.reload();
+        bean.openThesaurusMembers("th1");
+        bean.openCreateThesaurusMember();
+        bean.setNewMemberUsername("ada");
+        bean.setNewMemberEmail("ada@x.fr");
+        bean.createThesaurusMember();
+
+        ArgumentCaptor<ProjectMemberService.CreateMemberRequest> captor =
+                ArgumentCaptor.forClass(ProjectMemberService.CreateMemberRequest.class);
+        verify(projectMemberService).createMember(captor.capture());
+        assertEquals(12, captor.getValue().projectId());
+        assertEquals(List.of("TH1"), captor.getValue().thesaurusIds());
+        assertNull(bean.getNewMemberError());
+    }
+
+    @Test
+    void createThesaurusMember_reportsMissingProjectInsteadOfMinusOne() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(localeBean.getMsg("admin.members.noProject")).thenReturn("aucun projet");
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", -1, "", false, null)
+        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.findThesaurusProject("th1", -1)).thenReturn(null);
+        when(adminCatalogService.listThesaurusMembers(true, "th1", -1, "fr")).thenReturn(List.of());
+
+        bean.reload();
+        bean.openThesaurusMembers("th1");
+        bean.createThesaurusMember();
+
+        assertEquals("aucun projet", bean.getNewMemberError());
+        verify(projectMemberService, never()).createMember(any());
     }
 
     private static InstanceAdminAccount account(int id, String username, boolean active) {

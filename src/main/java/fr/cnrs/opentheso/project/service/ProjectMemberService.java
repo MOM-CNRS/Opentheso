@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -354,6 +355,22 @@ public class ProjectMemberService {
             String passwordConfirmation,
             String creationMode
     ) {
+        try {
+            return insertUserAccount(username, email, institution, alertMail, password, passwordConfirmation, creationMode);
+        } catch (DataIntegrityViolationException e) {
+            throw duplicateAccount(e);
+        }
+    }
+
+    private int insertUserAccount(
+            String username,
+            String email,
+            String institution,
+            boolean alertMail,
+            String password,
+            String passwordConfirmation,
+            String creationMode
+    ) {
         if ("EMAIL".equalsIgnoreCase(creationMode)) {
             int userId = userCommandRepository.createUser(new UserCommandRepository.CreateUserRequest(
                     username, email, "", alertMail, institution, false, true, false
@@ -376,6 +393,29 @@ public class ProjectMemberService {
                 false,
                 true
         ));
+    }
+
+    private static InvalidProjectDataException duplicateAccount(RuntimeException exception) {
+        String text = exceptionText(exception);
+        if (text.contains("username")) {
+            return new InvalidProjectDataException("Ce pseudo est déjà utilisé.");
+        }
+        if (text.contains("mail")) {
+            return new InvalidProjectDataException("Cet email est déjà utilisé.");
+        }
+        return new InvalidProjectDataException("Ce compte existe déjà.");
+    }
+
+    private static String exceptionText(Throwable exception) {
+        StringBuilder text = new StringBuilder();
+        Throwable current = exception;
+        while (current != null && text.length() < 4000) {
+            if (current.getMessage() != null) {
+                text.append(current.getMessage()).append(' ');
+            }
+            current = current.getCause();
+        }
+        return text.toString().toLowerCase(java.util.Locale.ROOT);
     }
 
     private void assignMembership(

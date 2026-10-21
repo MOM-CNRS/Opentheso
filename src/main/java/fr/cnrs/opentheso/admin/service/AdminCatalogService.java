@@ -16,6 +16,7 @@ import fr.cnrs.opentheso.project.service.ProjectLookupService;
 import fr.cnrs.opentheso.shared.repository.AdminQueryRepository;
 import fr.cnrs.opentheso.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.shared.repository.ProjectMembershipRepository;
+import fr.cnrs.opentheso.shared.repository.ProjectMembershipRepository.ThesaurusProjectLink;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -122,6 +123,11 @@ public class AdminCatalogService {
                         Comparator.nullsLast(Comparator.reverseOrder())
                 ))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ThesaurusProjectLink findThesaurusProject(String thesaurusId, int preferredProjectId) {
+        return projectMembershipRepository.findThesaurusProject(thesaurusId, preferredProjectId).orElse(null);
     }
 
     /**

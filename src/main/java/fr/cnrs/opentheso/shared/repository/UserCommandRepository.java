@@ -15,21 +15,48 @@ public class UserCommandRepository {
     private EntityManager entityManager;
 
     public boolean existsByUsernameIgnoreCase(String username) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
         String sql = """
-                SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER(:username))
+                SELECT EXISTS(
+                    SELECT 1 FROM users WHERE LOWER(BTRIM(username)) = LOWER(BTRIM(:username))
+                )
                 """;
-        return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
-                .setParameter(NativeQueryParams.USERNAME, username)
+        return isSqlTrue(entityManager.createNativeQuery(sql)
+                .setParameter(NativeQueryParams.USERNAME, username.trim())
                 .getSingleResult());
     }
 
     public boolean existsByMailIgnoreCase(String mail) {
+        if (mail == null || mail.isBlank()) {
+            return false;
+        }
         String sql = """
-                SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(mail) = LOWER(:mail))
+                SELECT EXISTS(
+                    SELECT 1 FROM users WHERE LOWER(BTRIM(mail)) = LOWER(BTRIM(:mail))
+                )
                 """;
-        return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
-                .setParameter("mail", mail)
+        return isSqlTrue(entityManager.createNativeQuery(sql)
+                .setParameter("mail", mail.trim())
                 .getSingleResult());
+    }
+
+    private static boolean isSqlTrue(Object value) {
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof Number number) {
+            return number.intValue() != 0;
+        }
+        if (value instanceof Object[] row && row.length > 0) {
+            return isSqlTrue(row[0]);
+        }
+        if (value == null) {
+            return false;
+        }
+        String text = value.toString().trim();
+        return "t".equalsIgnoreCase(text) || "true".equalsIgnoreCase(text) || "1".equals(text);
     }
 
     @SuppressWarnings("unchecked")

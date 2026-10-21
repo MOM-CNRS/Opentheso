@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -131,6 +132,26 @@ class ProjectMemberServiceTest {
 
         verify(projectMembershipRepository).replaceLimitedRoles(12, 4, 3, List.of("TH1"));
         verify(projectMembershipRepository, never()).assignProjectRole(anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void createMember_translatesDuplicateUsername() {
+        stubProjectAdmin(5, 3, 2);
+        when(userCommandRepository.existsByUsernameIgnoreCase("bob")).thenReturn(false);
+        when(userCommandRepository.existsByMailIgnoreCase("bob@example.com")).thenReturn(false);
+        when(projectAdminQueryRepository.findThesauriNotInProject(List.of("TH1"), 3)).thenReturn(Set.of());
+        when(userCommandRepository.createUser(any(UserCommandRepository.CreateUserRequest.class)))
+                .thenThrow(new DataIntegrityViolationException(
+                        "duplicate key value violates unique constraint \"user_username_key\""));
+
+        InvalidProjectDataException exception = assertThrows(InvalidProjectDataException.class,
+                () -> projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
+                        5, false, 3, "bob", "bob@example.com", null, false, 4, true, List.of("TH1"),
+                        null, null, "EMAIL"
+                )));
+
+        assertEquals("Ce pseudo est déjà utilisé.", exception.getMessage());
+        verify(projectMembershipRepository, never()).replaceLimitedRoles(anyInt(), anyInt(), anyInt(), any());
     }
 
     @Test

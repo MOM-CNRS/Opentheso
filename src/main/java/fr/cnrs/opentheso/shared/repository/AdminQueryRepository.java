@@ -113,13 +113,20 @@ public class AdminQueryRepository {
                 SELECT
                     t.id_thesaurus,
                     COALESCE(tl_sub.title, t.id_thesaurus) AS thesaurus_title,
-                    COALESCE(ugt.id_group, -1) AS id_group,
-                    COALESCE(ugl.label_group, '') AS label_group,
+                    COALESCE(grp.id_group, -1) AS id_group,
+                    COALESCE(grp.label_group, '') AS label_group,
                     COALESCE(t."private", false) AS is_private,
                     t.created
                 FROM thesaurus t
-                LEFT JOIN user_group_thesaurus ugt ON ugt.id_thesaurus = t.id_thesaurus
-                LEFT JOIN user_group_label ugl ON ugl.id_group = ugt.id_group
+                LEFT JOIN LATERAL (
+                    SELECT ugt.id_group, ugl.label_group
+                    FROM user_group_thesaurus ugt
+                    LEFT JOIN user_group_label ugl ON ugl.id_group = ugt.id_group
+                    WHERE LOWER(BTRIM(ugt.id_thesaurus)) = LOWER(BTRIM(t.id_thesaurus))
+                      AND ugt.id_group > 0
+                    ORDER BY ugt.id_group
+                    LIMIT 1
+                ) grp ON true
                 LEFT JOIN LATERAL (
                     SELECT tl.title
                     FROM thesaurus_label tl
