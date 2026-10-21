@@ -115,7 +115,7 @@
           <div class="ia-scroll ia-proj-scroll">
             <ui:fragment rendered="#{not empty instanceAdminBean.filteredProjects}">
               <ul class="ia-proj-list" role="list">
-                <ui:repeat value="#{instanceAdminBean.filteredProjects}" var="p">
+                <ui:repeat value="#{instanceAdminBean.visibleProjects}" var="p">
                   <li class="ia-proj-row">
                     <a class="ia-proj-main"
                        href="#{instanceAdminBean.projectThesauriUrl(p.id)}"
@@ -179,6 +179,44 @@
               </div>
             </ui:fragment>
           </div>
+          <ui:fragment rendered="#{not empty instanceAdminBean.filteredProjects}">
+            <div class="ia-pager ia-proj-pager">
+              <div class="ia-pager-meta">
+                <span class="ia-pager-info">
+                  #{instanceAdminBean.projectsPageFrom}–#{instanceAdminBean.projectsPageTo}
+                  #{localeBean.getMsg('admin.users.pager.of')}
+                  #{instanceAdminBean.filteredProjectCount}
+                  #{localeBean.getMsg('admin.users.pager.results')}
+                </span>
+                <label class="ia-pager-size">
+                  <span>#{localeBean.getMsg('admin.users.pager.size')}</span>
+                  <h:selectOneMenu id="iaProjectsPageSize"
+                                   value="#{instanceAdminBean.projectsPageSize}"
+                                   styleClass="st-input ia-select ia-pager-size-select"
+                                   pt:onchange="var b=document.getElementById('iaProjectsPageGo');if(b)b.click();">
+                    <f:selectItems value="#{instanceAdminBean.projectsPageSizeOptions}"/>
+                  </h:selectOneMenu>
+                  <h:commandButton id="iaProjectsPageGo" styleClass="ia-sr-only" value="ok" tabindex="-1" aria-hidden="true"/>
+                </label>
+              </div>
+              <div class="ia-pager-nav">
+                <h:commandLink styleClass="bo-btn ghost sm"
+                               action="#{instanceAdminBean.previousProjectsPage}"
+                               disabled="#{instanceAdminBean.projectsPage eq 0}">
+                  #{localeBean.getMsg('admin.users.pager.prev')}
+                </h:commandLink>
+                <span class="ia-pager-info">
+                  #{localeBean.getMsg('admin.users.pager.page')}
+                  #{instanceAdminBean.projectsPage + 1} / #{instanceAdminBean.projectsPageCount}
+                </span>
+                <h:commandLink styleClass="bo-btn ghost sm"
+                               action="#{instanceAdminBean.nextProjectsPage}"
+                               disabled="#{instanceAdminBean.projectsPage + 1 ge instanceAdminBean.projectsPageCount}">
+                  #{localeBean.getMsg('admin.users.pager.next')}
+                </h:commandLink>
+              </div>
+            </div>
+          </ui:fragment>
         </ui:fragment>
       </div>
     </div>

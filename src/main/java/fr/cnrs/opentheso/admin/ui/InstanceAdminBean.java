@@ -91,9 +91,14 @@ public class InstanceAdminBean implements Serializable {
 
     private List<InstanceAdminAccount> accounts = Collections.emptyList();
     private List<AdminThesaurus> thesauri = Collections.emptyList();
+    private String thesauriQuery = "";
+    private int thesauriPage;
+    private int thesauriPageSize = DEFAULT_USERS_PAGE_SIZE;
     private List<AdminProject> projects = Collections.emptyList();
     private Integer openProjectId;
     private String projectQuery = "";
+    private int projectsPage;
+    private int projectsPageSize = DEFAULT_USERS_PAGE_SIZE;
     private boolean createProjectOpen;
     private String newProjectName;
     private boolean renameProjectOpen;
@@ -232,6 +237,8 @@ public class InstanceAdminBean implements Serializable {
         openProjectId = null;
         userQuery = "";
         projectQuery = "";
+        thesauriQuery = "";
+        thesauriPage = 0;
         closeUserForms();
         closeProjectForms();
         clearMemberState();
@@ -256,6 +263,8 @@ public class InstanceAdminBean implements Serializable {
         openProjectId = null;
         userQuery = "";
         projectQuery = "";
+        thesauriQuery = "";
+        thesauriPage = 0;
         closeUserForms();
         closeProjectForms();
         clearMemberState();
@@ -1186,6 +1195,100 @@ public class InstanceAdminBean implements Serializable {
         return thesauri == null ? 0 : thesauri.size();
     }
 
+    public void setThesauriQuery(String thesauriQuery) {
+        String next = StringUtils.defaultString(thesauriQuery);
+        if (!next.equals(this.thesauriQuery)) {
+            this.thesauriQuery = next;
+            thesauriPage = 0;
+        }
+    }
+
+    public void setThesauriPageSize(int thesauriPageSize) {
+        int next = USERS_PAGE_SIZE_OPTIONS.contains(thesauriPageSize)
+                ? thesauriPageSize
+                : DEFAULT_USERS_PAGE_SIZE;
+        if (next != this.thesauriPageSize) {
+            this.thesauriPageSize = next;
+            thesauriPage = 0;
+        }
+    }
+
+    public List<Integer> getThesauriPageSizeOptions() {
+        return USERS_PAGE_SIZE_OPTIONS;
+    }
+
+    public List<AdminThesaurus> getFilteredThesauri() {
+        String needle = normalize(thesauriQuery);
+        if (thesauri == null) {
+            return List.of();
+        }
+        if (StringUtils.isBlank(needle)) {
+            return thesauri;
+        }
+        return thesauri.stream()
+                .filter(t -> normalize(t.title()).contains(needle)
+                        || normalize(t.id()).contains(needle)
+                        || normalize(t.projectName()).contains(needle))
+                .toList();
+    }
+
+    public int getFilteredThesaurusCount() {
+        return getFilteredThesauri().size();
+    }
+
+    public List<AdminThesaurus> getVisibleThesauri() {
+        List<AdminThesaurus> filtered = getFilteredThesauri();
+        clampThesauriPage(filtered.size());
+        int from = Math.min(thesauriPage * thesauriPageSize, filtered.size());
+        int to = Math.min(from + thesauriPageSize, filtered.size());
+        return filtered.subList(from, to);
+    }
+
+    public int getThesauriPageCount() {
+        int size = getFilteredThesaurusCount();
+        return size == 0 ? 1 : (int) Math.ceil(size / (double) thesauriPageSize);
+    }
+
+    public int getThesauriPageFrom() {
+        int total = getFilteredThesaurusCount();
+        if (total == 0) {
+            return 0;
+        }
+        clampThesauriPage(total);
+        return thesauriPage * thesauriPageSize + 1;
+    }
+
+    public int getThesauriPageTo() {
+        int total = getFilteredThesaurusCount();
+        if (total == 0) {
+            return 0;
+        }
+        clampThesauriPage(total);
+        return Math.min((thesauriPage + 1) * thesauriPageSize, total);
+    }
+
+    public void previousThesauriPage() {
+        if (thesauriPage > 0) {
+            thesauriPage--;
+        }
+    }
+
+    public void nextThesauriPage() {
+        if (thesauriPage + 1 < getThesauriPageCount()) {
+            thesauriPage++;
+        }
+    }
+
+    private void clampThesauriPage(int filteredSize) {
+        int pageCount = filteredSize == 0 ? 1 : (int) Math.ceil(filteredSize / (double) thesauriPageSize);
+        if (thesauriPage >= pageCount) {
+            thesauriPage = Math.max(0, pageCount - 1);
+        }
+        if (thesauriPage < 0) {
+            thesauriPage = 0;
+        }
+    }
+
     public int getProjectCount() {
         return projects == null ? 0 : projects.size();
     }
@@ -1202,6 +1305,93 @@ public class InstanceAdminBean implements Serializable {
 
     public int getFilteredProjectCount() {
         return getFilteredProjects().size();
+    }
+
+    public void setProjectQuery(String projectQuery) {
+        String next = StringUtils.defaultString(projectQuery);
+        if (!next.equals(this.projectQuery)) {
+            projectsPage = 0;
+        }
+        this.projectQuery = next;
+    }
+
+    public void setProjectsPageSize(int projectsPageSize) {
+        int next = USERS_PAGE_SIZE_OPTIONS.contains(projectsPageSize)
+                ? projectsPageSize
+                : DEFAULT_USERS_PAGE_SIZE;
+        if (next != this.projectsPageSize) {
+            this.projectsPageSize = next;
+            projectsPage = 0;
+        }
+    }
+
+    public List<Integer> getProjectsPageSizeOptions() {
+        return USERS_PAGE_SIZE_OPTIONS;
+    }
+
+    public List<AdminProject> getVisibleProjects() {
+        List<AdminProject> filtered = getFilteredProjects();
+        clampProjectsPage(filtered.size());
+        int size = projectsPageSize;
+        int from = Math.min(projectsPage * size, filtered.size());
+        int to = Math.min(from + size, filtered.size());
+        return filtered.subList(from, to);
+    }
+
+    public int getProjectsPageCount() {
+        int size = getFilteredProjectCount();
+        return size == 0 ? 1 : (int) Math.ceil(size / (double) projectsPageSize);
+    }
+
+    public int getProjectsPageFrom() {
+        int total = getFilteredProjectCount();
+        if (total == 0) {
+            return 0;
+        }
+        clampProjectsPage(total);
+        return projectsPage * projectsPageSize + 1;
+    }
+
+    public int getProjectsPageTo() {
+        int total = getFilteredProjectCount();
+        if (total == 0) {
+            return 0;
+        }
+        clampProjectsPage(total);
+        return Math.min((projectsPage + 1) * projectsPageSize, total);
+    }
+
+    public void previousProjectsPage() {
+        if (projectsPage > 0) {
+            projectsPage--;
+        }
+    }
+
+    public void nextProjectsPage() {
+        if (projectsPage + 1 < getProjectsPageCount()) {
+            projectsPage++;
+        }
+    }
+
+    private void showProjectPage(int projectId) {
+        List<AdminProject> filtered = getFilteredProjects();
+        for (int i = 0; i < filtered.size(); i++) {
+            if (filtered.get(i).id() == projectId) {
+                projectsPage = i / projectsPageSize;
+                return;
+            }
+        }
+        projectsPage = 0;
+    }
+
+    private void clampProjectsPage(int filteredSize) {
+        int pageCount = filteredSize == 0 ? 1 : (int) Math.ceil(filteredSize / (double) projectsPageSize);
+        if (projectsPage >= pageCount) {
+            projectsPage = Math.max(0, pageCount - 1);
+        }
+        if (projectsPage < 0) {
+            projectsPage = 0;
+        }
     }
 
     public void openCreateProject() {
@@ -1235,8 +1425,9 @@ public class InstanceAdminBean implements Serializable {
                     callerId, userSession.isSuperAdmin(), newProjectName);
             flashInfo(localeBean.getMsg("admin.projects.create.success"));
             closeCreateProject();
+            projectQuery = "";
             reload();
-            // Garder la liste : le projet vient d’être ajouté dans le tableau.
+            showProjectPage(created.id());
             openProjectId = null;
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
             projectFormError = e.getMessage();
@@ -2162,6 +2353,8 @@ public class InstanceAdminBean implements Serializable {
         openProjectId = null;
         userQuery = "";
         projectQuery = "";
+        thesauriQuery = "";
+        thesauriPage = 0;
         accounts = Collections.emptyList();
         thesauri = Collections.emptyList();
         projects = Collections.emptyList();
