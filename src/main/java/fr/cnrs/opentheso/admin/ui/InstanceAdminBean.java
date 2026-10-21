@@ -1931,6 +1931,14 @@ public class InstanceAdminBean implements Serializable {
                 .toList();
     }
 
+    public void selectMoveTarget(int projectId) {
+        if (moveTargetProjectId != null && moveTargetProjectId == projectId) {
+            moveTargetProjectId = null;
+            return;
+        }
+        moveTargetProjectId = projectId;
+    }
+
     public String projectName(Integer projectId) {
         if (projectId == null || projectId <= 0 || projects == null) {
             return "";

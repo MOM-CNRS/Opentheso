@@ -149,28 +149,55 @@
                     </ui:fragment>
 
                     <ui:fragment rendered="#{instanceAdminBean.moveThesaurusOpen}">
-                      <div class="ia-create">
+                      <div class="ia-create ia-move">
                         <ui:fragment rendered="#{not empty instanceAdminBean.thesaurusFormError}">
                           <div class="ia-create-err" role="alert">#{instanceAdminBean.thesaurusFormError}</div>
                         </ui:fragment>
-                        <p>#{localeBean.getMsg('admin.projects.thesauri.move.confirm')}
+                        <p class="ia-move-lead">
+                          #{localeBean.getMsg('admin.projects.thesauri.move.confirm')}
                           <b>#{instanceAdminBean.moveThesaurusTitle}</b>
+                        </p>
+                        <p class="ia-move-from-line">
+                          <span>#{localeBean.getMsg('admin.projects.thesauri.move.from')}</span>
+                          <b>#{instanceAdminBean.projectName(instanceAdminBean.openProjectId)}</b>
                         </p>
                         <ui:fragment rendered="#{empty instanceAdminBean.moveTargetProjects}">
                           <p class="ia-create-hint">#{localeBean.getMsg('admin.projects.thesauri.move.empty')}</p>
                         </ui:fragment>
                         <ui:fragment rendered="#{not empty instanceAdminBean.moveTargetProjects}">
-                          <label class="ia-field">
-                            <span>#{localeBean.getMsg('admin.projects.thesauri.move.target')}</span>
-                            <h:selectOneMenu id="iaMoveThesaurusTarget"
-                                             value="#{instanceAdminBean.moveTargetProjectId}"
-                                             styleClass="st-input ia-select">
-                              <f:selectItem itemValue="#{null}"
-                                            itemLabel="#{localeBean.getMsg('admin.projects.thesauri.move.choose')}"/>
-                              <f:selectItems value="#{instanceAdminBean.moveTargetProjects}" var="proj"
-                                             itemValue="#{proj.id}" itemLabel="#{proj.name}"/>
-                            </h:selectOneMenu>
-                          </label>
+                          <div class="ia-move-proj">
+                            <input type="search"
+                                   class="st-input ia-move-proj-q"
+                                   placeholder="#{localeBean.getMsg('admin.projects.thesauri.move.search')}"
+                                   aria-label="#{localeBean.getMsg('admin.projects.thesauri.move.search')}"
+                                   autocomplete="off"
+                                   spellcheck="false"
+                                   oninput="iaFilterMoveProjects(this)"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}"/>
+                            <h:panelGroup id="iaMoveList" layout="block"
+                                          styleClass="ia-member-hits ia-add-th-hits ia-move-list"
+                                          pt:role="listbox"
+                                          pt:aria-label="#{localeBean.getMsg('admin.projects.thesauri.move.target')}">
+                              <ui:repeat value="#{instanceAdminBean.moveTargetProjects}" var="proj">
+                                <h:commandLink styleClass="ia-member-hit ia-add-th-hit ia-move-hit#{instanceAdminBean.moveTargetProjectId eq proj.id ? ' is-on' : ''}"
+                                               action="#{instanceAdminBean.selectMoveTarget(proj.id)}">
+                                  <f:ajax execute="@this" render="iaMoveList iaMoveStatus" onevent="iaMoveProjectAjax"/>
+                                  <span class="ia-add-th-check" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+                                  </span>
+                                  <span class="ia-add-th-label">#{proj.name}</span>
+                                </h:commandLink>
+                              </ui:repeat>
+                            </h:panelGroup>
+                            <p class="ia-move-proj-none" hidden="hidden">#{localeBean.getMsg('admin.projects.thesauri.move.noMatch')}</p>
+                            <h:panelGroup id="iaMoveStatus" layout="block"
+                                          styleClass="ia-move-status#{empty instanceAdminBean.moveTargetProjectId ? ' is-empty' : ''}">
+                              <span>#{localeBean.getMsg('admin.projects.thesauri.move.target')}</span>
+                              <b>#{empty instanceAdminBean.moveTargetProjectId
+                                    ? localeBean.getMsg('admin.projects.thesauri.move.choose')
+                                    : instanceAdminBean.projectName(instanceAdminBean.moveTargetProjectId)}</b>
+                            </h:panelGroup>
+                          </div>
                         </ui:fragment>
                         <div class="ia-create-actions">
                           <h:commandLink styleClass="bo-btn ghost"
@@ -182,7 +209,7 @@
                           <h:commandLink styleClass="bo-btn primary"
                                          action="#{instanceAdminBean.confirmMoveThesaurus}"
                                          rendered="#{not empty instanceAdminBean.moveTargetProjects}">
-                            <f:ajax execute="@form" render="iaShell"/>
+                            <f:ajax execute="@this" render="iaShell"/>
                             #{localeBean.getMsg('admin.projects.thesauri.move.submit')}
                           </h:commandLink>
                         </div>

@@ -2764,6 +2764,31 @@ if (SCREEN === "preference" && location.hash) {
     }
   };
 
+  window.iaFilterMoveProjects = function (input) {
+    const box = input && input.closest ? input.closest(".ia-move-proj") : null;
+    if (!box) return;
+    const list = box.querySelector(".ia-move-list");
+    const none = box.querySelector(".ia-move-proj-none");
+    if (!list) return;
+    const fold = function (text) {
+      return (text || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+    const needle = fold(input.value);
+    let shown = 0;
+    list.querySelectorAll(".ia-move-hit").forEach(function (opt) {
+      const visible = !needle || fold(opt.textContent).indexOf(needle) >= 0;
+      opt.hidden = !visible;
+      if (visible) shown += 1;
+    });
+    if (none) none.hidden = needle === "" || shown !== 0;
+  };
+
+  window.iaMoveProjectAjax = function (data) {
+    if (!data || data.status !== "success") return;
+    const input = document.querySelector(".ia-move .ia-move-proj-q");
+    if (input) window.iaFilterMoveProjects(input);
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
     if (document.body && document.body.getAttribute("data-page") === "admin-instance") {
       const adminBtn = document.querySelector('.thesaurus a.thesaurus-btn[title="Administration de l\'instance"]');
