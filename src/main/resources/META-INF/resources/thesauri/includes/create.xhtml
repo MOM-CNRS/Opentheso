@@ -43,12 +43,12 @@
                              pt:placeholder="Ex. Ministère de la Culture, CNRS…"/>
               </div>
               <div class="tp-form-row">
-                <span class="tp-form-l">Langue source <span class="tp-req">*</span></span>
+                <span class="tp-form-l">Langue principale <span class="tp-req">*</span></span>
                 <h:panelGroup id="tpCreateLangUi" layout="block" styleClass="tp-lang-pick">
                   <button type="button"
                           class="tree-lang-btn tp-lang-btn"
                           data-act="tp-lang-toggle"
-                          title="Langue source"
+                          title="Langue principale"
                           aria-haspopup="listbox"
                           aria-expanded="false">
                     <span class="tree-lang-flag" aria-hidden="true">#{thesaurusPickerBean.createSelectedLanguageFlag}</span>
@@ -56,8 +56,8 @@
                     <span class="tree-lang-code">#{thesaurusPickerBean.createEditor.selectedLanguage}</span>
                     <span class="tree-lang-caret" aria-hidden="true">▾</span>
                   </button>
-                  <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue source">
-                    <div class="tree-lang-menu-h">Langue source</div>
+                  <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue principale">
+                    <div class="tree-lang-menu-h">Langue principale</div>
                     <ui:repeat value="#{thesaurusPickerBean.createLanguages}" var="lg">
                       <h:commandLink styleClass="tree-lang-opt#{thesaurusPickerBean.isCreateLanguageSelected(lg.code) ? ' is-on' : ''}"
                                      action="#{thesaurusPickerBean.selectCreateLanguage}">
@@ -70,6 +70,33 @@
                     </ui:repeat>
                   </div>
                 </h:panelGroup>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">Langues possibles</span>
+                <div class="tp-lang-multi" id="tpCreateLangsUi">
+                  <h:inputHidden styleClass="tp-lang-multi-value" value="#{thesaurusPickerBean.createPossibleLanguagesCsv}"/>
+                  <div class="tp-lang-multi-chips" aria-live="polite"></div>
+                  <div class="tp-lang-multi-box">
+                    <input type="search" class="tp-lang-multi-q" placeholder="Rechercher une langue…" autocomplete="off" aria-label="Rechercher une langue"/>
+                    <div class="tp-lang-multi-list" role="listbox" aria-label="Langues possibles" aria-multiselectable="true">
+                      <ui:repeat value="#{thesaurusPickerBean.createPossibleChoices}" var="lg">
+                        <button type="button"
+                                class="tp-lang-multi-opt#{thesaurusPickerBean.isCreateLanguagePossible(lg.code) ? ' is-on' : ''}"
+                                role="option"
+                                aria-selected="#{thesaurusPickerBean.isCreateLanguagePossible(lg.code) ? 'true' : 'false'}"
+                                data-code="#{lg.code}"
+                                data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
+                                data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}">
+                          <span class="tp-lang-multi-boxui" aria-hidden="true">✓</span>
+                          <span class="tp-lang-multi-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
+                          <span class="tp-lang-multi-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
+                          <span class="tp-lang-multi-code">#{lg.code}</span>
+                        </button>
+                      </ui:repeat>
+                    </div>
+                  </div>
+                  <p class="tp-lang-hint">Autres langues du thésaurus, en plus de la langue principale.</p>
+                </div>
               </div>
               <div class="tp-form-row">
                 <label class="tp-form-l" for="tpCreateProject">Projet</label>

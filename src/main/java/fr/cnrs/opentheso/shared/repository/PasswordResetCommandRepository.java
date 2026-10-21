@@ -36,4 +36,15 @@ public class PasswordResetCommandRepository {
                 .setParameter("expiresAt", expiresAt)
                 .executeUpdate();
     }
+
+    @Transactional
+    public void markUsed(String token) {
+        entityManager.createNativeQuery("""
+                        UPDATE password_reset_token
+                        SET used = true
+                        WHERE token = :token
+                        """)
+                .setParameter("token", token)
+                .executeUpdate();
+    }
 }

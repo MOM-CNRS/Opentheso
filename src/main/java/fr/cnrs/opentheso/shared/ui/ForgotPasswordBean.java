@@ -30,7 +30,11 @@ public class ForgotPasswordBean implements Serializable {
             error = "Veuillez saisir une adresse mail";
             return;
         }
-        accountPasswordResetService.requestPasswordReset(sendTo.trim(), false);
+        boolean sent = accountPasswordResetService.requestPasswordReset(sendTo.trim(), false);
+        if (!sent) {
+            error = "L'envoi du mail a échoué. Réessayez plus tard.";
+            return;
+        }
         message = "Si un compte existe pour cette adresse, un email de réinitialisation a été envoyé.";
     }
 }

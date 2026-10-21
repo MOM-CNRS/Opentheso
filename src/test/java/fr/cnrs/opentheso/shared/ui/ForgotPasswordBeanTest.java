@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ForgotPasswordBeanTest {
@@ -39,6 +40,7 @@ class ForgotPasswordBeanTest {
     @Test
     void sendMail_requestsResetWithoutRevealingAccount() {
         forgotPasswordBean.setSendTo(" alice@example.com ");
+        when(accountPasswordResetService.requestPasswordReset("alice@example.com", false)).thenReturn(true);
 
         forgotPasswordBean.sendMail();
 

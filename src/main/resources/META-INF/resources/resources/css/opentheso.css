@@ -1020,6 +1020,14 @@ a.th-id{flex:1}
 }
 .login-forgot:hover{text-decoration:underline}
 .login-forgot-back{margin-top:10px}
+.reset-page{min-height:100%;display:grid;place-items:center;padding:32px 16px}
+.reset-card{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow-lg);padding:22px 22px 18px}
+.reset-hint{font-size:12.5px;color:var(--ink-3);line-height:1.45;margin:0 0 12px}
+.reset-home{display:block;text-align:center;margin-top:14px;font-size:13px;font-weight:650;
+  color:var(--accent);text-decoration:none}
+.reset-home:hover{text-decoration:underline}
+.reset-card .login-go{border:0}
 #menu-login.is-forgot #previewLoginForm,
 #menu-login.is-forgot .login-sso{display:none}
 #menu-login:not(.is-forgot) #previewForgotForm{display:none}
@@ -1107,6 +1115,13 @@ a.th-id{flex:1}
 .block-overlay[hidden],
 .block-overlay.is-off,
 .confirm-overlay.is-off{display:none!important}
+#labelSaveConfirm:popover-open{
+  position:fixed;inset:0;width:100vw;height:100vh;max-width:none;max-height:none;
+  margin:0;padding:40px;border:0;overflow:visible;
+  background:rgba(0,0,0,.55);color:inherit;
+  display:grid!important;place-items:center;
+}
+#labelSaveConfirm::backdrop{background:rgba(0,0,0,.55)}
 .confirm-modal{
   background:var(--surface);border-radius:14px;box-shadow:var(--shadow-lg);
   width:min(400px,92vw);padding:22px 22px 18px;

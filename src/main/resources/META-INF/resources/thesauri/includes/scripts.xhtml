@@ -6,6 +6,80 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
     <script type="text/javascript">
       //<![CDATA[
+      function tpLangFold(value) {
+        return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+      function tpBindLangMulti(root) {
+        if (!root || root.getAttribute('data-bound') === '1') return;
+        root.setAttribute('data-bound', '1');
+        var hidden = root.querySelector('.tp-lang-multi-value');
+        var list = root.querySelector('.tp-lang-multi-list');
+        var chips = root.querySelector('.tp-lang-multi-chips');
+        var query = root.querySelector('.tp-lang-multi-q');
+        if (!list || !chips) return;
+        function paint() {
+          var selected = Array.from(list.querySelectorAll('.tp-lang-multi-opt.is-on'));
+          if (hidden) hidden.value = selected.map(function (el) { return el.getAttribute('data-code') || ''; }).filter(Boolean).join(',');
+          chips.replaceChildren();
+          if (!selected.length) {
+            var empty = document.createElement('span');
+            empty.className = 'tp-lang-multi-empty';
+            empty.textContent = 'Aucune langue ajoutée';
+            chips.appendChild(empty);
+            return;
+          }
+          selected.forEach(function (el) {
+            var label = el.getAttribute('data-label') || el.getAttribute('data-code') || '';
+            var chip = document.createElement('span');
+            chip.className = 'tp-lang-multi-chip';
+            var flag = document.createElement('span');
+            flag.setAttribute('aria-hidden', 'true');
+            flag.textContent = el.getAttribute('data-flag') || '';
+            var name = document.createElement('span');
+            name.textContent = label;
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'tp-lang-multi-x';
+            remove.setAttribute('aria-label', 'Retirer ' + label);
+            remove.textContent = '×';
+            remove.addEventListener('click', function () {
+              el.classList.remove('is-on');
+              el.setAttribute('aria-selected', 'false');
+              paint();
+            });
+            chip.appendChild(flag);
+            chip.appendChild(name);
+            chip.appendChild(remove);
+            chips.appendChild(chip);
+          });
+        }
+        list.addEventListener('click', function (event) {
+          var opt = event.target.closest && event.target.closest('.tp-lang-multi-opt');
+          if (!opt) return;
+          event.preventDefault();
+          var on = !opt.classList.contains('is-on');
+          opt.classList.toggle('is-on', on);
+          opt.setAttribute('aria-selected', on ? 'true' : 'false');
+          paint();
+        });
+        if (query) {
+          query.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') event.preventDefault();
+          });
+          query.addEventListener('input', function () {
+            var needle = tpLangFold(query.value.trim());
+            list.querySelectorAll('.tp-lang-multi-opt').forEach(function (el) {
+              var hay = tpLangFold((el.getAttribute('data-label') || '') + ' ' + (el.getAttribute('data-code') || ''));
+              el.classList.toggle('is-hide', !!needle && hay.indexOf(needle) === -1);
+            });
+          });
+        }
+        paint();
+      }
+      window.tpBindLangMultis = function () {
+        document.querySelectorAll('.tp-lang-multi').forEach(tpBindLangMulti);
+      };
+      if (document.readyState !== 'loading') window.tpBindLangMultis();
       window.tpApplyProgressSteps = function (mode) {
         var box = document.getElementById('tpLoading');
         if (!box) return;
@@ -1381,6 +1455,7 @@
         window.tpSyncSearchClear && window.tpSyncSearchClear();
         window.tpConsumeListFlash && window.tpConsumeListFlash();
         window.tpMountExportPage && window.tpMountExportPage();
+        window.tpBindLangMultis && window.tpBindLangMultis();
         window.tpOpenDeleteConfirmIfReady && window.tpOpenDeleteConfirmIfReady();
         var loadingEl = document.getElementById('tpLoading');
         if (loadingEl && !loadingEl.dataset.tpDismissBound) {

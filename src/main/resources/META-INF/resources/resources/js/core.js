@@ -262,9 +262,20 @@ function clickPreviewJsf(buttonId, fields) {
   window.setTimeout(() => btn.click(), 0);
 }
 
+function liftLabelConfirm(dlg, open) {
+  if (!dlg || dlg.id !== "labelSaveConfirm" || typeof dlg.showPopover !== "function") return;
+  if (open) {
+    if (!dlg.hasAttribute("popover")) dlg.setAttribute("popover", "manual");
+    if (!dlg.matches(":popover-open")) dlg.showPopover();
+    return;
+  }
+  if (dlg.matches(":popover-open")) dlg.hidePopover();
+}
+
 function hideConfirm(id) {
   const dlg = $(id);
   if (!dlg || dlg.hidden) return false;
+  liftLabelConfirm(dlg, false);
   dlg.hidden = true;
   return true;
 }
@@ -273,6 +284,7 @@ function showConfirm(id) {
   const dlg = $(id);
   if (!dlg) return;
   dlg.hidden = false;
+  liftLabelConfirm(dlg, true);
   const cancel = dlg.querySelector(".confirm-cancel");
   if (cancel) cancel.focus();
 }

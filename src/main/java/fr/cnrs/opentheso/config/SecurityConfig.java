@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/api/v2/auth/token",
                                 "/api/**"
                         )
+                        .ignoringRequestMatchers("/reset-password")
                         .ignoringRequestMatchers(
                                 request -> request.getServletPath().endsWith(".xhtml")
                         )

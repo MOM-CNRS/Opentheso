@@ -14,6 +14,8 @@ import java.util.Optional;
 
 public interface TermRepository extends JpaRepository<Term, Integer> {
 
+    boolean existsByIdThesaurusAndLang(String idThesaurus, String lang);
+
     @Modifying
     @Transactional
     @Query(value = """

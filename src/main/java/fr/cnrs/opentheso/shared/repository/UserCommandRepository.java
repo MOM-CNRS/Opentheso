@@ -198,6 +198,18 @@ public class UserCommandRepository {
                 .executeUpdate();
     }
 
+    @Transactional
+    public void activatePendingPassword(int userId) {
+        entityManager.createNativeQuery("""
+                        UPDATE users
+                        SET active = true, passtomodify = false
+                        WHERE id_user = :userId
+                          AND passtomodify = true
+                        """)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .executeUpdate();
+    }
+
     /**
      * Persiste l'autorisation API ({@code key_never_expire} / {@code key_expires_at}).
      * Si {@code authorized} est faux, la clé stockée est effacée.

@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -146,5 +147,17 @@ class NewThesaurusServiceTest {
         verify(toolboxPreferencePersistence).initPreferences("th100", "en");
         verify(toolboxThesaurusPersistence).setVisibility("th100", true);
         verify(projectMembershipRepository, never()).assignLimitedRole(anyInt(), anyInt(), anyInt(), any());
+    }
+
+    @Test
+    void create_addsEachPossibleLanguage() {
+        when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th103");
+
+        service.create(new NewThesaurusRequest(
+                "Test", "", "fr", null, false, "", List.of("fr", "en", "de")
+        ), "admin");
+
+        verify(toolboxThesaurusPersistence, times(3)).addTranslation(any());
+        verify(toolboxPreferencePersistence).initPreferences("th103", "fr");
     }
 }

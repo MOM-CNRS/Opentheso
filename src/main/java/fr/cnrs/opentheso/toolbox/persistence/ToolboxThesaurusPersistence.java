@@ -97,6 +97,13 @@ public class ToolboxThesaurusPersistence {
         return true;
     }
 
+    public List<String> listLanguageCodes(String thesaurusId) {
+        return thesaurusLabelRepository.findByIdThesaurus(thesaurusId).stream()
+                .map(ThesaurusLabel::getLang)
+                .filter(org.apache.commons.lang3.StringUtils::isNotBlank)
+                .toList();
+    }
+
     public void deleteTranslation(String thesaurusId, String languageCode) {
         thesaurusLabelRepository.deleteByIdThesaurusAndLang(
                 fr.cnrs.opentheso.utils.StringUtils.convertString(thesaurusId), languageCode);

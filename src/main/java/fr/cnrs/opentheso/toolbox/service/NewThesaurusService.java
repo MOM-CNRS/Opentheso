@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -74,6 +77,19 @@ public class NewThesaurusService {
         thesaurus.setLanguage(request.language());
         thesaurus.setPublisher(StringUtils.defaultString(request.organization()));
         toolboxThesaurusPersistence.addTranslation(thesaurus);
+        for (String language : possibleLanguages(request)) {
+            if (language.equalsIgnoreCase(request.language())) {
+                continue;
+            }
+            var extra = new fr.cnrs.opentheso.models.thesaurus.Thesaurus();
+            extra.setCreator(creatorName);
+            extra.setContributor(creatorName);
+            extra.setId_thesaurus(thesaurusId);
+            extra.setTitle(request.title());
+            extra.setLanguage(language);
+            extra.setPublisher(StringUtils.defaultString(request.organization()));
+            toolboxThesaurusPersistence.addTranslation(extra);
+        }
 
         if (request.projectId() != null) {
             toolboxThesaurusPersistence.linkToProject(
@@ -132,6 +148,21 @@ public class NewThesaurusService {
                 projectId,
                 thesaurusId
         );
+    }
+
+    private List<String> possibleLanguages(NewThesaurusRequest request) {
+        LinkedHashSet<String> languages = new LinkedHashSet<>();
+        if (request.languages() != null) {
+            for (String language : request.languages()) {
+                if (StringUtils.isNotBlank(language)) {
+                    languages.add(language.trim());
+                }
+            }
+        }
+        if (languages.stream().noneMatch(language -> language.equalsIgnoreCase(request.language()))) {
+            languages.add(request.language().trim());
+        }
+        return new ArrayList<>(languages);
     }
 
     private void validate(NewThesaurusRequest request) {

@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.toolbox.service;
 
 import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
+import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.toolbox.persistence.ThesaurusLifecyclePersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxPreferencePersistence;
@@ -52,6 +53,8 @@ class ModifyThesaurusServiceTest {
     private ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
     @Mock
     private ThesaurusDcTermRepository thesaurusDcTermRepository;
+    @Mock
+    private TermRepository termRepository;
 
     private ModifyThesaurusService service;
 
@@ -64,7 +67,8 @@ class ModifyThesaurusServiceTest {
                 toolboxThesaurusPersistence,
                 toolboxThesaurusArkPersistence,
                 thesaurusLifecyclePersistence,
-                thesaurusDcTermRepository
+                thesaurusDcTermRepository,
+                termRepository
         );
         ReflectionTestUtils.setField(service, "workLanguage", "fr");
     }
@@ -260,6 +264,29 @@ class ModifyThesaurusServiceTest {
 
         verify(thesaurusDcTermRepository).save(existing);
         assertEquals("Pays", existing.getValue());
+    }
+
+    @Test
+    void updateLanguages_addsPossibleLanguageAndKeepsPrincipal() {
+        when(toolboxThesaurusPersistence.listLanguageCodes("TH1")).thenReturn(List.of("fr"));
+        when(toolboxThesaurusPersistence.updateTranslation(any())).thenReturn(true);
+        when(toolboxPreferencePersistence.setWorkLanguage("en", "TH1")).thenReturn(true);
+
+        service.updateLanguages("TH1", "en", List.of("fr", "en"), "Titre", "admin");
+
+        verify(toolboxThesaurusPersistence).addTranslation(any());
+        verify(toolboxPreferencePersistence).setWorkLanguage("en", "TH1");
+        verify(toolboxThesaurusPersistence, never()).deleteTranslation(any(), any());
+    }
+
+    @Test
+    void updateLanguages_refusesToDropLanguageUsedByTerms() {
+        when(toolboxThesaurusPersistence.listLanguageCodes("TH1")).thenReturn(List.of("fr", "de"));
+        when(termRepository.existsByIdThesaurusAndLang("TH1", "de")).thenReturn(true);
+
+        assertThrows(InvalidToolboxDataException.class,
+                () -> service.updateLanguages("TH1", "fr", List.of("fr"), "Titre", "admin"));
+        verify(toolboxThesaurusPersistence, never()).deleteTranslation(any(), any());
     }
 
     @Test

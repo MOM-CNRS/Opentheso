@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
+import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.toolbox.persistence.ThesaurusLifecyclePersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxPreferencePersistence;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +51,7 @@ public class ModifyThesaurusService {
     private final ToolboxThesaurusArkPersistence toolboxThesaurusArkPersistence;
     private final ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
+    private final TermRepository termRepository;
 
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
@@ -238,6 +241,55 @@ public class ModifyThesaurusService {
         thesaurus.setTitle(title);
         thesaurus.setLanguage(languageCode);
         toolboxThesaurusPersistence.addTranslation(thesaurus);
+    }
+
+    @Transactional
+    public void updateLanguages(
+            String thesaurusId,
+            String principal,
+            List<String> languages,
+            String title,
+            String creatorName
+    ) {
+        if (StringUtils.isBlank(title)) {
+            throw new InvalidToolboxDataException("Le label est obligatoire");
+        }
+        String source = StringUtils.trimToEmpty(principal);
+        if (StringUtils.isBlank(source)) {
+            throw new InvalidToolboxDataException("La langue principale est obligatoire");
+        }
+        LinkedHashSet<String> desired = new LinkedHashSet<>();
+        if (languages != null) {
+            for (String language : languages) {
+                if (StringUtils.isNotBlank(language)) {
+                    desired.add(language.trim());
+                }
+            }
+        }
+        if (desired.stream().noneMatch(language -> language.equalsIgnoreCase(source))) {
+            desired.add(source);
+        }
+        List<String> current = toolboxThesaurusPersistence.listLanguageCodes(thesaurusId);
+        for (String language : desired) {
+            boolean present = current.stream().anyMatch(existing -> existing.equalsIgnoreCase(language));
+            if (!present) {
+                addLanguage(thesaurusId, title.trim(), language, creatorName);
+            }
+        }
+        for (String language : current) {
+            boolean keep = desired.stream().anyMatch(wanted -> wanted.equalsIgnoreCase(language));
+            if (keep || language.equalsIgnoreCase(source)) {
+                continue;
+            }
+            if (termRepository.existsByIdThesaurusAndLang(thesaurusId, language)) {
+                throw new InvalidToolboxDataException(
+                        "Impossible de retirer la langue " + language + " : des termes l'utilisent."
+                );
+            }
+            deleteLanguage(thesaurusId, language);
+        }
+        updateLanguage(thesaurusId, source, title.trim(), creatorName);
+        changeSourceLanguage(thesaurusId, source);
     }
 
     @Transactional

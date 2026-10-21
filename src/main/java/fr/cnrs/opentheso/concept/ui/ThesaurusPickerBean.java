@@ -26,6 +26,7 @@ import org.apache.commons.lang3.Strings;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -101,6 +102,8 @@ public class ThesaurusPickerBean implements Serializable {
     private String editThesaurusId;
     private String editTitle;
     private String editLanguage;
+    private List<LanguageOption> editLanguages = Collections.emptyList();
+    private List<String> editPossibleLanguages = new ArrayList<>();
     private boolean editPrivateThesaurus;
     private String editError;
 
@@ -730,6 +733,12 @@ public class ThesaurusPickerBean implements Serializable {
             editThesaurusId = details.id();
             editTitle = StringUtils.defaultString(details.title());
             editLanguage = StringUtils.defaultIfBlank(details.sourceLang(), localeBean.getIdLangue());
+            editLanguages = modifyThesaurusService.loadAllLanguages();
+            editPossibleLanguages = new ArrayList<>();
+            modifyThesaurusService.loadLanguages(editThesaurusId).stream()
+                    .map(language -> language.code())
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(this::includeEditPossible);
             editPrivateThesaurus = details.privateThesaurus();
             editMode = true;
             columnsMenuOpen = false;
@@ -744,6 +753,8 @@ public class ThesaurusPickerBean implements Serializable {
         editThesaurusId = null;
         editTitle = null;
         editLanguage = null;
+        editLanguages = Collections.emptyList();
+        editPossibleLanguages = new ArrayList<>();
         editPrivateThesaurus = false;
         editError = null;
     }
@@ -768,9 +779,10 @@ public class ThesaurusPickerBean implements Serializable {
         }
         try {
             String creator = StringUtils.defaultIfBlank(userSession.getCurrentUsername(), "user");
-            modifyThesaurusService.updateLanguage(
+            modifyThesaurusService.updateLanguages(
                     editThesaurusId,
                     StringUtils.defaultIfBlank(editLanguage, localeBean.getIdLangue()),
+                    editPossibleLanguages,
                     editTitle.trim(),
                     creator
             );
@@ -926,6 +938,108 @@ public class ThesaurusPickerBean implements Serializable {
             createEditor = NewThesaurusEditor.empty();
         }
         createEditor.setSelectedLanguage(StringUtils.defaultString(code));
+    }
+
+    public List<LanguageOption> getCreatePossibleChoices() {
+        String principal = createEditor == null ? "" : createEditor.getSelectedLanguage();
+        return createLanguages.stream()
+                .filter(language -> !Strings.CI.equals(language.code(), principal))
+                .toList();
+    }
+
+    public boolean isCreateLanguagePossible(String code) {
+        return createEditor != null && createEditor.isPossible(code);
+    }
+
+    public String getCreatePossibleLanguagesCsv() {
+        if (createEditor == null || createEditor.getPossibleLanguages().isEmpty()) {
+            return "";
+        }
+        return String.join(",", createEditor.getPossibleLanguages());
+    }
+
+    public void setCreatePossibleLanguagesCsv(String csv) {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.replacePossible(splitLanguageCodes(csv));
+    }
+
+    public List<LanguageOption> getEditPossibleChoices() {
+        return editLanguages.stream()
+                .filter(language -> !Strings.CI.equals(language.code(), editLanguage))
+                .toList();
+    }
+
+    public void selectEditLanguage() {
+        String code = requestParam("editLangCode");
+        if (StringUtils.isBlank(code)) {
+            return;
+        }
+        String previous = editLanguage;
+        editLanguage = code.trim();
+        if (StringUtils.isNotBlank(previous) && !previous.equalsIgnoreCase(editLanguage)) {
+            includeEditPossible(previous);
+        }
+        editPossibleLanguages.removeIf(lang -> lang.equalsIgnoreCase(editLanguage));
+    }
+
+    public boolean isEditLanguageSelected(String code) {
+        return Strings.CI.equals(editLanguage, code);
+    }
+
+    public boolean isEditLanguagePossible(String code) {
+        return editPossibleLanguages.stream().anyMatch(lang -> lang.equalsIgnoreCase(StringUtils.defaultString(code)));
+    }
+
+    public String getEditPossibleLanguagesCsv() {
+        return editPossibleLanguages.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(code -> !code.equalsIgnoreCase(StringUtils.defaultString(editLanguage)))
+                .reduce((left, right) -> left + "," + right)
+                .orElse("");
+    }
+
+    public void setEditPossibleLanguagesCsv(String csv) {
+        editPossibleLanguages = new ArrayList<>();
+        splitLanguageCodes(csv).forEach(this::includeEditPossible);
+    }
+
+    public String getEditSelectedLanguageFlag() {
+        return languageFlag(editLanguage);
+    }
+
+    public String getEditSelectedLanguageLabel() {
+        return languageLabel(editLanguage);
+    }
+
+    private void includeEditPossible(String code) {
+        String normalized = StringUtils.trimToEmpty(code);
+        if (normalized.isEmpty()
+                || normalized.equalsIgnoreCase(StringUtils.defaultString(editLanguage))
+                || isEditLanguagePossible(normalized)) {
+            return;
+        }
+        editPossibleLanguages.add(normalized);
+    }
+
+    private List<String> splitLanguageCodes(String csv) {
+        if (StringUtils.isBlank(csv)) {
+            return List.of();
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .toList();
+    }
+
+    private String requestParam(String name) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return "";
+        }
+        return StringUtils.defaultString(faces.getExternalContext().getRequestParameterMap().get(name));
     }
 
     public boolean isCreateLanguageSelected(String code) {
