@@ -252,7 +252,7 @@
                           <table class="st-table ia-tab ia-tab-t">
                             <thead>
                               <tr>
-                                <th>#{localeBean.getMsg('admin.projects.thesauri.col.name')}</th>
+                                <th class="ia-th-name">#{localeBean.getMsg('admin.projects.thesauri.col.name')}</th>
                                 <th>#{localeBean.getMsg('admin.projects.thesauri.col.visibility')}</th>
                                 <th></th>
                               </tr>
@@ -260,7 +260,7 @@
                             <tbody>
                               <ui:repeat value="#{instanceAdminBean.openProjectThesauri}" var="t">
                                 <tr>
-                                  <td data-label="#{localeBean.getMsg('admin.projects.thesauri.col.name')}">
+                                  <td class="ia-th-name" data-label="#{localeBean.getMsg('admin.projects.thesauri.col.name')}" title="#{t.title}">
                                     <b>#{t.title}</b>
                                   </td>
                                   <td data-label="#{localeBean.getMsg('admin.projects.thesauri.col.visibility')}">

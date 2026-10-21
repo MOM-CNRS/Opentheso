@@ -1117,6 +1117,11 @@ body[data-page="admin-instance"] button.ia-edit-delete:focus-visible{
 
 .ia-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .ia-tab{table-layout:auto;width:100%;border-collapse:collapse}
+.ia-tab-t{table-layout:fixed}
+.ia-tab-t .ia-th-name{
+  width:240px;max-width:240px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
 .ia-tab th,.ia-tab td{
   padding:12px 16px;text-align:left;vertical-align:middle;
   border-bottom:1px solid var(--line-2);font-size:13.5px
@@ -1364,6 +1369,9 @@ body[data-page="admin-instance"] .bo-back.is-leaving,
     flex:0 0 38%;max-width:9rem;
     font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
     color:var(--ink-4);padding-top:2px
+  }
+  .ia-tab-t .ia-th-name{
+    width:auto;max-width:none;overflow:visible;text-overflow:clip;white-space:normal
   }
   .ia-tab td.st-td-act{justify-content:flex-end;padding-top:10px}
   .ia-tab td.st-td-act::before{display:none}

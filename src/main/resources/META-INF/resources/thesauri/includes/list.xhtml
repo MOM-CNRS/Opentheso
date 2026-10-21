@@ -447,7 +447,7 @@
                           <a class="tp-c-name-in" href="#{thesaurusPickerBean.browseUrl(row.id)}"
                              onclick="return window.tpShowLoading &amp;&amp; window.tpShowLoading();">
                             <span class="tp-name-wrap">
-                              <span class="tp-name">#{row.name}</span>
+                              <span class="tp-name" title="#{row.name}">#{row.name}</span>
                               <span class="tp-sync-ico #{row.syncBadgeClass}"
                                     title="#{row.master ? localeBean.getMsg('picker.sync.master') : localeBean.getMsg('picker.sync.copy')}">
                                 <ui:fragment rendered="#{row.master}">

@@ -912,7 +912,7 @@
                           <table class="st-table ia-tab ia-tab-t">
                             <thead>
                               <tr>
-                                <th>Thésaurus</th>
+                                <th class="ia-th-name">Thésaurus</th>
                                 <th>Projet</th>
                                 <th>Visibilité</th>
                                 <th></th>
@@ -921,7 +921,7 @@
                             <tbody>
                               <ui:repeat value="#{instanceAdminBean.visibleThesauri}" var="t">
                                 <tr>
-                                  <td data-label="Thésaurus"><b>#{t.title}</b></td>
+                                  <td class="ia-th-name" data-label="Thésaurus" title="#{t.title}"><b>#{t.title}</b></td>
                                   <td data-label="Projet">#{empty t.projectName ? '—' : t.projectName}</td>
                                   <td data-label="Visibilité">
                                     <span class="ia-vis#{t.privateThesaurus ? ' is-private' : ''}">#{t.privateThesaurus ? 'Privé' : 'Public'}</span>

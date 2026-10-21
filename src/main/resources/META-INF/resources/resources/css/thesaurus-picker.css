@@ -85,7 +85,7 @@ button.tp-create, input.tp-create[type="submit"]{
   stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto; }
 img.tp-gov-mark{
   display:block;flex:0 0 auto;
-  width:160px;height:auto;max-width:none;max-height:none;
+  width:96px;height:auto;max-width:none;max-height:none;
   object-fit:unset;object-position:unset
 }
 
@@ -109,12 +109,12 @@ img.tp-gov-mark{
   padding:0;background:transparent;border:0;box-shadow:none
 }
 .tp-brand-logo{
-  display:block;height:clamp(40px, 5.6vw, 64px);width:auto;max-width:min(100%, 440px);
+  display:block;height:clamp(32px, 4.2vw, 48px);width:auto;max-width:min(100%, 320px);
   object-fit:contain;object-position:left center;background:transparent
 }
 .gv-mark{
   display:block;flex:0 0 auto;
-  width:140px;height:auto;max-width:none;max-height:none;
+  width:84px;height:auto;max-width:none;max-height:none;
   object-fit:unset;object-position:unset;
   padding:0;background:transparent;border:0;border-radius:0
 }
@@ -387,7 +387,7 @@ a.tp-add-opt:hover .tp-add-opt-go{opacity:1;transform:translateX(0);color:var(--
   .tp-tabs{width:100%}
   .tp-tab{flex:1 1 auto;justify-content:center}
   .tp-title{font-size:26px;letter-spacing:-.02em}
-  .tp-brand-logo{height:42px}
+  .tp-brand-logo{height:34px}
 }
 .tp-tabs{display:flex;gap:6px;margin:0;flex-wrap:wrap;flex:0 0 auto;padding:4px;width:fit-content;max-width:100%;
   border-radius:14px;background:rgba(255,255,255,.55);border:1px solid var(--line);box-shadow:var(--shadow-sm);
@@ -604,6 +604,9 @@ button.tp-tab{appearance:none;-webkit-appearance:none;margin:0;line-height:1.2}
 .tp-th{text-align:left;padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.045em;color:var(--ink-3);background:var(--surface-2);border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;z-index:3}
 .tp-filters th{position:sticky;top:39px;z-index:2}
 .tp-th--grow{width:26%}
+.tp-th--name.tp-th--grow,
+.tp-filters th.tp-fth--name,
+.tp-col-name{max-width:280px}
 .tp-th--edit{width:118px;min-width:118px;cursor:default;position:sticky;right:0;z-index:8;box-shadow:-1px 0 0 var(--line)}
 .tp-th:hover:not(.tp-th--edit){color:var(--ink)}
 .tp-th.is-sorted{color:var(--accent)}
@@ -718,12 +721,12 @@ button.tp-act{font:inherit;padding:0;appearance:none;-webkit-appearance:none}
 .tp-table tbody tr:hover .tp-col-name,
 .tp-table tbody tr:hover .tp-c-edit{background-color:var(--surface);background-image:linear-gradient(var(--accent-soft),var(--accent-soft))}
 .tp-table td{padding:13px 14px;border-bottom:1px solid var(--line-2);color:var(--ink-2);vertical-align:middle;white-space:nowrap}
-.tp-c-name-in{display:flex;align-items:center;gap:10px}
+.tp-c-name-in{display:flex;align-items:center;gap:10px;max-width:280px;min-width:0}
 .tp-table tbody tr:last-child td{border-bottom:0}
 .tp-c-name{white-space:nowrap}
 .tp-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
-.tp-name-wrap{display:inline-flex;align-items:center;gap:6px;min-width:0}
-.tp-name{font-weight:650;color:var(--ink);font-size:14.5px;letter-spacing:-.01em}
+.tp-name-wrap{display:inline-flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;max-width:100%;overflow:hidden}
+.tp-name{font-weight:650;color:var(--ink);font-size:14.5px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tp-c-name-in:hover .tp-name{color:var(--accent)}
 .tp-sync-ico{
   display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
@@ -733,7 +736,7 @@ button.tp-act{font:inherit;padding:0;appearance:none;-webkit-appearance:none}
   stroke-linecap:round;stroke-linejoin:round}
 .tp-sync-ico--master{color:#1d4e89}
 .tp-sync-ico--copy{color:#6b5428}
-.tp-id{opacity:.85}
+.tp-id{opacity:.85;flex:0 0 auto}
 .tp-langs{font-size:11px;color:var(--ink-4);background:var(--surface-2);border-radius:5px;padding:1px 7px}
 .tp-c-lang{vertical-align:middle;white-space:nowrap}
 .tp-langs-in{display:inline-flex;flex-wrap:nowrap;align-items:center;gap:5px;max-width:100%;vertical-align:middle}
@@ -1060,7 +1063,7 @@ body[data-page="thesauri"] .tp--create .bo-back.is-leaving{
   animation:tp-fade-in .3s ease-out;overflow:visible}
 .tp-gov-mark{display:block;line-height:normal;flex:0 0 auto;overflow:visible}
 .tp-gov-mark img,
-img.tp-gov-mark{display:block;width:160px;height:auto;max-width:none;max-height:none;object-fit:unset}
+img.tp-gov-mark{display:block;width:96px;height:auto;max-width:none;max-height:none;object-fit:unset}
 .tp-gov-lk{margin-left:auto;font-size:12px;font-weight:500;color:var(--ink-3);display:inline-flex;align-items:center;gap:5px}
 .tp-gov-lk:hover{color:var(--accent)}
 .gv-slot{width:60px;height:44px;border:1px dashed var(--line-2);border-radius:4px;display:grid;place-items:center;text-align:center;
@@ -1662,7 +1665,12 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
   .tp-table tbody td.is-col-off{display:none!important}
   .tp-c-name-in{flex-direction:column;align-items:flex-start;gap:2px}
   .tp-name-wrap{flex-wrap:wrap}
-  .tp-name{font-size:15.5px;font-weight:700;line-height:1.3;white-space:normal}
+  .tp-th--name.tp-th--grow,
+  .tp-filters th.tp-fth--name,
+  .tp-col-name,
+  .tp-c-name-in{max-width:none}
+  .tp-name-wrap{flex:1 1 auto;overflow:visible}
+  .tp-name{font-size:15.5px;font-weight:700;line-height:1.3;white-space:normal;overflow:visible;text-overflow:clip}
   .tp-id{font-size:12px;color:var(--ink-3)}
   .tp-row-acts{gap:6px;justify-content:flex-end}
   .tp-act{width:42px;height:42px;border-radius:11px;min-width:42px;min-height:42px}
@@ -1689,7 +1697,7 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
   .tp{padding:14px 12px 88px}
   .tp--create,.tp--import,.tp--export{padding:16px 12px 96px}
   .tp-gov{padding:10px 12px;margin:-14px -12px 14px;gap:10px}
-  .tp-brand-logo{height:clamp(34px,9vw,46px);max-width:min(100%,280px)}
+  .tp-brand-logo{height:clamp(28px,8vw,36px);max-width:min(100%,220px)}
   .tp-sub{font-size:13.5px}
   .tp-title{font-size:clamp(1.35rem,4.5vw,1.7rem)}
   .tp-bar-actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
