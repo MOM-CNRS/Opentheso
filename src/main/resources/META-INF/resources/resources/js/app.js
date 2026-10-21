@@ -481,8 +481,39 @@ function syncThesaurusPollTick() {
   if (syncPollTimer) return;
   syncPollTimer = window.setInterval(() => clickPreviewJsf("previewSyncPollGo"), 1000);
 }
+function syncNoticeText(selector) {
+  const box = document.getElementById("messageIndex");
+  if (!box) return "";
+  const parts = [];
+  box.querySelectorAll(selector).forEach((node) => {
+    const text = (node.textContent || "").replace(/\s+/g, " ").trim();
+    if (text) parts.push(text);
+    node.hidden = true;
+  });
+  return parts.join("\n");
+}
+function showSyncDialog(selector, textId, dialogId) {
+  const msg = syncNoticeText(selector);
+  const text = document.getElementById(textId);
+  if (!msg || !text) return false;
+  text.textContent = msg;
+  showConfirm(dialogId);
+  return true;
+}
+function showSyncErrorIfAny() {
+  return showSyncDialog(".is-error", "syncErrorText", "#syncErrorDialog");
+}
+function showSyncDoneIfAny() {
+  return showSyncDialog(".st-corpus-msg:not(.is-error)", "syncDoneText", "#syncDoneDialog");
+}
+window.onPreviewSyncNotice = function (data) {
+  if (data.status === "success") showSyncErrorIfAny();
+};
 window.onPreviewSyncPoll = function (data) {
-  if (data.status === "success") syncThesaurusPollTick();
+  if (data.status === "success") {
+    if (!showSyncErrorIfAny()) showSyncDoneIfAny();
+    syncThesaurusPollTick();
+  }
 };
 function setSyncSolicitBusy(on) {
   const page = document.getElementById("viewSync");
@@ -501,7 +532,10 @@ function setSyncSolicitBusy(on) {
 }
 window.onPreviewSyncSolicit = function (data) {
   if (data.status === "begin") setSyncSolicitBusy(true);
-  if (data.status === "success") setSyncSolicitBusy(false);
+  if (data.status === "success") {
+    setSyncSolicitBusy(false);
+    showSyncErrorIfAny();
+  }
   if (data.status === "complete") {
     window.setTimeout(() => setSyncSolicitBusy(false), 30);
   }
@@ -561,6 +595,10 @@ document.addEventListener("keydown", (e) => {
   const overlay = $("#cblockOverlay");
   if (overlay && !overlay.hidden) {
     closeConceptBlockOverlay();
+    e.preventDefault();
+    return;
+  }
+  if (hideConfirm("#syncErrorDialog") || hideConfirm("#syncDoneDialog")) {
     e.preventDefault();
     return;
   }
@@ -845,6 +883,14 @@ document.addEventListener("click", (e) => {
     closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
     showConfirm("#logoutConfirm");
+  } else if (act === "sync-error-dismiss") {
+    e.preventDefault();
+    hideConfirm("#syncErrorDialog");
+  } else if (act === "sync-error-modal" || act === "sync-done-modal") {
+    return;
+  } else if (act === "sync-done-dismiss") {
+    e.preventDefault();
+    hideConfirm("#syncDoneDialog");
   } else if (act === "portal-result-dismiss") {
     e.preventDefault();
     dismissPortalResult();
