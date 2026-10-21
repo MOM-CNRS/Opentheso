@@ -71,6 +71,8 @@ public class InstanceAdminBean implements Serializable {
     private static final List<Integer> USERS_PAGE_SIZE_OPTIONS = List.of(10, 25, 50, 100);
     private static final int DEFAULT_USERS_PAGE_SIZE = 25;
     private static final String SESSION_MEMBER_FLASH = "iaMemberCreateFlash";
+    private static final String MEMBER_SCOPE_THESAURUS = "thesaurus";
+    private static final String MEMBER_SCOPE_PROJECT = "project";
 
     private final transient UserSession userSession;
     private final transient LocaleBean localeBean;
@@ -164,6 +166,7 @@ public class InstanceAdminBean implements Serializable {
     private int memberEditOldRoleId;
     private String memberEditUsername;
     private boolean memberEditProjectWide;
+    private String memberEditScope = MEMBER_SCOPE_THESAURUS;
 
     private boolean createUserOpen;
     private String newUsername;
@@ -2341,6 +2344,7 @@ public class InstanceAdminBean implements Serializable {
         memberEditRoleId = roleId;
         memberEditUsername = username;
         memberEditProjectWide = projectWide;
+        memberEditScope = projectWide ? MEMBER_SCOPE_PROJECT : MEMBER_SCOPE_THESAURUS;
     }
 
     public void closeMemberEditRole() {
@@ -2349,6 +2353,15 @@ public class InstanceAdminBean implements Serializable {
         memberEditRoleId = ProjectAccessPolicy.ROLE_CONTRIBUTOR;
         memberEditUsername = null;
         memberEditProjectWide = false;
+        memberEditScope = MEMBER_SCOPE_THESAURUS;
+    }
+
+    public String getMemberScopeThesaurus() {
+        return MEMBER_SCOPE_THESAURUS;
+    }
+
+    public String getMemberScopeProject() {
+        return MEMBER_SCOPE_PROJECT;
     }
 
     public void saveMemberEditRole() {
@@ -2366,17 +2379,31 @@ public class InstanceAdminBean implements Serializable {
             return;
         }
         try {
-            projectMemberService.updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
-                    callerId,
-                    userSession.isSuperAdmin(),
-                    projectId,
-                    memberEditUserId,
-                    memberEditOldRoleId,
-                    memberEditRoleId,
-                    memberThesaurusId(th),
-                    !memberEditProjectWide
-            ));
-            flashInfo(localeBean.getMsg("admin.members.edit.success"));
+            boolean limitToThisThesaurus = !MEMBER_SCOPE_PROJECT.equals(memberEditScope);
+            if (limitToThisThesaurus && memberEditProjectWide) {
+                projectMemberService.updateMemberRole(
+                        callerId,
+                        userSession.isSuperAdmin(),
+                        projectId,
+                        memberEditUserId,
+                        memberEditRoleId,
+                        true,
+                        List.of(memberThesaurusId(th))
+                );
+                flashInfo(localeBean.getMsg("admin.members.edit.limited"));
+            } else {
+                projectMemberService.updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
+                        callerId,
+                        userSession.isSuperAdmin(),
+                        projectId,
+                        memberEditUserId,
+                        memberEditOldRoleId,
+                        memberEditRoleId,
+                        memberThesaurusId(th),
+                        limitToThisThesaurus
+                ));
+                flashInfo(localeBean.getMsg("admin.members.edit.success"));
+            }
             closeMemberEditRole();
             reloadThesaurusMembers();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {

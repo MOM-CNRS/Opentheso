@@ -890,6 +890,36 @@ class InstanceAdminBeanTest {
         verify(projectMemberService, never()).createMember(any());
     }
 
+    @Test
+    void saveMemberEditRole_limitsProjectWideMemberToCurrentThesaurus() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(1);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(localeBean.getMsg("admin.members.edit.limited")).thenReturn("Accès limité à ce thésaurus.");
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of(
+                new ThesaurusMember(3, "bob", true, ProjectAccessPolicy.ROLE_ADMIN, "Admin", true)
+        ));
+
+        bean.reload();
+        bean.openThesaurusMembers("th1");
+        bean.openMemberEditRole(3, ProjectAccessPolicy.ROLE_ADMIN, "bob", true);
+        bean.setMemberEditScope(bean.getMemberScopeThesaurus());
+        bean.setMemberEditRoleId(ProjectAccessPolicy.ROLE_CONTRIBUTOR);
+        bean.saveMemberEditRole();
+
+        verify(projectMemberService).updateMemberRole(
+                1, true, 5, 3, ProjectAccessPolicy.ROLE_CONTRIBUTOR, true, List.of("th1"));
+        verify(projectMemberService, never()).updateLimitedMemberRole(any());
+        assertEquals("Accès limité à ce thésaurus.", bean.getFlashMessage());
+        assertNull(bean.getMemberEditUserId());
+    }
+
     private static InstanceAdminAccount account(int id, String username, boolean active) {
         return account(id, username, active, "super_admin");
     }

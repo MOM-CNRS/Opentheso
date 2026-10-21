@@ -1271,19 +1271,35 @@
                             </div>
                           </div>
                         </div>
-                        <label class="ia-field" style="max-width:240px">
-                          <span class="ia-field-l">#{localeBean.getMsg('admin.members.col.role')}</span>
-                          <h:selectOneMenu id="iaEditMemberRole"
-                                           value="#{instanceAdminBean.memberEditRoleId}"
-                                           styleClass="st-input ia-select">
-                            <f:selectItem itemValue="#{instanceAdminBean.roleAdminId}"
-                                          itemLabel="#{localeBean.getMsg('admin.users.role.admin')}"/>
-                            <f:selectItem itemValue="#{instanceAdminBean.roleManagerId}"
-                                          itemLabel="#{localeBean.getMsg('admin.users.role.manager')}"/>
-                            <f:selectItem itemValue="#{instanceAdminBean.roleContributorId}"
-                                          itemLabel="#{localeBean.getMsg('admin.users.role.contributor')}"/>
-                          </h:selectOneMenu>
-                        </label>
+                        <div class="ia-create-grid">
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('admin.members.col.role')}</span>
+                            <h:selectOneMenu id="iaEditMemberRole"
+                                             value="#{instanceAdminBean.memberEditRoleId}"
+                                             styleClass="st-input ia-select">
+                              <f:selectItem itemValue="#{instanceAdminBean.roleAdminId}"
+                                            itemLabel="#{localeBean.getMsg('admin.users.role.admin')}"/>
+                              <f:selectItem itemValue="#{instanceAdminBean.roleManagerId}"
+                                            itemLabel="#{localeBean.getMsg('admin.users.role.manager')}"/>
+                              <f:selectItem itemValue="#{instanceAdminBean.roleContributorId}"
+                                            itemLabel="#{localeBean.getMsg('admin.users.role.contributor')}"/>
+                            </h:selectOneMenu>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('admin.members.edit.scope')}</span>
+                            <h:selectOneMenu id="iaEditMemberScope"
+                                             value="#{instanceAdminBean.memberEditScope}"
+                                             styleClass="st-input ia-select">
+                              <f:selectItem itemValue="#{instanceAdminBean.memberScopeThesaurus}"
+                                            itemLabel="#{localeBean.getMsg('admin.members.edit.scope.thesaurus')}"/>
+                              <f:selectItem itemValue="#{instanceAdminBean.memberScopeProject}"
+                                            itemLabel="#{localeBean.getMsg('admin.members.edit.scope.project')}"/>
+                            </h:selectOneMenu>
+                          </label>
+                        </div>
+                        <ui:fragment rendered="#{instanceAdminBean.memberEditProjectWide}">
+                          <p class="ia-mode-hint">#{localeBean.getMsg('admin.members.edit.scope.limitHint')}</p>
+                        </ui:fragment>
                         <div class="ia-create-actions">
                           <button type="button"
                                   class="bo-btn ghost"
@@ -1312,6 +1328,7 @@
                               <tr>
                                 <th>#{localeBean.getMsg('admin.members.col.name')}</th>
                                 <th>#{localeBean.getMsg('admin.members.col.role')}</th>
+                                <th>#{localeBean.getMsg('admin.members.col.scope')}</th>
                                 <th>#{localeBean.getMsg('admin.members.col.status')}</th>
                                 <th></th>
                               </tr>
@@ -1321,6 +1338,7 @@
                                 <tr class="#{m.active ? '' : 'ia-row-inactive'}">
                                   <td data-label="#{localeBean.getMsg('admin.members.col.name')}"><b>#{m.username}</b></td>
                                   <td data-label="#{localeBean.getMsg('admin.members.col.role')}">#{instanceAdminBean.memberRoleLabel(m)}</td>
+                                  <td data-label="#{localeBean.getMsg('admin.members.col.scope')}">#{instanceAdminBean.memberScopeLabel(m)}</td>
                                   <td data-label="#{localeBean.getMsg('admin.members.col.status')}">
                                     <span class="ia-status#{m.active ? ' ia-status--on' : ' ia-status--off'}">
                                       #{m.active
