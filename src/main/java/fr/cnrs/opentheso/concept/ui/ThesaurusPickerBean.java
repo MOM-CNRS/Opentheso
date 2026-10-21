@@ -74,8 +74,8 @@ public class ThesaurusPickerBean implements Serializable {
     private List<ThesaurusPickerRow> rows = List.of();
     private String query = "";
     private String activeTab = TAB_ALL;
-    private String sortColumn = "name";
-    private boolean sortAscending = true;
+    private String sortColumn = "created";
+    private boolean sortAscending = false;
     private boolean listLoading;
 
     private transient List<ThesaurusPickerRow> filteredRowsCache;
@@ -1130,7 +1130,7 @@ public class ThesaurusPickerBean implements Serializable {
         Comparator<ThesaurusPickerRow> base = switch (StringUtils.defaultString(sortColumn)) {
             case "terms" -> Comparator.comparingLong(ThesaurusPickerRow::terms);
             case "created" -> Comparator.comparing(
-                    ThesaurusPickerRow::created, Comparator.nullsLast(Comparator.naturalOrder()));
+                    ThesaurusPickerRow::created, Comparator.nullsLast(createdOrder()));
             case "projects" -> Comparator.comparing(
                     row -> StringUtils.defaultString(row.projects()), String.CASE_INSENSITIVE_ORDER);
             case "access" -> Comparator.comparing(ThesaurusPickerRow::isPrivateThesaurus);
@@ -1148,7 +1148,17 @@ public class ThesaurusPickerBean implements Serializable {
             default -> Comparator.comparing(
                     row -> StringUtils.defaultString(row.name()), String.CASE_INSENSITIVE_ORDER);
         };
+        if ("created".equals(sortColumn)) {
+            return base;
+        }
         return sortAscending ? base : base.reversed();
+    }
+
+    private Comparator<java.time.LocalDate> createdOrder() {
+        if (sortAscending) {
+            return Comparator.naturalOrder();
+        }
+        return Comparator.reverseOrder();
     }
 
     private static List<ColumnCfg> defaultColumnCfg() {

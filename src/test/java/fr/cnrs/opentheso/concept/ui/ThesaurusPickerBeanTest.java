@@ -98,6 +98,14 @@ class ThesaurusPickerBeanTest {
     }
 
     @Test
+    void filteredRows_areNewestFirstByDefault() {
+        assertFalse(bean.isSortAscending());
+        assertTrue(bean.isSortedBy("created"));
+        assertEquals(List.of("th-b", "th-a", "th-c"),
+                bean.getFilteredRows().stream().map(ThesaurusPickerRow::id).toList());
+    }
+
+    @Test
     void selectTab_filtersMemberAndPublic() {
         bean.selectTab(ThesaurusPickerBean.TAB_MEMBER);
         assertEquals(2, bean.getFilteredRows().size());
