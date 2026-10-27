@@ -2850,10 +2850,31 @@ if (SCREEN === "preference" && location.hash) {
     if (none) none.hidden = needle === "" || shown !== 0;
   };
 
+  window.iaMarkMoveProject = function (el) {
+    const list = el && el.closest ? el.closest(".ia-move-list") : null;
+    if (!list || !el) return true;
+    const wasOn = el.classList.contains("is-on");
+    list.querySelectorAll(".ia-move-hit.is-on").forEach(function (hit) {
+      hit.classList.remove("is-on");
+    });
+    if (!wasOn) el.classList.add("is-on");
+    return true;
+  };
+
   window.iaMoveProjectAjax = function (data) {
-    if (!data || data.status !== "success") return;
+    if (!data) return;
+    const list = document.querySelector(".ia-move .ia-move-list");
+    if (data.status === "begin" && list) {
+      window._iaMoveListScroll = list.scrollTop;
+      return;
+    }
+    if (data.status !== "success") return;
     const input = document.querySelector(".ia-move .ia-move-proj-q");
     if (input) window.iaFilterMoveProjects(input);
+    const fresh = document.querySelector(".ia-move .ia-move-list");
+    if (fresh && typeof window._iaMoveListScroll === "number") {
+      fresh.scrollTop = window._iaMoveListScroll;
+    }
   };
 
   document.addEventListener("DOMContentLoaded", function () {

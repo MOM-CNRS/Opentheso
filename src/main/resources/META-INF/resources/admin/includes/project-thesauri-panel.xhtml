@@ -335,8 +335,9 @@
                                           pt:aria-label="#{localeBean.getMsg('admin.projects.thesauri.move.target')}">
                               <ui:repeat value="#{instanceAdminBean.moveTargetProjects}" var="proj">
                                 <h:commandLink styleClass="ia-member-hit ia-add-th-hit ia-move-hit#{instanceAdminBean.moveTargetProjectId eq proj.id ? ' is-on' : ''}"
-                                               action="#{instanceAdminBean.selectMoveTarget(proj.id)}">
-                                  <f:ajax execute="@this" render="iaMoveList iaMoveStatus" onevent="iaMoveProjectAjax"/>
+                                               action="#{instanceAdminBean.selectMoveTarget(proj.id)}"
+                                               onclick="iaMarkMoveProject(this)">
+                                  <f:ajax execute="@this" render="iaMoveStatus" onevent="iaMoveProjectAjax"/>
                                   <span class="ia-add-th-check" aria-hidden="true">
                                     <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
                                   </span>

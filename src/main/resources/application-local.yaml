@@ -57,7 +57,7 @@ spring:
       max-file-size: 100MB  # Définit la taille max d'un fichier
       max-request-size: 100MB  # Taille totale max de la requête
   datasource:
-    url: jdbc:postgresql://localhost:5432/opentheso6
+    url: jdbc:postgresql://localhost:5432/big_opentheso
     password: postgres
     username: postgres
   jpa:
