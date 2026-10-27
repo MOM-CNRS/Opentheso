@@ -527,14 +527,15 @@ public class CandidatService {
         noteRepository.save(Note.builder()
                 .noteTypeCode(type)
                 .idThesaurus(thesoId)
-                .idTerm(idTerm)
+                 //.idTerm(idTerm)
                 .lang(lang)
                 .lexicalValue(description)
                 .created(new Date())
                 .modified(new Date())
                 .idUser(userId)
                 .noteSource(source)
-                .idConcept(idConcept)
+                //.idConcept(idConcept)
+                .identifier(idConcept)
                 .build());
     }
 
