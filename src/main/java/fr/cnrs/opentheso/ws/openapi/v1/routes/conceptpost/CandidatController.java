@@ -53,7 +53,7 @@ public class CandidatController {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Clé d'API invalide");
         }
         if (!candidatService.saveCandidat(candidate, user.getId())) {
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("");
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Création impossible, vérifier les doublons");
         }
         return ResponseEntity.ok().body("");
     }

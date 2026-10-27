@@ -406,12 +406,17 @@ public class CandidatService {
 
     //Sauvegarde un candidat en base à partir d'un JSON
     public boolean saveCandidat(Candidate candidate, int userId) {
-
         var idTerm = String.valueOf(conceptRepository.getNextConceptNumericId());
         var idConcept = String.valueOf(conceptRepository.getNextConceptNumericId());
 
         if (CollectionUtils.isNotEmpty(candidate.getTerme())) {
             for (Element term : candidate.getTerme()) {
+                if(termService.isTermExistIgnoreCase(term.getValue(), candidate.getThesoId(), term.getLang())) {
+                    return false;
+                }
+                if (termService.isAltLabelExist(term.getValue(), candidate.getThesoId(), term.getLang())) {
+                    return false;
+                }
                 termRepository.save(fr.cnrs.opentheso.entites.Term.builder()
                         .idTerm(idTerm)
                         .lexicalValue(term.getValue())
