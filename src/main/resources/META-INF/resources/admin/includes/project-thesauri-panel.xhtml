@@ -10,15 +10,17 @@
                   <div class="bo-card-h ia-card-h-users">
                     <div class="ia-members-head">
                       <span class="bo-card-t">
-                        #{instanceAdminBean.addThesaurusOpen
+                        #{instanceAdminBean.createProjectUserOpen
+                            ? localeBean.getMsg('admin.projects.thesauri.createUser')
+                            : (instanceAdminBean.addThesaurusOpen
                             ? localeBean.getMsg('admin.projects.thesauri.add.title')
                             : (instanceAdminBean.editThesaurusOpen
                                 ? localeBean.getMsg('admin.projects.thesauri.edit.title')
                                 : (instanceAdminBean.moveThesaurusOpen
                                     ? localeBean.getMsg('admin.projects.thesauri.move.title')
-                                    : localeBean.getMsg('admin.projects.thesauri.title')))}
+                                    : localeBean.getMsg('admin.projects.thesauri.title'))))}
                       </span>
-                      <ui:fragment rendered="#{instanceAdminBean.openProject ne null and not instanceAdminBean.addThesaurusOpen and not instanceAdminBean.editThesaurusOpen and not instanceAdminBean.moveThesaurusOpen}">
+                      <ui:fragment rendered="#{instanceAdminBean.openProject ne null and not instanceAdminBean.addThesaurusOpen and not instanceAdminBean.editThesaurusOpen and not instanceAdminBean.moveThesaurusOpen and not instanceAdminBean.createProjectUserOpen}">
                         <div class="ia-members-meta">
                           <span>#{instanceAdminBean.openProject.name}</span>
                           <span class="ia-members-meta-sep">·</span>
@@ -27,17 +29,170 @@
                         </div>
                       </ui:fragment>
                     </div>
-                    <ui:fragment rendered="#{not instanceAdminBean.addThesaurusOpen and not instanceAdminBean.editThesaurusOpen and not instanceAdminBean.moveThesaurusOpen}">
+                    <ui:fragment rendered="#{not instanceAdminBean.addThesaurusOpen and not instanceAdminBean.editThesaurusOpen and not instanceAdminBean.moveThesaurusOpen and not instanceAdminBean.createProjectUserOpen}">
                       <div class="ia-toolbar">
-                        <h:commandLink styleClass="bo-btn primary sm ia-create-btn"
-                                       action="#{instanceAdminBean.openAddThesaurus}">
+                        <h:commandButton styleClass="bo-btn primary sm ia-create-btn"
+                                         value="#{localeBean.getMsg('admin.projects.thesauri.createUser')}"
+                                         action="#{instanceAdminBean.openCreateProjectUser}">
                           <f:ajax execute="@this" render="iaShell"/>
-                          #{localeBean.getMsg('admin.projects.thesauri.add')}
-                        </h:commandLink>
+                        </h:commandButton>
+                        <ui:fragment rendered="#{instanceAdminBean.superAdmin}">
+                          <h:commandLink styleClass="bo-btn ghost sm ia-create-btn"
+                                         action="#{instanceAdminBean.openAddThesaurus}">
+                            <f:ajax execute="@this" render="iaShell"/>
+                            #{localeBean.getMsg('admin.projects.thesauri.add')}
+                          </h:commandLink>
+                        </ui:fragment>
                       </div>
                     </ui:fragment>
                   </div>
                   <div class="bo-card-b">
+                    <ui:fragment rendered="#{instanceAdminBean.createProjectUserOpen}">
+                      <h:panelGroup id="iaProjectUserPane" layout="block" styleClass="ia-create ia-member-add">
+                        <div class="ia-create-h">
+                          <div>
+                            <div class="ia-create-t">#{localeBean.getMsg('admin.projects.thesauri.createUser')}</div>
+                            <div class="ia-create-d">
+                              #{localeBean.getMsg('admin.projects.thesauri.createUser.sub')}
+                              <b>#{instanceAdminBean.openProject.name}</b>
+                            </div>
+                          </div>
+                        </div>
+                        <ui:fragment rendered="#{not empty instanceAdminBean.newMemberError}">
+                          <div class="ia-create-err" role="alert">#{instanceAdminBean.newMemberError}</div>
+                        </ui:fragment>
+                        <div class="ia-member-mode">
+                          <div class="ia-mode" role="group" aria-label="#{localeBean.getMsg('projects.invite.mode')}">
+                            <h:commandButton value="#{localeBean.getMsg('projects.invite.mode.direct')}"
+                                             styleClass="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? '' : ' is-on'}"
+                                             action="#{instanceAdminBean.selectNewMemberDirectMode}">
+                              <f:ajax execute="@this" render="iaProjectUserPane"/>
+                            </h:commandButton>
+                            <h:commandButton value="#{localeBean.getMsg('projects.invite.mode.email')}"
+                                             styleClass="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? ' is-on' : ''}"
+                                             action="#{instanceAdminBean.selectNewMemberEmailMode}">
+                              <f:ajax execute="@this" render="iaProjectUserPane"/>
+                            </h:commandButton>
+                          </div>
+                          <p class="ia-mode-hint">
+                            #{instanceAdminBean.newMemberEmailInvite
+                                ? localeBean.getMsg('projects.invite.mode.emailHint')
+                                : localeBean.getMsg('projects.invite.mode.directHint')}
+                          </p>
+                        </div>
+                        <div class="ia-create-grid">
+                          <div class="ia-field ia-ac">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.username')}</span>
+                            <h:inputText id="iaProjectUserName"
+                                         value="#{instanceAdminBean.newMemberUsername}"
+                                         styleClass="st-input"
+                                         pt:autocomplete="off"
+                                         pt:role="combobox"
+                                         pt:aria-autocomplete="list"
+                                         pt:aria-controls="iaProjectUserSuggest"
+                                         pt:aria-expanded="#{not empty instanceAdminBean.projectUserSuggestions}"
+                                         pt:placeholder="#{localeBean.getMsg('admin.projects.thesauri.createUser.ph')}">
+                              <f:ajax event="keyup" delay="250" execute="@this"
+                                      listener="#{instanceAdminBean.suggestProjectUsers}"
+                                      render="iaProjectUserSuggest iaProjectUserPicked"/>
+                            </h:inputText>
+                            <h:panelGroup id="iaProjectUserSuggest" layout="block"
+                                          styleClass="ia-ac-list#{empty instanceAdminBean.projectUserSuggestions ? ' is-off' : ''}"
+                                          pt:role="listbox">
+                              <ui:repeat value="#{instanceAdminBean.projectUserSuggestions}" var="hit">
+                                <button type="button" class="ia-member-hit"
+                                        data-ia-user-id="#{hit.userId}"
+                                        data-ia-username="#{hit.username}"
+                                        data-ia-email="#{hit.email}"
+                                        data-ia-id-field="iaPickProjectUserId"
+                                        data-ia-name-field="iaPickProjectUserName"
+                                        data-ia-email-field="iaPickProjectUserEmail"
+                                        data-ia-query-field="iaProjectUserName"
+                                        data-ia-go="iaProjectUserPickGo"
+                                        onmousedown="return iaQueuePick(this, event);">
+                                  <span class="ia-member-hit-name">#{hit.username}</span>
+                                  <span class="ia-member-hit-mail">#{hit.email}</span>
+                                </button>
+                              </ui:repeat>
+                            </h:panelGroup>
+                            <h:panelGroup id="iaProjectUserPicked" layout="block">
+                              <ui:fragment rendered="#{instanceAdminBean.projectUserExisting}">
+                                <p class="ia-ac-picked">
+                                  #{localeBean.getMsg('admin.projects.thesauri.createUser.existing')}
+                                  <button type="button" class="ia-chip-x"
+                                          title="#{localeBean.getMsg('admin.members.add.clear')}"
+                                          onclick="var b=document.getElementById('iaProjectUserClearGo');if(b)b.click();return false;">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                  </button>
+                                </p>
+                              </ui:fragment>
+                            </h:panelGroup>
+                          </div>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.email')}</span>
+                            <h:inputText id="iaProjectUserEmail"
+                                         value="#{instanceAdminBean.newMemberEmail}"
+                                         styleClass="st-input"
+                                         pt:type="email"
+                                         pt:autocomplete="email"/>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.institution')}</span>
+                            <h:inputText id="iaProjectUserInstitution"
+                                         value="#{instanceAdminBean.newMemberInstitution}"
+                                         styleClass="st-input"/>
+                          </label>
+                          <label class="ia-field ia-member-password#{instanceAdminBean.newMemberEmailInvite or instanceAdminBean.projectUserExisting ? ' is-off' : ''}">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.password')}</span>
+                            <h:inputSecret id="iaProjectUserPassword"
+                                           value="#{instanceAdminBean.newMemberPassword}"
+                                           styleClass="st-input"
+                                           redisplay="false"
+                                           pt:autocomplete="new-password"/>
+                          </label>
+                          <label class="ia-field ia-member-password#{instanceAdminBean.newMemberEmailInvite or instanceAdminBean.projectUserExisting ? ' is-off' : ''}">
+                            <span class="ia-field-l">#{localeBean.getMsg('projects.invite.passwordConfirm')}</span>
+                            <h:inputSecret id="iaProjectUserPasswordConfirm"
+                                           value="#{instanceAdminBean.newMemberPasswordConfirm}"
+                                           styleClass="st-input"
+                                           redisplay="false"
+                                           pt:autocomplete="new-password"/>
+                          </label>
+                        </div>
+                        <label class="ia-check" style="margin-top:12px">
+                          <h:selectBooleanCheckbox id="iaProjectUserAlert" value="#{instanceAdminBean.newMemberAlertMail}"/>
+                          <span>#{localeBean.getMsg('projects.invite.alertMail')}</span>
+                        </label>
+                        <label class="ia-field" style="max-width:240px;margin-top:12px">
+                          <span class="ia-field-l">#{localeBean.getMsg('admin.members.col.role')}</span>
+                          <h:selectOneMenu id="iaProjectUserRole"
+                                           value="#{instanceAdminBean.newMemberRoleId}"
+                                           styleClass="st-input ia-select">
+                            <f:selectItem itemValue="#{instanceAdminBean.roleAdminId}"
+                                          itemLabel="#{localeBean.getMsg('admin.users.role.admin')}"/>
+                            <f:selectItem itemValue="#{instanceAdminBean.roleManagerId}"
+                                          itemLabel="#{localeBean.getMsg('admin.users.role.manager')}"/>
+                            <f:selectItem itemValue="#{instanceAdminBean.roleContributorId}"
+                                          itemLabel="#{localeBean.getMsg('admin.users.role.contributor')}"/>
+                          </h:selectOneMenu>
+                        </label>
+                        <p class="ia-create-hint">#{localeBean.getMsg('admin.projects.thesauri.createUser.hint')}</p>
+                        <div class="ia-create-actions">
+                          <h:commandButton styleClass="bo-btn ghost"
+                                           value="#{localeBean.getMsg('admin.projects.cancel')}"
+                                           action="#{instanceAdminBean.closeCreateProjectUser}"
+                                           immediate="true">
+                            <f:ajax execute="@this" render="iaShell"/>
+                          </h:commandButton>
+                          <button type="button"
+                                  class="bo-btn primary"
+                                  onclick="var b=document.getElementById('iaProjectUserCreateGo');if(b)b.click();return false;">
+                            #{localeBean.getMsg('admin.members.create.submit')}
+                          </button>
+                        </div>
+                      </h:panelGroup>
+                    </ui:fragment>
+
                     <ui:fragment rendered="#{instanceAdminBean.addThesaurusOpen}">
                       <h:panelGroup id="iaAddThesaurusPane" layout="block" styleClass="ia-create ia-add-thesaurus">
                         <div class="ia-create-h">
@@ -246,7 +401,7 @@
                       </div>
                     </ui:fragment>
 
-                    <ui:fragment rendered="#{not instanceAdminBean.addThesaurusOpen and not instanceAdminBean.editThesaurusOpen and not instanceAdminBean.moveThesaurusOpen}">
+                    <ui:fragment rendered="#{not instanceAdminBean.addThesaurusOpen and not instanceAdminBean.editThesaurusOpen and not instanceAdminBean.moveThesaurusOpen and not instanceAdminBean.createProjectUserOpen}">
                       <div class="ia-scroll">
                         <ui:fragment rendered="#{not empty instanceAdminBean.openProjectThesauri}">
                           <table class="st-table ia-tab ia-tab-t">
@@ -271,6 +426,7 @@
                                     </span>
                                   </td>
                                   <td class="st-td-act" data-label="">
+                                    <ui:fragment rendered="#{instanceAdminBean.superAdmin}">
                                     <div class="ia-row-acts">
                                       <h:commandLink styleClass="bo-btn ghost sm"
                                                      action="#{instanceAdminBean.openMoveThesaurus}">
@@ -308,6 +464,7 @@
                                         </svg>
                                       </h:commandLink>
                                     </div>
+                                    </ui:fragment>
                                   </td>
                                 </tr>
                               </ui:repeat>
@@ -318,12 +475,6 @@
                           <div class="ia-empty">
                             <div class="ia-empty-t">#{localeBean.getMsg('admin.projects.thesauri.empty.title')}</div>
                             <div class="ia-empty-d">#{localeBean.getMsg('admin.projects.thesauri.empty.sub')}</div>
-                            <h:commandLink styleClass="bo-btn primary sm"
-                                           style="margin-top:14px"
-                                           action="#{instanceAdminBean.openAddThesaurus}">
-                              <f:ajax execute="@this" render="iaShell"/>
-                              #{localeBean.getMsg('admin.projects.thesauri.add')}
-                            </h:commandLink>
                           </div>
                         </ui:fragment>
                       </div>

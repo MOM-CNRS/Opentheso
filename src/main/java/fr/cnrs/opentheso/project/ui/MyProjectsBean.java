@@ -55,7 +55,7 @@ public class MyProjectsBean implements Serializable {
     private String memberEmail;
     private String memberInstitution;
     private boolean memberAlertMail;
-    private String memberCreationMode = EMAIL;
+    private String memberCreationMode = "DIRECT";
     private String memberPassword1;
     private String memberPassword2;
     private Integer memberRoleId;
@@ -112,7 +112,17 @@ public class MyProjectsBean implements Serializable {
     private String activePanel;
     private String existingUserQuery = "";
     private List<UserSearchResult> existingUserHits = Collections.emptyList();
+    private boolean existingUserSearched;
+    private String pendingPickUserId;
+    private String pendingPickUsername;
+    private String pendingPickEmail;
+    private List<UserSearchResult> memberSuggestions = List.of();
+    private Integer memberExistingUserId;
+    private String memberPickedName;
     private String panelError;
+    private String flashMessage;
+    private String flashToken;
+    private boolean flashError;
     private int activeSectionIndex;
 
     private static final String PANEL_CREATE = "create";
@@ -183,6 +193,8 @@ public class MyProjectsBean implements Serializable {
         panelError = null;
         existingUserQuery = "";
         existingUserHits = Collections.emptyList();
+        existingUserSearched = false;
+        clearNewMemberPick();
     }
 
     public void openCreatePanel() {
@@ -221,6 +233,7 @@ public class MyProjectsBean implements Serializable {
         prepareAddExistingMemberDialog();
         existingUserQuery = "";
         existingUserHits = Collections.emptyList();
+        existingUserSearched = false;
         activePanel = PANEL_ADD_EXISTING;
         panelError = null;
     }
@@ -231,8 +244,24 @@ public class MyProjectsBean implements Serializable {
         panelError = null;
     }
 
+    public void suggestExistingUsers() {
+        String typed = existingUserQuery == null ? "" : existingUserQuery.trim();
+        if (selectedExistingUser != null
+                && !typed.equalsIgnoreCase(selectedExistingUser.username())) {
+            selectedExistingUser = null;
+        }
+        if (selectedExistingUser != null || typed.length() < 2) {
+            existingUserHits = List.of();
+            existingUserSearched = false;
+            panelError = null;
+            return;
+        }
+        searchExistingUserHits();
+    }
+
     public void searchExistingUserHits() {
         panelError = null;
+        existingUserSearched = true;
         try {
             existingUserHits = searchExistingUsers(existingUserQuery);
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
@@ -241,13 +270,36 @@ public class MyProjectsBean implements Serializable {
         }
     }
 
+    public void applyPickedExistingUser() {
+        if (pendingPickUserId == null || pendingPickUserId.isBlank()) {
+            return;
+        }
+        try {
+            int userId = Integer.parseInt(pendingPickUserId.trim());
+            String username = pendingPickUsername == null ? "" : pendingPickUsername;
+            UserSearchResult match = existingUserHits.stream()
+                    .filter(hit -> hit.userId() == userId)
+                    .findFirst()
+                    .orElse(null);
+            String email = match == null ? "" : match.email();
+            pickExistingUser(userId, username, email);
+        } catch (NumberFormatException ignored) {
+            panelError = null;
+        }
+    }
+
     public void pickExistingUser(int userId, String username, String email) {
         selectedExistingUser = new UserSearchResult(userId, username, email);
+        existingUserQuery = username;
+        existingUserHits = List.of();
+        existingUserSearched = false;
         panelError = null;
     }
 
     public void clearPickedExistingUser() {
         selectedExistingUser = null;
+        existingUserHits = List.of();
+        existingUserSearched = false;
     }
 
     public void openEditMemberRolePanel(ProjectMember member) {
@@ -328,12 +380,66 @@ public class MyProjectsBean implements Serializable {
         memberEmail = null;
         memberInstitution = null;
         memberAlertMail = false;
-        memberCreationMode = EMAIL;
+        memberCreationMode = "DIRECT";
         memberPassword1 = null;
         memberPassword2 = null;
         memberRoleId = defaultAssignableRoleId();
         memberLimitOnThesaurus = false;
         memberThesaurusIds = new ArrayList<>();
+        clearNewMemberPick();
+    }
+
+    public void suggestNewMembers() {
+        String typed = memberUsername == null ? "" : memberUsername.trim();
+        if (memberExistingUserId != null
+                && !typed.equalsIgnoreCase(memberPickedName == null ? "" : memberPickedName.trim())) {
+            memberExistingUserId = null;
+            memberPickedName = null;
+        }
+        if (memberExistingUserId != null || typed.length() < 2) {
+            memberSuggestions = List.of();
+            return;
+        }
+        try {
+            memberSuggestions = searchExistingUsers(typed);
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            memberSuggestions = List.of();
+            panelError = e.getMessage();
+        }
+    }
+
+    public void applyPickedNewMember() {
+        if (pendingPickUserId == null || pendingPickUserId.isBlank()) {
+            return;
+        }
+        try {
+            pickNewMember(
+                    Integer.parseInt(pendingPickUserId.trim()),
+                    pendingPickUsername == null ? "" : pendingPickUsername,
+                    pendingPickEmail == null ? "" : pendingPickEmail
+            );
+        } catch (NumberFormatException ignored) {
+            panelError = null;
+        }
+    }
+
+    public void pickNewMember(int userId, String username, String email) {
+        memberExistingUserId = userId;
+        memberPickedName = username;
+        memberUsername = username;
+        memberEmail = email;
+        memberSuggestions = List.of();
+        panelError = null;
+    }
+
+    public void clearNewMemberPick() {
+        memberExistingUserId = null;
+        memberPickedName = null;
+        memberSuggestions = List.of();
+    }
+
+    public boolean isMemberExisting() {
+        return memberExistingUserId != null;
     }
 
     public void prepareAddExistingMemberDialog() {
@@ -368,11 +474,35 @@ public class MyProjectsBean implements Serializable {
 
     public void createMember() {
         Integer userId = requireConnectedUserId();
-        if (userId == null || selectedProjectId == null || memberRoleId == null) {
+        if (userId == null || selectedProjectId == null) {
+            return;
+        }
+        if (memberRoleId == null) {
+            panelError = "Choisissez un rôle.";
+            MessageUtils.showErrorMessage(panelError);
             return;
         }
         try {
             boolean limited = memberLimitOnThesaurus && isMemberRoleLimitedSectionVisible();
+            if (memberExistingUserId != null) {
+                projectMemberService.addExistingMember(
+                        userId,
+                        userSession.isSuperAdmin(),
+                        selectedProjectId,
+                        memberExistingUserId,
+                        memberRoleId,
+                        limited,
+                        limited ? memberThesaurusIds : List.of()
+                );
+                String added = localeBean.getMsg("admin.projects.thesauri.createUser.added");
+                flashInfo(added);
+                MessageUtils.showInformationMessage(added);
+                prepareNewMemberDialog();
+                reloadDashboard(userId);
+                closeActivePanel();
+                refreshPage();
+                return;
+            }
             projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                     userId,
                     userSession.isSuperAdmin(),
@@ -388,11 +518,11 @@ public class MyProjectsBean implements Serializable {
                     memberPassword2,
                     memberCreationMode
             ));
-            if (isMemberEmailInvite()) {
-                MessageUtils.showInformationMessage(localeBean.getMsg("projects.invite.successEmail"));
-            } else {
-                MessageUtils.showInformationMessage(localeBean.getMsg("projects.invite.success"));
-            }
+            String created = localeBean.getMsg(isMemberEmailInvite()
+                    ? "projects.invite.successEmail"
+                    : "projects.invite.success");
+            flashInfo(created);
+            MessageUtils.showInformationMessage(created);
             prepareNewMemberDialog();
             reloadDashboard(userId);
             closeActivePanel();
@@ -400,12 +530,22 @@ public class MyProjectsBean implements Serializable {
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
             panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
+        } catch (RuntimeException e) {
+            panelError = e.getMessage() == null || e.getMessage().isBlank()
+                    ? "La création du compte a échoué."
+                    : e.getMessage();
+            MessageUtils.showErrorMessage(panelError);
         }
     }
 
     public void addExistingMember() {
         Integer userId = requireConnectedUserId();
-        if (userId == null || selectedProjectId == null || existingMemberRoleId == null) {
+        if (userId == null || selectedProjectId == null) {
+            return;
+        }
+        if (existingMemberRoleId == null) {
+            panelError = "Choisissez un rôle.";
+            MessageUtils.showErrorMessage(panelError);
             return;
         }
         if (selectedExistingUser == null) {
@@ -424,6 +564,7 @@ public class MyProjectsBean implements Serializable {
                     limited,
                     limited ? existingMemberThesaurusIds : List.of()
             );
+            flashInfo("L'utilisateur a été ajouté avec succès");
             MessageUtils.showInformationMessage("L'utilisateur a été ajouté avec succès");
             prepareAddExistingMemberDialog();
             reloadDashboard(userId);
@@ -432,6 +573,11 @@ public class MyProjectsBean implements Serializable {
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
             panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
+        } catch (RuntimeException e) {
+            panelError = e.getMessage() == null || e.getMessage().isBlank()
+                    ? "L'ajout du membre a échoué."
+                    : e.getMessage();
+            MessageUtils.showErrorMessage(panelError);
         }
     }
 
@@ -798,6 +944,12 @@ public class MyProjectsBean implements Serializable {
             MessageUtils.showErrorMessage(localeBean.getMsg("profile.userNotConnected"));
         }
         return userId;
+    }
+
+    private void flashInfo(String message) {
+        flashMessage = message == null ? "" : message;
+        flashToken = String.valueOf(System.currentTimeMillis());
+        flashError = false;
     }
 
     private void refreshPage() {

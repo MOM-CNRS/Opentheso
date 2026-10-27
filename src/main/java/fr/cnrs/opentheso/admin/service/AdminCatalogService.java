@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.admin.model.ThesaurusMember;
 import fr.cnrs.opentheso.admin.policy.SuperAdminAccessPolicy;
 import fr.cnrs.opentheso.project.exception.InvalidProjectDataException;
+import fr.cnrs.opentheso.project.exception.ProjectAccessDeniedException;
 import fr.cnrs.opentheso.project.mapper.ProjectMapper;
 import fr.cnrs.opentheso.project.model.AssignableRole;
 import fr.cnrs.opentheso.project.model.ProjectSummary;
@@ -84,6 +85,30 @@ public class AdminCatalogService {
                 .toList();
     }
 
+    /**
+     * Thésaurus d'un projet, pour un super-admin ou un administrateur de ce projet.
+     */
+    @Transactional(readOnly = true)
+    public ManagedProject listManagedProject(int callerId, boolean superAdmin, int projectId, String workLanguage) {
+        var project = projectLookupService.requireAccessibleProject(callerId, superAdmin, projectId);
+        if (!superAdmin) {
+            int roleId = projectAdminQueryRepository.findCallerRoleOnProject(callerId, projectId)
+                    .orElseThrow(ProjectAccessDeniedException::new);
+            if (!ProjectAccessPolicy.isProjectAdmin(false, roleId)) {
+                throw new ProjectAccessDeniedException();
+            }
+        }
+        String lang = workLanguage != null ? workLanguage : defaultWorkLanguage;
+        String name = project.getLabel() == null ? "" : project.getLabel();
+        List<AdminThesaurus> rows = projectAdminQueryRepository.findThesauriOfProject(projectId, lang).stream()
+                .map(row -> new AdminThesaurus(row.id(), row.title(), projectId, name, row.privateThesaurus(), null))
+                .toList();
+        return new ManagedProject(projectId, name, rows);
+    }
+
+    public record ManagedProject(int id, String name, List<AdminThesaurus> thesauri) {
+    }
+
     @Transactional(readOnly = true)
     public List<AdminThesaurusOption> listThesauriOfProject(boolean superAdmin, int projectId) {
         SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
@@ -142,6 +167,34 @@ public class AdminCatalogService {
             String workLanguage
     ) {
         SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
+        return thesaurusMembers(thesaurusId, projectId, workLanguage);
+    }
+
+    /**
+     * Même liste, ouverte à l'admin du projet (pas seulement au super-admin).
+     */
+    @Transactional(readOnly = true)
+    public List<ThesaurusMember> listThesaurusMembers(
+            int callerId,
+            boolean superAdmin,
+            String thesaurusId,
+            int projectId,
+            String workLanguage
+    ) {
+        if (!superAdmin) {
+            Integer role = projectAdminQueryRepository.findCallerRoleOnProject(callerId, projectId).orElse(null);
+            if (!ProjectAccessPolicy.isProjectAdmin(false, role)) {
+                throw new ProjectAccessDeniedException();
+            }
+        }
+        return thesaurusMembers(thesaurusId, projectId, workLanguage);
+    }
+
+    private List<ThesaurusMember> thesaurusMembers(
+            String thesaurusId,
+            int projectId,
+            String workLanguage
+    ) {
         String lang = workLanguage != null ? workLanguage : defaultWorkLanguage;
 
         var limited = projectAdminQueryRepository.findLimitedMembersOfProject(projectId, lang).stream()

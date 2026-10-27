@@ -4,8 +4,10 @@ import fr.cnrs.opentheso.admin.exception.AdminAccessDeniedException;
 import fr.cnrs.opentheso.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.admin.model.AdminUserMembership;
+import fr.cnrs.opentheso.project.exception.ProjectAccessDeniedException;
 import fr.cnrs.opentheso.project.model.AssignableRole;
 import fr.cnrs.opentheso.project.model.ProjectSummary;
+import fr.cnrs.opentheso.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.project.service.ProjectLookupService;
 import fr.cnrs.opentheso.shared.persistence.ProjectEntity;
 import fr.cnrs.opentheso.shared.repository.AdminQueryRepository;
@@ -26,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -247,5 +250,26 @@ class AdminCatalogServiceTest {
         assertFalse(members.get(0).projectWide());
         assertEquals("bob", members.get(1).username());
         assertTrue(members.get(1).projectWide());
+    }
+
+    @Test
+    void listThesaurusMembers_allowsProjectAdmin() {
+        when(projectAdminQueryRepository.findCallerRoleOnProject(7, 5))
+                .thenReturn(Optional.of(ProjectAccessPolicy.ROLE_ADMIN));
+        when(projectAdminQueryRepository.findLimitedMembersOfProject(5, "fr")).thenReturn(List.of());
+        when(projectAdminQueryRepository.findMembersOfProject(5, 2)).thenReturn(List.of());
+
+        var members = adminCatalogService.listThesaurusMembers(7, false, "th1", 5, "fr");
+
+        assertEquals(0, members.size());
+    }
+
+    @Test
+    void listThesaurusMembers_rejectsContributor() {
+        when(projectAdminQueryRepository.findCallerRoleOnProject(7, 5))
+                .thenReturn(Optional.of(ProjectAccessPolicy.ROLE_CONTRIBUTOR));
+
+        assertThrows(ProjectAccessDeniedException.class,
+                () -> adminCatalogService.listThesaurusMembers(7, false, "th1", 5, "fr"));
     }
 }

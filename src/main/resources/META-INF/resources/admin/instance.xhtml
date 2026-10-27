@@ -40,7 +40,12 @@
             <ui:fragment rendered="#{instanceAdminBean.home}">
               <span class="bc-cur" aria-current="page">Administration de l'instance</span>
             </ui:fragment>
-            <ui:fragment rendered="#{not instanceAdminBean.home}">
+            <ui:fragment rendered="#{not instanceAdminBean.home and not instanceAdminBean.superAdmin}">
+              <a class="bc-lk" href="#{request.contextPath}/project/projets">#{localeBean.getMsg('nav.projects')}</a>
+              <span class="bc-sep" aria-hidden="true">›</span>
+              <span class="bc-cur" aria-current="page">#{instanceAdminBean.pageTitle}</span>
+            </ui:fragment>
+            <ui:fragment rendered="#{not instanceAdminBean.home and instanceAdminBean.superAdmin}">
               <a class="bc-lk" href="#{instanceAdminBean.homeUrl}">Administration de l'instance</a>
               <span class="bc-sep" aria-hidden="true">›</span>
               <ui:fragment rendered="#{not instanceAdminBean.thesaurusMembers and not instanceAdminBean.projectThesauri}">
@@ -1079,48 +1084,61 @@
                             <div class="ia-create-d">#{localeBean.getMsg('admin.members.add.sub')}</div>
                           </div>
                         </div>
-                        <ui:fragment rendered="#{not empty instanceAdminBean.addMemberError}">
-                          <div class="ia-create-err" role="alert">#{instanceAdminBean.addMemberError}</div>
-                        </ui:fragment>
+                        <h:panelGroup id="iaMemberAddError" layout="block">
+                          <ui:fragment rendered="#{not empty instanceAdminBean.addMemberError}">
+                            <div class="ia-create-err" role="alert">#{instanceAdminBean.addMemberError}</div>
+                          </ui:fragment>
+                        </h:panelGroup>
                         <div class="ia-member-search">
-                          <label class="ia-field">
+                          <div class="ia-field ia-ac">
                             <span class="ia-field-l">#{localeBean.getMsg('admin.members.add.search')}</span>
-                            <div class="ia-member-search-row">
-                              <h:inputText id="iaMemberSearchQ"
-                                           value="#{instanceAdminBean.memberSearchQuery}"
-                                           styleClass="st-input"
-                                           pt:placeholder="#{localeBean.getMsg('admin.members.add.searchPh')}"/>
-                              <h:commandButton styleClass="bo-btn ghost sm"
-                                               value="#{localeBean.getMsg('admin.members.add.searchGo')}"
-                                               action="#{instanceAdminBean.searchMemberCandidates}">
-                                <f:ajax execute="iaMemberAddPane" render="iaMemberAddPane"/>
-                              </h:commandButton>
-                            </div>
-                          </label>
-                          <ui:fragment rendered="#{not empty instanceAdminBean.memberSearchResults}">
-                            <div class="ia-member-hits" role="listbox">
+                            <h:inputText id="iaMemberSearchQ"
+                                         value="#{instanceAdminBean.memberSearchQuery}"
+                                         styleClass="st-input"
+                                         pt:placeholder="#{localeBean.getMsg('projects.searchUserPh')}"
+                                         pt:autocomplete="off"
+                                         pt:role="combobox"
+                                         pt:aria-autocomplete="list"
+                                         pt:aria-controls="iaMemberSearchResults"
+                                         pt:aria-expanded="#{not empty instanceAdminBean.memberSearchResults}">
+                              <f:ajax event="keyup" delay="250" execute="@this"
+                                      listener="#{instanceAdminBean.suggestMemberCandidates}"
+                                      render="iaMemberSearchResults iaMemberSearchPicked iaMemberAddError"/>
+                            </h:inputText>
+                            <h:panelGroup id="iaMemberSearchResults" layout="block"
+                                          styleClass="ia-ac-list#{empty instanceAdminBean.memberSearchResults and not instanceAdminBean.memberSearchDone ? ' is-off' : ''}"
+                                          pt:role="listbox">
                               <ui:repeat value="#{instanceAdminBean.memberSearchResults}" var="hit">
-                                <h:commandLink styleClass="ia-member-hit#{instanceAdminBean.selectedMemberUserId ne null and instanceAdminBean.selectedMemberUserId eq hit.userId ? ' is-on' : ''}"
-                                               action="#{instanceAdminBean.selectMemberCandidate(hit.userId, hit.username)}">
-                                  <f:ajax execute="@this" render="iaMemberAddPane"/>
+                                <button type="button" class="ia-member-hit"
+                                        data-ia-user-id="#{hit.userId}"
+                                        data-ia-username="#{hit.username}"
+                                        data-ia-id-field="iaPickMemberUserId"
+                                        data-ia-name-field="iaPickMemberUsername"
+                                        data-ia-query-field="iaMemberSearchQ"
+                                        data-ia-go="iaMemberPickGo"
+                                        onmousedown="return iaQueuePick(this, event);">
                                   <span class="ia-member-hit-name">#{hit.username}</span>
                                   <span class="ia-member-hit-mail">#{hit.email}</span>
-                                </h:commandLink>
+                                </button>
                               </ui:repeat>
-                            </div>
-                          </ui:fragment>
-                          <ui:fragment rendered="#{instanceAdminBean.selectedMemberUserId ne null}">
-                            <div class="ia-member-picked">
-                              <span>#{localeBean.getMsg('admin.members.add.selected')}</span>
-                              <b>#{instanceAdminBean.selectedMemberUsername}</b>
-                              <h:commandLink styleClass="ia-chip-x"
-                                             title="#{localeBean.getMsg('admin.members.add.clear')}"
-                                             action="#{instanceAdminBean.clearSelectedMemberCandidate}">
-                                <f:ajax execute="@this" render="iaMemberAddPane"/>
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                              </h:commandLink>
-                            </div>
-                          </ui:fragment>
+                              <ui:fragment rendered="#{instanceAdminBean.memberSearchDone and empty instanceAdminBean.memberSearchResults and empty instanceAdminBean.addMemberError}">
+                                <p class="ia-move-proj-none">#{localeBean.getMsg('search.noResult')}</p>
+                              </ui:fragment>
+                            </h:panelGroup>
+                            <h:panelGroup id="iaMemberSearchPicked" layout="block">
+                              <ui:fragment rendered="#{instanceAdminBean.selectedMemberUserId ne null}">
+                                <p class="ia-ac-picked">
+                                  #{localeBean.getMsg('admin.members.add.selected')}
+                                  <b>#{instanceAdminBean.selectedMemberUsername}</b>
+                                  <button type="button" class="ia-chip-x"
+                                          title="#{localeBean.getMsg('admin.members.add.clear')}"
+                                          onclick="var b=document.getElementById('iaMemberPickClearGo');if(b)b.click();return false;">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                  </button>
+                                </p>
+                              </ui:fragment>
+                            </h:panelGroup>
+                          </div>
                           <label class="ia-field" style="max-width:240px">
                             <span class="ia-field-l">#{localeBean.getMsg('admin.members.col.role')}</span>
                             <h:selectOneMenu id="iaAddMemberRole"
@@ -1132,7 +1150,9 @@
                                             itemLabel="#{localeBean.getMsg('admin.users.role.manager')}"/>
                               <f:selectItem itemValue="#{instanceAdminBean.roleContributorId}"
                                             itemLabel="#{localeBean.getMsg('admin.users.role.contributor')}"/>
+                              <f:ajax event="valueChange" execute="@this"/>
                             </h:selectOneMenu>
+                            <h:message for="iaAddMemberRole" styleClass="ia-create-err"/>
                           </label>
                         </div>
                         <div class="ia-create-actions">
@@ -1141,11 +1161,11 @@
                                   onclick="return iaClickProxy('iaMemberAddCancelGo');">
                             #{localeBean.getMsg('admin.members.add.cancel')}
                           </button>
-                          <h:commandButton styleClass="bo-btn primary"
-                                           value="#{localeBean.getMsg('admin.members.add.submit')}"
-                                           action="#{instanceAdminBean.addThesaurusMember}">
-                            <f:ajax execute="iaMemberAddPane" render="iaShell"/>
-                          </h:commandButton>
+                          <button type="button"
+                                  class="bo-btn primary"
+                                  onclick="var b=document.getElementById('iaMemberAddGo');if(b)b.click();return false;">
+                            #{localeBean.getMsg('admin.members.add.submit')}
+                          </button>
                         </div>
                       </h:panelGroup>
                     </ui:fragment>
@@ -1167,22 +1187,19 @@
                           <div class="ia-create-err" role="alert">#{instanceAdminBean.newMemberError}</div>
                         </ui:fragment>
                         <div class="ia-member-mode">
-                          <h:inputHidden id="iaNewMemberMode"
-                                         value="#{instanceAdminBean.newMemberCreationMode}"
-                                         styleClass="ia-member-mode-value"/>
                           <div class="ia-mode" role="group" aria-label="#{localeBean.getMsg('projects.invite.mode')}">
-                            <button type="button"
-                                    class="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? '' : ' is-on'}"
-                                    data-mode="DIRECT"
-                                    onclick="return iaMemberCreateMode(this);">#{localeBean.getMsg('projects.invite.mode.direct')}</button>
-                            <button type="button"
-                                    class="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? ' is-on' : ''}"
-                                    data-mode="EMAIL"
-                                    onclick="return iaMemberCreateMode(this);">#{localeBean.getMsg('projects.invite.mode.email')}</button>
+                            <h:commandButton value="#{localeBean.getMsg('projects.invite.mode.direct')}"
+                                             styleClass="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? '' : ' is-on'}"
+                                             action="#{instanceAdminBean.selectNewMemberDirectMode}">
+                              <f:ajax execute="@this" render="iaMemberCreatePane"/>
+                            </h:commandButton>
+                            <h:commandButton value="#{localeBean.getMsg('projects.invite.mode.email')}"
+                                             styleClass="ia-mode-opt#{instanceAdminBean.newMemberEmailInvite ? ' is-on' : ''}"
+                                             action="#{instanceAdminBean.selectNewMemberEmailMode}">
+                              <f:ajax execute="@this" render="iaMemberCreatePane"/>
+                            </h:commandButton>
                           </div>
-                          <p class="ia-mode-hint ia-member-mode-hint"
-                             data-direct="#{localeBean.getMsg('projects.invite.mode.directHint')}"
-                             data-email="#{localeBean.getMsg('projects.invite.mode.emailHint')}">
+                          <p class="ia-mode-hint">
                             #{instanceAdminBean.newMemberEmailInvite
                                 ? localeBean.getMsg('projects.invite.mode.emailHint')
                                 : localeBean.getMsg('projects.invite.mode.directHint')}
@@ -1363,17 +1380,6 @@
                                           <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
                                         </svg>
                                       </button>
-                                      <ui:fragment rendered="#{not m.projectWide}">
-                                        <button type="button"
-                                                class="bo-btn ghost sm ia-icon-btn is-danger"
-                                                title="#{localeBean.getMsg('admin.members.remove')}"
-                                                aria-label="#{localeBean.getMsg('admin.members.remove')}"
-                                                data-ia-action="remove"
-                                                data-ia-user-id="#{m.userId}"
-                                                data-ia-role-id="#{m.roleId}"
-                                                data-ia-username="#{m.username}"
-                                                onclick="return iaQueueMemberAction(this);">×</button>
-                                      </ui:fragment>
                                       <ui:fragment rendered="#{instanceAdminBean.currentUserId eq null or instanceAdminBean.currentUserId ne m.userId}">
                                         <button type="button"
                                                 class="bo-btn ghost sm ia-icon-btn is-danger"
@@ -1600,6 +1606,11 @@
                              pt:data-ia-render="iaShell">
               <f:ajax execute="@this iaMemberCreatePane" render="iaShell" onevent="iaMemberCreateAjax"/>
             </h:commandButton>
+            <h:commandButton id="iaMemberAddGo"
+                             value="go"
+                             action="#{instanceAdminBean.addThesaurusMember}">
+              <f:ajax execute="iaAddMemberRole @this" render="iaShell"/>
+            </h:commandButton>
             <h:commandButton id="iaMemberAddCancelGo"
                              value="go"
                              action="#{instanceAdminBean.closeAddMember}"
@@ -1619,6 +1630,39 @@
             <h:inputHidden id="iaPendingMemberRoleId" value="#{instanceAdminBean.pendingMemberRoleId}"/>
             <h:inputHidden id="iaPendingMemberUsername" value="#{instanceAdminBean.pendingMemberUsername}"/>
             <h:inputHidden id="iaPendingMemberProjectWide" value="#{instanceAdminBean.pendingMemberProjectWide}"/>
+            <h:inputHidden id="iaPickMemberUserId" value="#{instanceAdminBean.pendingPickUserId}"/>
+            <h:inputHidden id="iaPickMemberUsername" value="#{instanceAdminBean.pendingPickUsername}"/>
+            <h:inputHidden id="iaPickProjectUserId" value="#{instanceAdminBean.pendingPickUserId}"/>
+            <h:inputHidden id="iaPickProjectUserName" value="#{instanceAdminBean.pendingPickUsername}"/>
+            <h:inputHidden id="iaPickProjectUserEmail" value="#{instanceAdminBean.pendingPickEmail}"/>
+            <h:commandButton id="iaMemberPickGo"
+                             value="go"
+                             action="#{instanceAdminBean.applyPickedMember}">
+              <f:ajax execute="iaPickMemberUserId iaPickMemberUsername @this"
+                      render="iaMemberSearchQ iaMemberSearchResults iaMemberSearchPicked"/>
+            </h:commandButton>
+            <h:commandButton id="iaProjectUserPickGo"
+                             value="go"
+                             action="#{instanceAdminBean.applyPickedProjectUser}">
+              <f:ajax execute="iaPickProjectUserId iaPickProjectUserName iaPickProjectUserEmail @this"
+                      render="iaProjectUserPane"/>
+            </h:commandButton>
+            <h:commandButton id="iaProjectUserClearGo"
+                             value="go"
+                             action="#{instanceAdminBean.clearProjectUserPick}">
+              <f:ajax execute="@this" render="iaProjectUserPane"/>
+            </h:commandButton>
+            <h:commandButton id="iaProjectUserCreateGo"
+                             value="go"
+                             action="#{instanceAdminBean.createProjectUser}">
+              <f:ajax execute="iaProjectUserName iaProjectUserEmail iaProjectUserInstitution iaProjectUserPassword iaProjectUserPasswordConfirm iaProjectUserAlert iaProjectUserRole @this"
+                      render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberPickClearGo"
+                             value="go"
+                             action="#{instanceAdminBean.clearSelectedMemberCandidate}">
+              <f:ajax execute="@this" render="iaMemberSearchQ iaMemberSearchResults iaMemberSearchPicked"/>
+            </h:commandButton>
             <h:commandButton id="iaMemberRowActionGo"
                              value="go"
                              action="#{instanceAdminBean.runPendingMemberAction}">

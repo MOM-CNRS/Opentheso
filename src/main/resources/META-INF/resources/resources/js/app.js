@@ -2865,16 +2865,20 @@ if (SCREEN === "preference" && location.hash) {
   });
 
   function iaConsumeFlash() {
-    const live = document.getElementById("iaFlashLive");
-    if (!live || typeof window.toast !== "function") return;
-    const msg = live.getAttribute("data-ia-flash");
-    const token = live.getAttribute("data-ia-flash-token");
-    const error = live.getAttribute("data-ia-flash-error") === "true";
-    if (!msg || !token) return;
-    if (window._iaFlashToken === token) return;
-    window._iaFlashToken = token;
-    window.toast(msg, error ? { error: true } : undefined);
+    if (typeof window.toast !== "function") return;
+    ["iaFlashLive", "mpFlashLive"].forEach(function (id) {
+      const live = document.getElementById(id);
+      if (!live) return;
+      const msg = live.getAttribute("data-ia-flash");
+      const token = live.getAttribute("data-ia-flash-token");
+      const error = live.getAttribute("data-ia-flash-error") === "true";
+      if (!msg || !token) return;
+      if (window._iaFlashToken === token) return;
+      window._iaFlashToken = token;
+      window.toast(msg, error ? { error: true } : undefined);
+    });
   }
+  window.iaConsumeFlash = iaConsumeFlash;
 
   function iaUsersListBusy(on) {
     const toolbar = document.getElementById("iaUsersToolbar");
@@ -2935,6 +2939,24 @@ if (SCREEN === "preference" && location.hash) {
     event.preventDefault();
     const go = document.getElementById("iaNewProjectSubmit");
     if (go && typeof go.click === "function") go.click();
+    return false;
+  };
+
+  window.iaQueuePick = function (el, event) {
+    if (event && event.preventDefault) event.preventDefault();
+    if (!el) return false;
+    const idInput = document.getElementById(el.getAttribute("data-ia-id-field"));
+    const nameInput = document.getElementById(el.getAttribute("data-ia-name-field"));
+    const emailInput = document.getElementById(el.getAttribute("data-ia-email-field") || "");
+    const queryInput = document.getElementById(el.getAttribute("data-ia-query-field") || "");
+    const go = document.getElementById(el.getAttribute("data-ia-go"));
+    if (!idInput || !go) return false;
+    const username = el.getAttribute("data-ia-username") || "";
+    idInput.value = el.getAttribute("data-ia-user-id") || "";
+    if (nameInput) nameInput.value = username;
+    if (emailInput) emailInput.value = el.getAttribute("data-ia-email") || "";
+    if (queryInput) queryInput.value = username;
+    go.click();
     return false;
   };
 
@@ -3008,13 +3030,20 @@ if (SCREEN === "preference" && location.hash) {
 
   function iaOnAjaxFlash(data) {
     if (!data || data.status !== "success") return;
-    if (!document.body || document.body.getAttribute("data-page") !== "admin-instance") return;
     iaConsumeFlash();
   }
 
-  if (window.faces && faces.ajax && typeof faces.ajax.addOnEvent === "function") {
-    faces.ajax.addOnEvent(iaOnAjaxFlash);
-  } else if (window.jsf && jsf.ajax && typeof jsf.ajax.addOnEvent === "function") {
-    jsf.ajax.addOnEvent(iaOnAjaxFlash);
+  function iaBindFlash() {
+    if (window._iaFlashBound) return;
+    const api = window.faces && faces.ajax && typeof faces.ajax.addOnEvent === "function"
+      ? faces.ajax
+      : window.jsf && jsf.ajax && typeof jsf.ajax.addOnEvent === "function"
+        ? jsf.ajax
+        : null;
+    if (!api) return;
+    api.addOnEvent(iaOnAjaxFlash);
+    window._iaFlashBound = true;
   }
+  iaBindFlash();
+  document.addEventListener("DOMContentLoaded", iaBindFlash);
 })();

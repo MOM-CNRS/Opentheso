@@ -522,8 +522,8 @@ class MyProjectsBeanTest {
         myProjectsBean.openCreateMemberPanel();
 
         assertEquals("createMember", myProjectsBean.getActivePanel());
-        assertEquals("EMAIL", myProjectsBean.getMemberCreationMode());
-        assertTrue(myProjectsBean.isMemberEmailInvite());
+        assertEquals("DIRECT", myProjectsBean.getMemberCreationMode());
+        assertFalse(myProjectsBean.isMemberEmailInvite());
         assertEquals(4, myProjectsBean.getMemberRoleId());
         assertFalse(myProjectsBean.isMemberLimitOnThesaurus());
     }
@@ -554,6 +554,28 @@ class MyProjectsBeanTest {
                 "Abcd1234!", "Abcd1234!", "DIRECT"
         ));
         assertNull(myProjectsBean.getActivePanel());
+    }
+
+    @Test
+    void createMember_addsExistingAccountChosenFromAutocomplete() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(localeBean.getMsg("admin.projects.thesauri.createUser.added")).thenReturn("ajouté");
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setDashboard(buildDashboard());
+        myProjectsBean.openCreateMemberPanel();
+        myProjectsBean.pickNewMember(16, "lea", "lea@x.fr");
+        myProjectsBean.setMemberRoleId(4);
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.createMember();
+            messages.verify(() -> MessageUtils.showInformationMessage("ajouté"));
+        }
+
+        verify(projectMemberService).addExistingMember(5, false, 3, 16, 4, false, List.of());
+        verify(projectMemberService, never()).createMember(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
