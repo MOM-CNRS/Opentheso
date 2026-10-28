@@ -1084,7 +1084,15 @@ input.ia-ajax-proxy-btn,
   -webkit-appearance:menulist;appearance:menulist;font-size:13px !important
 }
 body[data-page="admin-instance"] .bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
-body[data-page="admin-instance"] .bo-btn.primary.danger{background:var(--danger, #b42318);border-color:transparent;color:#fff}
+body[data-page="admin-instance"] .bo-btn.primary.danger,
+body[data-page="admin-instance"] .confirm-modal a.bo-btn.danger,
+body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger{
+  background:var(--danger, #b42318);border-color:transparent;color:#fff
+}
+body[data-page="admin-instance"] .confirm-modal a.bo-btn.danger:hover,
+body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger:hover{
+  filter:brightness(1.06);color:#fff
+}
 .ia-delete .ia-create-d b{color:var(--ink)}
 .ia-create-actions{
   display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px
