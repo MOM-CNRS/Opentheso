@@ -159,6 +159,31 @@ class ThesaurusHomeMetadataBeanTest {
     }
 
     @Test
+    void saveRow_keepsUnsavedSibling() {
+        stubAdmin("TH1", 9, true);
+        when(modifyThesaurusService.loadMetadata("TH1")).thenReturn(List.of());
+        when(modifyThesaurusService.loadDcmiResources()).thenReturn(List.of("title", "creator"));
+        when(modifyThesaurusService.loadDcmiTypes()).thenReturn(List.of("string"));
+        bean.startEditing();
+        bean.addRow();
+        EditionMetadata pending = bean.getRows().get(1);
+        pending.setName("creator");
+        pending.setValue("en cours");
+        EditionMetadata saved = EditionMetadata.emptyRow();
+        saved.setId(12);
+        saved.setName("title");
+        saved.setValue("Pactols");
+        when(modifyThesaurusService.loadMetadata("TH1")).thenReturn(List.of(saved));
+
+        bean.saveRow(saved);
+
+        assertEquals(3, bean.getRows().size());
+        assertEquals("creator", bean.getRows().get(2).getName());
+        assertEquals("en cours", bean.getRows().get(2).getValue());
+        assertEquals(-1, bean.getRows().get(2).getId());
+    }
+
+    @Test
     void saveRow_showsValidationError() {
         stubAdmin("TH1", 9, true);
         when(modifyThesaurusService.loadMetadata("TH1")).thenReturn(List.of());

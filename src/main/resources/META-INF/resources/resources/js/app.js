@@ -2388,6 +2388,10 @@ function onV2Ajax(data) {
       applyStatusFilter();
       applySort();
       restoreSelection();
+      if (srcId.indexOf("previewMetadataForm") >= 0) {
+        if (typeof restoreThDcPanel === "function") restoreThDcPanel();
+        return;
+      }
       showLiveDetail();
       if (window.syncViewRail) window.syncViewRail();
     });
