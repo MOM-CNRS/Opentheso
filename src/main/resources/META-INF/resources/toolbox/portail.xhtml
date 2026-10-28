@@ -3,6 +3,7 @@
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/includes/layout.xhtml">
   <ui:param name="page" value="portail"/>
   <ui:define name="title">OpenTheso — #{localeBean.getMsg('home.workshop.portal')}</ui:define>
@@ -30,6 +31,7 @@
                 <div class="sy-head-copy">
                   <span class="sy-kicker">#{localeBean.getMsg('portal.kicker')}</span>
                   <h1 class="bo-title">#{localeBean.getMsg('home.workshop.portal')}</h1>
+                  <p class="bo-sub">#{localeBean.getMsg('portal.subtitle')}</p>
                 </div>
                 <span class="sy-role po-role" title="HSPortal">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg>
@@ -67,10 +69,55 @@
                           </strong>
                         </div>
                         <div class="sy-stat">
-                          <span class="sy-stat-l">#{localeBean.getMsg('portal.format')}</span>
-                          <strong class="sy-stat-v">#{localeBean.getMsg('portal.format.skos')}</strong>
+                          <span class="sy-stat-l">#{localeBean.getMsg('portal.nightly.label')}</span>
+                          <strong class="sy-stat-v">#{localeBean.getMsg('portal.nightly')}</strong>
                         </div>
                       </div>
+
+                      <details class="po-fold po-guide">
+                        <summary class="po-fold-sum" id="portalGuideTitle">
+                          <span>#{localeBean.getMsg('portal.guide')}</span>
+                        </summary>
+                        <div class="po-fold-b">
+                          <ol>
+                            <li>#{localeBean.getMsg('portal.guide.1')}</li>
+                            <li>#{localeBean.getMsg('portal.guide.2')}</li>
+                            <li>#{localeBean.getMsg('portal.guide.3')}</li>
+                          </ol>
+                        </div>
+                      </details>
+
+                      <details class="po-fold po-example">
+                        <summary class="po-fold-sum" id="portalExampleTitle">
+                          <span>#{localeBean.getMsg('portal.example.title')}</span>
+                        </summary>
+                        <div class="po-fold-b">
+                          <p class="po-example-lead">#{localeBean.getMsg('portal.example.lead')}</p>
+                          <dl>
+                            <div>
+                              <dt>#{localeBean.getMsg('portal.url')}</dt>
+                              <dd>https://hsportal.espadon.net</dd>
+                            </div>
+                            <div>
+                              <dt>#{localeBean.getMsg('portal.acronym')}</dt>
+                              <dd>PACTOLS</dd>
+                            </div>
+                            <div>
+                              <dt>#{localeBean.getMsg('portal.username')}</dt>
+                              <dd>mdupont</dd>
+                            </div>
+                            <div>
+                              <dt>#{localeBean.getMsg('portal.contactName')}</dt>
+                              <dd>Marie Dupont</dd>
+                            </div>
+                            <div>
+                              <dt>#{localeBean.getMsg('portal.contactEmail')}</dt>
+                              <dd>marie.dupont@cnrs.fr</dd>
+                            </div>
+                          </dl>
+                          <p class="po-example-note">#{localeBean.getMsg('portal.example.note')}</p>
+                        </div>
+                      </details>
 
                       <section class="sy-card">
                         <header class="sy-card-h">
@@ -88,26 +135,34 @@
                                 <span>#{localeBean.getMsg('portal.url')}</span>
                                 <h:inputText id="portalUrl" styleClass="st-input"
                                              value="#{thesaurusPortalBean.portalUrl}"
-                                             disabled="#{thesaurusPortalBean.running}"/>
+                                             disabled="#{thesaurusPortalBean.running}"
+                                             pt:placeholder="#{localeBean.getMsg('portal.url.ph')}"/>
+                                <small class="po-hint">#{localeBean.getMsg('portal.url.hint')}</small>
                               </label>
                               <label class="sy-field">
                                 <span>#{localeBean.getMsg('portal.acronym')}</span>
                                 <h:inputText id="portalAcronym" styleClass="st-input"
                                              value="#{thesaurusPortalBean.portalAcronym}"
-                                             disabled="#{thesaurusPortalBean.running}"/>
+                                             disabled="#{thesaurusPortalBean.running}"
+                                             pt:placeholder="#{localeBean.getMsg('portal.acronym.ph')}"/>
+                                <small class="po-hint">#{localeBean.getMsg('portal.acronym.hint')}</small>
                               </label>
                               <label class="sy-field">
                                 <span>#{localeBean.getMsg('portal.username')}</span>
                                 <h:inputText id="portalUsername" styleClass="st-input"
                                              value="#{thesaurusPortalBean.portalUsername}"
-                                             disabled="#{thesaurusPortalBean.running}"/>
+                                             disabled="#{thesaurusPortalBean.running}"
+                                             pt:placeholder="#{localeBean.getMsg('portal.username.ph')}"/>
+                                <small class="po-hint">#{localeBean.getMsg('portal.username.hint')}</small>
                               </label>
                               <label class="sy-field sy-field--wide">
                                 <span>#{localeBean.getMsg('portal.apiKey')}</span>
                                 <h:inputSecret id="portalApiKey" styleClass="st-input"
                                                value="#{thesaurusPortalBean.portalApiKey}"
                                                redisplay="true"
-                                               disabled="#{thesaurusPortalBean.running}"/>
+                                               disabled="#{thesaurusPortalBean.running}"
+                                               pt:placeholder="#{localeBean.getMsg('portal.apiKey.ph')}"/>
+                                <small class="po-hint">#{localeBean.getMsg('portal.apiKey.hint')}</small>
                               </label>
                             </div>
                           </div>
@@ -118,13 +173,17 @@
                                 <span>#{localeBean.getMsg('portal.contactName')}</span>
                                 <h:inputText id="portalContactName" styleClass="st-input"
                                              value="#{thesaurusPortalBean.portalContactName}"
-                                             disabled="#{thesaurusPortalBean.running}"/>
+                                             disabled="#{thesaurusPortalBean.running}"
+                                             pt:placeholder="#{localeBean.getMsg('portal.contactName.ph')}"/>
+                                <small class="po-hint">#{localeBean.getMsg('portal.contactName.hint')}</small>
                               </label>
                               <label class="sy-field">
                                 <span>#{localeBean.getMsg('portal.contactEmail')}</span>
                                 <h:inputText id="portalContactEmail" styleClass="st-input"
                                              value="#{thesaurusPortalBean.portalContactEmail}"
-                                             disabled="#{thesaurusPortalBean.running}"/>
+                                             disabled="#{thesaurusPortalBean.running}"
+                                             pt:placeholder="#{localeBean.getMsg('portal.contactEmail.ph')}"/>
+                                <small class="po-hint">#{localeBean.getMsg('portal.contactEmail.hint')}</small>
                               </label>
                             </div>
                           </div>
@@ -200,6 +259,7 @@
                               <span class="abt-save-label">#{localeBean.getMsg('portal.remove')}</span>
                               <span class="abt-save-wait">#{localeBean.getMsg('portal.removing')}</span>
                             </button>
+                            <p class="po-aside">#{localeBean.getMsg('portal.remove.note')}</p>
                             <h:commandButton id="previewPortalPublishGo" value="publish" styleClass="st-jsf-go"
                                              action="#{thesaurusPortalBean.publish}">
                               <f:ajax execute="portalUrl portalAcronym portalUsername portalApiKey portalContactName portalContactEmail @this"

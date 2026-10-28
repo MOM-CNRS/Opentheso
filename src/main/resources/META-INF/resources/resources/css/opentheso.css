@@ -2393,6 +2393,60 @@ body[data-page="portail"] .po-role{
 body[data-page="portail"] .po-stats{
   display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:10px
 }
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold{
+  border-radius:14px;overflow:hidden
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-guide{
+  background:#f4f8fb;border:1px solid #d5e4ee
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example{
+  background:var(--surface,#fff);border:1px dashed #b7cdd8
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold-sum{
+  list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 16px;font-size:15px;font-weight:750;letter-spacing:-.02em;color:var(--ink);
+  user-select:none
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold-sum::-webkit-details-marker{display:none}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold-sum::after{
+  content:"";width:8px;height:8px;flex:0 0 auto;
+  border-right:1.8px solid var(--ink-3);border-bottom:1.8px solid var(--ink-3);
+  transform:rotate(45deg);margin-top:-4px;transition:transform .15s ease
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold[open] > .po-fold-sum::after{
+  transform:rotate(225deg);margin-top:3px
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold-sum:focus-visible{outline:2px solid #1f5f7a;outline-offset:-2px}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-fold-b{padding:0 16px 14px}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-guide ol{
+  margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:6px
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-guide li{
+  font-size:13.5px;line-height:1.45;color:var(--ink-2)
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example-lead{
+  margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--ink-2)
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example dl{margin:0;display:flex;flex-direction:column;gap:6px}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example dl > div{
+  display:grid;grid-template-columns:minmax(8rem,11rem) 1fr;gap:8px 12px;align-items:baseline
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example dt{
+  margin:0;font-size:12.5px;font-weight:650;color:var(--ink-3)
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example dd{
+  margin:0;font-size:13.5px;font-weight:650;color:var(--ink);
+  font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);overflow-wrap:anywhere
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-example-note{
+  margin:10px 0 0;font-size:12.5px;line-height:1.45;color:var(--ink-2)
+}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-hint{
+  font-size:12.5px;line-height:1.4;font-weight:500;color:var(--ink-3)
+}
+body[data-page="portail"] .po-aside{
+  flex:1 0 100%;margin:2px 0 0;font-size:12.5px;line-height:1.45;color:var(--ink-3)
+}
 body[data-page="portail"] .po-stat-mono{
   font-family:var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size:16px;letter-spacing:.02em
@@ -2455,23 +2509,26 @@ body[data-page="portail"] .po-result-a svg{
   width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round
 }
-body[data-page="portail"] .po-result-dlg{
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-dlg{
   width:min(440px,92vw);gap:14px
 }
-body[data-page="portail"] .po-result-dlg.is-ok{border-top:4px solid #1f6b45}
-body[data-page="portail"] .po-result-dlg.is-err{border-top:4px solid #9b1c1c}
-body[data-page="portail"] .po-result-head{display:flex;align-items:flex-start;gap:12px}
-body[data-page="portail"] .po-result-ico{
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-dlg.is-ok{border-top:4px solid #1f6b45}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-dlg.is-err{border-top:4px solid #9b1c1c}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-head{display:flex;align-items:flex-start;gap:12px}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-ico{
   display:grid;place-items:center;width:36px;height:36px;flex:0 0 auto;
   border-radius:10px
 }
-body[data-page="portail"] .po-result-ico.is-ok{background:#eef8f1;color:#1f6b45}
-body[data-page="portail"] .po-result-ico.is-err{background:var(--danger-soft-2);color:var(--danger-ink)}
-body[data-page="portail"] .po-result-ico svg{
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-ico.is-ok{background:#eef8f1;color:#1f6b45}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-ico.is-err{background:var(--danger-soft-2);color:var(--danger-ink)}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-ico svg{
   width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round
 }
-body[data-page="portail"] .po-result-dlg .confirm-p{margin-top:4px}
+body:is([data-page="portail"],[data-page="synchronisation"]) .po-result-dlg .confirm-p{margin-top:4px}
+body[data-page="synchronisation"] #syncErrorText{
+  white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto
+}
 body[data-page="portail"] .po-result-meta{
   margin:0;display:flex;flex-direction:column;gap:8px
 }
@@ -2489,6 +2546,7 @@ body[data-page="portail"] .po-result-err{color:#9b1c1c;font-weight:600}
 @media (max-width:720px){
   body[data-page="portail"] .po-stats{grid-template-columns:1fr}
   body[data-page="portail"] .po-pipe-i{flex:1 1 100%}
+  body:is([data-page="portail"],[data-page="synchronisation"]) .po-example dl > div{grid-template-columns:1fr}
 }
 textarea.sync-comment{min-height:88px;max-width:none;resize:vertical}
 .sync-first-hint{margin:6px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4;font-weight:500}

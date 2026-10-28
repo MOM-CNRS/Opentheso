@@ -64,7 +64,7 @@
                                        action="#{thesaurusSyncBean.saveMasterLink}"
                                        disabled="#{thesaurusSyncBean.running}">
                         <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
-                                render="previewSyncBox messageIndex"/>
+                                render="previewSyncBox messageIndex" onevent="onPreviewSyncNotice"/>
                       </h:commandButton>
                       <div class="sy-stats">
                         <div class="sy-stat">
@@ -82,6 +82,39 @@
                         </div>
                       </div>
 
+                      <details class="po-fold po-guide">
+                        <summary class="po-fold-sum">
+                          <span>#{localeBean.getMsg('sync.guide')}</span>
+                        </summary>
+                        <div class="po-fold-b">
+                          <ol>
+                            <li>#{localeBean.getMsg('sync.guide.1')}</li>
+                            <li>#{localeBean.getMsg('sync.guide.2')}</li>
+                            <li>#{localeBean.getMsg('sync.guide.3')}</li>
+                          </ol>
+                        </div>
+                      </details>
+
+                      <details class="po-fold po-example">
+                        <summary class="po-fold-sum">
+                          <span>#{localeBean.getMsg('sync.example.title')}</span>
+                        </summary>
+                        <div class="po-fold-b">
+                          <p class="po-example-lead">#{localeBean.getMsg('sync.example.lead')}</p>
+                          <dl>
+                            <div>
+                              <dt>#{localeBean.getMsg('sync.masterUrl')}</dt>
+                              <dd>https://opentheso.huma-num.fr</dd>
+                            </div>
+                            <div>
+                              <dt>#{localeBean.getMsg('sync.masterId')}</dt>
+                              <dd>th87</dd>
+                            </div>
+                          </dl>
+                          <p class="po-example-note">#{localeBean.getMsg('sync.example.note')}</p>
+                        </div>
+                      </details>
+
                       <div class="sy-modes" role="tablist">
                         <h:commandButton id="syncModePush"
                                          value="#{localeBean.getMsg('sync.mode.push')}"
@@ -89,7 +122,7 @@
                                          action="#{thesaurusSyncBean.selectPushMode}"
                                          disabled="#{thesaurusSyncBean.running}">
                           <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncIncomingOpen syncResultOpen @this"
-                                  render="previewSyncBox messageIndex"/>
+                                  render="previewSyncBox messageIndex" onevent="onPreviewSyncNotice"/>
                         </h:commandButton>
                         <h:commandButton id="syncModePull"
                                          value="#{localeBean.getMsg('sync.mode.pull')}"
@@ -97,7 +130,7 @@
                                          action="#{thesaurusSyncBean.selectPullMode}"
                                          disabled="#{thesaurusSyncBean.running}">
                           <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncIncomingOpen syncResultOpen @this"
-                                  render="previewSyncBox messageIndex"/>
+                                  render="previewSyncBox messageIndex" onevent="onPreviewSyncNotice"/>
                         </h:commandButton>
                       </div>
 
@@ -112,22 +145,28 @@
                         <div class="sy-card-b">
                           <div class="sy-grid">
                             <label class="sy-field">
-                              <span>#{localeBean.getMsg('toolbox.masterServerUrl')}</span>
+                              <span>#{localeBean.getMsg('sync.masterUrl')}</span>
                               <h:inputText id="syncMasterUrl" styleClass="st-input"
                                            value="#{thesaurusSyncBean.masterServerUrl}"
-                                           disabled="#{thesaurusSyncBean.running}"/>
+                                           disabled="#{thesaurusSyncBean.running}"
+                                           pt:placeholder="#{localeBean.getMsg('sync.masterUrl.ph')}"/>
+                              <small class="po-hint">#{localeBean.getMsg('sync.masterUrl.hint')}</small>
                             </label>
                             <label class="sy-field">
-                              <span>#{localeBean.getMsg('toolbox.masterThesaurusId')}</span>
+                              <span>#{localeBean.getMsg('sync.masterId')}</span>
                               <h:inputText id="syncMasterTheso" styleClass="st-input"
                                            value="#{thesaurusSyncBean.masterThesaurusId}"
-                                           disabled="#{thesaurusSyncBean.running}"/>
+                                           disabled="#{thesaurusSyncBean.running}"
+                                           pt:placeholder="#{localeBean.getMsg('sync.masterId.ph')}"/>
+                              <small class="po-hint">#{localeBean.getMsg('sync.masterId.hint')}</small>
                             </label>
                             <label class="sy-field sy-field--wide">
-                              <span>#{localeBean.getMsg('toolbox.masterApiKey')}</span>
+                              <span>#{localeBean.getMsg('sync.masterKey')}</span>
                               <h:inputSecret id="syncMasterKey" styleClass="st-input"
                                              value="#{thesaurusSyncBean.masterApiKey}"
-                                             redisplay="true" disabled="#{thesaurusSyncBean.running}"/>
+                                             redisplay="true" disabled="#{thesaurusSyncBean.running}"
+                                             pt:placeholder="#{localeBean.getMsg('sync.masterKey.ph')}"/>
+                              <small class="po-hint">#{localeBean.getMsg('sync.masterKey.hint')}</small>
                             </label>
                           </div>
                           <ui:fragment rendered="#{empty thesaurusSyncBean.formattedLastSyncAt and thesaurusSyncBean.pushMode}">
@@ -141,13 +180,13 @@
                                              action="#{thesaurusSyncBean.saveMasterLink}"
                                              disabled="#{thesaurusSyncBean.running}">
                               <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
-                                      render="previewSyncBox messageIndex"/>
+                                      render="previewSyncBox messageIndex" onevent="onPreviewSyncNotice"/>
                             </h:commandButton>
                             <h:commandButton value="#{localeBean.getMsg('sync.refreshCount')}" styleClass="bo-btn ghost"
                                              action="#{thesaurusSyncBean.refreshPreparation}"
                                              disabled="#{thesaurusSyncBean.running}">
                               <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
-                                      render="previewSyncBox messageIndex"/>
+                                      render="previewSyncBox messageIndex" onevent="onPreviewSyncNotice"/>
                             </h:commandButton>
                           </div>
                         </div>
@@ -352,7 +391,9 @@
                               <span>#{localeBean.getMsg('toolbox.syncComment')}</span>
                               <h:inputTextarea id="syncComment" styleClass="st-input sync-comment"
                                                value="#{thesaurusSyncBean.comment}"
-                                               disabled="#{thesaurusSyncBean.running}"/>
+                                               disabled="#{thesaurusSyncBean.running}"
+                                               pt:placeholder="#{localeBean.getMsg('sync.comment.ph')}"/>
+                              <small class="po-hint">#{localeBean.getMsg('sync.comment.hint')}</small>
                             </label>
                           </div>
 
@@ -487,6 +528,42 @@
                     </h:panelGroup>
                   </h:panelGroup>
                 </h:form>
+              </div>
+            </div>
+            <div class="block-overlay confirm-overlay" id="syncDoneDialog" hidden="hidden"
+                 data-act="sync-done-dismiss" role="presentation">
+              <div class="confirm-modal po-result-dlg is-ok" role="dialog" aria-modal="true"
+                   aria-labelledby="syncDoneTitle" data-act="sync-done-modal">
+                <div class="po-result-head">
+                  <span class="po-result-ico is-ok" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+                  </span>
+                  <div>
+                    <div class="confirm-h" id="syncDoneTitle">#{localeBean.getMsg('sync.done.title')}</div>
+                    <p class="confirm-p" id="syncDoneText"></p>
+                  </div>
+                </div>
+                <div class="confirm-actions">
+                  <button type="button" class="abt-cancel confirm-cancel" data-act="sync-done-dismiss">#{localeBean.getMsg('sync.error.close')}</button>
+                </div>
+              </div>
+            </div>
+            <div class="block-overlay confirm-overlay" id="syncErrorDialog" hidden="hidden"
+                 data-act="sync-error-dismiss" role="presentation">
+              <div class="confirm-modal po-result-dlg is-err" role="dialog" aria-modal="true"
+                   aria-labelledby="syncErrorTitle" data-act="sync-error-modal">
+                <div class="po-result-head">
+                  <span class="po-result-ico is-err" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                  </span>
+                  <div>
+                    <div class="confirm-h" id="syncErrorTitle">#{localeBean.getMsg('sync.error.title')}</div>
+                    <p class="confirm-p" id="syncErrorText"></p>
+                  </div>
+                </div>
+                <div class="confirm-actions">
+                  <button type="button" class="abt-cancel confirm-cancel" data-act="sync-error-dismiss">#{localeBean.getMsg('sync.error.close')}</button>
+                </div>
               </div>
             </div>
             <div id="syncSolicitBusy" class="sy-busy" hidden="hidden" role="status" aria-live="assertive"

@@ -89,8 +89,11 @@ public class UserCommandRepository {
         String sql = """
                 SELECT id_user, username, mail
                 FROM users
-                WHERE LOWER(username) LIKE LOWER(:pattern)
-                  AND issuperadmin = false
+                WHERE COALESCE(issuperadmin, false) = false
+                  AND (
+                    LOWER(username) LIKE LOWER(:pattern)
+                    OR LOWER(COALESCE(mail, '')) LIKE LOWER(:pattern)
+                  )
                 ORDER BY LOWER(username)
                 LIMIT :limit
                 """;

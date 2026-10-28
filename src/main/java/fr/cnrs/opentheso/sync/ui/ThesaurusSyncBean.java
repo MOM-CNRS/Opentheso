@@ -399,11 +399,7 @@ public class ThesaurusSyncBean implements Serializable {
         } else {
             syncSucceeded = true;
             refreshConceptCountQuietly();
-            MessageUtils.showInformationMessage(
-                    "Sync terminée — propositions: " + state.getPropositions()
-                            + ", candidats: " + state.getCandidates()
-                            + ", ignorés: " + state.getSkipped()
-                            + ", erreurs: " + state.getErrors());
+            MessageUtils.showInformationMessage(completionMessage(state));
         }
         try {
             PrimeFaces.current().ajax().update("messageIndex");
@@ -780,6 +776,14 @@ public class ThesaurusSyncBean implements Serializable {
         return localeOrKey("sync.action.update");
     }
 
+    private String completionMessage(ProgressState state) {
+        return localeOrKey("sync.done.lead")
+                + " " + localeOrKey("toolbox.syncPropositions") + " : " + state.getPropositions()
+                + ". " + localeOrKey("toolbox.syncCandidates") + " : " + state.getCandidates()
+                + ". " + localeOrKey("toolbox.syncSkipped") + " : " + state.getSkipped()
+                + ". " + localeOrKey("toolbox.syncErrors") + " : " + state.getErrors() + ".";
+    }
+
     private String localeOrKey(String key) {
         try {
             FacesContext context = FacesContext.getCurrentInstance();
@@ -820,6 +824,11 @@ public class ThesaurusSyncBean implements Serializable {
             case "sync.incoming.empty" -> "Aucun concept modifié sur le maître depuis la dernière synchronisation.";
             case "sync.pull.startDisabled" -> "Sélectionnez au moins un concept, ou la réception est déjà terminée.";
             case "sync.solicit.failed" -> "Impossible de solliciter le maître.";
+            case "sync.done.lead" -> "La synchronisation est terminée.";
+            case "toolbox.syncPropositions" -> "Propositions";
+            case "toolbox.syncCandidates" -> "Candidats";
+            case "toolbox.syncSkipped" -> "Ignorés";
+            case "toolbox.syncErrors" -> "Erreurs";
             default -> key;
         };
     }

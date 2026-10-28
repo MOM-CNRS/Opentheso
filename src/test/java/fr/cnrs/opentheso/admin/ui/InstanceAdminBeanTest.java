@@ -855,6 +855,7 @@ class InstanceAdminBeanTest {
         bean.reload();
         bean.openThesaurusMembers("th1");
         bean.openCreateThesaurusMember();
+        bean.setNewMemberCreationMode("EMAIL");
         bean.setNewMemberUsername("ada");
         bean.setNewMemberEmail("ada@x.fr");
         bean.createThesaurusMember();
@@ -918,6 +919,66 @@ class InstanceAdminBeanTest {
         verify(projectMemberService, never()).updateLimitedMemberRole(any());
         assertEquals("Accès limité à ce thésaurus.", bean.getFlashMessage());
         assertNull(bean.getMemberEditUserId());
+    }
+
+    @Test
+    void createProjectUser_assignsTheAccountToTheWholeProject() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(localeBean.getMsg("admin.projects.thesauri.createUser.success")).thenReturn("créé");
+        when(adminCatalogService.listManagedProject(5, false, 9, "fr")).thenReturn(
+                new AdminCatalogService.ManagedProject(9, "PACTOLS", List.of(
+                        new AdminThesaurus("th1", "PACTOLS", 9, "PACTOLS", false, null)
+                ))
+        );
+
+        assertTrue(bean.openAsProjectAdmin(9));
+        assertTrue(bean.isAccessAllowed());
+        assertTrue(bean.isProjectThesauri());
+        bean.openCreateProjectUser();
+        bean.setNewMemberUsername("lea");
+        bean.setNewMemberEmail("lea@x.fr");
+        bean.setNewMemberCreationMode("DIRECT");
+        bean.setNewMemberRoleId(ProjectAccessPolicy.ROLE_ADMIN);
+        bean.createProjectUser();
+
+        ArgumentCaptor<ProjectMemberService.CreateMemberRequest> captor =
+                ArgumentCaptor.forClass(ProjectMemberService.CreateMemberRequest.class);
+        verify(projectMemberService).createMember(captor.capture());
+        ProjectMemberService.CreateMemberRequest request = captor.getValue();
+        assertEquals(5, request.callerId());
+        assertFalse(request.superAdmin());
+        assertEquals(9, request.projectId());
+        assertEquals(ProjectAccessPolicy.ROLE_ADMIN, request.roleId());
+        assertFalse(request.limitedOnThesaurus());
+        assertEquals(List.of(), request.thesaurusIds());
+        assertFalse(bean.isCreateProjectUserOpen());
+        assertEquals("créé", bean.getFlashMessage());
+    }
+
+    @Test
+    void createProjectUser_addsExistingAccountChosenFromAutocomplete() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(localeBean.getMsg("admin.projects.thesauri.createUser.added")).thenReturn("ajouté");
+        when(adminCatalogService.listManagedProject(5, false, 9, "fr")).thenReturn(
+                new AdminCatalogService.ManagedProject(9, "PACTOLS", List.of())
+        );
+
+        assertTrue(bean.openAsProjectAdmin(9));
+        bean.openCreateProjectUser();
+        bean.pickProjectUser(16, "lea", "lea@x.fr");
+        bean.setNewMemberRoleId(ProjectAccessPolicy.ROLE_MANAGER);
+        bean.createProjectUser();
+
+        verify(projectMemberService).addExistingMember(
+                5, false, 9, 16, ProjectAccessPolicy.ROLE_MANAGER, false, List.of());
+        verify(projectMemberService, never()).createMember(any());
+        assertEquals("ajouté", bean.getFlashMessage());
     }
 
     private static InstanceAdminAccount account(int id, String username, boolean active) {

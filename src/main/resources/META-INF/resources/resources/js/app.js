@@ -481,8 +481,39 @@ function syncThesaurusPollTick() {
   if (syncPollTimer) return;
   syncPollTimer = window.setInterval(() => clickPreviewJsf("previewSyncPollGo"), 1000);
 }
+function syncNoticeText(selector) {
+  const box = document.getElementById("messageIndex");
+  if (!box) return "";
+  const parts = [];
+  box.querySelectorAll(selector).forEach((node) => {
+    const text = (node.textContent || "").replace(/\s+/g, " ").trim();
+    if (text) parts.push(text);
+    node.hidden = true;
+  });
+  return parts.join("\n");
+}
+function showSyncDialog(selector, textId, dialogId) {
+  const msg = syncNoticeText(selector);
+  const text = document.getElementById(textId);
+  if (!msg || !text) return false;
+  text.textContent = msg;
+  showConfirm(dialogId);
+  return true;
+}
+function showSyncErrorIfAny() {
+  return showSyncDialog(".is-error", "syncErrorText", "#syncErrorDialog");
+}
+function showSyncDoneIfAny() {
+  return showSyncDialog(".st-corpus-msg:not(.is-error)", "syncDoneText", "#syncDoneDialog");
+}
+window.onPreviewSyncNotice = function (data) {
+  if (data.status === "success") showSyncErrorIfAny();
+};
 window.onPreviewSyncPoll = function (data) {
-  if (data.status === "success") syncThesaurusPollTick();
+  if (data.status === "success") {
+    if (!showSyncErrorIfAny()) showSyncDoneIfAny();
+    syncThesaurusPollTick();
+  }
 };
 function setSyncSolicitBusy(on) {
   const page = document.getElementById("viewSync");
@@ -501,7 +532,10 @@ function setSyncSolicitBusy(on) {
 }
 window.onPreviewSyncSolicit = function (data) {
   if (data.status === "begin") setSyncSolicitBusy(true);
-  if (data.status === "success") setSyncSolicitBusy(false);
+  if (data.status === "success") {
+    setSyncSolicitBusy(false);
+    showSyncErrorIfAny();
+  }
   if (data.status === "complete") {
     window.setTimeout(() => setSyncSolicitBusy(false), 30);
   }
@@ -561,6 +595,10 @@ document.addEventListener("keydown", (e) => {
   const overlay = $("#cblockOverlay");
   if (overlay && !overlay.hidden) {
     closeConceptBlockOverlay();
+    e.preventDefault();
+    return;
+  }
+  if (hideConfirm("#syncErrorDialog") || hideConfirm("#syncDoneDialog")) {
     e.preventDefault();
     return;
   }
@@ -845,6 +883,14 @@ document.addEventListener("click", (e) => {
     closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
     showConfirm("#logoutConfirm");
+  } else if (act === "sync-error-dismiss") {
+    e.preventDefault();
+    hideConfirm("#syncErrorDialog");
+  } else if (act === "sync-error-modal" || act === "sync-done-modal") {
+    return;
+  } else if (act === "sync-done-dismiss") {
+    e.preventDefault();
+    hideConfirm("#syncDoneDialog");
   } else if (act === "portal-result-dismiss") {
     e.preventDefault();
     dismissPortalResult();
@@ -2804,10 +2850,31 @@ if (SCREEN === "preference" && location.hash) {
     if (none) none.hidden = needle === "" || shown !== 0;
   };
 
+  window.iaMarkMoveProject = function (el) {
+    const list = el && el.closest ? el.closest(".ia-move-list") : null;
+    if (!list || !el) return true;
+    const wasOn = el.classList.contains("is-on");
+    list.querySelectorAll(".ia-move-hit.is-on").forEach(function (hit) {
+      hit.classList.remove("is-on");
+    });
+    if (!wasOn) el.classList.add("is-on");
+    return true;
+  };
+
   window.iaMoveProjectAjax = function (data) {
-    if (!data || data.status !== "success") return;
+    if (!data) return;
+    const list = document.querySelector(".ia-move .ia-move-list");
+    if (data.status === "begin" && list) {
+      window._iaMoveListScroll = list.scrollTop;
+      return;
+    }
+    if (data.status !== "success") return;
     const input = document.querySelector(".ia-move .ia-move-proj-q");
     if (input) window.iaFilterMoveProjects(input);
+    const fresh = document.querySelector(".ia-move .ia-move-list");
+    if (fresh && typeof window._iaMoveListScroll === "number") {
+      fresh.scrollTop = window._iaMoveListScroll;
+    }
   };
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -2819,16 +2886,20 @@ if (SCREEN === "preference" && location.hash) {
   });
 
   function iaConsumeFlash() {
-    const live = document.getElementById("iaFlashLive");
-    if (!live || typeof window.toast !== "function") return;
-    const msg = live.getAttribute("data-ia-flash");
-    const token = live.getAttribute("data-ia-flash-token");
-    const error = live.getAttribute("data-ia-flash-error") === "true";
-    if (!msg || !token) return;
-    if (window._iaFlashToken === token) return;
-    window._iaFlashToken = token;
-    window.toast(msg, error ? { error: true } : undefined);
+    if (typeof window.toast !== "function") return;
+    ["iaFlashLive", "mpFlashLive"].forEach(function (id) {
+      const live = document.getElementById(id);
+      if (!live) return;
+      const msg = live.getAttribute("data-ia-flash");
+      const token = live.getAttribute("data-ia-flash-token");
+      const error = live.getAttribute("data-ia-flash-error") === "true";
+      if (!msg || !token) return;
+      if (window._iaFlashToken === token) return;
+      window._iaFlashToken = token;
+      window.toast(msg, error ? { error: true } : undefined);
+    });
   }
+  window.iaConsumeFlash = iaConsumeFlash;
 
   function iaUsersListBusy(on) {
     const toolbar = document.getElementById("iaUsersToolbar");
@@ -2889,6 +2960,24 @@ if (SCREEN === "preference" && location.hash) {
     event.preventDefault();
     const go = document.getElementById("iaNewProjectSubmit");
     if (go && typeof go.click === "function") go.click();
+    return false;
+  };
+
+  window.iaQueuePick = function (el, event) {
+    if (event && event.preventDefault) event.preventDefault();
+    if (!el) return false;
+    const idInput = document.getElementById(el.getAttribute("data-ia-id-field"));
+    const nameInput = document.getElementById(el.getAttribute("data-ia-name-field"));
+    const emailInput = document.getElementById(el.getAttribute("data-ia-email-field") || "");
+    const queryInput = document.getElementById(el.getAttribute("data-ia-query-field") || "");
+    const go = document.getElementById(el.getAttribute("data-ia-go"));
+    if (!idInput || !go) return false;
+    const username = el.getAttribute("data-ia-username") || "";
+    idInput.value = el.getAttribute("data-ia-user-id") || "";
+    if (nameInput) nameInput.value = username;
+    if (emailInput) emailInput.value = el.getAttribute("data-ia-email") || "";
+    if (queryInput) queryInput.value = username;
+    go.click();
     return false;
   };
 
@@ -2962,13 +3051,20 @@ if (SCREEN === "preference" && location.hash) {
 
   function iaOnAjaxFlash(data) {
     if (!data || data.status !== "success") return;
-    if (!document.body || document.body.getAttribute("data-page") !== "admin-instance") return;
     iaConsumeFlash();
   }
 
-  if (window.faces && faces.ajax && typeof faces.ajax.addOnEvent === "function") {
-    faces.ajax.addOnEvent(iaOnAjaxFlash);
-  } else if (window.jsf && jsf.ajax && typeof jsf.ajax.addOnEvent === "function") {
-    jsf.ajax.addOnEvent(iaOnAjaxFlash);
+  function iaBindFlash() {
+    if (window._iaFlashBound) return;
+    const api = window.faces && faces.ajax && typeof faces.ajax.addOnEvent === "function"
+      ? faces.ajax
+      : window.jsf && jsf.ajax && typeof jsf.ajax.addOnEvent === "function"
+        ? jsf.ajax
+        : null;
+    if (!api) return;
+    api.addOnEvent(iaOnAjaxFlash);
+    window._iaFlashBound = true;
   }
+  iaBindFlash();
+  document.addEventListener("DOMContentLoaded", iaBindFlash);
 })();

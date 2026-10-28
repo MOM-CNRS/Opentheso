@@ -24,6 +24,11 @@
 
       <ui:fragment rendered="#{userSession.loggedIn}">
         <h:panelGroup id="mpShell" layout="block" styleClass="view-panel is-on">
+          <span id="mpFlashLive"
+                hidden="hidden"
+                data-ia-flash="#{myProjectsBean.flashMessage}"
+                data-ia-flash-token="#{myProjectsBean.flashToken}"
+                data-ia-flash-error="#{myProjectsBean.flashError}"></span>
           <div class="bo bo-solo">
             <ui:fragment rendered="#{myProjectsBean.listView}">
               <a class="bo-back" href="#{request.contextPath}/index.xhtml"
@@ -170,40 +175,80 @@
                           : localeBean.getMsg('projects.invite.mode.directHint')}
                     </p>
                     <div class="ia-create-grid">
-                      <label class="ia-field">
+                      <div class="ia-field ia-ac">
                         <span class="ia-field-l">#{localeBean.getMsg('projects.invite.username')}</span>
-                        <h:inputText value="#{myProjectsBean.memberUsername}" styleClass="st-input"
-                                     pt:autocomplete="username"/>
-                      </label>
+                        <h:inputText id="mpInviteUserName"
+                                     value="#{myProjectsBean.memberUsername}"
+                                     styleClass="st-input"
+                                     pt:autocomplete="off"
+                                     pt:role="combobox"
+                                     pt:aria-autocomplete="list"
+                                     pt:aria-controls="mpInviteUserSuggest"
+                                     pt:aria-expanded="#{not empty myProjectsBean.memberSuggestions}"
+                                     pt:placeholder="#{localeBean.getMsg('admin.projects.thesauri.createUser.ph')}">
+                          <f:ajax event="keyup" delay="250" execute="@this"
+                                  listener="#{myProjectsBean.suggestNewMembers}"
+                                  render="mpInviteUserSuggest mpInviteUserPicked"/>
+                        </h:inputText>
+                        <h:panelGroup id="mpInviteUserSuggest" layout="block"
+                                      styleClass="ia-ac-list#{empty myProjectsBean.memberSuggestions ? ' is-off' : ''}"
+                                      pt:role="listbox">
+                          <ui:repeat value="#{myProjectsBean.memberSuggestions}" var="hit">
+                            <button type="button" class="ia-member-hit"
+                                    data-ia-user-id="#{hit.userId}"
+                                    data-ia-username="#{hit.username}"
+                                    data-ia-email="#{hit.email}"
+                                    data-ia-id-field="mpInvitePickUserId"
+                                    data-ia-name-field="mpInvitePickUsername"
+                                    data-ia-email-field="mpInvitePickEmail"
+                                    data-ia-query-field="mpInviteUserName"
+                                    data-ia-go="mpInvitePickGo"
+                                    onmousedown="return iaQueuePick(this, event);">
+                              <span class="ia-member-hit-name">#{hit.username}</span>
+                              <span class="ia-member-hit-mail">#{hit.email}</span>
+                            </button>
+                          </ui:repeat>
+                        </h:panelGroup>
+                        <h:panelGroup id="mpInviteUserPicked" layout="block">
+                          <ui:fragment rendered="#{myProjectsBean.memberExisting}">
+                            <p class="ia-ac-picked">
+                              #{localeBean.getMsg('admin.projects.thesauri.createUser.existing')}
+                              <button type="button" class="ia-chip-x"
+                                      title="#{localeBean.getMsg('admin.members.add.clear')}"
+                                      onclick="var b=document.getElementById('mpInviteClearGo');if(b)b.click();return false;">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                              </button>
+                            </p>
+                          </ui:fragment>
+                        </h:panelGroup>
+                      </div>
                       <label class="ia-field">
                         <span class="ia-field-l">#{localeBean.getMsg('projects.invite.email')}</span>
-                        <h:inputText value="#{myProjectsBean.memberEmail}" styleClass="st-input"
+                        <h:inputText id="mpInviteEmail" value="#{myProjectsBean.memberEmail}" styleClass="st-input"
                                      pt:type="email" pt:autocomplete="email"/>
                       </label>
                       <label class="ia-field">
                         <span class="ia-field-l">#{localeBean.getMsg('projects.invite.institution')}</span>
-                        <h:inputText value="#{myProjectsBean.memberInstitution}" styleClass="st-input"/>
+                        <h:inputText id="mpInviteInstitution" value="#{myProjectsBean.memberInstitution}" styleClass="st-input"/>
                       </label>
-                      <ui:fragment rendered="#{not myProjectsBean.memberEmailInvite}">
-                        <label class="ia-field">
-                          <span class="ia-field-l">#{localeBean.getMsg('projects.invite.password')}</span>
-                          <h:inputSecret value="#{myProjectsBean.memberPassword1}" styleClass="st-input"
-                                         redisplay="false" pt:autocomplete="new-password"/>
-                        </label>
-                        <label class="ia-field">
-                          <span class="ia-field-l">#{localeBean.getMsg('projects.invite.passwordConfirm')}</span>
-                          <h:inputSecret value="#{myProjectsBean.memberPassword2}" styleClass="st-input"
-                                         redisplay="false" pt:autocomplete="new-password"/>
-                        </label>
-                      </ui:fragment>
+                      <label class="ia-field ia-member-password#{myProjectsBean.memberEmailInvite or myProjectsBean.memberExisting ? ' is-off' : ''}">
+                        <span class="ia-field-l">#{localeBean.getMsg('projects.invite.password')}</span>
+                        <h:inputSecret id="mpInvitePassword" value="#{myProjectsBean.memberPassword1}" styleClass="st-input"
+                                       redisplay="false" pt:autocomplete="new-password"/>
+                      </label>
+                      <label class="ia-field ia-member-password#{myProjectsBean.memberEmailInvite or myProjectsBean.memberExisting ? ' is-off' : ''}">
+                        <span class="ia-field-l">#{localeBean.getMsg('projects.invite.passwordConfirm')}</span>
+                        <h:inputSecret id="mpInvitePassword2" value="#{myProjectsBean.memberPassword2}" styleClass="st-input"
+                                       redisplay="false" pt:autocomplete="new-password"/>
+                      </label>
                     </div>
                     <label class="ia-check" style="margin-top:12px">
-                      <h:selectBooleanCheckbox value="#{myProjectsBean.memberAlertMail}"/>
+                      <h:selectBooleanCheckbox id="mpInviteAlert" value="#{myProjectsBean.memberAlertMail}"/>
                       <span>#{localeBean.getMsg('projects.invite.alertMail')}</span>
                     </label>
                     <label class="ia-field" style="max-width:240px;margin-top:12px">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.role')}</span>
-                      <h:selectOneMenu value="#{myProjectsBean.memberRoleId}" styleClass="st-input ia-select">
+                      <h:selectOneMenu id="mpInviteRole" value="#{myProjectsBean.memberRoleId}" styleClass="st-input ia-select">
                         <f:selectItems value="#{myProjectsBean.assignableRoles}" var="r"
                                        itemValue="#{r.id}" itemLabel="#{r.name}"/>
                         <f:ajax event="valueChange" execute="@this" render="mpInviteLimitBlock"/>
@@ -239,11 +284,11 @@
                                        immediate="true">
                         <f:ajax execute="@this" render="mpShell"/>
                       </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
-                                       value="#{localeBean.getMsg('projects.inviteSubmit')}"
-                                       action="#{myProjectsBean.createMember}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                      <button type="button"
+                              class="bo-btn primary"
+                              onclick="var b=document.getElementById('mpInviteCreateGo');if(b)b.click();return false;">
+                        #{localeBean.getMsg('projects.inviteSubmit')}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -253,48 +298,85 @@
                 <div class="bo-card ia-create">
                   <div class="bo-card-h"><span class="bo-card-t">#{localeBean.getMsg('projects.addMember')}</span></div>
                   <div class="bo-card-b">
-                    <ui:fragment rendered="#{not empty myProjectsBean.panelError}">
-                      <div class="ia-create-err" role="alert">#{myProjectsBean.panelError}</div>
-                    </ui:fragment>
-                    <label class="ia-field">
+                    <h:panelGroup id="mpExistingUserError" layout="block">
+                      <ui:fragment rendered="#{not empty myProjectsBean.panelError}">
+                        <div class="ia-create-err" role="alert">#{myProjectsBean.panelError}</div>
+                      </ui:fragment>
+                    </h:panelGroup>
+                    <div class="ia-field ia-ac">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.searchUser')}</span>
-                      <div class="ia-member-search-row">
-                        <h:inputText value="#{myProjectsBean.existingUserQuery}"
-                                     styleClass="st-input"
-                                     pt:placeholder="#{localeBean.getMsg('projects.searchUserPh')}"/>
-                        <h:commandButton styleClass="bo-btn ghost sm"
-                                         value="#{localeBean.getMsg('projects.searchGo')}"
-                                         action="#{myProjectsBean.searchExistingUserHits}">
-                          <f:ajax execute="@form" render="mpShell"/>
-                        </h:commandButton>
-                      </div>
-                    </label>
-                    <ui:fragment rendered="#{not empty myProjectsBean.existingUserHits}">
-                      <div class="ia-member-hits" role="listbox">
+                      <h:inputText id="mpExistingUserQuery"
+                                   value="#{myProjectsBean.existingUserQuery}"
+                                   styleClass="st-input"
+                                   pt:placeholder="#{localeBean.getMsg('projects.searchUserPh')}"
+                                   pt:autocomplete="off"
+                                   pt:role="combobox"
+                                   pt:aria-autocomplete="list"
+                                   pt:aria-controls="mpExistingUserResults"
+                                   pt:aria-expanded="#{not empty myProjectsBean.existingUserHits}">
+                        <f:ajax event="keyup" delay="250" execute="@this"
+                                listener="#{myProjectsBean.suggestExistingUsers}"
+                                render="mpExistingUserResults mpExistingUserPicked mpExistingUserError"/>
+                      </h:inputText>
+                      <h:panelGroup id="mpExistingUserResults" layout="block"
+                                    styleClass="ia-ac-list#{empty myProjectsBean.existingUserHits and not myProjectsBean.existingUserSearched ? ' is-off' : ''}"
+                                    pt:role="listbox">
                         <ui:repeat value="#{myProjectsBean.existingUserHits}" var="hit">
-                          <h:commandLink styleClass="ia-member-hit#{myProjectsBean.selectedExistingUser ne null and myProjectsBean.selectedExistingUser.userId eq hit.userId ? ' is-on' : ''}"
-                                         action="#{myProjectsBean.pickExistingUser(hit.userId, hit.username, hit.email)}">
-                            <f:ajax execute="@this" render="mpShell"/>
+                          <button type="button" class="ia-member-hit"
+                                  data-ia-user-id="#{hit.userId}"
+                                  data-ia-username="#{hit.username}"
+                                  data-ia-id-field="mpPickUserId"
+                                  data-ia-name-field="mpPickUsername"
+                                  data-ia-query-field="mpExistingUserQuery"
+                                  data-ia-go="mpExistingUserPickGo"
+                                  onmousedown="return iaQueuePick(this, event);">
                             <span class="ia-member-hit-name">#{hit.username}</span>
                             <span class="ia-member-hit-mail">#{hit.email}</span>
-                          </h:commandLink>
+                          </button>
                         </ui:repeat>
-                      </div>
-                    </ui:fragment>
-                    <ui:fragment rendered="#{myProjectsBean.selectedExistingUser ne null}">
-                      <div class="ia-member-picked">
-                        <span>#{localeBean.getMsg('projects.selected')}</span>
-                        <b>#{myProjectsBean.selectedExistingUser.username}</b>
-                        <h:commandLink styleClass="ia-chip-x"
+                        <ui:fragment rendered="#{myProjectsBean.existingUserSearched and empty myProjectsBean.existingUserHits and empty myProjectsBean.panelError}">
+                          <p class="ia-move-proj-none">#{localeBean.getMsg('search.noResult')}</p>
+                        </ui:fragment>
+                      </h:panelGroup>
+                      <h:panelGroup id="mpExistingUserPicked" layout="block">
+                        <ui:fragment rendered="#{myProjectsBean.selectedExistingUser ne null}">
+                          <p class="ia-ac-picked">
+                            #{localeBean.getMsg('projects.selected')}
+                            <b>#{myProjectsBean.selectedExistingUser.username}</b>
+                            <button type="button" class="ia-chip-x"
+                                    title="#{localeBean.getMsg('admin.members.add.clear')}"
+                                    onclick="var b=document.getElementById('mpExistingUserClearGo');if(b)b.click();return false;">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </button>
+                          </p>
+                        </ui:fragment>
+                      </h:panelGroup>
+                    </div>
+                    <div class="ia-ajax-proxy" aria-hidden="true">
+                      <h:inputHidden id="mpPickUserId" value="#{myProjectsBean.pendingPickUserId}"/>
+                      <h:inputHidden id="mpPickUsername" value="#{myProjectsBean.pendingPickUsername}"/>
+                      <h:commandButton id="mpExistingUserPickGo"
+                                       value="go"
+                                       action="#{myProjectsBean.applyPickedExistingUser}">
+                        <f:ajax execute="mpPickUserId mpPickUsername @this"
+                                render="mpExistingUserQuery mpExistingUserResults mpExistingUserPicked"/>
+                      </h:commandButton>
+                      <h:commandButton id="mpExistingUserClearGo"
+                                       value="go"
                                        action="#{myProjectsBean.clearPickedExistingUser}">
-                          <f:ajax execute="@this" render="mpShell"/>
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                        </h:commandLink>
-                      </div>
-                    </ui:fragment>
+                        <f:ajax execute="@this" render="mpExistingUserQuery mpExistingUserResults mpExistingUserPicked"/>
+                      </h:commandButton>
+                      <h:commandButton id="mpExistingUserAddGo"
+                                       value="go"
+                                       action="#{myProjectsBean.addExistingMember}">
+                        <f:ajax execute="mpExistingRole mpExistingLimitBlock @this" render="mpShell mpExistingUserError"/>
+                      </h:commandButton>
+                    </div>
                     <label class="ia-field" style="max-width:240px">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.role')}</span>
-                      <h:selectOneMenu value="#{myProjectsBean.existingMemberRoleId}" styleClass="st-input ia-select">
+                      <h:selectOneMenu id="mpExistingRole"
+                                       value="#{myProjectsBean.existingMemberRoleId}"
+                                       styleClass="st-input ia-select">
                         <f:selectItems value="#{myProjectsBean.assignableRoles}" var="r"
                                        itemValue="#{r.id}" itemLabel="#{r.name}"/>
                         <f:ajax event="valueChange" execute="@this" render="mpExistingLimitBlock"/>
@@ -330,11 +412,11 @@
                                        immediate="true">
                         <f:ajax execute="@this" render="mpShell"/>
                       </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
-                                       value="#{localeBean.getMsg('projects.addMemberSubmit')}"
-                                       action="#{myProjectsBean.addExistingMember}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                      <button type="button"
+                              class="bo-btn primary"
+                              onclick="var b=document.getElementById('mpExistingUserAddGo');if(b)b.click();return false;">
+                        #{localeBean.getMsg('projects.addMemberSubmit')}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -593,6 +675,15 @@
 
                 <ui:fragment rendered="#{myProjectsBean.activeSectionIndex eq 0}">
                   <div class="bo-card">
+                    <div class="bo-card-h ia-card-h-users">
+                      <span class="bo-card-t">#{localeBean.getMsg('admin.projects.thesauri.title')}</span>
+                      <h:commandButton styleClass="bo-btn primary sm"
+                                       value="#{localeBean.getMsg('projects.invite')}"
+                                       action="#{myProjectsBean.openCreateMemberPanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
                     <div class="bo-card-b ia-scroll">
                       <ui:fragment rendered="#{empty myProjectsBean.dashboard.thesauri()}">
                         <div class="ia-empty"><div class="ia-empty-d">#{localeBean.getMsg('projects.thesauri.empty')}</div></div>
@@ -738,6 +829,27 @@
             </div>
           </div>
         </h:panelGroup>
+        <div class="ia-ajax-proxy" aria-hidden="true">
+          <h:inputHidden id="mpInvitePickUserId" value="#{myProjectsBean.pendingPickUserId}"/>
+          <h:inputHidden id="mpInvitePickUsername" value="#{myProjectsBean.pendingPickUsername}"/>
+          <h:inputHidden id="mpInvitePickEmail" value="#{myProjectsBean.pendingPickEmail}"/>
+          <h:commandButton id="mpInvitePickGo"
+                           value="go"
+                           action="#{myProjectsBean.applyPickedNewMember}">
+            <f:ajax execute="mpInvitePickUserId mpInvitePickUsername mpInvitePickEmail @this" render="mpShell"/>
+          </h:commandButton>
+          <h:commandButton id="mpInviteClearGo"
+                           value="go"
+                           action="#{myProjectsBean.clearNewMemberPick}">
+            <f:ajax execute="@this" render="mpShell"/>
+          </h:commandButton>
+          <h:commandButton id="mpInviteCreateGo"
+                           value="go"
+                           action="#{myProjectsBean.createMember}">
+            <f:ajax execute="mpInviteUserName mpInviteEmail mpInviteInstitution mpInvitePassword mpInvitePassword2 mpInviteAlert mpInviteRole mpInviteLimitBlock @this"
+                    render="mpShell"/>
+          </h:commandButton>
+        </div>
       </ui:fragment>
     </h:form>
   </ui:define>
