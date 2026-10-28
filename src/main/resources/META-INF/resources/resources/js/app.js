@@ -1142,10 +1142,11 @@ document.addEventListener("click", (e) => {
   } else if (act === "go-top") {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const behavior = reduce ? "auto" : "smooth";
-    ["#previewView", "#viewHome", "#viewLive", "#viewConcept", "#viewSettings", "main.content .view"].forEach((sel) => {
+    ["#previewView", "#viewHome", "#viewLive", "#viewConcept", "#viewSettings", "main.content", "main.content .view", ".main"].forEach((sel) => {
       const el = $(sel);
-      if (el) el.scrollTo({ top: 0, behavior });
+      if (el && typeof el.scrollTo === "function") el.scrollTo({ top: 0, behavior });
     });
+    window.scrollTo({ top: 0, behavior });
   } else if (act === "thesaurus") {
     const on = t.classList.contains("is-on");
     closeThesaurus();

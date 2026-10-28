@@ -4,18 +4,6 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
-      <div class="block-overlay confirm-overlay" id="tpCreateConfirm" hidden="hidden"
-           data-act="tp-create-dismiss" role="presentation">
-        <div class="confirm-modal" role="dialog" aria-modal="true"
-             aria-labelledby="tpCreateConfirmTitle" data-act="tp-create-modal">
-          <div class="confirm-h" id="tpCreateConfirmTitle">#{localeBean.getMsg('picker.create.submit')}</div>
-          <p class="confirm-p" id="tpCreateConfirmText">#{localeBean.getMsg('picker.create.confirm')}</p>
-          <div class="confirm-actions">
-            <button type="button" class="bo-btn ghost confirm-cancel" data-act="tp-create-dismiss">#{localeBean.getMsg('picker.create.cancel')}</button>
-            <button type="button" class="bo-btn primary" data-act="tp-create-ok">#{localeBean.getMsg('picker.create.submit')}</button>
-          </div>
-        </div>
-      </div>
       <div id="tpExportMeta" hidden="hidden" data-active="0" aria-hidden="true"></div>
       <h:panelGroup id="tpDeleteConfirmPanel" layout="block">
         <div class="block-overlay confirm-overlay" id="tpDeleteConfirm" hidden="hidden"

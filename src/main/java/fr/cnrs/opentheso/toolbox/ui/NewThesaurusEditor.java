@@ -8,7 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -20,7 +22,13 @@ public class NewThesaurusEditor implements Serializable {
     private final List<String> possibleLanguages = new ArrayList<>();
     private String selectedProjectId = "";
     private boolean privateThesaurus;
+    /** Maître par défaut : source de synchronisation. */
+    private boolean master = true;
     private String organization = "";
+    /** Domaine thématique, enregistré comme dcterms:subject. */
+    private String subject = "";
+    /** Nom traduit par code de langue, hors langue du nom principal. */
+    private final Map<String, String> titlesByLanguage = new LinkedHashMap<>();
 
     public static NewThesaurusEditor empty() {
         return new NewThesaurusEditor();
@@ -73,6 +81,50 @@ public class NewThesaurusEditor implements Serializable {
         return possibleLanguages.stream().anyMatch(lang -> lang.equalsIgnoreCase(normalized));
     }
 
+    public String getTitlesEncoded() {
+        StringBuilder encoded = new StringBuilder();
+        titlesByLanguage.forEach((code, value) -> {
+            if (encoded.length() > 0) {
+                encoded.append('\n');
+            }
+            encoded.append(code).append('=').append(value.replace('\n', ' ').replace('\r', ' '));
+        });
+        return encoded.toString();
+    }
+
+    public void setTitlesEncoded(String encoded) {
+        titlesByLanguage.clear();
+        if (StringUtils.isBlank(encoded)) {
+            return;
+        }
+        for (String line : encoded.split("\\R")) {
+            int split = line.indexOf('=');
+            if (split <= 0) {
+                continue;
+            }
+            String code = line.substring(0, split).trim();
+            String value = line.substring(split + 1).trim();
+            if (code.isEmpty()
+                    || value.isEmpty()
+                    || code.equalsIgnoreCase(StringUtils.defaultString(selectedLanguage))) {
+                continue;
+            }
+            titlesByLanguage.put(code, value);
+        }
+    }
+
+    private Map<String, String> titlesForRequest() {
+        Map<String, String> titles = new LinkedHashMap<>();
+        for (String code : possibleLanguages) {
+            titlesByLanguage.forEach((key, value) -> {
+                if (key.equalsIgnoreCase(code) && StringUtils.isNotBlank(value)) {
+                    titles.put(code, value.trim());
+                }
+            });
+        }
+        return Map.copyOf(titles);
+    }
+
     public NewThesaurusRequest toRequest() {
         Integer projectId = null;
         if (StringUtils.isNotBlank(selectedProjectId)) {
@@ -90,7 +142,10 @@ public class NewThesaurusEditor implements Serializable {
                 projectId,
                 privateThesaurus,
                 StringUtils.trimToEmpty(organization),
-                List.copyOf(possibleLanguages)
+                List.copyOf(possibleLanguages),
+                master,
+                StringUtils.trimToEmpty(subject),
+                titlesForRequest()
         );
     }
 }

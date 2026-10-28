@@ -22,11 +22,52 @@
             <div class="tp-form-card">
               <div class="tp-form-row">
                 <label class="tp-form-l" for="tpCreateTitle">Nom <span class="tp-req">*</span></label>
-                <h:inputText id="tpCreateTitle"
-                             styleClass="tp-form-i"
-                             value="#{thesaurusPickerBean.createEditor.title}"
-                             pt:placeholder="Ex. PACTOLS, GeoEthno…"
-                             pt:oninput="window.tpSyncCreateSubmit &amp;&amp; window.tpSyncCreateSubmit();"/>
+                <div class="tp-name-lang">
+                  <h:inputText id="tpCreateTitle"
+                               styleClass="tp-form-i"
+                               value="#{thesaurusPickerBean.createEditor.title}"
+                               pt:placeholder="Ex. PACTOLS, GeoEthno…"
+                               pt:oninput="window.tpSyncCreateSubmit &amp;&amp; window.tpSyncCreateSubmit();"/>
+                  <h:inputHidden id="tpCreateSourceLang" value="#{thesaurusPickerBean.createEditor.selectedLanguage}"/>
+                  <h:panelGroup layout="block" styleClass="tp-lang-pick">
+                    <button type="button"
+                            class="tree-lang-btn tp-lang-btn"
+                            data-act="tp-lang-toggle"
+                            title="Langue de ce nom"
+                            aria-haspopup="listbox"
+                            aria-expanded="false">
+                      <span class="tree-lang-flag" aria-hidden="true">#{thesaurusPickerBean.createSelectedLanguageFlag}</span>
+                      <span class="tree-lang-name">#{thesaurusPickerBean.createSelectedLanguageLabel}</span>
+                      <span class="tree-lang-code">#{thesaurusPickerBean.createEditor.selectedLanguage}</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu tp-lang-menu tp-project-menu" role="listbox" aria-label="Langue">
+                      <input type="search"
+                             class="tp-project-q"
+                             placeholder="Rechercher une langue…"
+                             autocomplete="off"
+                             aria-label="Rechercher une langue"
+                             oninput="window.tpFilterPickMenu &amp;&amp; window.tpFilterPickMenu(this);"
+                             onkeydown="if (event.key === 'Enter') event.preventDefault();"/>
+                      <div class="tp-project-scroll">
+                        <ui:repeat value="#{thesaurusPickerBean.createLanguages}" var="lg">
+                          <button type="button"
+                                  class="tree-lang-opt#{thesaurusPickerBean.isCreateLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                  data-code="#{lg.code}"
+                                  data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
+                                  data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}"
+                                  onclick="return window.tpPickCreateLang &amp;&amp; window.tpPickCreateLang(this);">
+                            <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
+                            <span class="tree-lang-opt-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
+                            <span class="tree-lang-opt-code">#{lg.code}</span>
+                            <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                          </button>
+                        </ui:repeat>
+                        <p class="tp-project-empty" hidden="hidden">Aucune langue trouvée</p>
+                      </div>
+                    </div>
+                  </h:panelGroup>
+                </div>
               </div>
               <div class="tp-form-row">
                 <label class="tp-form-l" for="tpCreateAcronym">Acronyme</label>
@@ -43,88 +84,151 @@
                              pt:placeholder="Ex. Ministère de la Culture, CNRS…"/>
               </div>
               <div class="tp-form-row">
-                <span class="tp-form-l">Langue principale <span class="tp-req">*</span></span>
-                <h:panelGroup id="tpCreateLangUi" layout="block" styleClass="tp-lang-pick">
-                  <button type="button"
-                          class="tree-lang-btn tp-lang-btn"
-                          data-act="tp-lang-toggle"
-                          title="Langue principale"
-                          aria-haspopup="listbox"
-                          aria-expanded="false">
-                    <span class="tree-lang-flag" aria-hidden="true">#{thesaurusPickerBean.createSelectedLanguageFlag}</span>
-                    <span class="tree-lang-name">#{thesaurusPickerBean.createSelectedLanguageLabel}</span>
-                    <span class="tree-lang-code">#{thesaurusPickerBean.createEditor.selectedLanguage}</span>
-                    <span class="tree-lang-caret" aria-hidden="true">▾</span>
-                  </button>
-                  <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue principale">
-                    <div class="tree-lang-menu-h">Langue principale</div>
-                    <ui:repeat value="#{thesaurusPickerBean.createLanguages}" var="lg">
-                      <h:commandLink styleClass="tree-lang-opt#{thesaurusPickerBean.isCreateLanguageSelected(lg.code) ? ' is-on' : ''}"
-                                     action="#{thesaurusPickerBean.selectCreateLanguage}">
-                        <f:param name="createLangCode" value="#{lg.code}"/>
-                        <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
-                        <span class="tree-lang-opt-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
-                        <span class="tree-lang-opt-code">#{lg.code}</span>
-                        <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
-                      </h:commandLink>
-                    </ui:repeat>
-                  </div>
-                </h:panelGroup>
+                <label class="tp-form-l" for="tpCreateDomain">Domaine</label>
+                <div class="tp-domain-field">
+                  <h:inputText id="tpCreateDomain"
+                               styleClass="tp-form-i"
+                               value="#{thesaurusPickerBean.createEditor.subject}"
+                               pt:placeholder="Archéologie, Peuples, Architecture…"/>
+                </div>
               </div>
               <div class="tp-form-row">
                 <span class="tp-form-l">Langues possibles</span>
                 <div class="tp-lang-multi" id="tpCreateLangsUi">
-                  <h:inputHidden styleClass="tp-lang-multi-value" value="#{thesaurusPickerBean.createPossibleLanguagesCsv}"/>
+                  <h:inputHidden id="tpCreateLangs" styleClass="tp-lang-multi-value" value="#{thesaurusPickerBean.createPossibleLanguagesCsv}"/>
+                  <h:inputHidden id="tpCreateTitles" value="#{thesaurusPickerBean.createTitlesEncoded}"/>
                   <div class="tp-lang-multi-chips" aria-live="polite"></div>
-                  <div class="tp-lang-multi-box">
-                    <input type="search" class="tp-lang-multi-q" placeholder="Rechercher une langue…" autocomplete="off" aria-label="Rechercher une langue"/>
-                    <div class="tp-lang-multi-list" role="listbox" aria-label="Langues possibles" aria-multiselectable="true">
-                      <ui:repeat value="#{thesaurusPickerBean.createPossibleChoices}" var="lg">
-                        <button type="button"
-                                class="tp-lang-multi-opt#{thesaurusPickerBean.isCreateLanguagePossible(lg.code) ? ' is-on' : ''}"
-                                role="option"
-                                aria-selected="#{thesaurusPickerBean.isCreateLanguagePossible(lg.code) ? 'true' : 'false'}"
-                                data-code="#{lg.code}"
-                                data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
-                                data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}">
-                          <span class="tp-lang-multi-boxui" aria-hidden="true">✓</span>
-                          <span class="tp-lang-multi-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
-                          <span class="tp-lang-multi-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
-                          <span class="tp-lang-multi-code">#{lg.code}</span>
-                        </button>
-                      </ui:repeat>
+                  <div class="tp-lang-titles"></div>
+                  <div class="tp-lang-pick tp-lang-extra-pick">
+                    <button type="button"
+                            id="tpCreateLangsBtn"
+                            class="tree-lang-btn tp-lang-btn"
+                            data-act="tp-lang-toggle"
+                            title="Ajouter une langue"
+                            aria-haspopup="listbox"
+                            aria-expanded="false">
+                      <span class="tree-lang-name">Ajouter une langue</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu tp-lang-menu tp-project-menu" role="listbox" aria-label="Langues possibles" aria-multiselectable="true">
+                      <input type="search"
+                             class="tp-project-q"
+                             placeholder="Rechercher une langue…"
+                             autocomplete="off"
+                             aria-label="Rechercher une langue"
+                             oninput="window.tpFilterPickMenu &amp;&amp; window.tpFilterPickMenu(this);"
+                             onkeydown="if (event.key === 'Enter') event.preventDefault();"/>
+                      <div class="tp-lang-multi-list tp-project-scroll">
+                        <ui:repeat value="#{thesaurusPickerBean.createLanguages}" var="lg">
+                          <button type="button"
+                                  class="tp-lang-multi-opt#{thesaurusPickerBean.isCreateLanguagePossible(lg.code) ? ' is-on' : ''}"
+                                  role="option"
+                                  value="#{lg.code}"
+                                  aria-selected="#{thesaurusPickerBean.isCreateLanguagePossible(lg.code) ? 'true' : 'false'}"
+                                  data-code="#{lg.code}"
+                                  data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
+                                  data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}">
+                            <span class="tp-lang-multi-boxui" aria-hidden="true">✓</span>
+                            <span class="tp-lang-multi-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
+                            <span class="tp-lang-multi-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
+                            <span class="tp-lang-multi-code">#{lg.code}</span>
+                          </button>
+                        </ui:repeat>
+                        <p class="tp-project-empty" hidden="hidden">Aucune langue trouvée</p>
+                      </div>
                     </div>
                   </div>
-                  <p class="tp-lang-hint">Autres langues du thésaurus, en plus de la langue principale.</p>
+                  <p class="tp-lang-hint">Ajoutez une langue, puis saisissez le nom du thésaurus dans cette langue.</p>
                 </div>
               </div>
               <div class="tp-form-row">
-                <label class="tp-form-l" for="tpCreateProject">Projet</label>
-                <h:selectOneMenu id="tpCreateProject"
-                                 styleClass="tp-form-i"
-                                 value="#{thesaurusPickerBean.createEditor.selectedProjectId}">
-                  <f:selectItem itemValue="" itemLabel="#{thesaurusPickerBean.createSuperAdmin ? 'Aucun projet…' : 'Choisir un projet…'}"/>
-                  <f:selectItems value="#{thesaurusPickerBean.createProjects}"
-                                 var="proj"
-                                 itemValue="#{proj.idAsString()}"
-                                 itemLabel="#{proj.name}"/>
-                </h:selectOneMenu>
+                <label class="tp-form-l" for="tpCreateProjectBtn">Projet</label>
+                <div class="tp-lang-pick tp-project-pick">
+                  <h:inputHidden id="tpCreateProject" value="#{thesaurusPickerBean.createEditor.selectedProjectId}"/>
+                  <button type="button"
+                          id="tpCreateProjectBtn"
+                          class="tree-lang-btn tp-lang-btn"
+                          data-act="tp-lang-toggle"
+                          title="Projet"
+                          aria-haspopup="listbox"
+                          aria-expanded="false">
+                    <span class="tree-lang-name">#{thesaurusPickerBean.createSelectedProjectLabel}</span>
+                    <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="tree-lang-menu tp-lang-menu tp-project-menu" role="listbox" aria-label="Projet">
+                    <input type="search"
+                           class="tp-project-q"
+                           placeholder="Rechercher un projet…"
+                           autocomplete="off"
+                           aria-label="Rechercher un projet"
+                           oninput="window.tpFilterPickMenu &amp;&amp; window.tpFilterPickMenu(this);"
+                           onkeydown="if (event.key === 'Enter') event.preventDefault();"/>
+                    <div class="tp-project-scroll">
+                      <button type="button"
+                              class="tree-lang-opt#{empty thesaurusPickerBean.createEditor.selectedProjectId ? ' is-on' : ''}"
+                              data-value=""
+                              data-label="#{thesaurusPickerBean.createSuperAdmin ? 'Aucun projet' : 'Choisir un projet…'}"
+                              onclick="return window.tpPickCreateProject &amp;&amp; window.tpPickCreateProject(this);">
+                        <span class="tree-lang-opt-name">#{thesaurusPickerBean.createSuperAdmin ? 'Aucun projet' : 'Choisir un projet…'}</span>
+                        <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                      </button>
+                      <ui:repeat value="#{thesaurusPickerBean.createProjects}" var="proj">
+                        <button type="button"
+                                class="tree-lang-opt#{thesaurusPickerBean.isCreateProjectSelected(proj.idAsString()) ? ' is-on' : ''}"
+                                data-value="#{proj.idAsString()}"
+                                data-label="#{proj.name}"
+                                onclick="return window.tpPickCreateProject &amp;&amp; window.tpPickCreateProject(this);">
+                          <span class="tree-lang-opt-name">#{proj.name}</span>
+                          <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                        </button>
+                      </ui:repeat>
+                      <p class="tp-project-empty" hidden="hidden">Aucun projet trouvé</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">Type</span>
+                <h:panelGroup id="tpCreateRole" layout="block" styleClass="tp-form-radios" pt:data-field="tpCreateMaster">
+                  <h:inputHidden id="tpCreateMaster" value="#{thesaurusPickerBean.createMasterValue}"/>
+                  <button type="button"
+                          class="tp-form-radio#{thesaurusPickerBean.createEditor.master ? ' is-on' : ''}"
+                          data-value="true"
+                          onclick="return window.tpPickCreateChoice &amp;&amp; window.tpPickCreateChoice(this);">
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16h16l-1.6-8-4.4 3.2L12 6l-2 5.2L5.6 8z"/><path d="M6 16v3h12v-3"/></svg>
+                    <span><b>#{localeBean.getMsg('picker.sync.master')}</b> — source de synchronisation</span>
+                  </button>
+                  <button type="button"
+                          class="tp-form-radio#{not thesaurusPickerBean.createEditor.master ? ' is-on' : ''}"
+                          data-value="false"
+                          onclick="return window.tpPickCreateChoice &amp;&amp; window.tpPickCreateChoice(this);">
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="13" rx="1.5"/><path d="M16 8V6.5A1.5 1.5 0 0 0 14.5 5H6.5A1.5 1.5 0 0 0 5 6.5v12A1.5 1.5 0 0 0 6.5 20H8"/></svg>
+                    <span><b>#{localeBean.getMsg('picker.sync.copy')}</b> — se synchronise avec un maître</span>
+                  </button>
+                </h:panelGroup>
               </div>
               <div class="tp-form-row">
                 <span class="tp-form-l">Visibilité</span>
-                <h:panelGroup id="tpCreateVis" layout="block" styleClass="tp-form-radios">
-                  <h:commandLink styleClass="tp-form-radio#{not thesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
-                                 action="#{thesaurusPickerBean.choosePublicVisibility}">
+                <h:panelGroup id="tpCreateVis" layout="block" styleClass="tp-form-radios" pt:data-field="tpCreatePrivate">
+                  <h:inputHidden id="tpCreatePrivate" value="#{thesaurusPickerBean.createPrivateValue}"/>
+                  <button type="button"
+                          class="tp-form-radio#{not thesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
+                          data-value="false"
+                          onclick="return window.tpPickCreateChoice &amp;&amp; window.tpPickCreateChoice(this);">
                     <span class="tp-radio-ui" aria-hidden="true"></span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
                     <span><b>Public</b> — consultation ouverte</span>
-                  </h:commandLink>
-                  <h:commandLink styleClass="tp-form-radio#{thesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
-                                 action="#{thesaurusPickerBean.choosePrivateVisibility}">
+                  </button>
+                  <button type="button"
+                          class="tp-form-radio#{thesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
+                          data-value="true"
+                          onclick="return window.tpPickCreateChoice &amp;&amp; window.tpPickCreateChoice(this);">
                     <span class="tp-radio-ui" aria-hidden="true"></span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
                     <span><b>Privé</b> — accès restreint</span>
-                  </h:commandLink>
+                  </button>
                 </h:panelGroup>
               </div>
             </div>
@@ -146,7 +250,7 @@
                       id="tpCreateAsk"
                       class="tp-form-submit#{empty thesaurusPickerBean.createEditor.title ? ' is-disabled' : ''}"
                       aria-disabled="#{empty thesaurusPickerBean.createEditor.title ? 'true' : 'false'}"
-                      onclick="return window.tpAskCreate &amp;&amp; window.tpAskCreate(this);">
+                      onclick="return window.tpSubmitCreate &amp;&amp; window.tpSubmitCreate(this);">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 <span>#{localeBean.getMsg('picker.create.submit')}</span>
               </button>
