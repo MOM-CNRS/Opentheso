@@ -445,6 +445,11 @@ public class ConceptLifecycleEditorBean implements Serializable {
             return;
         }
         conceptNavigationSupport.invalidateConceptTree();
+        thesaurusViewBean.reloadTree();
+        if (StringUtils.isNotBlank(lastCreatedId)) {
+            thesaurusViewBean.setRevealId(lastCreatedId);
+            thesaurusViewBean.revealInTree();
+        }
     }
 
     private void beginCreateSession() {

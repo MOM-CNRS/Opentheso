@@ -4085,6 +4085,7 @@ function selectOpenedInTree(id) {
 }
 
 function showLiveDetail() {
+  if (state.conceptDraft || state.facetDraft || state.draft) return false;
   const el = liveDetailState();
   if (!el || el.getAttribute("data-requested") !== "1") return false;
   state.home = false;
@@ -5943,28 +5944,14 @@ function requestConceptDraftCreate(kind) {
     return;
   }
   setConceptDraftTitleError(false);
-  const root = conceptDraftRoot();
-  const dlg = $("#cptCreateConfirm");
-  const text = $("#cptCreateText");
-  const go = $("#cptCreateGo");
-  if (dlg && root) {
-    const name = String(title.value || "").trim();
-    const key = kind === "chain" ? "data-confirm-chain" : "data-confirm-create";
-    const tpl = root.getAttribute(key) || "";
-    if (text) text.textContent = tpl.replace("{0}", name);
-    if (go) go.textContent = root.getAttribute(kind === "chain" ? "data-confirm-go-chain" : "data-confirm-go") || go.textContent;
-    go && go.setAttribute("data-kind", kind === "chain" ? "chain" : "create");
-    dlg.hidden = false;
-    return;
-  }
   confirmConceptDraftCreate(kind);
 }
 
 function confirmConceptDraftCreate(kind) {
   hideConceptDraftCreateConfirm();
   const mode = $("#cptCreateMode");
-  const resolved = kind || (($("#cptCreateGo") && $("#cptCreateGo").getAttribute("data-kind")) || "create");
-  if (mode) mode.value = resolved === "chain" ? "chain" : "create";
+  const resolved = kind === "chain" ? "chain" : "create";
+  if (mode) mode.value = resolved;
   const createBtn = resolved === "chain"
     ? ($("#cptCreateNext") || $("#cptCreate"))
     : $("#cptCreate");
@@ -6015,12 +6002,15 @@ function onConceptDraftAjax(data) {
   const root = conceptDraftRoot();
   const msg = root && root.getAttribute("data-created-msg");
   if (msg && typeof toast === "function") toast(msg, { soft: true });
+  const createdId = result && result.getAttribute("data-id");
+  if (createdId && typeof selectOpenedInTree === "function") {
+    selectOpenedInTree(createdId);
+  }
   if (conceptDraftFlagOn(result, "data-chain")) {
     const parentName = String(($("#cptParentLabel") && $("#cptParentLabel").value) || "").trim();
     showConceptDraftPanel(parentName);
     return;
   }
-  const createdId = result && result.getAttribute("data-id");
   resolveConceptDraftUi("créé");
   if (createdId && typeof openLiveDetail === "function") {
     openLiveDetail(createdId, "concept");

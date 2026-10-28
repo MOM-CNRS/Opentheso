@@ -9,11 +9,7 @@
        data-loc-under="#{localeBean.getMsg('concept.draft.loc.under')}"
        data-more="#{localeBean.getMsg('concept.draft.more')}"
        data-more-hide="#{localeBean.getMsg('concept.draft.more.hide')}"
-       data-created-msg="#{localeBean.getMsg('concept.draft.created')}"
-       data-confirm-create="#{localeBean.getMsg('concept.draft.confirm.create')}"
-       data-confirm-chain="#{localeBean.getMsg('concept.draft.confirm.chain')}"
-       data-confirm-go="#{localeBean.getMsg('concept.draft.create')}"
-       data-confirm-go-chain="#{localeBean.getMsg('concept.draft.chain')}">
+       data-created-msg="#{localeBean.getMsg('concept.draft.created')}">
     <h:form id="conceptDraftForm" prependId="false" styleClass="cand-draft-form" acceptcharset="UTF-8">
       <span id="cptResult" hidden="hidden"
             data-created="#{conceptLifecycleEditorBean.created ? '1' : '0'}"
@@ -152,7 +148,7 @@
               <h:commandButton id="cptCreateForce" styleClass="bo-btn primary"
                                value="#{localeBean.getMsg('concept.addDupForce')}"
                                action="#{conceptLifecycleEditorBean.createConceptDraftForced}">
-                <f:ajax execute="@form" render="@form" onevent="onConceptDraftAjax"/>
+                <f:ajax execute="@form" render="@form :previewTree" onevent="onConceptDraftAjax"/>
               </h:commandButton>
             </ui:fragment>
             <ui:fragment rendered="#{not conceptLifecycleEditorBean.duplicateLabelWarning}">
@@ -161,12 +157,12 @@
               <h:commandButton id="cptCreateNext" styleClass="preview-open-btn" style="display:none"
                                value="#{localeBean.getMsg('concept.draft.chain')}"
                                action="#{conceptLifecycleEditorBean.createConceptDraftAndContinue}">
-                <f:ajax execute="@form" render="@form" onevent="onConceptDraftAjax"/>
+                <f:ajax execute="@form" render="@form :previewTree" onevent="onConceptDraftAjax"/>
               </h:commandButton>
               <h:commandButton id="cptCreate" styleClass="preview-open-btn" style="display:none"
                                value="#{localeBean.getMsg('concept.draft.create')}"
                                action="#{conceptLifecycleEditorBean.createConceptDraft}">
-                <f:ajax execute="@form" render="@form" onevent="onConceptDraftAjax"/>
+                <f:ajax execute="@form" render="@form :previewTree" onevent="onConceptDraftAjax"/>
               </h:commandButton>
             </ui:fragment>
           </ui:fragment>
@@ -179,18 +175,6 @@
       </div>
     </h:form>
 
-    <div class="block-overlay confirm-overlay" id="cptCreateConfirm" hidden="hidden"
-         data-act="cpt-create-dismiss" role="presentation">
-      <div class="confirm-modal" role="dialog" aria-modal="true"
-           aria-labelledby="cptCreateTitle" data-act="cpt-create-modal">
-        <div class="confirm-h" id="cptCreateTitle">#{localeBean.getMsg('concept.draft.confirm.title')}</div>
-        <p class="confirm-p" id="cptCreateText">#{localeBean.getMsg('concept.draft.confirm.create')}</p>
-        <div class="confirm-actions">
-          <button type="button" class="bo-btn ghost confirm-cancel" data-act="cpt-create-dismiss">#{localeBean.getMsg('concept.draft.cancel')}</button>
-          <button type="button" class="bo-btn primary" id="cptCreateGo" data-act="cpt-create-go">#{localeBean.getMsg('concept.draft.create')}</button>
-        </div>
-      </div>
-    </div>
     <div class="block-overlay confirm-overlay" id="cptLeaveConfirm" hidden="hidden"
          data-act="cpt-leave-dismiss" role="presentation">
       <div class="confirm-modal" role="dialog" aria-modal="true"

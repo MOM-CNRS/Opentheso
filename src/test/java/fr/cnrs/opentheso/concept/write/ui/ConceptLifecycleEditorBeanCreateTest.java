@@ -222,6 +222,9 @@ class ConceptLifecycleEditorBeanCreateTest {
         assertFalse(bean.isChainNext());
         verify(conceptLifecycleMutationService).addChildConcept(any());
         verify(conceptNavigationSupport).invalidateConceptTree();
+        verify(thesaurusViewBean).reloadTree();
+        verify(thesaurusViewBean).setRevealId("C2");
+        verify(thesaurusViewBean).revealInTree();
     }
 
     @Test
