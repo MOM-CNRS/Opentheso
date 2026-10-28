@@ -1320,6 +1320,10 @@ public class InstanceAdminBean implements Serializable {
         }
     }
 
+    public void onThesauriPageSizeChange() {
+        clampThesauriPage(getFilteredThesaurusCount());
+    }
+
     public void setThesauriPageSize(int thesauriPageSize) {
         int next = USERS_PAGE_SIZE_OPTIONS.contains(thesauriPageSize)
                 ? thesauriPageSize

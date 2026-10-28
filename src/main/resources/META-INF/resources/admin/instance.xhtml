@@ -906,32 +906,32 @@
                                    pt:placeholder="#{localeBean.getMsg('admin.thesauri.search.placeholder')}"
                                    pt:aria-label="#{localeBean.getMsg('admin.thesauri.search.placeholder')}"
                                    pt:autocomplete="off">
-                        <f:ajax event="keyup" delay="300" execute="@this" render="iaThesauriList"/>
+                        <f:ajax event="keyup" delay="300" execute="@this" render="iaThesauriList iaThesauriPager"/>
                       </h:inputText>
                     </div>
                   </div>
                   <div class="bo-card-b">
-                    <h:panelGroup id="iaThesauriList" layout="block" styleClass="ia-thes-body">
-                      <div class="ia-scroll ia-thes-scroll">
+                    <div class="ia-thes-body">
+                      <h:panelGroup id="iaThesauriList" layout="block" styleClass="ia-scroll ia-thes-scroll">
                         <ui:fragment rendered="#{not empty instanceAdminBean.filteredThesauri}">
                           <table class="st-table ia-tab ia-tab-t">
                             <thead>
                               <tr>
                                 <th class="ia-th-name">Thésaurus</th>
-                                <th>Projet</th>
-                                <th>Visibilité</th>
-                                <th></th>
+                                <th class="ia-th-project">Projet</th>
+                                <th class="ia-th-vis">Visibilité</th>
+                                <th class="ia-th-act"></th>
                               </tr>
                             </thead>
                             <tbody>
                               <ui:repeat value="#{instanceAdminBean.visibleThesauri}" var="t">
                                 <tr>
                                   <td class="ia-th-name" data-label="Thésaurus" title="#{t.title}"><b>#{t.title}</b></td>
-                                  <td data-label="Projet">#{empty t.projectName ? '—' : t.projectName}</td>
-                                  <td data-label="Visibilité">
+                                  <td class="ia-th-project" data-label="Projet" title="#{t.projectName}">#{empty t.projectName ? '—' : t.projectName}</td>
+                                  <td class="ia-th-vis" data-label="Visibilité">
                                     <span class="ia-vis#{t.privateThesaurus ? ' is-private' : ''}">#{t.privateThesaurus ? 'Privé' : 'Public'}</span>
                                   </td>
-                                  <td class="st-td-act" data-label="">
+                                  <td class="st-td-act ia-th-act" data-label="">
                                     <a class="bo-btn ghost sm"
                                        href="#{instanceAdminBean.thesaurusMembersUrl(t.id, t.projectId)}">
                                       Gérer les membres
@@ -953,47 +953,49 @@
                             <div class="ia-empty-t">#{localeBean.getMsg('admin.thesauri.empty.filter')}</div>
                           </div>
                         </ui:fragment>
-                      </div>
-                      <ui:fragment rendered="#{not empty instanceAdminBean.filteredThesauri}">
-                        <div class="ia-pager ia-thes-pager">
-                          <div class="ia-pager-meta">
-                            <span class="ia-pager-info">
-                              #{instanceAdminBean.thesauriPageFrom}–#{instanceAdminBean.thesauriPageTo}
-                              #{localeBean.getMsg('admin.users.pager.of')}
-                              #{instanceAdminBean.filteredThesaurusCount}
-                              #{localeBean.getMsg('admin.users.pager.results')}
-                            </span>
-                            <label class="ia-pager-size">
-                              <span>#{localeBean.getMsg('admin.users.pager.size')}</span>
-                              <h:selectOneMenu id="iaThesauriPageSize"
-                                               value="#{instanceAdminBean.thesauriPageSize}"
-                                               styleClass="st-input ia-select ia-pager-size-select">
-                                <f:selectItems value="#{instanceAdminBean.thesauriPageSizeOptions}"/>
-                                <f:ajax event="valueChange" execute="@this" render="iaThesauriList"/>
-                              </h:selectOneMenu>
-                            </label>
+                      </h:panelGroup>
+                      <h:panelGroup id="iaThesauriPager" layout="block">
+                        <ui:fragment rendered="#{not empty instanceAdminBean.filteredThesauri}">
+                          <div class="ia-pager ia-thes-pager">
+                            <div class="ia-pager-meta">
+                              <span class="ia-pager-info">
+                                #{instanceAdminBean.thesauriPageFrom}–#{instanceAdminBean.thesauriPageTo}
+                                #{localeBean.getMsg('admin.users.pager.of')}
+                                #{instanceAdminBean.filteredThesaurusCount}
+                                #{localeBean.getMsg('admin.users.pager.results')}
+                              </span>
+                              <label class="ia-pager-size">
+                                <span>#{localeBean.getMsg('admin.users.pager.size')}</span>
+                                <h:selectOneMenu id="iaThesauriPageSize"
+                                                 value="#{instanceAdminBean.thesauriPageSize}"
+                                                 styleClass="st-input ia-select ia-pager-size-select"
+                                                 pt:onchange="var b=document.getElementById('iaThesauriPageSizeGo');if(b)b.click();">
+                                  <f:selectItems value="#{instanceAdminBean.thesauriPageSizeOptions}"/>
+                                </h:selectOneMenu>
+                              </label>
+                            </div>
+                            <div class="ia-pager-nav">
+                              <button type="button"
+                                      class="bo-btn ghost sm"
+                                      data-ia-off="#{instanceAdminBean.thesauriPage eq 0 ? '1' : null}"
+                                      onclick="if(this.getAttribute('data-ia-off')==='1')return false;var b=document.getElementById('iaThesauriPrevGo');if(b)b.click();return false;">
+                                #{localeBean.getMsg('admin.users.pager.prev')}
+                              </button>
+                              <span class="ia-pager-info">
+                                #{localeBean.getMsg('admin.users.pager.page')}
+                                #{instanceAdminBean.thesauriPage + 1} / #{instanceAdminBean.thesauriPageCount}
+                              </span>
+                              <button type="button"
+                                      class="bo-btn ghost sm"
+                                      data-ia-off="#{instanceAdminBean.thesauriPage + 1 ge instanceAdminBean.thesauriPageCount ? '1' : null}"
+                                      onclick="if(this.getAttribute('data-ia-off')==='1')return false;var b=document.getElementById('iaThesauriNextGo');if(b)b.click();return false;">
+                                #{localeBean.getMsg('admin.users.pager.next')}
+                              </button>
+                            </div>
                           </div>
-                          <div class="ia-pager-nav">
-                            <h:commandLink styleClass="bo-btn ghost sm"
-                                           action="#{instanceAdminBean.previousThesauriPage}"
-                                           disabled="#{instanceAdminBean.thesauriPage eq 0}">
-                              <f:ajax execute="@this" render="iaThesauriList"/>
-                              #{localeBean.getMsg('admin.users.pager.prev')}
-                            </h:commandLink>
-                            <span class="ia-pager-info">
-                              #{localeBean.getMsg('admin.users.pager.page')}
-                              #{instanceAdminBean.thesauriPage + 1} / #{instanceAdminBean.thesauriPageCount}
-                            </span>
-                            <h:commandLink styleClass="bo-btn ghost sm"
-                                           action="#{instanceAdminBean.nextThesauriPage}"
-                                           disabled="#{instanceAdminBean.thesauriPage + 1 ge instanceAdminBean.thesauriPageCount}">
-                              <f:ajax execute="@this" render="iaThesauriList"/>
-                              #{localeBean.getMsg('admin.users.pager.next')}
-                            </h:commandLink>
-                          </div>
-                        </div>
-                      </ui:fragment>
-                    </h:panelGroup>
+                        </ui:fragment>
+                      </h:panelGroup>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1668,6 +1670,22 @@
                              action="#{instanceAdminBean.runPendingMemberAction}">
               <f:ajax execute="iaPendingMemberAction iaPendingMemberUserId iaPendingMemberRoleId iaPendingMemberUsername iaPendingMemberProjectWide @this"
                       render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaThesauriPrevGo"
+                             value="go"
+                             action="#{instanceAdminBean.previousThesauriPage}">
+              <f:ajax execute="@this" render="iaThesauriList iaThesauriPager"/>
+            </h:commandButton>
+            <h:commandButton id="iaThesauriNextGo"
+                             value="go"
+                             action="#{instanceAdminBean.nextThesauriPage}">
+              <f:ajax execute="@this" render="iaThesauriList iaThesauriPager"/>
+            </h:commandButton>
+            <h:commandButton id="iaThesauriPageSizeGo"
+                             value="go">
+              <f:ajax execute="iaThesauriPageSize @this"
+                      listener="#{instanceAdminBean.onThesauriPageSizeChange}"
+                      render="iaThesauriList iaThesauriPager"/>
             </h:commandButton>
             <h:commandButton id="iaMemberEditSaveGo"
                              value="go"

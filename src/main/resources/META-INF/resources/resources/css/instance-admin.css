@@ -849,9 +849,9 @@ body[data-page="admin-instance"] .ia-proj-card-h input.ia-proj-search-input{
   padding:4px 0;-webkit-overflow-scrolling:touch
 }
 .ia-proj-pager{flex:0 0 auto;margin:0;padding:10px 12px 12px;background:var(--surface)}
-.ia-thes-pane .ia-thes-card{
+body[data-page="admin-instance"] .ia-thes-pane .ia-thes-card.bo-card{
   display:flex;flex-direction:column;overflow:hidden;
-  max-height:calc(100vh - 250px);min-height:280px
+  max-height:calc(100vh - 168px);min-height:320px
 }
 .ia-thes-pane .ia-thes-card > .bo-card-b{
   flex:1;min-height:0;display:flex;flex-direction:column
@@ -862,8 +862,22 @@ body[data-page="admin-instance"] .ia-proj-card-h input.ia-proj-search-input{
   -webkit-overflow-scrolling:touch
 }
 .ia-thes-pager{flex:0 0 auto;margin:0;padding:10px 12px 12px;background:var(--surface)}
+.ia-pager [data-ia-off]{opacity:.45;pointer-events:none}
 .ia-thes-scroll .ia-tab-t thead th{
-  position:sticky;top:0;z-index:1;background:var(--surface)
+  position:sticky;top:0;z-index:2;background:var(--surface-2, var(--surface))
+}
+.ia-thes-scroll .ia-tab-t{table-layout:auto;width:max-content;min-width:100%}
+.ia-thes-scroll .ia-tab-t .ia-th-name{
+  width:auto;max-width:28rem;min-width:12rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.ia-thes-scroll .ia-tab-t .ia-th-project{
+  min-width:10rem;max-width:18rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.ia-thes-scroll .ia-tab-t .ia-th-vis{width:7.5rem;white-space:nowrap}
+.ia-thes-scroll .ia-tab-t .ia-th-act{
+  width:1%;white-space:nowrap;text-align:right
 }
 .ia-proj-row{content-visibility:auto;contain-intrinsic-size:auto 58px}
 .ia-proj-list{list-style:none;margin:0;padding:0}
