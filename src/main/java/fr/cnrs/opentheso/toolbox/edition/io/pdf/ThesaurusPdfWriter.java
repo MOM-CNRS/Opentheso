@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.toolbox.edition.io.pdf;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Rectangle;
@@ -117,21 +118,26 @@ public class ThesaurusPdfWriter {
             }
         } else {
             PdfPTable table = new PdfPTable(2);
-            int listSize = Integer.min(paragraphList.size(), paragraphTradList.size());
-            for (int i = 0; i < listSize; i++) {
-
-                PdfPCell cell1 = new PdfPCell();
-                cell1.addElement(paragraphList.get(i));
-                cell1.setBorderWidth(Rectangle.NO_BORDER);
-
-                PdfPCell cell2 = new PdfPCell();
-                cell2.addElement(paragraphTradList.get(i));
-                cell2.setBorder(Rectangle.NO_BORDER);
-
-                table.addCell(cell1);
-                table.addCell(cell2);
+            table.setWidthPercentage(100);
+            table.setSplitLate(false);
+            int rows = Math.max(paragraphList.size(), paragraphTradList.size());
+            for (int i = 0; i < rows; i++) {
+                table.addCell(pairedCell(i < paragraphList.size() ? paragraphList.get(i) : new Paragraph("-")));
+                table.addCell(pairedCell(i < paragraphTradList.size() ? paragraphTradList.get(i) : new Paragraph("-")));
             }
             document.add(table);
         }
+    }
+
+    private static PdfPCell pairedCell(Paragraph paragraph) {
+        paragraph.setSpacingBefore(0);
+        paragraph.setSpacingAfter(0);
+        PdfPCell cell = new PdfPCell();
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setVerticalAlignment(Element.ALIGN_TOP);
+        cell.setUseAscender(true);
+        cell.setUseDescender(true);
+        cell.addElement(paragraph);
+        return cell;
     }
 }

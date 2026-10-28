@@ -84,7 +84,8 @@ public class ThesaurusPdfAlphabeticWriter {
         String idFromUri = concept.getIdentifier();
         if (addLabels(concept.getLabelsList(), idFromUri, concept.getArkId(), context)) {
             context.paragraphs().add(new Paragraph(ID + idFromUri, context.writePdfSettings().getTextFont()));
-            addRelations(context.paragraphs(), concept.getRelationsList(), context.writePdfSettings(), context.state().labels());
+            addRelations(context.paragraphs(), concept.getRelationsList(), context.writePdfSettings(),
+                    context.state().labels(), StringUtils.isNotEmpty(context.codeLanguage2()));
             addDocuments(context.paragraphs(), concept.getDocumentationsList(), context.state().traductions().get(idFromUri),
                     context.codeLanguage1(), context.codeLanguage2(), context.writePdfSettings());
             addMatchs(context.paragraphs(), concept.getMatchList(), context.writePdfSettings());
@@ -96,6 +97,9 @@ public class ThesaurusPdfAlphabeticWriter {
     }
 
     private boolean addLabels(ArrayList<SKOSLabel> labels, String idFromUri, String idArk, AlphabeticTermContext context) {
+        if (StringUtils.isNotEmpty(context.codeLanguage2())) {
+            return addPairedLabels(labels, idFromUri, idArk, context);
+        }
         boolean added = false;
         int altLabelCount = 0;
         List<Integer> trads = context.state().traductions().get(idFromUri);
@@ -112,6 +116,61 @@ public class ThesaurusPdfAlphabeticWriter {
             altLabelWrite = appendLabel(label, idFromUri, idArk, context, altLabelCount, altLabelWrite);
         }
         return added;
+    }
+
+    private boolean addPairedLabels(ArrayList<SKOSLabel> labels, String idFromUri, String idArk, AlphabeticTermContext context) {
+        List<SKOSLabel> ownPrefs = new ArrayList<>();
+        List<SKOSLabel> ownAlts = new ArrayList<>();
+        int otherPrefs = 0;
+        int otherAlts = 0;
+        if (labels != null) {
+            for (SKOSLabel label : labels) {
+                if (label == null || label.getLanguage() == null) {
+                    continue;
+                }
+                boolean own = label.getLanguage().equals(context.codeLanguage1());
+                boolean other = label.getLanguage().equals(context.codeLanguage2());
+                if (!own && !other) {
+                    continue;
+                }
+                if (label.getProperty() == SKOSProperty.PREF_LABEL) {
+                    if (own) {
+                        ownPrefs.add(label);
+                    } else {
+                        otherPrefs++;
+                    }
+                } else if (label.getProperty() == SKOSProperty.ALT_LABEL) {
+                    if (own) {
+                        ownAlts.add(label);
+                    } else {
+                        otherAlts++;
+                    }
+                }
+            }
+        }
+        if (ownPrefs.isEmpty() && ownAlts.isEmpty() && otherPrefs == 0 && otherAlts == 0) {
+            return false;
+        }
+        int prefRows = Math.max(ownPrefs.size(), otherPrefs);
+        for (int i = 0; i < prefRows; i++) {
+            if (i < ownPrefs.size()) {
+                Paragraph paragraph = new Paragraph();
+                Anchor anchor = new Anchor(ownPrefs.get(i).getLabel(), context.writePdfSettings().getTermFont());
+                anchor.setReference(uriResolver.getUriForConcept(
+                        exportPreferences, exportThesaurusId, idFromUri, idArk, idArk));
+                anchor.setName(idFromUri);
+                paragraph.add(anchor);
+                context.paragraphs().add(paragraph);
+            } else {
+                context.paragraphs().add(new Paragraph("-", context.writePdfSettings().getTermFont()));
+            }
+        }
+        int altRows = Math.max(ownAlts.size(), otherAlts);
+        for (int i = 0; i < altRows; i++) {
+            String value = i < ownAlts.size() ? ownAlts.get(i).getLabel() : "-";
+            context.paragraphs().add(new Paragraph(USE + value, context.writePdfSettings().getTextFont()));
+        }
+        return true;
     }
 
     private int appendLabel(
@@ -183,7 +242,8 @@ public class ThesaurusPdfAlphabeticWriter {
     private record LabelRenderState(String labelValue, boolean prefIsTrad, boolean altIsTrad, int altLabelWrite) {
     }
 
-    private void addRelations(List<Paragraph> paragraphs, List<SKOSRelation> relations, ThesaurusPdfSettings writePdfSettings, HashMap<String, String> labels) {
+    private void addRelations(List<Paragraph> paragraphs, List<SKOSRelation> relations, ThesaurusPdfSettings writePdfSettings,
+                              HashMap<String, String> labels, boolean bilingual) {
 
         if (CollectionUtils.isNotEmpty(relations)) {
             relations.forEach(relation -> {
@@ -193,13 +253,13 @@ public class ThesaurusPdfAlphabeticWriter {
                     case SKOSProperty.TOP_CONCEPT_OF:
                         break;
                     case SKOSProperty.NARROWER:
-                        appendRelation(paragraphs, relation, writePdfSettings, labels);
+                        appendRelation(paragraphs, relation, writePdfSettings, labels, bilingual);
                         break;
                     case SKOSProperty.BROADER:
-                        appendRelation(paragraphs, relation, writePdfSettings, labels);
+                        appendRelation(paragraphs, relation, writePdfSettings, labels, bilingual);
                         break;
                     case SKOSProperty.RELATED:
-                        appendRelation(paragraphs, relation, writePdfSettings, labels);
+                        appendRelation(paragraphs, relation, writePdfSettings, labels, bilingual);
                         break;                        
                     default:
                         break;
@@ -209,21 +269,32 @@ public class ThesaurusPdfAlphabeticWriter {
         }
     }
 
-    private void appendRelation(List<Paragraph> paragraphs, SKOSRelation relation, ThesaurusPdfSettings writePdfSettings, HashMap<String, String> labels) {
-        String targetName = labels.get(relation.getLocalIdentifier());
-        if(!StringUtils.isEmpty(targetName)
-                && StringUtils.isNotEmpty(writePdfSettings.getCodeRelation(relation.getProperty()))) {
-            Chunk chunk = new Chunk(TAB_NIVEAU + writePdfSettings.getCodeRelation(relation.getProperty())
-                    + ": " + targetName, writePdfSettings.getRelationFont());
-            chunk.setLocalGoto(relation.getLocalIdentifier());
-            paragraphs.add(new Paragraph(chunk));
+    private void appendRelation(List<Paragraph> paragraphs, SKOSRelation relation, ThesaurusPdfSettings writePdfSettings,
+                                HashMap<String, String> labels, boolean bilingual) {
+        String code = writePdfSettings.getCodeRelation(relation.getProperty());
+        if (StringUtils.isEmpty(code)) {
+            return;
         }
+        String targetName = labels.get(relation.getLocalIdentifier());
+        if (StringUtils.isEmpty(targetName)) {
+            if (!bilingual) {
+                return;
+            }
+            targetName = "-";
+        }
+        Chunk chunk = new Chunk(TAB_NIVEAU + code + ": " + targetName, writePdfSettings.getRelationFont());
+        chunk.setLocalGoto(relation.getLocalIdentifier());
+        paragraphs.add(new Paragraph(chunk));
     }
 
     private void addDocuments(List<Paragraph> paragraphs, List<SKOSDocumentation> documentations, List<Integer> tradList,
             String codeLanguage1, String codeLanguage2, ThesaurusPdfSettings writePdfSettings) {
 
         if (CollectionUtils.isEmpty(documentations)) {
+            return;
+        }
+        if (StringUtils.isNotEmpty(codeLanguage2)) {
+            addPairedDocuments(paragraphs, documentations, codeLanguage1, codeLanguage2, writePdfSettings);
             return;
         }
         int noteCount = CollectionUtils.isEmpty(tradList)
@@ -234,6 +305,29 @@ public class ThesaurusPdfAlphabeticWriter {
                         || document.getLanguage().equals(codeLanguage2))
                 .forEach(document -> appendDocument(
                         paragraphs, document, tradList, codeLanguage1, noteCount, writePdfSettings));
+    }
+
+    private static void addPairedDocuments(List<Paragraph> paragraphs, List<SKOSDocumentation> documentations,
+                                           String codeLanguage1, String codeLanguage2, ThesaurusPdfSettings writePdfSettings) {
+        List<SKOSDocumentation> own = new ArrayList<>();
+        List<SKOSDocumentation> other = new ArrayList<>();
+        for (SKOSDocumentation document : documentations) {
+            if (codeLanguage1.equals(document.getLanguage())) {
+                own.add(document);
+            } else if (codeLanguage2.equals(document.getLanguage())) {
+                other.add(document);
+            }
+        }
+        int rows = Math.max(own.size(), other.size());
+        for (int i = 0; i < rows; i++) {
+            if (i < own.size()) {
+                SKOSDocumentation document = own.get(i);
+                paragraphs.add(new Paragraph(TAB_NIVEAU + writePdfSettings.getDocTypeName(document.getProperty())
+                        + ": " + document.getText(), writePdfSettings.getTextFont()));
+            } else {
+                paragraphs.add(new Paragraph(TAB_NIVEAU + "-", writePdfSettings.getTextFont()));
+            }
+        }
     }
 
     private static void appendDocument(
