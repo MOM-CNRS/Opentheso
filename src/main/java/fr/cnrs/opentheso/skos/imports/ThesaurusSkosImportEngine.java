@@ -39,6 +39,7 @@ import fr.cnrs.opentheso.models.skosapi.SKOSVote;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.repositories.CandidatStatusRepository;
 import fr.cnrs.opentheso.repositories.ConceptFacetRepository;
+import fr.cnrs.opentheso.repositories.ConceptReplacedByRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
@@ -115,6 +116,7 @@ public class ThesaurusSkosImportEngine {
     private final ConceptRepository conceptRepository;
     private final ImagesRepository imagesRepository;
     private final ConceptFacetRepository conceptFacetRepository;
+    private final ConceptReplacedByRepository conceptReplacedByRepository;
 
 
     private List<String> idGroups = new ArrayList<>();
@@ -518,7 +520,10 @@ public class ThesaurusSkosImportEngine {
             images = "";
             for (NodeImage nodeImage : conceptResource.getNodeImages()) {
                 if (StringUtils.isNotEmpty(nodeImage.getUri())) {
-                    images = images + SEPERATEUR + nodeImage.getImageName() + SOUS_SEPERATEUR + nodeImage.getCopyRight() + SOUS_SEPERATEUR + nodeImage.getUri();
+                    images = images + SEPERATEUR + imageCaptionPart(nodeImage.getImageName())
+                            + SOUS_SEPERATEUR + imageCaptionPart(nodeImage.getCopyRight())
+                            + SOUS_SEPERATEUR + nodeImage.getUri()
+                            + SOUS_SEPERATEUR + imageCaptionPart(nodeImage.getCreator());
                 }
             }
             if (!images.isEmpty()) {
@@ -696,6 +701,15 @@ public class ThesaurusSkosImportEngine {
             if (isReplacedBy != null && isReplacedBy.length() > 0) {
                 isReplacedBy = isReplacedBy.substring(SEPERATEUR.length());
             }
+            for (SKOSReplaces replace : conceptResource.getsKOSReplaces()) {
+                if (replace.getProperty() != SKOSProperty.REPLACES) {
+                    continue;
+                }
+                String deprecatedId = getOriginalId(replace.getTargetUri());
+                if (StringUtils.isNotBlank(deprecatedId) && !"null".equalsIgnoreCase(deprecatedId)) {
+                    conceptReplacedByRepository.insertReplacedByIfAbsent(deprecatedId, idConcept, idTheso, idUser);
+                }
+            }
         }
 
         Date created = null;
@@ -739,6 +753,20 @@ public class ThesaurusSkosImportEngine {
                     break;
                 default:
                     break;
+            }
+        }
+        if (conceptResource.getThesaurus() != null
+                && CollectionUtils.isNotEmpty(conceptResource.getThesaurus().getDcElement())) {
+            for (DcElement element : conceptResource.getThesaurus().getDcElement()) {
+                if (element == null || StringUtils.isBlank(element.getName()) || StringUtils.isBlank(element.getValue())
+                        || "null".equalsIgnoreCase(element.getValue().trim())
+                        || "maitre".equalsIgnoreCase(element.getName())) {
+                    continue;
+                }
+                String token = element.getName() + SOUS_SEPERATEUR
+                        + element.getValue().trim().replace(SEPERATEUR, " ").replace(SOUS_SEPERATEUR, " ")
+                        + SOUS_SEPERATEUR + StringUtils.defaultString(element.getLanguage());
+                dcterms = StringUtils.isEmpty(dcterms) ? token : dcterms + SEPERATEUR + token;
             }
         }
 
@@ -798,21 +826,25 @@ public class ThesaurusSkosImportEngine {
     public void addFoafImages(ArrayList<SKOSResource> foafImages, String idTheso) {
 
         for (SKOSResource sKOSResource : foafImages) {
-            if (sKOSResource.getFoafImage() == null) {
-                return;
+            if (sKOSResource.getFoafImage() == null || StringUtils.isBlank(sKOSResource.getUri())) {
+                continue;
             }
 
-            var imagesStr = fr.cnrs.opentheso.utils.StringUtils.convertString(sKOSResource.getFoafImage().getImageName())
-                    + SOUS_SEPERATEUR + fr.cnrs.opentheso.utils.StringUtils.convertString(sKOSResource.getFoafImage().getCopyRight())
+            String imagesStr = imageCaptionPart(sKOSResource.getFoafImage().getImageName())
+                    + SOUS_SEPERATEUR + imageCaptionPart(sKOSResource.getFoafImage().getCopyRight())
                     + SOUS_SEPERATEUR + sKOSResource.getUri()
-                    + SOUS_SEPERATEUR + fr.cnrs.opentheso.utils.StringUtils.convertString(sKOSResource.getFoafImage().getCreator());
-
-            if (StringUtils.isEmpty(imagesStr)) {
-                return;
-            }
+                    + SOUS_SEPERATEUR + imageCaptionPart(sKOSResource.getFoafImage().getCreator());
 
             imagesRepository.addExternalImages(idTheso, sKOSResource.getIdentifier(), idUser, imagesStr);
         }
+    }
+
+    static String imageCaptionPart(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
+            return "";
+        }
+        return text;
     }
 
     public void addFacetsV2(ArrayList<SKOSResource> facetResources, String idTheso) {
@@ -1190,8 +1222,12 @@ public class ThesaurusSkosImportEngine {
 
         // ajout des images externes URI
         for (NodeImage nodeImage : acs.nodeImages) {
-            imageService.addExternalImage(acs.concept.getIdConcept(), idThesaurus, nodeImage.getImageName(),
-                    nodeImage.getCopyRight(), nodeImage.getUri(), "", idUser);
+            imageService.addExternalImage(acs.concept.getIdConcept(), idThesaurus,
+                    imageCaptionPart(nodeImage.getImageName()),
+                    imageCaptionPart(nodeImage.getCopyRight()),
+                    nodeImage.getUri(),
+                    imageCaptionPart(nodeImage.getCreator()),
+                    idUser);
         }
 
         if (acs.conceptStatus.equalsIgnoreCase("dep")) {
@@ -1200,6 +1236,12 @@ public class ThesaurusSkosImportEngine {
         /// ajout des relations de concepts dépréciés
         for (NodeIdValue nodeIdValue : acs.replacedBy) {
             conceptService.addReplacedBy(acs.concept.getIdConcept(), idThesaurus, nodeIdValue.getId(), idUser);
+        }
+        for (NodeIdValue nodeIdValue : acs.replaces) {
+            if (StringUtils.isNotBlank(nodeIdValue.getId())) {
+                conceptReplacedByRepository.insertReplacedByIfAbsent(
+                        nodeIdValue.getId(), acs.concept.getIdConcept(), idThesaurus, idUser);
+            }
         }
         if (isCandidatImport) {
             candidatStatusRepository.save(CandidatStatus.builder()

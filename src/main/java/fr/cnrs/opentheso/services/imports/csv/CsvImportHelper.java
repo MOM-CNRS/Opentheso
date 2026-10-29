@@ -355,11 +355,15 @@ public class CsvImportHelper {
                 if(nodeImage == null) continue;
                 if (StringUtils.isEmpty(nodeImage.getUri())) continue;
                 
+                String imageToken = imageCaptionPart(nodeImage.getImageName()) + SOUS_SEPERATEUR
+                        + imageCaptionPart(nodeImage.getCopyRight()) + SOUS_SEPERATEUR
+                        + nodeImage.getUri() + SOUS_SEPERATEUR
+                        + imageCaptionPart(nodeImage.getCreator());
                 if(StringUtils.isEmpty(images)) {
-                    images = nodeImage.getImageName() + SOUS_SEPERATEUR + nodeImage.getCopyRight() + SOUS_SEPERATEUR + nodeImage.getUri() + SOUS_SEPERATEUR + nodeImage.getCreator();
+                    images = imageToken;
                 }
                 else {    
-                    images = images + SEPERATEUR + nodeImage.getImageName() + SOUS_SEPERATEUR + nodeImage.getCopyRight() + SOUS_SEPERATEUR + nodeImage.getUri() + SOUS_SEPERATEUR + nodeImage.getCreator();
+                    images = images + SEPERATEUR + imageToken;
                 }
             }
         }
@@ -601,6 +605,14 @@ public class CsvImportHelper {
 
         addExternalResources(idTheso, conceptObject.getIdConcept(), conceptObject.getExternalResources());        
         return true;
+    }
+
+    static String imageCaptionPart(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
+            return "";
+        }
+        return text;
     }
 
     private String getNotes(CsvReadHelper.ConceptObject conceptObject){

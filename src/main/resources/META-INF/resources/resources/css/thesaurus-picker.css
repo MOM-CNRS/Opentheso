@@ -3,7 +3,6 @@
 body[data-page="thesauri"] .sidebar,
 body[data-page="thesauri"] .resizer,
 body[data-page="thesauri"] .sb-rail-btn,
-body[data-page="thesauri"] .go-top,
 body[data-page="thesauri"] .view-rail,
 body[data-page="thesauri"] .fiche,
 body[data-page="thesauri"] #conceptDetail,
@@ -864,6 +863,24 @@ select.tp-form-i{cursor:pointer;appearance:auto}
 .tp-lang-btn .tree-lang-code{margin-left:auto}
 .tp-lang-btn:hover,.tp-lang-btn.is-open{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
 .tp-lang-hint{margin:0;font-size:12px;line-height:1.4;color:var(--ink-3)}
+.tp-domain-field{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.tp-domain-field .tp-form-i{width:100%}
+.tp-name-lang{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
+.tp-name-lang > .tp-form-i{flex:1 1 16rem}
+.tp-name-lang .tp-lang-pick{flex:0 1 240px;min-width:190px}
+.tp-name-lang .tp-lang-hint{flex:1 0 100%}
+button.tp-form-radio{font:inherit;width:100%;text-align:left}
+button.tree-lang-opt{font:inherit;border:0;background:none;cursor:pointer;border-radius:8px}
+.tp-lang-titles{display:flex;flex-direction:column;gap:8px}
+.tp-lang-titles:empty{display:none}
+.tp-lang-title{display:flex;align-items:center;gap:8px}
+.tp-lang-title-x{width:28px;height:28px;flex:0 0 auto;border:1px solid var(--line);border-radius:8px;
+  background:var(--surface);color:var(--ink-3);font-size:16px;line-height:1;cursor:pointer}
+.tp-lang-title-x:hover{color:var(--danger);border-color:var(--danger)}
+.tp-lang-title-meta{display:flex;align-items:center;gap:6px;flex:0 0 9.5rem;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+#tpCreateLangsUi .tp-lang-multi-chips{display:none}
+.tp-lang-title .tp-form-i{flex:1;height:36px}
+.tp-lang-multi-opt.is-principal{display:none}
 .tp-lang-multi{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .tp-lang-multi-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;align-items:center}
 .tp-lang-multi-empty{font-size:12.5px;color:var(--ink-4)}
@@ -896,6 +913,19 @@ select.tp-form-i{cursor:pointer;appearance:auto}
 .tp-lang-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;right:auto;min-width:100%;z-index:40;max-height:280px;overflow:auto;
   background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:8px;margin-top:0}
 .tp-lang-btn.is-open + .tp-lang-menu{display:block}
+.tp-project-pick{flex:1;min-width:0}
+.tp-project-menu{overflow:hidden;padding:0;max-height:320px}
+.tp-lang-btn.is-open + .tp-project-menu{display:flex;flex-direction:column}
+.tp-project-q{width:100%;border:0;border-bottom:1px solid var(--line-2);padding:10px 12px;font:inherit;
+  font-size:13.5px;color:var(--ink);background:var(--bg);outline:none}
+.tp-project-q:focus{box-shadow:inset 0 -2px 0 var(--accent)}
+.tp-project-scroll{overflow:auto;padding:6px;min-height:0}
+.tp-project-menu .tree-lang-opt.is-hide,
+.tp-project-empty[hidden]{display:none}
+.tp-project-empty{margin:8px 10px 10px;font-size:12.5px;color:var(--ink-3)}
+.tp-lang-extra-pick{width:100%}
+.tp-lang-extra-pick .tp-lang-btn{width:100%}
+.tp-lang-extra-pick .tp-lang-multi-list{max-height:none;padding:6px}
 .tp-form-radios{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
 .tp-form-radio{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .12s;background:var(--surface);text-decoration:none;color:inherit}
 .tp-form-radio:hover{border-color:var(--accent-line)}

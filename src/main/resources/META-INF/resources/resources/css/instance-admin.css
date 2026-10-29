@@ -3,7 +3,6 @@
 body[data-page="admin-instance"] .sidebar,
 body[data-page="admin-instance"] .resizer,
 body[data-page="admin-instance"] .sb-rail-btn,
-body[data-page="admin-instance"] .go-top,
 body[data-page="admin-instance"] .view-rail,
 body[data-page="admin-instance"] .fiche,
 body[data-page="admin-instance"] #conceptDetail,
@@ -88,11 +87,9 @@ body[data-page="admin-instance"] .bo-sub{
 .bo-solo.ia-denied>*{grid-column:1}
 .panes.is-access-denied{display:block;height:100%}
 .panes.is-access-denied .content{width:100%;max-width:none;position:relative}
-.panes.is-access-denied .go-top,
 .panes.is-access-denied .view-rail{display:none !important}
 body[data-page="accueil"]:has(.ia-denied) .sidebar,
 body[data-page="accueil"]:has(.ia-denied) .resizer,
-body[data-page="accueil"]:has(.ia-denied) .go-top,
 body[data-page="accueil"]:has(.ia-denied) .view-rail{display:none !important}
 body[data-page="accueil"]:has(.ia-denied) .panes{display:block;height:100%}
 body[data-page="accueil"]:has(.ia-denied) .content{width:100%}
@@ -1087,7 +1084,15 @@ input.ia-ajax-proxy-btn,
   -webkit-appearance:menulist;appearance:menulist;font-size:13px !important
 }
 body[data-page="admin-instance"] .bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
-body[data-page="admin-instance"] .bo-btn.primary.danger{background:var(--danger, #b42318);border-color:transparent;color:#fff}
+body[data-page="admin-instance"] .bo-btn.primary.danger,
+body[data-page="admin-instance"] .confirm-modal a.bo-btn.danger,
+body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger{
+  background:var(--danger, #b42318);border-color:transparent;color:#fff
+}
+body[data-page="admin-instance"] .confirm-modal a.bo-btn.danger:hover,
+body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger:hover{
+  filter:brightness(1.06);color:#fff
+}
 .ia-delete .ia-create-d b{color:var(--ink)}
 .ia-create-actions{
   display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px

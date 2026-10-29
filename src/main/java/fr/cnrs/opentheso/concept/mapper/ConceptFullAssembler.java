@@ -408,12 +408,11 @@ public class ConceptFullAssembler {
     private List<ConceptImageItem> mapImages(String conceptId, String thesaurusId) {
         List<ConceptImageItem> images = new ArrayList<>();
         for (Object[] row : conceptFullQueryRepository.findImages(conceptId, thesaurusId)) {
-            String imageName = stringAt(row, 1);
             images.add(new ConceptImageItem(
                     parseInt(stringAt(row, 0)),
-                    "null".equalsIgnoreCase(imageName) ? "" : imageName,
-                    stringAt(row, 2),
-                    stringAt(row, 4),
+                    imageCaptionPart(stringAt(row, 1)),
+                    imageCaptionPart(stringAt(row, 2)),
+                    imageCaptionPart(stringAt(row, 4)),
                     stringAt(row, 3)
             ));
         }
@@ -451,6 +450,14 @@ public class ConceptFullAssembler {
                         StringUtils.defaultString(resource.getDescription())
                 ))
                 .toList();
+    }
+
+    static String imageCaptionPart(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
+            return "";
+        }
+        return text;
     }
 
     private static String stringAt(Object[] row, int index) {

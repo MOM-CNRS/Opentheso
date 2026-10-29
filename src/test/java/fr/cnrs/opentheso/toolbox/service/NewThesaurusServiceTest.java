@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,7 +107,7 @@ class NewThesaurusServiceTest {
                 ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.UserGroupThesaurus.class);
         verify(toolboxThesaurusPersistence).linkToProject(captor.capture());
         assertEquals(5, captor.getValue().getIdGroup());
-        verify(toolboxPreferencePersistence).initPreferences("th99", "fr");
+        verify(toolboxPreferencePersistence).initPreferences("th99", "fr", true);
         ArgumentCaptor<fr.cnrs.opentheso.models.thesaurus.Thesaurus> thesaurusCaptor =
                 ArgumentCaptor.forClass(fr.cnrs.opentheso.models.thesaurus.Thesaurus.class);
         verify(toolboxThesaurusPersistence).addTranslation(thesaurusCaptor.capture());
@@ -144,7 +145,7 @@ class NewThesaurusServiceTest {
         service.create(new NewThesaurusRequest("Test", "","en", null, true, ""), "creator", 3);
 
         verify(toolboxThesaurusPersistence, never()).linkToProject(any());
-        verify(toolboxPreferencePersistence).initPreferences("th100", "en");
+        verify(toolboxPreferencePersistence).initPreferences("th100", "en", true);
         verify(toolboxThesaurusPersistence).setVisibility("th100", true);
         verify(projectMembershipRepository, never()).assignLimitedRole(anyInt(), anyInt(), anyInt(), any());
     }
@@ -158,6 +159,52 @@ class NewThesaurusServiceTest {
         ), "admin");
 
         verify(toolboxThesaurusPersistence, times(3)).addTranslation(any());
-        verify(toolboxPreferencePersistence).initPreferences("th103", "fr");
+        verify(toolboxPreferencePersistence).initPreferences("th103", "fr", true);
+    }
+
+    @Test
+    void create_savesSubjectOnEveryLanguageAndHonorsCopyRole() {
+        when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th104");
+
+        service.create(new NewThesaurusRequest(
+                "Test", "", "fr", null, false, "", List.of("en", "de"), false, "  Archéologie  "
+        ), "admin");
+
+        verify(toolboxPreferencePersistence).initPreferences("th104", "fr", false);
+        ArgumentCaptor<fr.cnrs.opentheso.models.thesaurus.Thesaurus> thesaurusCaptor =
+                ArgumentCaptor.forClass(fr.cnrs.opentheso.models.thesaurus.Thesaurus.class);
+        verify(toolboxThesaurusPersistence, times(3)).addTranslation(thesaurusCaptor.capture());
+        assertEquals("Archéologie", thesaurusCaptor.getAllValues().get(0).getSubject());
+        assertEquals("fr", thesaurusCaptor.getAllValues().get(0).getLanguage());
+        assertEquals("en", thesaurusCaptor.getAllValues().get(1).getLanguage());
+        assertEquals("de", thesaurusCaptor.getAllValues().get(2).getLanguage());
+        assertEquals("Archéologie", thesaurusCaptor.getAllValues().get(2).getSubject());
+
+        ArgumentCaptor<fr.cnrs.opentheso.entites.ThesaurusDcTerm> dcCaptor =
+                ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.ThesaurusDcTerm.class);
+        verify(thesaurusDcTermRepository, org.mockito.Mockito.atLeastOnce()).save(dcCaptor.capture());
+        assertEquals(1, dcCaptor.getAllValues().stream()
+                .filter(term -> "subject".equals(term.getName()) && "Archéologie".equals(term.getValue()))
+                .count());
+    }
+
+    @Test
+    void create_usesTranslatedTitleForEachLanguage() {
+        when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th105");
+
+        service.create(new NewThesaurusRequest(
+                "Nom français", "", "fr", null, false, "", List.of("en", "de"), true, "",
+                Map.of("en", "English name", "de", "Deutscher Name")
+        ), "admin");
+
+        ArgumentCaptor<fr.cnrs.opentheso.models.thesaurus.Thesaurus> thesaurusCaptor =
+                ArgumentCaptor.forClass(fr.cnrs.opentheso.models.thesaurus.Thesaurus.class);
+        verify(toolboxThesaurusPersistence, times(3)).addTranslation(thesaurusCaptor.capture());
+        assertEquals("Nom français", thesaurusCaptor.getAllValues().get(0).getTitle());
+        assertEquals("fr", thesaurusCaptor.getAllValues().get(0).getLanguage());
+        assertEquals("English name", thesaurusCaptor.getAllValues().get(1).getTitle());
+        assertEquals("en", thesaurusCaptor.getAllValues().get(1).getLanguage());
+        assertEquals("Deutscher Name", thesaurusCaptor.getAllValues().get(2).getTitle());
+        assertEquals("de", thesaurusCaptor.getAllValues().get(2).getLanguage());
     }
 }

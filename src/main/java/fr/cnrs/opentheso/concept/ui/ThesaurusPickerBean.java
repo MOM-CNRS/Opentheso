@@ -704,6 +704,25 @@ public class ThesaurusPickerBean implements Serializable {
         columnsMenuOpen = false;
     }
 
+    public String getCreateSelectedProjectLabel() {
+        String empty = createSuperAdmin ? "Aucun projet" : "Choisir un projet…";
+        if (createEditor == null || StringUtils.isBlank(createEditor.getSelectedProjectId())) {
+            return empty;
+        }
+        String id = createEditor.getSelectedProjectId().trim();
+        return createProjects.stream()
+                .filter(project -> String.valueOf(project.id()).equals(id))
+                .map(ProjectOption::name)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(empty);
+    }
+
+    public boolean isCreateProjectSelected(String projectId) {
+        String selected = createEditor == null ? "" : StringUtils.trimToEmpty(createEditor.getSelectedProjectId());
+        return Strings.CS.equals(selected, StringUtils.trimToEmpty(projectId));
+    }
+
     public void cancelCreateThesaurus() {
         createMode = false;
         createEditor = NewThesaurusEditor.empty();
@@ -769,6 +788,7 @@ public class ThesaurusPickerBean implements Serializable {
 
     public void submitEditThesaurus() {
         editError = null;
+        applyPostedEditLanguages();
         if (!editMode || StringUtils.isBlank(editThesaurusId) || !assertCanManage(editThesaurusId)) {
             editError = localeBean.getMsg("picker.edit.denied");
             return;
@@ -882,6 +902,7 @@ public class ThesaurusPickerBean implements Serializable {
         if (!isCanCreateThesaurus()) {
             return;
         }
+        applyPostedCreateChoices();
         if (createEditor == null || StringUtils.isBlank(createEditor.getTitle())) {
             MessageUtils.showErrorMessage(localeBean.getMsg("picker.create.nameRequired"));
             return;
@@ -901,6 +922,20 @@ public class ThesaurusPickerBean implements Serializable {
         } catch (InvalidToolboxDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }
+    }
+
+    public void chooseMasterRole() {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setMaster(true);
+    }
+
+    public void chooseCopyRole() {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setMaster(false);
     }
 
     public void choosePublicVisibility() {
@@ -965,6 +1000,69 @@ public class ThesaurusPickerBean implements Serializable {
         createEditor.replacePossible(splitLanguageCodes(csv));
     }
 
+    public String getCreateMasterValue() {
+        return createEditor == null || createEditor.isMaster() ? "true" : "false";
+    }
+
+    public void setCreateMasterValue(String value) {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setMaster(!"false".equalsIgnoreCase(StringUtils.trimToEmpty(value)));
+    }
+
+    public String getCreatePrivateValue() {
+        return createEditor != null && createEditor.isPrivateThesaurus() ? "true" : "false";
+    }
+
+    public void setCreatePrivateValue(String value) {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setPrivateThesaurus("true".equalsIgnoreCase(StringUtils.trimToEmpty(value)));
+    }
+
+    public String getCreateTitlesEncoded() {
+        return createEditor == null ? "" : createEditor.getTitlesEncoded();
+    }
+
+    public void setCreateTitlesEncoded(String encoded) {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setTitlesEncoded(encoded);
+    }
+
+    /**
+     * Relit les choix faits dans la page (type, visibilité, langues, traductions)
+     * sans dépendre d'un rechargement intermédiaire.
+     */
+    private void applyPostedCreateChoices() {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return;
+        }
+        var params = faces.getExternalContext().getRequestParameterMap();
+        if (params.containsKey("tpCreateSourceLang")) {
+            createEditor.setSelectedLanguage(params.get("tpCreateSourceLang"));
+        }
+        if (params.containsKey("tpCreateMaster")) {
+            setCreateMasterValue(params.get("tpCreateMaster"));
+        }
+        if (params.containsKey("tpCreatePrivate")) {
+            setCreatePrivateValue(params.get("tpCreatePrivate"));
+        }
+        if (params.containsKey("tpCreateLangs")) {
+            createEditor.replacePossible(splitLanguageCodes(params.get("tpCreateLangs")));
+        }
+        if (params.containsKey("tpCreateTitles")) {
+            createEditor.setTitlesEncoded(params.get("tpCreateTitles"));
+        }
+    }
+
     public List<LanguageOption> getEditPossibleChoices() {
         return editLanguages.stream()
                 .filter(language -> !Strings.CI.equals(language.code(), editLanguage))
@@ -1003,6 +1101,18 @@ public class ThesaurusPickerBean implements Serializable {
     public void setEditPossibleLanguagesCsv(String csv) {
         editPossibleLanguages = new ArrayList<>();
         splitLanguageCodes(csv).forEach(this::includeEditPossible);
+    }
+
+    private void applyPostedEditLanguages() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return;
+        }
+        var params = faces.getExternalContext().getRequestParameterMap();
+        if (!params.containsKey("tpEditLangs")) {
+            return;
+        }
+        setEditPossibleLanguagesCsv(params.get("tpEditLangs"));
     }
 
     public String getEditSelectedLanguageFlag() {

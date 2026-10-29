@@ -14,14 +14,15 @@ function bindViewRail() {
   const goTop = $("#previewGoTop");
   const shell = view && view.closest(".content");
   if (!view) return;
-  const scrollers = [view, home, live, concept, settings].filter((el, i, arr) => el && arr.indexOf(el) === i);
+  const scrollers = [view, home, live, concept, settings, shell, document.querySelector(".main"), document.scrollingElement]
+    .filter((el, i, arr) => el && arr.indexOf(el) === i);
   let idle;
   const mark = () => {
     if (shell) shell.classList.add("is-scrolling");
     clearTimeout(idle);
     idle = setTimeout(() => { if (shell) shell.classList.remove("is-scrolling"); }, 900);
   };
-  const currentScroll = () => scrollers.reduce((max, el) => Math.max(max, el.scrollTop || 0), 0);
+  const currentScroll = () => scrollers.reduce((max, el) => Math.max(max, el.scrollTop || 0), window.scrollY || 0);
   const sync = () => {
     const st = currentScroll();
     if (goTop) {
@@ -57,6 +58,7 @@ function bindViewRail() {
     view.scrollTop = max <= 0 ? 0 : (y / max) * span;
   };
   scrollers.forEach((el) => el.addEventListener("scroll", () => { mark(); sync(); }, { passive: true }));
+  window.addEventListener("scroll", () => { mark(); sync(); }, { passive: true });
   window.addEventListener("resize", sync);
   if (rail && thumb) {
     rail.addEventListener("pointerdown", (e) => {

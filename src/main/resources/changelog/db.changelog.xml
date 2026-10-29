@@ -347,4 +347,9 @@
         <sqlFile path="v26/26-10_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.10.04" author="Firas">
+        <comment>Show imported concept and facet notes, and drop literal null image captions</comment>
+        <sqlFile path="v26/26-10_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

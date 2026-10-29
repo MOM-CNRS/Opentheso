@@ -543,6 +543,30 @@
               </ui:fragment>
             </div>
           </div>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replacedBy}">
+          <div class="crow crow-rel">
+            <div class="crow-lbl"><span class="rel-code rel-rt">RP</span>Est remplacé par</div>
+            <div class="crow-val">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.replacedBy}" var="rel">
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                </ui:repeat>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replaces}">
+          <div class="crow crow-rel">
+            <div class="crow-lbl"><span class="rel-code rel-rt">RM</span>Remplace</div>
+            <div class="crow-val">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.replaces}" var="rel">
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                </ui:repeat>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
           </ui:fragment>
         </div>
       </section>
@@ -1432,6 +1456,25 @@
           </div>
         </div>
       </section>
+
+      <ui:fragment rendered="#{not empty thesaurusViewBean.conceptMetadata}">
+      <section class="cblock" data-card-id="metadonnees">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Métadonnées</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <ui:repeat value="#{thesaurusViewBean.conceptMetadata}" var="meta">
+            <div class="crow">
+              <div class="crow-lbl">#{thesaurusViewBean.metadataLabel(meta.name)}</div>
+              <div class="crow-val">
+                <span>#{meta.value}</span>
+                <ui:fragment rendered="#{not empty meta.language}">
+                  <span class="muted"> (#{meta.language})</span>
+                </ui:fragment>
+              </div>
+            </div>
+          </ui:repeat>
+        </div>
+      </section>
+      </ui:fragment>
 
       <section class="cblock" data-card-id="temporel">
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Information temporelle</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>

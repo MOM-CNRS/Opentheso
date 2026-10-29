@@ -123,81 +123,72 @@
                             </tbody>
                           </table>
                       </h:panelGroup>
-                      <h:panelGroup rendered="#{thesaurusMetadataBean.editing}" layout="block">
-                        <table class="th-dc-table th-dc-edit">
-                          <thead>
-                            <tr>
-                              <th>#{localeBean.getMsg('home.dc.property')}</th>
-                              <th>#{localeBean.getMsg('home.dc.value')}</th>
-                              <th>#{localeBean.getMsg('home.dc.lang')}</th>
-                              <th>#{localeBean.getMsg('home.dc.type')}</th>
-                              <th class="th-dc-actions">#{localeBean.getMsg('home.metadata.actions')}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <ui:repeat value="#{thesaurusMetadataBean.rows}" var="row">
-                              <tr>
-                                <td>
-                                  <h:selectOneMenu value="#{row.name}" styleClass="st-input th-dc-select"
-                                                   disabled="#{thesaurusMetadataBean.masterRow(row)}">
-                                    <f:selectItems value="#{thesaurusMetadataBean.dcmiResources}"/>
-                                    <f:ajax event="change" execute="@this"
-                                            listener="#{thesaurusMetadataBean.onPropertyChanged(row)}"
-                                            render="@form"/>
-                                  </h:selectOneMenu>
-                                </td>
-                                <td>
-                                  <h:selectOneMenu value="#{row.value}" styleClass="st-input th-dc-select"
-                                                   rendered="#{thesaurusMetadataBean.booleanRow(row)}">
-                                    <f:selectItem itemValue="true" itemLabel="#{localeBean.getMsg('home.metadata.masterYes')}"/>
-                                    <f:selectItem itemValue="false" itemLabel="#{localeBean.getMsg('home.metadata.masterNo')}"/>
-                                  </h:selectOneMenu>
-                                  <h:inputText value="#{row.value}" styleClass="st-input th-dc-value"
-                                               rendered="#{not thesaurusMetadataBean.booleanRow(row)}"/>
-                                </td>
-                                <td>
-                                  <h:selectOneMenu value="#{row.language}" styleClass="st-input th-dc-select"
-                                                   disabled="#{thesaurusMetadataBean.booleanRow(row)}">
-                                    <f:selectItem itemValue="" itemLabel="—"/>
-                                    <f:selectItems value="#{thesaurusMetadataBean.languages}"
-                                                   var="lg" itemValue="#{lg.code}" itemLabel="#{lg.value}"/>
-                                    <f:ajax event="change" execute="@this"
-                                            listener="#{thesaurusMetadataBean.clearTypeIfLanguaged(row)}"
-                                            render="@form"/>
-                                  </h:selectOneMenu>
-                                </td>
-                                <td>
-                                  <h:selectOneMenu value="#{row.type}" styleClass="st-input th-dc-select"
-                                                   disabled="#{thesaurusMetadataBean.masterRow(row)}">
-                                    <f:selectItem itemValue="" itemLabel="—"/>
-                                    <f:selectItems value="#{thesaurusMetadataBean.dcmiTypes}"/>
-                                    <f:ajax event="change" execute="@this"
-                                            listener="#{thesaurusMetadataBean.clearLanguageIfTyped(row)}"
-                                            render="@form"/>
-                                  </h:selectOneMenu>
-                                </td>
-                                <td class="th-dc-actions">
-                                  <h:commandButton value="#{localeBean.getMsg('save')}"
-                                                   styleClass="bo-btn primary sm"
-                                                   action="#{thesaurusMetadataBean.saveRow(row)}">
-                                    <f:ajax execute="@form" render="@form"/>
-                                  </h:commandButton>
-                                  <h:commandButton value="#{localeBean.getMsg('home.metadata.delete')}"
-                                                   styleClass="bo-btn ghost sm th-dc-del"
-                                                   rendered="#{not thesaurusMetadataBean.masterRow(row)}"
-                                                   action="#{thesaurusMetadataBean.deleteRow(row)}">
-                                    <f:ajax execute="@this" render="@form"/>
-                                  </h:commandButton>
-                                </td>
-                              </tr>
-                            </ui:repeat>
-                          </tbody>
-                        </table>
+                      <h:panelGroup id="previewMetadataEdit" rendered="#{thesaurusMetadataBean.editing}" layout="block">
+                        <h:dataTable value="#{thesaurusMetadataBean.rows}" var="row"
+                                     styleClass="th-dc-table th-dc-edit">
+                          <h:column>
+                            <f:facet name="header">#{localeBean.getMsg('home.dc.property')}</f:facet>
+                            <h:selectOneMenu value="#{row.name}" styleClass="st-input th-dc-select th-dc-name"
+                                             disabled="#{thesaurusMetadataBean.masterRow(row)}">
+                              <f:selectItems value="#{thesaurusMetadataBean.dcmiResources}"/>
+                              <f:ajax event="change" execute="@form"
+                                      listener="#{thesaurusMetadataBean.onPropertyChanged(row)}"
+                                      render="previewMetadataMsgs previewMetadataEdit"/>
+                            </h:selectOneMenu>
+                          </h:column>
+                          <h:column>
+                            <f:facet name="header">#{localeBean.getMsg('home.dc.value')}</f:facet>
+                            <h:selectOneMenu value="#{row.value}" styleClass="st-input th-dc-select"
+                                             rendered="#{thesaurusMetadataBean.booleanRow(row)}">
+                              <f:selectItem itemValue="true" itemLabel="#{localeBean.getMsg('home.metadata.masterYes')}"/>
+                              <f:selectItem itemValue="false" itemLabel="#{localeBean.getMsg('home.metadata.masterNo')}"/>
+                            </h:selectOneMenu>
+                            <h:inputText value="#{row.value}" styleClass="st-input th-dc-value"
+                                         rendered="#{not thesaurusMetadataBean.booleanRow(row)}"/>
+                          </h:column>
+                          <h:column>
+                            <f:facet name="header">#{localeBean.getMsg('home.dc.lang')}</f:facet>
+                            <h:selectOneMenu value="#{row.language}" styleClass="st-input th-dc-select"
+                                             disabled="#{thesaurusMetadataBean.booleanRow(row)}">
+                              <f:selectItem itemValue="" itemLabel="—"/>
+                              <f:selectItems value="#{thesaurusMetadataBean.languages}"
+                                             var="lg" itemValue="#{lg.code}" itemLabel="#{lg.value}"/>
+                              <f:ajax event="change" execute="@form"
+                                      listener="#{thesaurusMetadataBean.clearTypeIfLanguaged(row)}"
+                                      render="previewMetadataMsgs previewMetadataEdit"/>
+                            </h:selectOneMenu>
+                          </h:column>
+                          <h:column>
+                            <f:facet name="header">#{localeBean.getMsg('home.dc.type')}</f:facet>
+                            <h:selectOneMenu value="#{row.type}" styleClass="st-input th-dc-select"
+                                             disabled="#{thesaurusMetadataBean.masterRow(row)}">
+                              <f:selectItem itemValue="" itemLabel="—"/>
+                              <f:selectItems value="#{thesaurusMetadataBean.dcmiTypes}"/>
+                              <f:ajax event="change" execute="@form"
+                                      listener="#{thesaurusMetadataBean.clearLanguageIfTyped(row)}"
+                                      render="previewMetadataMsgs previewMetadataEdit"/>
+                            </h:selectOneMenu>
+                          </h:column>
+                          <h:column styleClass="th-dc-actions" headerClass="th-dc-actions">
+                            <f:facet name="header">#{localeBean.getMsg('home.metadata.actions')}</f:facet>
+                            <h:commandButton value="#{localeBean.getMsg('save')}"
+                                             styleClass="bo-btn primary sm"
+                                             action="#{thesaurusMetadataBean.saveRow(row)}">
+                              <f:ajax execute="@form" render="previewMetadataMsgs previewMetadataEdit"/>
+                            </h:commandButton>
+                            <h:commandButton value="#{localeBean.getMsg('home.metadata.delete')}"
+                                             styleClass="bo-btn ghost sm th-dc-del"
+                                             rendered="#{not thesaurusMetadataBean.masterRow(row)}"
+                                             action="#{thesaurusMetadataBean.deleteRow(row)}">
+                              <f:ajax execute="@form" render="previewMetadataMsgs previewMetadataEdit"/>
+                            </h:commandButton>
+                          </h:column>
+                        </h:dataTable>
                         <div class="th-dc-foot">
                           <h:commandButton value="#{localeBean.getMsg('home.metadata.add')}"
                                            styleClass="bo-btn ghost sm"
                                            action="#{thesaurusMetadataBean.addRow}">
-                            <f:ajax execute="@this" render="@form"/>
+                            <f:ajax execute="@form" render="previewMetadataMsgs previewMetadataEdit"/>
                           </h:commandButton>
                         </div>
                       </h:panelGroup>

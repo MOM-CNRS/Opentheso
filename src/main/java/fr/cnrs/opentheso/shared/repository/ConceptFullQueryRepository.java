@@ -131,7 +131,11 @@ public class ConceptFullQueryRepository {
             SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
             FROM note n
             WHERE n.id_thesaurus = :thesaurusId
-              AND n.identifier = :conceptId
+              AND (
+                n.identifier = :conceptId
+                OR n.id_concept = :conceptId
+                OR ((n.identifier IS NULL OR btrim(n.identifier) = '') AND n.id_term = :conceptId)
+              )
             ORDER BY n.notetypecode, n.lang
             """)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)

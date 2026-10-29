@@ -76,6 +76,7 @@ public class NewThesaurusService {
         thesaurus.setTitle(request.title());
         thesaurus.setLanguage(request.language());
         thesaurus.setPublisher(StringUtils.defaultString(request.organization()));
+        thesaurus.setSubject(StringUtils.trimToEmpty(request.subject()));
         toolboxThesaurusPersistence.addTranslation(thesaurus);
         for (String language : possibleLanguages(request)) {
             if (language.equalsIgnoreCase(request.language())) {
@@ -85,9 +86,10 @@ public class NewThesaurusService {
             extra.setCreator(creatorName);
             extra.setContributor(creatorName);
             extra.setId_thesaurus(thesaurusId);
-            extra.setTitle(request.title());
+            extra.setTitle(titleFor(request, language));
             extra.setLanguage(language);
             extra.setPublisher(StringUtils.defaultString(request.organization()));
+            extra.setSubject(StringUtils.trimToEmpty(request.subject()));
             toolboxThesaurusPersistence.addTranslation(extra);
         }
 
@@ -101,7 +103,7 @@ public class NewThesaurusService {
             ensureCreatorMembership(creatorUserId, request.projectId(), thesaurusId);
         }
 
-        toolboxPreferencePersistence.initPreferences(thesaurusId, request.language());
+        toolboxPreferencePersistence.initPreferences(thesaurusId, request.language(), request.master());
         toolboxPreferencePersistence.updatePreferredName(thesaurusId, request.persistentNameThesaurus());
         toolboxThesaurusPersistence.setVisibility(thesaurusId, request.privateThesaurus());
         createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", DCMI_TYPE_STRING);
@@ -112,6 +114,15 @@ public class NewThesaurusService {
                     thesaurusId,
                     DCMIResource.PUBLISHER,
                     request.organization(),
+                    request.language(),
+                    DCMI_TYPE_STRING
+            );
+        }
+        if (StringUtils.isNotBlank(request.subject())) {
+            createAndSaveDcTerm(
+                    thesaurusId,
+                    DCMIResource.SUBJECT,
+                    request.subject().trim(),
                     request.language(),
                     DCMI_TYPE_STRING
             );
@@ -148,6 +159,19 @@ public class NewThesaurusService {
                 projectId,
                 thesaurusId
         );
+    }
+
+    private String titleFor(NewThesaurusRequest request, String language) {
+        if (request.titles() != null && StringUtils.isNotBlank(language)) {
+            for (var entry : request.titles().entrySet()) {
+                if (entry.getKey() != null
+                        && entry.getKey().equalsIgnoreCase(language)
+                        && StringUtils.isNotBlank(entry.getValue())) {
+                    return entry.getValue().trim();
+                }
+            }
+        }
+        return request.title();
     }
 
     private List<String> possibleLanguages(NewThesaurusRequest request) {

@@ -5,6 +5,8 @@ import com.itextpdf.text.Paragraph;
 
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
+import fr.cnrs.opentheso.models.skosapi.SKOSDocumentation;
+import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
@@ -21,7 +23,6 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.cnrs.opentheso.models.skosapi.SKOSResource.sortForHiera;
@@ -62,29 +63,93 @@ public class ThesaurusPdfHierarchicalWriter {
         HierarchicalWriteContext context = new HierarchicalWriteContext(
                 new HierarchicalTreeState(labels, idToChildId, resourceChecked, writePdfSettings),
                 new HierarchicalDetails(matchs, images, gps, notesDiff));
-        traitement(paragraphs, codeLanguage1, codeLanguage2, false, notes, concepts, context);
+        sortConcepts(codeLanguage1, codeLanguage2, false, notes, concepts, context);
+        ensureLabels(concepts, codeLanguage1, labels);
+        ensureDocumentations(concepts, codeLanguage1, notes, writePdfSettings);
+        HashMap<String, String> labelsLanguage1 = new HashMap<>(labels);
 
         if (StringUtils.isNotEmpty(codeLanguage2)) {
-            traitement(paragraphTradList, codeLanguage2, codeLanguage1, true, notesTraduction, concepts, context);
+            sortConcepts(codeLanguage2, codeLanguage1, true, notesTraduction, concepts, context);
+            ensureLabels(concepts, codeLanguage2, labels);
+            ensureDocumentations(concepts, codeLanguage2, notesTraduction, writePdfSettings);
+            HashMap<String, String> labelsLanguage2 = new HashMap<>(labels);
+            labels.clear();
+            labels.putAll(labelsLanguage1);
+            writeConcepts(paragraphs, notes, notesTraduction, concepts, context);
+            labels.clear();
+            labels.putAll(labelsLanguage2);
+            writeConcepts(paragraphTradList, notesTraduction, notes, concepts, context);
+            return;
+        }
+        writeConcepts(paragraphs, notes, notesTraduction, concepts, context);
+    }
+
+    private static void ensureLabels(List<SKOSResource> concepts, String language, HashMap<String, String> labels) {
+        if (concepts == null || StringUtils.isEmpty(language)) {
+            return;
+        }
+        for (SKOSResource resource : concepts) {
+            if (resource == null || resource.getIdentifier() == null || resource.getLabelsList() == null) {
+                continue;
+            }
+            for (SKOSLabel label : resource.getLabelsList()) {
+                if (label != null
+                        && label.getProperty() == SKOSProperty.PREF_LABEL
+                        && language.equals(label.getLanguage())
+                        && StringUtils.isNotEmpty(label.getLabel())) {
+                    labels.put(resource.getIdentifier(), label.getLabel());
+                }
+            }
         }
     }
 
-    private void traitement(List<Paragraph> paragraphs, String codeLanguage1, String codeLanguage2, boolean isTrad,
-                            HashMap<String, ArrayList<String>> idToDoc, List<SKOSResource> concepts,
-                            HierarchicalWriteContext context) {
+    private static void ensureDocumentations(List<SKOSResource> concepts, String language,
+                                             HashMap<String, ArrayList<String>> dest, ThesaurusPdfSettings settings) {
+        if (concepts == null || StringUtils.isEmpty(language)) {
+            return;
+        }
+        for (SKOSResource resource : concepts) {
+            if (resource == null || resource.getDocumentationsList() == null || resource.getIdentifier() == null) {
+                continue;
+            }
+            for (SKOSDocumentation documentation : resource.getDocumentationsList()) {
+                if (documentation == null || !language.equals(documentation.getLanguage())) {
+                    continue;
+                }
+                String typeName = settings.getDocTypeName(documentation.getProperty());
+                if (StringUtils.isEmpty(typeName)) {
+                    typeName = "note";
+                }
+                String line = typeName + ": " + documentation.getText();
+                ArrayList<String> docs = dest.computeIfAbsent(resource.getIdentifier(), key -> new ArrayList<>());
+                if (!docs.contains(line)) {
+                    docs.add(line);
+                }
+            }
+        }
+    }
 
+    private void sortConcepts(String codeLanguage1, String codeLanguage2, boolean isTrad,
+                              HashMap<String, ArrayList<String>> idToDoc, List<SKOSResource> concepts,
+                              HierarchicalWriteContext context) {
         System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
         Collections.sort(concepts, sortForHiera(isTrad, codeLanguage1, codeLanguage2, context.tree().labels(),
                 context.tree().idToChildId(), idToDoc, context.details().matchs(), context.details().gps(),
                 context.details().images(), context.tree().resourceChecked(), context.details().notesDiff(), termLookup));
+    }
 
+    private void writeConcepts(List<Paragraph> paragraphs, HashMap<String, ArrayList<String>> idToDoc,
+                               HashMap<String, ArrayList<String>> otherDocs, List<SKOSResource> concepts,
+                               HierarchicalWriteContext context) {
         for (SKOSResource concept : concepts) {
-            writeRootConcept(concept, paragraphs, idToDoc, context);
+            writeRootConcept(concept, paragraphs, idToDoc, otherDocs, context);
         }
     }
 
     private void writeRootConcept(SKOSResource concept, List<Paragraph> paragraphs,
-                                  HashMap<String, ArrayList<String>> idToDoc, HierarchicalWriteContext context) {
+                                  HashMap<String, ArrayList<String>> idToDoc,
+                                  HashMap<String, ArrayList<String>> otherDocs,
+                                  HierarchicalWriteContext context) {
         String conceptID = concept.getIdentifier();
         if (!isAtRoot(conceptID, context.tree().idToChildId())) {
             return;
@@ -102,8 +167,8 @@ public class ThesaurusPdfHierarchicalWriter {
         paragraphs.add(paragraph);
 
         String indentation = "";
-        addConceptDetails(conceptID, indentation, paragraphs, idToDoc, context);
-        addConcept(conceptID, indentation, paragraphs, idToDoc, context);
+        addConceptDetails(conceptID, indentation, paragraphs, idToDoc, otherDocs, context);
+        addConcept(conceptID, indentation, paragraphs, idToDoc, otherDocs, context);
     }
 
     private boolean isAtRoot(String conceptID, HashMap<String, List<String>> idToChildId) {
@@ -120,7 +185,9 @@ public class ThesaurusPdfHierarchicalWriter {
     }
 
     private void addConcept(String id, String indentation, List<Paragraph> paragraphs,
-                            HashMap<String, ArrayList<String>> idToDoc, HierarchicalWriteContext context) {
+                            HashMap<String, ArrayList<String>> idToDoc,
+                            HashMap<String, ArrayList<String>> otherDocs,
+                            HierarchicalWriteContext context) {
 
         indentation += ".......";
 
@@ -142,16 +209,18 @@ public class ThesaurusPdfHierarchicalWriter {
             paragraph.add(anchor);
             paragraphs.add(paragraph);
 
-            addConceptDetails(idFils, indentation, paragraphs, idToDoc, context);
-            addConcept(idFils, indentation, paragraphs, idToDoc, context);
+            addConceptDetails(idFils, indentation, paragraphs, idToDoc, otherDocs, context);
+            addConcept(idFils, indentation, paragraphs, idToDoc, otherDocs, context);
         }
     }
 
     private void addConceptDetails(String key, String indentation, List<Paragraph> paragraphs,
-                                   HashMap<String, ArrayList<String>> idToDoc, HierarchicalWriteContext context) {
+                                   HashMap<String, ArrayList<String>> idToDoc,
+                                   HashMap<String, ArrayList<String>> otherDocs,
+                                   HierarchicalWriteContext context) {
 
         String space = getSpace(indentation);
-        addNotes(paragraphs, space, idToDoc.get(key), context.details().notesDiff().get(key), context.tree().writePdfSettings());
+        addNotes(paragraphs, space, idToDoc.get(key), otherDocs.get(key), context.tree().writePdfSettings());
         addMatchs(paragraphs, context.details().matchs().get(key), space, context.tree().writePdfSettings());
         addGpsCoordiantes(paragraphs, context.details().gps().get(key), space, context.tree().writePdfSettings());
         if (isToogleExportImage) {
@@ -187,25 +256,19 @@ public class ThesaurusPdfHierarchicalWriter {
         return " ".repeat(indentation.length());
     }
 
-    private void addNotes(List<Paragraph> paragraphs, String space, ArrayList<String> idToDoc, ArrayList<Integer> idTradDiff, ThesaurusPdfSettings writePdfSettings) {
+    private void addNotes(List<Paragraph> paragraphs, String space, ArrayList<String> ownDocs,
+                          ArrayList<String> otherDocs, ThesaurusPdfSettings writePdfSettings) {
 
-        int docCount = 0;
-        if (CollectionUtils.isNotEmpty(idTradDiff)) {
-            docCount = (int) idTradDiff.stream().filter(traduction -> traduction == SKOSProperty.NOTE).count();
-        }
-
-        AtomicInteger docWrite = new AtomicInteger();
-        if (CollectionUtils.isNotEmpty(idToDoc)) {
-            idToDoc.forEach(document  -> {
+        int written = 0;
+        if (CollectionUtils.isNotEmpty(ownDocs)) {
+            for (String document : ownDocs) {
                 paragraphs.add(new Paragraph(space + document, writePdfSettings.getHieraInfoFont()));
-                docWrite.getAndIncrement();
-            });
-        }
-
-        if (docWrite.get() < docCount) {
-            for (int i = 0; i < docCount; i++) {
-                paragraphs.add(new Paragraph(space + "-", writePdfSettings.getHieraInfoFont()));
+                written++;
             }
+        }
+        int otherCount = otherDocs == null ? 0 : otherDocs.size();
+        for (int i = written; i < otherCount; i++) {
+            paragraphs.add(new Paragraph(space + "-", writePdfSettings.getHieraInfoFont()));
         }
     }
 

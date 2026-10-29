@@ -198,6 +198,7 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     }
 
     private void reloadRows(String thesaurusId) {
+        List<EditionMetadata> pending = pendingRows();
         rows = new ArrayList<>();
         rows.add(masterRow());
         for (EditionMetadata row : modifyThesaurusService.loadMetadata(thesaurusId)) {
@@ -205,6 +206,20 @@ public class ThesaurusHomeMetadataBean implements Serializable {
                 rows.add(row);
             }
         }
+        rows.addAll(pending);
+    }
+
+    private List<EditionMetadata> pendingRows() {
+        List<EditionMetadata> pending = new ArrayList<>();
+        if (rows == null) {
+            return pending;
+        }
+        for (EditionMetadata row : rows) {
+            if (row != null && row.getId() == -1 && !isMasterRow(row)) {
+                pending.add(row);
+            }
+        }
+        return pending;
     }
 
     private EditionMetadata masterRow() {

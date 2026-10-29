@@ -303,9 +303,13 @@ public class ConceptQueryRepository {
         return em.createNativeQuery("""
             SELECT n.id, n.notetypecode, n.lang, n.lexicalvalue, n.identifier
             FROM note n
-            WHERE n.identifier = :conceptId
-              AND n.id_thesaurus = :thesaurusId
+            WHERE n.id_thesaurus = :thesaurusId
               AND n.lang = :lang
+              AND (
+                n.identifier = :conceptId
+                OR n.id_concept = :conceptId
+                OR ((n.identifier IS NULL OR btrim(n.identifier) = '') AND n.id_term = :conceptId)
+              )
             ORDER BY n.notetypecode
             """)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)

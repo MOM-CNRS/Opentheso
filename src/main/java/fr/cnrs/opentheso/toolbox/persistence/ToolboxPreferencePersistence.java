@@ -18,6 +18,10 @@ public class ToolboxPreferencePersistence {
     private final PreferencesRepository preferencesRepository;
 
     public void initPreferences(String thesaurusId, String workLanguage) {
+        initPreferences(thesaurusId, workLanguage, false);
+    }
+
+    public void initPreferences(String thesaurusId, String workLanguage, boolean master) {
         if (StringUtils.isBlank(thesaurusId)) {
             return;
         }
@@ -52,7 +56,7 @@ public class ToolboxPreferencePersistence {
                 .autoExpandTree(true)
                 .webservices(true)
                 .breadcrumb(true)
-                .master(false)
+                .master(master)
                 .build());
     }
 

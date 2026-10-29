@@ -14,6 +14,7 @@ import fr.cnrs.opentheso.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.concept.session.ConceptSelectionContext;
+import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.setting.model.ThesaurusLanguage;
@@ -48,6 +49,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -81,6 +83,8 @@ class ThesaurusViewBeanTest {
     private ConsultationShellBean consultationShellBean;
     @Mock
     private fr.cnrs.opentheso.proposition.ui.PropositionBean propositionBean;
+    @Mock
+    private ConceptDcTermRepository conceptDcTermRepository;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -102,8 +106,11 @@ class ThesaurusViewBeanTest {
                 conceptSelectionContext,
                 thesaurusSearchLanguageSync,
                 consultationShellBean,
-                propositionBean
+                propositionBean,
+                conceptDcTermRepository
         );
+        lenient().when(conceptDcTermRepository.findAllByIdThesaurusAndIdConcept(any(), any()))
+                .thenReturn(List.of());
     }
 
     @Test

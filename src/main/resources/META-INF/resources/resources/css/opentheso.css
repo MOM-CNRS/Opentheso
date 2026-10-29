@@ -1916,7 +1916,7 @@ html[lang="AR"] .cv-dlg-move-arrow{transform:scaleX(-1)}
 }
 .view-rail.is-drag .view-rail-thumb{background:rgba(31,122,92,.7)}
 .go-top{
-  position:absolute;right:18px;bottom:18px;z-index:90;
+  position:fixed;right:18px;bottom:18px;z-index:90;
   width:auto;min-width:44px;height:44px;padding:0 14px 0 12px;border:0;border-radius:12px;
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:650;
@@ -1938,7 +1938,6 @@ body[data-page="preference"] #viewSettings.view-panel,
 body[data-page="preference-user"] #viewSettings.view-panel{
   display:block;height:auto;min-height:100%;overflow:visible
 }
-body[data-page="compte"] .go-top,
 body[data-page="preference"] .st-lang-pick{max-width:440px;width:100%}
 body[data-page="preference"] .st-id-type{display:flex;align-items:center;gap:10px;min-height:30px}
 body[data-page="preference"] .st-id-type .st-sw{margin-top:0}
@@ -1958,7 +1957,6 @@ body[data-page="preference-user"] .go-top{
 body[data-page="compte"] .sidebar,
 body[data-page="compte"] .resizer,
 body[data-page="compte"] .sb-rail-btn,
-body[data-page="compte"] .go-top,
 body[data-page="compte"] .view-rail,
 body[data-page="compte"] .fiche,
 body[data-page="compte"] #conceptDetail,
@@ -1966,7 +1964,6 @@ body[data-page="compte"] .detail-panel,
 body[data-page="preference-user"] .sidebar,
 body[data-page="preference-user"] .resizer,
 body[data-page="preference-user"] .sb-rail-btn,
-body[data-page="preference-user"] .go-top,
 body[data-page="preference-user"] .view-rail,
 body[data-page="preference-user"] .fiche,
 body[data-page="preference-user"] #conceptDetail,
@@ -1990,7 +1987,6 @@ body[data-page="preference-user"] .bo.bo-solo{
 body[data-page="preference"]:not([data-logged-in="1"]) .sidebar,
 body[data-page="preference"]:not([data-logged-in="1"]) .resizer,
 body[data-page="preference"]:not([data-logged-in="1"]) .sb-rail-btn,
-body[data-page="preference"]:not([data-logged-in="1"]) .go-top,
 body[data-page="preference"]:not([data-logged-in="1"]) .view-rail,
 body[data-page="preference"]:not([data-logged-in="1"]) .fiche,
 body[data-page="preference"]:not([data-logged-in="1"]) #conceptDetail,
@@ -2008,7 +2004,6 @@ body[data-page="preference"]:not([data-logged-in="1"]) .content.is-full .view{pa
 body[data-page="propositions"] .sidebar,
 body[data-page="propositions"] .resizer,
 body[data-page="propositions"] .sb-rail-btn,
-body[data-page="propositions"] .go-top,
 body[data-page="propositions"] .view-rail,
 body[data-page="propositions"] .fiche,
 body[data-page="propositions"] #conceptDetail,
@@ -2016,7 +2011,6 @@ body[data-page="propositions"] .detail-panel,
 body[data-page="proposition-review"] .sidebar,
 body[data-page="proposition-review"] .resizer,
 body[data-page="proposition-review"] .sb-rail-btn,
-body[data-page="proposition-review"] .go-top,
 body[data-page="proposition-review"] .view-rail,
 body[data-page="proposition-review"] .fiche,
 body[data-page="proposition-review"] #conceptDetail,
@@ -2199,7 +2193,6 @@ input.bo-btn.primary:disabled,.bo-btn.primary:disabled{
 body:is([data-page="synchronisation"],[data-page="portail"]) .sidebar,
 body:is([data-page="synchronisation"],[data-page="portail"]) .resizer,
 body:is([data-page="synchronisation"],[data-page="portail"]) .sb-rail-btn,
-body:is([data-page="synchronisation"],[data-page="portail"]) .go-top,
 body:is([data-page="synchronisation"],[data-page="portail"]) .view-rail,
 body:is([data-page="synchronisation"],[data-page="portail"]) .fiche,
 body:is([data-page="synchronisation"],[data-page="portail"]) #conceptDetail,

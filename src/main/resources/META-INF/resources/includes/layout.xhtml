@@ -29,9 +29,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/prototype-recherche.css"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261021-syncdone"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-picker.css?v=20261021-govlogo2"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-admin.css?v=20261028-theslist"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261028-gotop"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-picker.css?v=20261028-langonce"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-admin.css?v=20261028-logout"/>
 </h:head>
 <h:body pt:data-page="#{page}" pt:data-ctx="#{request.contextPath}"
       pt:data-logged-in="#{userSession.loggedIn ? '1' : '0'}"
@@ -152,7 +152,7 @@
 <h:outputScript library="jakarta.faces" name="faces.js"/>
 <script src="#{request.contextPath}/resources/js/core.js?v=20261019-label"></script>
 <script src="#{request.contextPath}/resources/js/settings.js"></script>
-<script src="#{request.contextPath}/resources/js/shell.js"></script>
+<script src="#{request.contextPath}/resources/js/shell.js?v=20261028-csvconcept"></script>
 <script src="#{request.contextPath}/resources/js/search.js"></script>
 <script src="#{request.contextPath}/resources/js/tree.js"></script>
 <script src="#{request.contextPath}/resources/js/table.js"></script>
@@ -161,7 +161,7 @@
 <script src="#{request.contextPath}/resources/js/selection.js?v=20261017-list"></script>
 <script src="#{request.contextPath}/resources/js/export.js?v=20261018-prog"></script>
 <script src="#{request.contextPath}/resources/js/about.js"></script>
-<script src="#{request.contextPath}/resources/js/stats.js"></script>
+<script src="#{request.contextPath}/resources/js/stats.js?v=20261028-gotop"></script>
 <script src="#{request.contextPath}/resources/js/instance-stats.js"></script>
 <script src="#{request.contextPath}/resources/js/shell-narrow.js"></script>
 <script src="#{request.contextPath}/resources/js/dialogs.js"></script>
@@ -169,7 +169,7 @@
 <script src="#{request.contextPath}/resources/js/ark-progress.js"></script>
 <script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
 <script src="#{request.contextPath}/resources/js/session.js"></script>
-<script src="#{request.contextPath}/resources/js/app.js?v=20261027-movescroll"></script>
+<script src="#{request.contextPath}/resources/js/app.js?v=20261028-gotop"></script>
 </h:body>
 </f:view>
 </html>

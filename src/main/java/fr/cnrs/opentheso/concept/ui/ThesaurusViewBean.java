@@ -15,6 +15,8 @@ import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.concept.model.ThesaurusMetadataItem;
+import fr.cnrs.opentheso.entites.ConceptDcTerm;
+import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.concept.session.ConceptSelectionContext;
@@ -72,6 +74,7 @@ public class ThesaurusViewBean implements Serializable {
     private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
     private final transient ConsultationShellBean consultationShellBean;
     private final transient PropositionBean propositionBean;
+    private final transient ConceptDcTermRepository conceptDcTermRepository;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
@@ -85,6 +88,8 @@ public class ThesaurusViewBean implements Serializable {
     private Boolean suggestionEnabled;
     @Getter
     private boolean showAllNoteLanguages;
+    @Getter
+    private List<ThesaurusMetadataItem> conceptMetadata = List.of();
 
     @Getter
     @Setter
@@ -579,6 +584,7 @@ public class ThesaurusViewBean implements Serializable {
             applySelectedCandidateMeta(id);
         }
         branchConceptCount = conceptReadService.countBranchConcepts(getId(), id);
+        loadConceptMetadata(id);
         conceptSelectionContext.update(getId(), selectedConcept);
     }
 
@@ -1451,6 +1457,59 @@ public class ThesaurusViewBean implements Serializable {
         branchConceptCount = 0;
         corpusSearched = false;
         displayedCorpusLinks = Collections.emptyList();
+        conceptMetadata = List.of();
+    }
+
+    private void loadConceptMetadata(String conceptId) {
+        List<ConceptDcTerm> rows = conceptDcTermRepository.findAllByIdThesaurusAndIdConcept(getId(), conceptId);
+        if (rows == null || rows.isEmpty()) {
+            conceptMetadata = List.of();
+            return;
+        }
+        List<ThesaurusMetadataItem> items = new ArrayList<>();
+        for (ConceptDcTerm row : rows) {
+            String value = StringUtils.trimToEmpty(row.getValue());
+            String name = StringUtils.trimToEmpty(row.getName());
+            if (value.isEmpty() || "null".equalsIgnoreCase(value) || name.isEmpty() || "maitre".equalsIgnoreCase(name)) {
+                continue;
+            }
+            items.add(new ThesaurusMetadataItem(
+                    0,
+                    name,
+                    value,
+                    StringUtils.trimToEmpty(row.getLanguage()),
+                    StringUtils.trimToEmpty(row.getDataType())
+            ));
+        }
+        conceptMetadata = List.copyOf(items);
+    }
+
+    public String metadataLabel(String name) {
+        return switch (StringUtils.defaultString(name)) {
+            case "creator" -> "Créateur";
+            case "contributor" -> "Contributeur";
+            case "subject" -> "Sujet";
+            case "description" -> "Description";
+            case "publisher" -> "Éditeur";
+            case "date" -> "Date";
+            case "type" -> "Type";
+            case "format" -> "Format";
+            case "identifier" -> "Identifiant";
+            case "source" -> "Source";
+            case "language" -> "Langue";
+            case "relation" -> "Relation";
+            case "coverage" -> "Couverture";
+            case "rights" -> "Droits";
+            case "rightsHolder" -> "Titulaire des droits";
+            case "conformsTo" -> "Conforme à";
+            case "created" -> "Créé";
+            case "modified" -> "Modifié";
+            case "license" -> "Licence";
+            case "replaces" -> "Remplace";
+            case "alternative" -> "Alternative";
+            case "title" -> "Titre";
+            default -> name;
+        };
     }
 
     private static String formatGpsPoint(ConceptGpsPoint point) {
