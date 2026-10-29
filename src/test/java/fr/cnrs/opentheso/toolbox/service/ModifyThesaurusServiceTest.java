@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -277,6 +279,29 @@ class ModifyThesaurusServiceTest {
         verify(toolboxThesaurusPersistence).addTranslation(any());
         verify(toolboxPreferencePersistence).setWorkLanguage("en", "TH1");
         verify(toolboxThesaurusPersistence, never()).deleteTranslation(any(), any());
+    }
+
+    @Test
+    void updateLanguages_updatesExistingExtraLanguageTitle() {
+        when(toolboxThesaurusPersistence.listLanguageCodes("TH1")).thenReturn(List.of("fr", "en"));
+        when(toolboxThesaurusPersistence.updateTranslation(any())).thenReturn(true);
+        when(toolboxPreferencePersistence.setWorkLanguage("fr", "TH1")).thenReturn(true);
+
+        service.updateLanguages("TH1", "fr", List.of("fr", "en"), "Titre", "admin", Map.of("en", "English name"));
+
+        ArgumentCaptor<Thesaurus> captor = ArgumentCaptor.forClass(Thesaurus.class);
+        verify(toolboxThesaurusPersistence, times(2)).updateTranslation(captor.capture());
+        verify(toolboxThesaurusPersistence, never()).addTranslation(any());
+        assertEquals("English name", captor.getAllValues().stream()
+                .filter(row -> "en".equals(row.getLanguage()))
+                .findFirst()
+                .orElseThrow()
+                .getTitle());
+        assertEquals("Titre", captor.getAllValues().stream()
+                .filter(row -> "fr".equals(row.getLanguage()))
+                .findFirst()
+                .orElseThrow()
+                .getTitle());
     }
 
     @Test

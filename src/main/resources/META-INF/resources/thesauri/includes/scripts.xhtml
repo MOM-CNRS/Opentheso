@@ -31,17 +31,35 @@
         if (!list || !chips) return;
         var titles = root.querySelector('.tp-lang-titles');
         root.tpTitles = root.tpTitles || {};
-        var titlesHidden = document.getElementById('tpCreateTitles');
+        function titlesBox() {
+          return root.querySelector('#tpCreateTitles, #tpEditTitles');
+        }
+        root.querySelectorAll('.tp-lang-title-i').forEach(function (input) {
+          var code = input.getAttribute('data-code');
+          if (code && String(input.value || '').trim() && root.tpTitles[code] == null) {
+            root.tpTitles[code] = input.value;
+          }
+        });
+        var titlesHidden = titlesBox();
         if (titlesHidden && titlesHidden.value) {
-          titlesHidden.value.split(/\n/).forEach(function (line) {
+          titlesHidden.value.split(/\n|\|\|/).forEach(function (line) {
             var eq = line.indexOf('=');
             if (eq <= 0) return;
             var code = line.slice(0, eq).trim();
             if (code && root.tpTitles[code] == null) root.tpTitles[code] = line.slice(eq + 1);
           });
         }
+        Object.keys(root.tpTitles).forEach(function (code) {
+          if (!String(root.tpTitles[code] || '').trim()) return;
+          list.querySelectorAll('.tp-lang-multi-opt').forEach(function (opt) {
+            if (opt.classList.contains('is-principal')) return;
+            if (tpLangOptionCode(opt).toLowerCase() !== String(code).toLowerCase()) return;
+            opt.classList.add('is-on');
+            opt.setAttribute('aria-selected', 'true');
+          });
+        });
         function writeTitles(selected) {
-          var box = document.getElementById('tpCreateTitles');
+          var box = titlesBox();
           if (!box) return;
           var lines = [];
           selected.forEach(function (el) {
@@ -1324,11 +1342,59 @@
         window.tpSyncPrincipalLanguage && window.tpSyncPrincipalLanguage();
         return false;
       };
-      window.tpSyncPrincipalLanguage = function () {
-        var hidden = document.getElementById('tpCreateSourceLang');
-        var code = hidden && hidden.value ? hidden.value.trim().toLowerCase() : '';
-        var root = document.getElementById('tpCreateLangsUi');
-        if (!root) return;
+      window.tpPickEditLang = function (btn) {
+        var code = tpLangOptionCode(btn);
+        if (!code) return false;
+        var hidden = document.getElementById('tpEditSourceLang');
+        var previous = hidden && hidden.value ? String(hidden.value).trim() : '';
+        var root = document.getElementById('tpEditLangsUi');
+        var titleInput = document.getElementById('tpEditTitle');
+        if (root && previous && previous.toLowerCase() !== code.toLowerCase()) {
+          root.tpTitles = root.tpTitles || {};
+          if (titleInput) root.tpTitles[previous] = titleInput.value || '';
+          var stored = root.tpTitles[code];
+          if (titleInput && stored != null && String(stored).trim()) {
+            titleInput.value = stored;
+          }
+          delete root.tpTitles[code];
+          root.querySelectorAll('.tp-lang-multi-opt').forEach(function (opt) {
+            if (tpLangOptionCode(opt).toLowerCase() === previous.toLowerCase()) {
+              opt.classList.add('is-on');
+              opt.setAttribute('aria-selected', 'true');
+            }
+          });
+        }
+        if (hidden) hidden.value = code;
+        var pick = btn.closest && btn.closest('.tp-lang-pick');
+        if (pick) {
+          var flag = pick.querySelector('.tp-lang-btn .tree-lang-flag');
+          var name = pick.querySelector('.tp-lang-btn .tree-lang-name');
+          var codeEl = pick.querySelector('.tp-lang-btn .tree-lang-code');
+          if (flag) flag.textContent = btn.getAttribute('data-flag') || '';
+          if (name) name.textContent = btn.getAttribute('data-label') || code;
+          if (codeEl) codeEl.textContent = code;
+          pick.querySelectorAll('.tree-lang-opt').forEach(function (el) {
+            el.classList.toggle('is-on', tpLangOptionCode(el).toLowerCase() === code.toLowerCase());
+          });
+          var toggle = pick.querySelector('.tp-lang-btn');
+          if (toggle) {
+            toggle.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+          }
+          var query = pick.querySelector('.tp-project-q');
+          if (query) {
+            query.value = '';
+            window.tpFilterPickMenu && window.tpFilterPickMenu(query);
+          }
+        }
+        window.tpSyncPrincipalLanguage && window.tpSyncPrincipalLanguage();
+        return false;
+      };
+      function tpSyncOnePrincipal(hiddenId, rootId) {
+        var hidden = document.getElementById(hiddenId);
+        var root = document.getElementById(rootId);
+        if (!hidden || !root) return;
+        var code = hidden.value ? hidden.value.trim().toLowerCase() : '';
         root.querySelectorAll('.tp-lang-multi-opt').forEach(function (opt) {
           var same = !!code && tpLangOptionCode(opt).toLowerCase() === code;
           opt.classList.toggle('is-principal', same);
@@ -1339,8 +1405,14 @@
           }
         });
         if (typeof root.tpSyncLangs === 'function') root.tpSyncLangs();
+      }
+      window.tpSyncPrincipalLanguage = function () {
+        tpSyncOnePrincipal('tpCreateSourceLang', 'tpCreateLangsUi');
+        tpSyncOnePrincipal('tpEditSourceLang', 'tpEditLangsUi');
       };
-      if (document.getElementById('tpCreateLangsUi')) window.tpSyncPrincipalLanguage();
+      if (document.getElementById('tpCreateLangsUi') || document.getElementById('tpEditLangsUi')) {
+        window.tpSyncPrincipalLanguage();
+      }
       window.tpConfirmCreateOk = function () {
         if (typeof hideConfirm === 'function') {
           hideConfirm('#tpCreateConfirm');

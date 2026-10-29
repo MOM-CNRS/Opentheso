@@ -878,7 +878,8 @@ button.tree-lang-opt{font:inherit;border:0;background:none;cursor:pointer;border
   background:var(--surface);color:var(--ink-3);font-size:16px;line-height:1;cursor:pointer}
 .tp-lang-title-x:hover{color:var(--danger);border-color:var(--danger)}
 .tp-lang-title-meta{display:flex;align-items:center;gap:6px;flex:0 0 9.5rem;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink-2)}
-#tpCreateLangsUi .tp-lang-multi-chips{display:none}
+#tpCreateLangsUi .tp-lang-multi-chips,
+#tpEditLangsUi .tp-lang-multi-chips{display:none}
 .tp-lang-title .tp-form-i{flex:1;height:36px}
 .tp-lang-multi-opt.is-principal{display:none}
 .tp-lang-multi{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}

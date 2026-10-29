@@ -30,84 +30,143 @@
                 <div class="tp-form-ro"><code>#{thesaurusPickerBean.editThesaurusId}</code></div>
               </div>
               <div class="tp-form-row">
-                <label class="tp-form-l" for="tpEditTitle">#{localeBean.getMsg('picker.edit.name')} <span class="tp-req">*</span></label>
-                <h:inputText id="tpEditTitle"
-                             styleClass="tp-form-i"
-                             value="#{thesaurusPickerBean.editTitle}"
-                             pt:placeholder="#{localeBean.getMsg('picker.edit.namePh')}"/>
-              </div>
-              <div class="tp-form-row">
-                <span class="tp-form-l">Langue principale <span class="tp-req">*</span></span>
-                <h:panelGroup id="tpEditLangUi" layout="block" styleClass="tp-lang-pick">
-                  <button type="button"
-                          class="tree-lang-btn tp-lang-btn"
-                          data-act="tp-lang-toggle"
-                          title="Langue principale"
-                          aria-haspopup="listbox"
-                          aria-expanded="false">
-                    <span class="tree-lang-flag" aria-hidden="true">#{thesaurusPickerBean.editSelectedLanguageFlag}</span>
-                    <span class="tree-lang-name">#{thesaurusPickerBean.editSelectedLanguageLabel}</span>
-                    <span class="tree-lang-code">#{thesaurusPickerBean.editLanguage}</span>
-                    <span class="tree-lang-caret" aria-hidden="true">▾</span>
-                  </button>
-                  <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue principale">
-                    <div class="tree-lang-menu-h">Langue principale</div>
-                    <ui:repeat value="#{thesaurusPickerBean.editLanguages}" var="lg">
-                      <h:commandLink styleClass="tree-lang-opt#{thesaurusPickerBean.isEditLanguageSelected(lg.code) ? ' is-on' : ''}"
-                                     action="#{thesaurusPickerBean.selectEditLanguage}">
-                        <f:param name="editLangCode" value="#{lg.code}"/>
-                        <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
-                        <span class="tree-lang-opt-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
-                        <span class="tree-lang-opt-code">#{lg.code}</span>
-                        <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
-                      </h:commandLink>
-                    </ui:repeat>
-                  </div>
-                </h:panelGroup>
+                <label class="tp-form-l" for="tpEditTitle">Nom <span class="tp-req">*</span></label>
+                <div class="tp-name-lang">
+                  <h:inputText id="tpEditTitle"
+                               styleClass="tp-form-i"
+                               value="#{thesaurusPickerBean.editTitle}"
+                               pt:autocomplete="off"
+                               pt:placeholder="Ex. PACTOLS, GeoEthno…"/>
+                  <h:inputHidden id="tpEditSourceLang" value="#{thesaurusPickerBean.editLanguage}"/>
+                  <h:panelGroup id="tpEditLangUi" layout="block" styleClass="tp-lang-pick">
+                    <button type="button"
+                            class="tree-lang-btn tp-lang-btn"
+                            data-act="tp-lang-toggle"
+                            title="Langue de ce nom"
+                            aria-haspopup="listbox"
+                            aria-expanded="false">
+                      <span class="tree-lang-flag" aria-hidden="true">#{thesaurusPickerBean.editSelectedLanguageFlag}</span>
+                      <span class="tree-lang-name">#{thesaurusPickerBean.editSelectedLanguageLabel}</span>
+                      <span class="tree-lang-code">#{thesaurusPickerBean.editLanguage}</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu tp-lang-menu tp-project-menu" role="listbox" aria-label="Langue">
+                      <input type="search"
+                             class="tp-project-q"
+                             placeholder="Rechercher une langue…"
+                             autocomplete="off"
+                             aria-label="Rechercher une langue"
+                             oninput="window.tpFilterPickMenu &amp;&amp; window.tpFilterPickMenu(this);"
+                             onkeydown="if (event.key === 'Enter') event.preventDefault();"/>
+                      <div class="tp-project-scroll">
+                        <ui:repeat value="#{thesaurusPickerBean.editLanguages}" var="lg">
+                          <button type="button"
+                                  class="tree-lang-opt#{thesaurusPickerBean.isEditLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                  data-code="#{lg.code}"
+                                  data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
+                                  data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}"
+                                  onclick="return window.tpPickEditLang &amp;&amp; window.tpPickEditLang(this);">
+                            <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
+                            <span class="tree-lang-opt-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
+                            <span class="tree-lang-opt-code">#{lg.code}</span>
+                            <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                          </button>
+                        </ui:repeat>
+                        <p class="tp-project-empty" hidden="hidden">Aucune langue trouvée</p>
+                      </div>
+                    </div>
+                  </h:panelGroup>
+                </div>
               </div>
               <div class="tp-form-row">
                 <span class="tp-form-l">Langues possibles</span>
                 <div class="tp-lang-multi" id="tpEditLangsUi">
                   <h:inputHidden id="tpEditLangs" styleClass="tp-lang-multi-value" value="#{thesaurusPickerBean.editPossibleLanguagesCsv}"/>
+                  <h:inputHidden id="tpEditTitles" value="#{thesaurusPickerBean.editTitlesEncoded}"/>
                   <div class="tp-lang-multi-chips" aria-live="polite"></div>
-                  <div class="tp-lang-multi-box">
-                    <input type="search" class="tp-lang-multi-q" placeholder="Rechercher une langue…" autocomplete="off" aria-label="Rechercher une langue"/>
-                    <div class="tp-lang-multi-list" role="listbox" aria-label="Langues possibles" aria-multiselectable="true">
-                      <ui:repeat value="#{thesaurusPickerBean.editPossibleChoices}" var="lg">
+                  <div class="tp-lang-titles">
+                    <ui:repeat value="#{thesaurusPickerBean.editLanguageTitleRows}" var="row">
+                      <div class="tp-lang-title">
                         <button type="button"
-                                class="tp-lang-multi-opt#{thesaurusPickerBean.isEditLanguagePossible(lg.code) ? ' is-on' : ''}"
-                                role="option"
-                                value="#{lg.code}"
-                                aria-selected="#{thesaurusPickerBean.isEditLanguagePossible(lg.code) ? 'true' : 'false'}"
-                                data-code="#{lg.code}"
-                                data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
-                                data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}">
-                          <span class="tp-lang-multi-boxui" aria-hidden="true">✓</span>
-                          <span class="tp-lang-multi-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
-                          <span class="tp-lang-multi-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
-                          <span class="tp-lang-multi-code">#{lg.code}</span>
-                        </button>
-                      </ui:repeat>
+                                class="tp-lang-title-x"
+                                data-code="#{row.code}"
+                                aria-label="Retirer #{thesaurusPickerBean.languageLabel(row.code)}">×</button>
+                        <span class="tp-lang-title-meta">
+                          <span aria-hidden="true">#{thesaurusPickerBean.languageFlag(row.code)}</span>
+                          <span class="tp-lang-multi-name">#{thesaurusPickerBean.languageLabel(row.code)}</span>
+                        </span>
+                        <input type="text"
+                               class="tp-form-i tp-lang-title-i"
+                               data-code="#{row.code}"
+                               value="#{row.title}"
+                               autocomplete="off"
+                               aria-label="Nom en #{thesaurusPickerBean.languageLabel(row.code)}"
+                               placeholder="Nom en #{thesaurusPickerBean.languageLabel(row.code)}"/>
+                      </div>
+                    </ui:repeat>
+                  </div>
+                  <div class="tp-lang-pick tp-lang-extra-pick">
+                    <button type="button"
+                            id="tpEditLangsBtn"
+                            class="tree-lang-btn tp-lang-btn"
+                            data-act="tp-lang-toggle"
+                            title="Ajouter une langue"
+                            aria-haspopup="listbox"
+                            aria-expanded="false">
+                      <span class="tree-lang-name">Ajouter une langue</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu tp-lang-menu tp-project-menu" role="listbox" aria-label="Langues possibles" aria-multiselectable="true">
+                      <input type="search"
+                             class="tp-project-q"
+                             placeholder="Rechercher une langue…"
+                             autocomplete="off"
+                             aria-label="Rechercher une langue"
+                             oninput="window.tpFilterPickMenu &amp;&amp; window.tpFilterPickMenu(this);"
+                             onkeydown="if (event.key === 'Enter') event.preventDefault();"/>
+                      <div class="tp-lang-multi-list tp-project-scroll">
+                        <ui:repeat value="#{thesaurusPickerBean.editLanguages}" var="lg">
+                          <button type="button"
+                                  class="tp-lang-multi-opt#{thesaurusPickerBean.isEditLanguagePossible(lg.code) ? ' is-on' : ''}"
+                                  role="option"
+                                  value="#{lg.code}"
+                                  aria-selected="#{thesaurusPickerBean.isEditLanguagePossible(lg.code) ? 'true' : 'false'}"
+                                  data-code="#{lg.code}"
+                                  data-label="#{thesaurusPickerBean.languageLabel(lg.code)}"
+                                  data-flag="#{thesaurusPickerBean.languageFlag(lg.code)}">
+                            <span class="tp-lang-multi-boxui" aria-hidden="true">✓</span>
+                            <span class="tp-lang-multi-flag" aria-hidden="true">#{thesaurusPickerBean.languageFlag(lg.code)}</span>
+                            <span class="tp-lang-multi-name">#{thesaurusPickerBean.languageLabel(lg.code)}</span>
+                            <span class="tp-lang-multi-code">#{lg.code}</span>
+                          </button>
+                        </ui:repeat>
+                        <p class="tp-project-empty" hidden="hidden">Aucune langue trouvée</p>
+                      </div>
                     </div>
                   </div>
-                  <p class="tp-lang-hint">Autres langues du thésaurus, en plus de la langue principale. Une langue déjà utilisée par des termes ne peut pas être retirée.</p>
+                  <p class="tp-lang-hint">Ajoutez une langue, puis saisissez le nom du thésaurus dans cette langue. Une langue déjà utilisée par des termes ne peut pas être retirée.</p>
                 </div>
               </div>
               <div class="tp-form-row">
                 <span class="tp-form-l">#{localeBean.getMsg('picker.edit.visibility')}</span>
-                <h:panelGroup id="tpEditVis" layout="block" styleClass="tp-form-radios">
-                  <h:commandLink styleClass="tp-form-radio#{not thesaurusPickerBean.editPrivateThesaurus ? ' is-on' : ''}"
-                                 action="#{thesaurusPickerBean.chooseEditPublicVisibility}">
+                <h:panelGroup id="tpEditVis" layout="block" styleClass="tp-form-radios" pt:data-field="tpEditPrivate">
+                  <h:inputHidden id="tpEditPrivate" value="#{thesaurusPickerBean.editPrivateValue}"/>
+                  <button type="button"
+                          class="tp-form-radio#{not thesaurusPickerBean.editPrivateThesaurus ? ' is-on' : ''}"
+                          data-value="false"
+                          onclick="return window.tpPickCreateChoice &amp;&amp; window.tpPickCreateChoice(this);">
                     <span class="tp-radio-ui" aria-hidden="true"></span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
                     <span><b>#{localeBean.getMsg('picker.edit.public')}</b> — #{localeBean.getMsg('picker.edit.publicHint')}</span>
-                  </h:commandLink>
-                  <h:commandLink styleClass="tp-form-radio#{thesaurusPickerBean.editPrivateThesaurus ? ' is-on' : ''}"
-                                 action="#{thesaurusPickerBean.chooseEditPrivateVisibility}">
+                  </button>
+                  <button type="button"
+                          class="tp-form-radio#{thesaurusPickerBean.editPrivateThesaurus ? ' is-on' : ''}"
+                          data-value="true"
+                          onclick="return window.tpPickCreateChoice &amp;&amp; window.tpPickCreateChoice(this);">
                     <span class="tp-radio-ui" aria-hidden="true"></span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
                     <span><b>#{localeBean.getMsg('picker.edit.private')}</b> — #{localeBean.getMsg('picker.edit.privateHint')}</span>
-                  </h:commandLink>
+                  </button>
                 </h:panelGroup>
               </div>
             </div>

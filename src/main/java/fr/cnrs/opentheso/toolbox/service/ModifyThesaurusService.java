@@ -251,6 +251,18 @@ public class ModifyThesaurusService {
             String title,
             String creatorName
     ) {
+        updateLanguages(thesaurusId, principal, languages, title, creatorName, Map.of());
+    }
+
+    @Transactional
+    public void updateLanguages(
+            String thesaurusId,
+            String principal,
+            List<String> languages,
+            String title,
+            String creatorName,
+            Map<String, String> titlesByLanguage
+    ) {
         if (StringUtils.isBlank(title)) {
             throw new InvalidToolboxDataException("Le label est obligatoire");
         }
@@ -271,9 +283,12 @@ public class ModifyThesaurusService {
         }
         List<String> current = toolboxThesaurusPersistence.listLanguageCodes(thesaurusId);
         for (String language : desired) {
+            String languageTitle = titleForLanguage(language, source, title, titlesByLanguage);
             boolean present = current.stream().anyMatch(existing -> existing.equalsIgnoreCase(language));
             if (!present) {
-                addLanguage(thesaurusId, title.trim(), language, creatorName);
+                addLanguage(thesaurusId, languageTitle, language, creatorName);
+            } else if (!language.equalsIgnoreCase(source) && hasOwnTitle(language, titlesByLanguage)) {
+                updateLanguage(thesaurusId, language, languageTitle, creatorName);
             }
         }
         for (String language : current) {
@@ -290,6 +305,39 @@ public class ModifyThesaurusService {
         }
         updateLanguage(thesaurusId, source, title.trim(), creatorName);
         changeSourceLanguage(thesaurusId, source);
+    }
+
+    private String titleForLanguage(
+            String language,
+            String principal,
+            String principalTitle,
+            Map<String, String> titlesByLanguage
+    ) {
+        if (language.equalsIgnoreCase(principal) || titlesByLanguage == null) {
+            return principalTitle.trim();
+        }
+        for (var entry : titlesByLanguage.entrySet()) {
+            if (entry.getKey() != null
+                    && entry.getKey().equalsIgnoreCase(language)
+                    && StringUtils.isNotBlank(entry.getValue())) {
+                return entry.getValue().trim();
+            }
+        }
+        return principalTitle.trim();
+    }
+
+    private boolean hasOwnTitle(String language, Map<String, String> titlesByLanguage) {
+        if (titlesByLanguage == null) {
+            return false;
+        }
+        for (var entry : titlesByLanguage.entrySet()) {
+            if (entry.getKey() != null
+                    && entry.getKey().equalsIgnoreCase(language)
+                    && StringUtils.isNotBlank(entry.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Transactional

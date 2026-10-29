@@ -15,6 +15,9 @@ import fr.cnrs.opentheso.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.toolbox.service.NewThesaurusService;
 import fr.cnrs.opentheso.toolbox.ui.NewThesaurusEditor;
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.component.EditableValueHolder;
+import jakarta.faces.component.visit.VisitContext;
+import jakarta.faces.component.visit.VisitResult;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -30,8 +33,10 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -104,6 +109,8 @@ public class ThesaurusPickerBean implements Serializable {
     private String editLanguage;
     private List<LanguageOption> editLanguages = Collections.emptyList();
     private List<String> editPossibleLanguages = new ArrayList<>();
+    private String editTitlesEncoded = "";
+    private List<EditLanguageTitle> editLanguageTitleRows = List.of();
     private boolean editPrivateThesaurus;
     private String editError;
 
@@ -750,17 +757,23 @@ public class ThesaurusPickerBean implements Serializable {
             cancelImportThesaurus();
             cancelExportThesaurus();
             editThesaurusId = details.id();
-            editTitle = StringUtils.defaultString(details.title());
             editLanguage = StringUtils.defaultIfBlank(details.sourceLang(), localeBean.getIdLangue());
             editLanguages = modifyThesaurusService.loadAllLanguages();
             editPossibleLanguages = new ArrayList<>();
-            modifyThesaurusService.loadLanguages(editThesaurusId).stream()
+            editTitlesEncoded = "";
+            editLanguageTitleRows = List.of();
+            var loadedLanguages = modifyThesaurusService.loadLanguages(editThesaurusId);
+            loadedLanguages.stream()
                     .map(language -> language.code())
                     .filter(StringUtils::isNotBlank)
                     .forEach(this::includeEditPossible);
+            editTitle = principalTitle(loadedLanguages, details.title());
+            editLanguageTitleRows = editLanguageTitleRows(loadedLanguages);
+            editTitlesEncoded = encodeEditTitles(loadedLanguages);
             editPrivateThesaurus = details.privateThesaurus();
             editMode = true;
             columnsMenuOpen = false;
+            clearSubmittedEditValues();
         } catch (InvalidToolboxDataException ex) {
             MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(
                     ex.getMessage(), localeBean.getMsg("picker.edit.failed")));
@@ -774,6 +787,8 @@ public class ThesaurusPickerBean implements Serializable {
         editLanguage = null;
         editLanguages = Collections.emptyList();
         editPossibleLanguages = new ArrayList<>();
+        editTitlesEncoded = "";
+        editLanguageTitleRows = List.of();
         editPrivateThesaurus = false;
         editError = null;
     }
@@ -804,7 +819,8 @@ public class ThesaurusPickerBean implements Serializable {
                     StringUtils.defaultIfBlank(editLanguage, localeBean.getIdLangue()),
                     editPossibleLanguages,
                     editTitle.trim(),
-                    creator
+                    creator,
+                    editTitles()
             );
             modifyThesaurusService.changeVisibility(editThesaurusId, editPrivateThesaurus);
             String ok = localeBean.getMsg("picker.edit.success");
@@ -1109,10 +1125,123 @@ public class ThesaurusPickerBean implements Serializable {
             return;
         }
         var params = faces.getExternalContext().getRequestParameterMap();
-        if (!params.containsKey("tpEditLangs")) {
+        if (params.containsKey("tpEditSourceLang") && StringUtils.isNotBlank(params.get("tpEditSourceLang"))) {
+            editLanguage = params.get("tpEditSourceLang").trim();
+        }
+        if (params.containsKey("tpEditLangs")) {
+            setEditPossibleLanguagesCsv(params.get("tpEditLangs"));
+        }
+        if (params.containsKey("tpEditTitles")) {
+            editTitlesEncoded = StringUtils.defaultString(params.get("tpEditTitles"));
+        }
+        if (params.containsKey("tpEditPrivate")) {
+            setEditPrivateValue(params.get("tpEditPrivate"));
+        }
+    }
+
+    public String getEditPrivateValue() {
+        return editPrivateThesaurus ? "true" : "false";
+    }
+
+    public void setEditPrivateValue(String value) {
+        editPrivateThesaurus = "true".equalsIgnoreCase(StringUtils.trimToEmpty(value));
+    }
+
+    private String principalTitle(List<fr.cnrs.opentheso.toolbox.model.EditionThesaurusLanguage> languages, String fallback) {
+        if (languages != null) {
+            for (var language : languages) {
+                if (language != null
+                        && StringUtils.isNotBlank(language.label())
+                        && language.code() != null
+                        && language.code().equalsIgnoreCase(StringUtils.defaultString(editLanguage))) {
+                    return language.label().trim();
+                }
+            }
+        }
+        return StringUtils.defaultString(fallback).trim();
+    }
+
+    private List<EditLanguageTitle> editLanguageTitleRows(
+            List<fr.cnrs.opentheso.toolbox.model.EditionThesaurusLanguage> languages
+    ) {
+        if (languages == null || languages.isEmpty()) {
+            return List.of();
+        }
+        List<EditLanguageTitle> rows = new ArrayList<>();
+        for (var language : languages) {
+            if (language == null
+                    || StringUtils.isBlank(language.code())
+                    || StringUtils.isBlank(language.label())
+                    || language.code().equalsIgnoreCase(StringUtils.defaultString(editLanguage))) {
+                continue;
+            }
+            rows.add(new EditLanguageTitle(
+                    language.code().trim(),
+                    language.label().replace('\n', ' ').replace('\r', ' ').trim()
+            ));
+        }
+        return List.copyOf(rows);
+    }
+
+    private String encodeEditTitles(List<fr.cnrs.opentheso.toolbox.model.EditionThesaurusLanguage> languages) {
+        StringBuilder encoded = new StringBuilder();
+        for (EditLanguageTitle row : editLanguageTitleRows(languages)) {
+            if (!encoded.isEmpty()) {
+                encoded.append("||");
+            }
+            encoded.append(row.code()).append('=').append(row.title());
+        }
+        return encoded.toString();
+    }
+
+    private void clearSubmittedEditValues() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null || faces.getViewRoot() == null) {
             return;
         }
-        setEditPossibleLanguagesCsv(params.get("tpEditLangs"));
+        faces.getViewRoot().visitTree(VisitContext.createVisitContext(faces), (context, target) -> {
+            if (target instanceof EditableValueHolder holder
+                    && ("tpEditTitle".equals(target.getId())
+                    || "tpEditSourceLang".equals(target.getId())
+                    || "tpEditLangs".equals(target.getId())
+                    || "tpEditTitles".equals(target.getId())
+                    || "tpEditPrivate".equals(target.getId()))) {
+                holder.resetValue();
+            }
+            return VisitResult.ACCEPT;
+        });
+    }
+
+    public record EditLanguageTitle(String code, String title) implements Serializable {
+        public String getCode() {
+            return code;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+    }
+
+    private Map<String, String> editTitles() {
+        Map<String, String> titles = new LinkedHashMap<>();
+        if (StringUtils.isBlank(editTitlesEncoded)) {
+            return titles;
+        }
+        for (String line : editTitlesEncoded.split("\\R|\\|\\|")) {
+            int split = line.indexOf('=');
+            if (split <= 0) {
+                continue;
+            }
+            String code = line.substring(0, split).trim();
+            String value = line.substring(split + 1).trim();
+            if (code.isEmpty()
+                    || value.isEmpty()
+                    || code.equalsIgnoreCase(StringUtils.defaultString(editLanguage))) {
+                continue;
+            }
+            titles.put(code, value);
+        }
+        return titles;
     }
 
     public String getEditSelectedLanguageFlag() {
