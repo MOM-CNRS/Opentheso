@@ -15,6 +15,23 @@ public interface ConceptReplacedByRepository extends JpaRepository<ConceptReplac
 
     @Modifying
     @Transactional
+    @Query(value = """
+            INSERT INTO concept_replacedby (id_concept1, id_concept2, id_thesaurus, modified, id_user)
+            SELECT :deprecatedId, :replacementId, :thesaurusId, now(), :userId
+            WHERE NOT EXISTS (
+                SELECT 1 FROM concept_replacedby
+                WHERE id_concept1 = :deprecatedId
+                  AND id_concept2 = :replacementId
+                  AND id_thesaurus = :thesaurusId
+            )
+            """, nativeQuery = true)
+    void insertReplacedByIfAbsent(@Param("deprecatedId") String deprecatedId,
+                                  @Param("replacementId") String replacementId,
+                                  @Param("thesaurusId") String thesaurusId,
+                                  @Param("userId") int userId);
+
+    @Modifying
+    @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying

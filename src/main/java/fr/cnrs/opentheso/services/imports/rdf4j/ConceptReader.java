@@ -165,6 +165,24 @@ public class ConceptReader {
             case "contributor":
                 skosConcept.addAgent(literal.getLabel(), SKOSProperty.CONTRIBUTOR);
                 break;
+            case "subject":
+            case "description":
+            case "publisher":
+            case "coverage":
+            case "rights":
+            case "type":
+            case "format":
+            case "relation":
+            case "title":
+            case "license":
+            case "alternative":
+            case "rightsHolder":
+            case "conformsTo":
+                skosConcept.getThesaurus().addDcElement(new DcElement(
+                        predicate.getLocalName(), literal.getLabel(), lang, DCMIResource.TYPE_STRING));
+                break;
+            default:
+                break;
         }
     }
 

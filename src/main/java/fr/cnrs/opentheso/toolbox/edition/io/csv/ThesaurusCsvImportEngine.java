@@ -364,10 +364,18 @@ public class ThesaurusCsvImportEngine {
         if (!imagesBuilder.isEmpty()) {
             imagesBuilder.append(SEPERATEUR);
         }
-        imagesBuilder.append(nodeImage.getImageName()).append(SOUS_SEPERATEUR)
-                .append(nodeImage.getCopyRight()).append(SOUS_SEPERATEUR)
+        imagesBuilder.append(imageCaptionPart(nodeImage.getImageName())).append(SOUS_SEPERATEUR)
+                .append(imageCaptionPart(nodeImage.getCopyRight())).append(SOUS_SEPERATEUR)
                 .append(nodeImage.getUri()).append(SOUS_SEPERATEUR)
-                .append(nodeImage.getCreator());
+                .append(imageCaptionPart(nodeImage.getCreator()));
+    }
+
+    static String imageCaptionPart(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
+            return "";
+        }
+        return text;
     }
 
     private String buildCsvAlignments(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {

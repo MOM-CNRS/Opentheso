@@ -1668,8 +1668,13 @@ const imgGallery = { index: 0, items: [], lightbox: false, conceptId: "" };
 
 function imgGalleryCaption(item) {
   if (!item) return "";
+  const clean = (part) => {
+    const value = (part || "").trim();
+    if (!value || value.toLowerCase() === "null" || /_(sparql|rest)$/i.test(value)) return "";
+    return value;
+  };
   return [item.name, item.copyright, item.creator]
-      .map((part) => (part || "").trim())
+      .map(clean)
       .filter(Boolean)
       .join(" · ");
 }

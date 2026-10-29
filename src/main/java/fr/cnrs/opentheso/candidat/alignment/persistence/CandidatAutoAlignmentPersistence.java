@@ -268,7 +268,7 @@ public class CandidatAutoAlignmentPersistence {
                     .idConcept(conceptId)
                     .idThesaurus(thesaurusId)
                     .imageName(org.apache.commons.lang3.StringUtils.isEmpty(imageName) ? "" : imageName)
-                    .imageCopyright(noteSource)
+                    .imageCopyright("")
                     .externalUri(selectedResource.getGettedValue().trim())
                     .build());
             if (ObjectUtils.isEmpty(saved)) {
