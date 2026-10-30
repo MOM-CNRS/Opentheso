@@ -116,7 +116,7 @@ class LoginBeanTest {
         }
 
         org.junit.jupiter.api.Assertions.assertTrue(
-                loginBean.getAfterLoginUrl().startsWith("/ot/index.xhtml?idt=TH1&_r="));
+                loginBean.getAfterLoginUrl().startsWith("/ot/idt=TH1&_r="));
         verify(externalContext, never()).redirect(org.mockito.ArgumentMatchers.anyString());
     }
 

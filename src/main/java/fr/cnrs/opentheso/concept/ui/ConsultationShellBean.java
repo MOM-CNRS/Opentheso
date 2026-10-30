@@ -458,7 +458,7 @@ public class ConsultationShellBean implements Serializable {
     /**
      * Navigation forcée vers la consultation, comme legacy {@code menuBean.redirectToThesaurus()}.
      * <p>
-     * Cible {@code /index.xhtml} (accueil thésaurus) avec un paramètre
+     * Cible l'accueil thésaurus ({@code /idt=}) avec un paramètre
      * anti-cache : un redirect/assign vers la même URL ne recharge la page qu'une fois sur deux.
      */
     private void navigateToBrowse() throws IOException {
@@ -468,12 +468,14 @@ public class ConsultationShellBean implements Serializable {
         }
         ExternalContext context = facesContext.getExternalContext();
         String thesaurusId = StringUtils.trimToEmpty(thesaurusContext.resolveThesaurusId());
-        String url = context.getRequestContextPath() + "/index.xhtml";
+        String url;
         if (StringUtils.isNotBlank(thesaurusId)) {
-            url += "?idt=" + java.net.URLEncoder.encode(thesaurusId, java.nio.charset.StandardCharsets.UTF_8)
-                    + "&_=" + System.currentTimeMillis();
+            String conceptPath = fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPathFromQuery(
+                    "idt=" + java.net.URLEncoder.encode(thesaurusId, java.nio.charset.StandardCharsets.UTF_8)
+                            + "&_=" + System.currentTimeMillis());
+            url = context.getRequestContextPath() + conceptPath;
         } else {
-            url += "?_=" + System.currentTimeMillis();
+            url = context.getRequestContextPath() + "/index.xhtml?_=" + System.currentTimeMillis();
         }
         if (PrimeFaces.current().isAjaxRequest()) {
             PrimeFaces.current().executeScript("window.location.assign('" + url + "');");

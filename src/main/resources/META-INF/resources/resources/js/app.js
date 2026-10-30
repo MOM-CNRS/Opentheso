@@ -1355,7 +1355,9 @@ document.addEventListener("click", (e) => {
     if (!id) return;
     state.home = false;
     if (!openLiveDetail(id, "concept")) {
-      go("index.xhtml?idc=" + encodeURIComponent(id));
+      go(typeof conceptPageHref === "function"
+          ? conceptPageHref("idc=" + encodeURIComponent(id))
+          : "index.xhtml?idc=" + encodeURIComponent(id));
     }
   } else if (act === "maint-confirm-ok") {
     hideConfirm("#maintConfirm");

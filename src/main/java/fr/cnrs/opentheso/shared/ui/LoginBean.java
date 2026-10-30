@@ -172,10 +172,20 @@ public class LoginBean implements Serializable {
             query = StringUtils.isBlank(query) ? idtParam : query + "&" + idtParam;
         }
         String stamp = "_r=" + System.currentTimeMillis();
-        if (StringUtils.isBlank(query)) {
-            return ctx + path + "?" + stamp;
+        String fullQuery = StringUtils.isBlank(query) ? stamp : query + "&" + stamp;
+        String conceptPath = fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPathFromQuery(fullQuery);
+        if (conceptPath != null && isThesaurusHomePath(path)) {
+            return ctx + conceptPath;
         }
-        return ctx + path + "?" + query + "&" + stamp;
+        return ctx + path + "?" + fullQuery;
+    }
+
+    private static boolean isThesaurusHomePath(String path) {
+        return path == null
+                || path.isBlank()
+                || "/".equals(path)
+                || "/index".equals(path)
+                || "/index.xhtml".equals(path);
     }
 
     private void failLogin(String messageKey, boolean invalidUser, boolean invalidPass) {

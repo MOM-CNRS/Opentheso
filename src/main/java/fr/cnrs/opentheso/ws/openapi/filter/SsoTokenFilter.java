@@ -46,15 +46,10 @@ public class SsoTokenFilter implements Filter {
                     session.setAttribute("ssoIdt", idt);
                 }
 
-                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/index.xhtml");
-                if (idt != null && !idt.isBlank()) {
-                    redirect.append("?idt=").append(idt);
-                    if (idc != null && !idc.isBlank()) {
-                        redirect.append("&idc=").append(idc);
-                    }
-                }
-
-                response.sendRedirect(redirect.toString());
+                String path = fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPath(idt, idc);
+                response.sendRedirect(request.getContextPath() + (path == null
+                        ? "/index.xhtml"
+                        : path));
                 return;
             }
 

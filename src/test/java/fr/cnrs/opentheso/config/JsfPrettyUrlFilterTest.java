@@ -12,7 +12,15 @@ class JsfPrettyUrlFilterTest {
         assertEquals("/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2"));
         assertEquals("/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/thesauri"));
         assertEquals("/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/"));
-        assertEquals("/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/"));
+        assertEquals("/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/", false));
+        assertEquals("/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/", true));
+        assertEquals("/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/idt=th217&idc=1895753"));
+        assertEquals("/idt=th217&idc=1895753", JsfPrettyUrlFilter.conceptBrowserPath("th217", "1895753"));
+        assertEquals("/idt=th217", JsfPrettyUrlFilter.conceptBrowserPath("th217", null));
+        assertEquals("th217", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753").get("idt")[0]);
+        assertEquals("1895753", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753").get("idc")[0]);
+        assertEquals("/idt=th217&idc=1895753",
+                JsfPrettyUrlFilter.conceptBrowserPathFromQuery("idt=th217&idc=1895753"));
         assertEquals("/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/index"));
         assertEquals("/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/index.xhtml"));
         assertEquals("/user/compte.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/profile"));

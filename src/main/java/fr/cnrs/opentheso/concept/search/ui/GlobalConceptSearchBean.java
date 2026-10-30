@@ -217,9 +217,8 @@ public class GlobalConceptSearchBean implements Serializable {
             return;
         }
         ExternalContext context = facesContext.getExternalContext();
-        context.redirect(context.getRequestContextPath()
-                + "/?idt=" + idt
-                + "&idc=" + idc);
+        String path = fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPath(idt, idc);
+        context.redirect(context.getRequestContextPath() + path);
     }
 
     private ConceptSearchMode activeMode() {

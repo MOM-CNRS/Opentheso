@@ -3976,15 +3976,22 @@ function syncConceptUrl(id, nodeType) {
   if (SCREEN !== "accueil" && SCREEN !== "consultation") return;
   try {
     const url = new URL(location.href);
-    if (id) {
-      /* Accueil: idc évite le paramètre JSF "id" qui casse l'ajax de sélection. */
-      if (SCREEN === "accueil") {
-        url.searchParams.set("idc", id);
-        url.searchParams.delete("id");
-      } else {
-        url.searchParams.set("id", id);
-        url.searchParams.delete("idc");
+    if (SCREEN === "accueil") {
+      const params = new URLSearchParams();
+      const idt = currentConceptParam("idt");
+      if (idt) params.set("idt", idt);
+      if (id) params.set("idc", id);
+      if (nodeType && nodeType !== "concept") params.set("type", nodeType);
+      if (!params.get("idt") && !params.get("idc")) return;
+      const next = conceptPathFromParams(params) + url.hash;
+      if (next !== location.pathname + location.search + location.hash) {
+        history.replaceState({ conceptId: id || "", type: nodeType || "" }, "", next);
       }
+      return;
+    }
+    if (id) {
+      url.searchParams.set("id", id);
+      url.searchParams.delete("idc");
       if (nodeType && nodeType !== "concept") url.searchParams.set("type", nodeType);
       else url.searchParams.delete("type");
     } else {
@@ -4001,12 +4008,88 @@ function syncConceptUrl(id, nodeType) {
   }
 }
 
+function encPathParam(value) {
+  return encodeURIComponent(value == null ? "" : String(value));
+}
+
+function currentConceptParam(name) {
+  try {
+    const fromQuery = new URL(location.href).searchParams.get(name);
+    if (fromQuery) return fromQuery;
+  } catch (err) {
+    /* ignore */
+  }
+  let raw = location.pathname || "";
+  const idtAt = raw.indexOf("/idt=");
+  const idcAt = raw.indexOf("/idc=");
+  const cut = idtAt >= 0 && idcAt >= 0 ? Math.min(idtAt, idcAt) : Math.max(idtAt, idcAt);
+  raw = cut >= 0 ? raw.slice(cut + 1) : raw.replace(/^\//, "");
+  const parts = raw.split("&");
+  for (let i = 0; i < parts.length; i++) {
+    const eq = parts[i].indexOf("=");
+    if (eq <= 0) continue;
+    let key = parts[i].slice(0, eq);
+    let value = parts[i].slice(eq + 1);
+    try {
+      key = decodeURIComponent(key);
+      value = decodeURIComponent(value.replace(/\+/g, " "));
+    } catch (err) {
+      /* keep raw */
+    }
+    if (key === name) return value;
+  }
+  return "";
+}
+
+function appRootPath() {
+  let path = location.pathname || "/";
+  const idtAt = path.indexOf("/idt=");
+  const idcAt = path.indexOf("/idc=");
+  const cut = idtAt >= 0 && idcAt >= 0 ? Math.min(idtAt, idcAt) : Math.max(idtAt, idcAt);
+  if (cut >= 0) path = cut === 0 ? "/" : path.slice(0, cut);
+  if (path.endsWith("/index.xhtml")) path = path.slice(0, -"/index.xhtml".length) || "/";
+  else if (path.endsWith("/index")) path = path.slice(0, -"/index".length) || "/";
+  if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  return path === "/" ? "" : path;
+}
+
+/** Accueil thésaurus : /idt=th217&idc=1895753 */
+function conceptPathFromParams(params) {
+  const parts = [];
+  const idt = params.get("idt");
+  const idc = params.get("idc");
+  if (idt) parts.push("idt=" + encPathParam(idt));
+  if (idc) parts.push("idc=" + encPathParam(idc));
+  ["type", "create", "pref", "_", "_r"].forEach((key) => {
+    const value = params.get(key);
+    if (value) parts.push(key + "=" + encPathParam(value));
+  });
+  if (!parts.length) return appRootPath() + "/";
+  return appRootPath() + "/" + parts.join("&");
+}
+
+function conceptPageHref(query) {
+  const params = new URLSearchParams(String(query || "").replace(/^\?/, ""));
+  if (!params.get("idt")) {
+    const idt = currentConceptParam("idt");
+    if (idt) params.set("idt", idt);
+  }
+  return conceptPathFromParams(params);
+}
+
 function sanitizeFacesFormAction(form) {
   if (!form) return;
   const raw = form.getAttribute("action");
   if (!raw) return;
   try {
     const url = new URL(raw, location.href);
+    const path = url.pathname || "";
+    if (path.indexOf("/idt=") >= 0 || path.indexOf("/idc=") >= 0) {
+      url.pathname = appRootPath() + "/index.xhtml";
+      url.search = "";
+      form.setAttribute("action", url.pathname);
+      return;
+    }
     if (!url.searchParams.has("id") && !url.searchParams.has("idc") && !url.searchParams.has("type")) {
       return;
     }
@@ -5912,7 +5995,7 @@ function createConceptDraft(src) {
     const q = new URLSearchParams({ create: "concept" });
     if (parentName) q.set("pref", parentName);
     if (parentId) q.set("idc", parentId);
-    go("index.xhtml?" + q.toString());
+    go(conceptPageHref(q.toString()));
     return;
   }
   const idEl = $("#cptParentId");
@@ -6728,7 +6811,7 @@ function createFacetDraft(src) {
     const q = new URLSearchParams({ create: "facet" });
     if (parentName) q.set("pref", parentName);
     q.set("idc", parentId);
-    go("index.xhtml?" + q.toString());
+    go(conceptPageHref(q.toString()));
     return;
   }
   const idEl = $("#fctParentId");

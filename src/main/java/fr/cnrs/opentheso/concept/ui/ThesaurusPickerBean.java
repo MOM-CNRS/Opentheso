@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.ui;
 
+import fr.cnrs.opentheso.config.JsfPrettyUrlFilter;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.concept.model.ThesaurusPickerRow;
 import fr.cnrs.opentheso.concept.service.ConsultationCatalogService;
@@ -676,7 +677,8 @@ public class ThesaurusPickerBean implements Serializable {
         }
         FacesContext faces = FacesContext.getCurrentInstance();
         String ctx = faces != null ? faces.getExternalContext().getRequestContextPath() : "";
-        return ctx + "/index.xhtml?idt=" + thesaurusId.trim();
+        String path = JsfPrettyUrlFilter.conceptBrowserPath(thesaurusId.trim(), null);
+        return path == null ? "#" : ctx + path;
     }
 
     public void createThesaurus() {
