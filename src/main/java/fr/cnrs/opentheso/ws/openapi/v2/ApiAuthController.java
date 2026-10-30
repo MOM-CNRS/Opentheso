@@ -65,19 +65,27 @@ public class ApiAuthController {
         // Générer et stocker le token SSO en base (expire dans 5 minutes)
         String token = ssoTokenService.createToken(user.getId());
 
-        // Récupérer idc et idt depuis le body
         String idc = params != null ? params.getOrDefault("idc", "") : "";
         String idt = params != null ? params.getOrDefault("idt", "") : "";
-
-        // Construire l'URL avec les paramètres
-        StringBuilder redirectUrl = new StringBuilder("/?ssoToken=").append(token);
-        if (!idt.isEmpty()) redirectUrl.append("&idt=").append(idt);
-        if (!idc.isEmpty()) redirectUrl.append("&idc=").append(idc);
+        String redirectUrl = redirectPath(token, idt, idc);
 
         return ResponseEntity.ok(Map.of(
                 "token", token,
-                "redirectUrl", redirectUrl.toString(),
+                "redirectUrl", redirectUrl,
                 "expiresIn", "300"
         ));
+    }
+
+    /**
+     * Adresse ouverte par l'application tierce.
+     * Le jeton est à usage unique ; le filtre le retire ensuite pour laisser {@code /idt=&idc=}.
+     */
+    static String redirectPath(String token, String idt, String idc) {
+        String encodedToken = java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8);
+        String concept = fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPath(idt, idc);
+        if (concept == null) {
+            return "/?ssoToken=" + encodedToken;
+        }
+        return concept + "&ssoToken=" + encodedToken;
     }
 }

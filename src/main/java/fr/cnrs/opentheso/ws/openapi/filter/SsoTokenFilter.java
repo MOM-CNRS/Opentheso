@@ -27,22 +27,28 @@ public class SsoTokenFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
 
-        String ssoToken = request.getParameter("ssoToken");
+        String ssoToken = firstText(
+                request.getParameter("ssoToken"),
+                fr.cnrs.opentheso.config.JsfPrettyUrlFilter.pathParameter(request, "ssoToken"));
 
-        if (ssoToken != null && !ssoToken.isBlank()) {
+        if (ssoToken != null) {
             Integer userId = ssoTokenService.validateAndConsumeToken(ssoToken);
             if (userId != null) {
                 HttpSession session = request.getSession(true);
                 session.setAttribute("ssoUserId", userId);
                 session.setAttribute("ssoProcessed", false);
 
-                String idc = request.getParameter("idc");
-                String idt = request.getParameter("idt");
+                String idc = firstText(
+                        request.getParameter("idc"),
+                        fr.cnrs.opentheso.config.JsfPrettyUrlFilter.pathParameter(request, "idc"));
+                String idt = firstText(
+                        request.getParameter("idt"),
+                        fr.cnrs.opentheso.config.JsfPrettyUrlFilter.pathParameter(request, "idt"));
 
-                if (idc != null && !idc.isBlank()) {
+                if (idc != null) {
                     session.setAttribute("ssoIdc", idc);
                 }
-                if (idt != null && !idt.isBlank()) {
+                if (idt != null) {
                     session.setAttribute("ssoIdt", idt);
                 }
 
@@ -53,11 +59,21 @@ public class SsoTokenFilter implements Filter {
                 return;
             }
 
-            log.warn("SSO token invalide ou expiré : {}", ssoToken);
+            log.warn("Jeton SSO invalide ou expiré");
             response.sendRedirect(request.getContextPath() + "/index.xhtml?ssoError=true");
             return;
         }
 
         chain.doFilter(req, res);
+    }
+
+    private static String firstText(String first, String second) {
+        if (first != null && !first.isBlank()) {
+            return first.trim();
+        }
+        if (second != null && !second.isBlank()) {
+            return second.trim();
+        }
+        return null;
     }
 }

@@ -19,7 +19,8 @@ public class FilterConfig {
         FilterRegistrationBean<SsoTokenFilter> bean = new FilterRegistrationBean<>();
         bean.setFilter(new SsoTokenFilter(ssoTokenService));
         bean.addUrlPatterns("/*");
-        bean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+        // Avant la réécriture /idt=&idc=, sinon le jeton n'est jamais lu.
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return bean;
     }
 }

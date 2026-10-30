@@ -75,6 +75,15 @@ public class ConsultationShellBean implements Serializable {
 
     public void load() {
         notifySessionLifecycleMessages();
+        acceptPendingSso();
+        refreshCatalog();
+        retryPendingConsultationAfterLogin();
+        syncSelectionFromContext();
+        syncHomePanels();
+    }
+
+    /** Ouvre la session créée par {@code SsoTokenFilter} avant le contrôle d'accès. */
+    private void acceptPendingSso() {
         ssoSessionBridge.consumePendingSsoLogin();
         String ssoThesaurusId = ssoSessionBridge.consumePendingThesaurusId();
         if (StringUtils.isNotBlank(ssoThesaurusId)) {
@@ -84,10 +93,17 @@ public class ConsultationShellBean implements Serializable {
         if (StringUtils.isNotBlank(ssoConceptId)) {
             thesaurusContext.setIdConceptFromUri(ssoConceptId);
         }
-        refreshCatalog();
-        retryPendingConsultationAfterLogin();
-        syncSelectionFromContext();
-        syncHomePanels();
+    }
+
+    private void notifySsoError() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        String flag = facesContext.getExternalContext().getRequestParameterMap().get("ssoError");
+        if ("true".equalsIgnoreCase(StringUtils.trimToEmpty(flag))) {
+            MessageUtils.showErrorMessage(localeBean.getMsg("connect.sso.invalid"));
+        }
     }
 
     /**
@@ -109,6 +125,8 @@ public class ConsultationShellBean implements Serializable {
      * puis positionne l'écran sur l'accueil détail du thésaurus.
      */
     public void applyThesaurusFromUrl() {
+        acceptPendingSso();
+        notifySsoError();
         // Reset à chaque requête : évite un écran « Accès refusé » collant en session.
         thesaurusAccessDenied = false;
         String idFromUri = StringUtils.trimToNull(thesaurusContext.getIdThesoFromUri());

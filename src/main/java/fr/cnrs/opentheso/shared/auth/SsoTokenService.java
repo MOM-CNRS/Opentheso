@@ -26,7 +26,13 @@ public class SsoTokenService {
     }
 
     public Integer validateAndConsumeToken(String token) {
-        return ssoTokenRepository.findById(UUID.fromString(token))
+        UUID tokenId;
+        try {
+            tokenId = UUID.fromString(token);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+        return ssoTokenRepository.findById(tokenId)
                 .filter(t -> !t.isUsed())
                 .filter(t -> t.getExpiresAt().isAfter(Dates.nowDateTime()))
                 .map(t -> {

@@ -26,7 +26,7 @@ import java.util.Map;
  * Spring view controllers only accept GET; JSF partial AJAX posts to the browser URL (POST).
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class JsfPrettyUrlFilter extends OncePerRequestFilter {
 
     private static final String FORMER_UI_PREFIX = "/v2";
@@ -131,6 +131,18 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
     /** Reprend une query {@code idt=…&idc=…} et la réécrit en chemin. */
     public static String conceptBrowserPathFromQuery(String query) {
         return conceptBrowserPath(parseQuery(query));
+    }
+
+    /** Paramètre porté par {@code /idt=…&idc=…}, absent de la query. */
+    public static String pathParameter(HttpServletRequest request, String name) {
+        if (request == null || name == null || name.isBlank()) {
+            return null;
+        }
+        Map<String, String[]> params = conceptPathParameters(conceptRequestPath(request));
+        if (params == null) {
+            return null;
+        }
+        return first(params.get(name));
     }
 
     static String resolveForwardTarget(String servletPath) {

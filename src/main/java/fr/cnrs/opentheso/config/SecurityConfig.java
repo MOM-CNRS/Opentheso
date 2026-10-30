@@ -43,6 +43,7 @@ public class SecurityConfig {
 
         // Configuration commune aux deux modes
         http
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionFixation().none())
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(
@@ -83,6 +84,19 @@ public class SecurityConfig {
         }
 
         return http.build();
+    }
+
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        configuration.addAllowedOriginPattern("*");
+        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(false);
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
+                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
     }
 
     @Bean

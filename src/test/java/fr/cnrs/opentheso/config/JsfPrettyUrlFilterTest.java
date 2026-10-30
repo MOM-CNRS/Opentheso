@@ -19,6 +19,7 @@ class JsfPrettyUrlFilterTest {
         assertEquals("/idt=th217", JsfPrettyUrlFilter.conceptBrowserPath("th217", null));
         assertEquals("th217", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753").get("idt")[0]);
         assertEquals("1895753", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753").get("idc")[0]);
+        assertEquals("abc", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753&ssoToken=abc").get("ssoToken")[0]);
         assertEquals("/idt=th217&idc=1895753",
                 JsfPrettyUrlFilter.conceptBrowserPathFromQuery("idt=th217&idc=1895753"));
         assertEquals("/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/index"));
