@@ -54,7 +54,7 @@ public class ConsultationCatalogQueryRepository {
                               AND gt.id_group = :projectId
                         )
                    )
-                ORDER BY CAST(regexp_replace(t.id_thesaurus, '\\D', '', 'g') AS INTEGER) DESC
+                ORDER BY CAST(NULLIF(regexp_replace(t.id_thesaurus, '\\D', '', 'g'), '') AS NUMERIC) DESC NULLS LAST
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
                 .setParameter(NativeQueryParams.PROJECT_ID, projectId)

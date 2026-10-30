@@ -1508,6 +1508,7 @@ public class ThesaurusViewBean implements Serializable {
             case "replaces" -> "Remplace";
             case "alternative" -> "Alternative";
             case "title" -> "Titre";
+            case "maitre" -> "Maître";
             default -> name;
         };
     }

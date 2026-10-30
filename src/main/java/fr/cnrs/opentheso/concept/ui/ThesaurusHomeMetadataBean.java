@@ -14,6 +14,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 
@@ -45,6 +46,12 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     private List<String> dcmiResources = Collections.emptyList();
     @Getter
     private List<String> dcmiTypes = Collections.emptyList();
+    @Getter
+    @Setter
+    private String notice = "";
+    @Getter
+    @Setter
+    private boolean noticeError;
 
     public boolean isEditable() {
         Integer userId = userSession.getCurrentUserId();
@@ -95,14 +102,17 @@ public class ThesaurusHomeMetadataBean implements Serializable {
         dcmiTypes = withBooleanType(modifyThesaurusService.loadDcmiTypes());
         reloadRows(thesaurusId);
         editing = true;
+        clearNotice();
     }
 
     public void cancelEditing() {
         editing = false;
         rows = new ArrayList<>();
+        clearNotice();
     }
 
     public void addRow() {
+        clearNotice();
         if (!editing || !isEditable()) {
             return;
         }
@@ -112,6 +122,7 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     }
 
     public void onPropertyChanged(EditionMetadata row) {
+        clearNotice();
         if (row == null) {
             return;
         }
@@ -121,6 +132,7 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     }
 
     public void clearLanguageIfTyped(EditionMetadata row) {
+        clearNotice();
         if (row != null && StringUtils.isNotBlank(row.getType())) {
             row.setLanguage("");
         }
@@ -130,6 +142,7 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     }
 
     public void clearTypeIfLanguaged(EditionMetadata row) {
+        clearNotice();
         if (isMasterRow(row) || isBooleanRow(row)) {
             row.setLanguage("");
             return;
@@ -140,6 +153,7 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     }
 
     public void saveRow(EditionMetadata row) {
+        clearNotice();
         if (!editing || !isEditable() || row == null) {
             return;
         }
@@ -154,31 +168,35 @@ public class ThesaurusHomeMetadataBean implements Serializable {
                 }
                 reloadRows(thesaurusId);
                 refreshHome();
-                MessageUtils.showInformationMessage("Rôle du thésaurus enregistré");
+                inform("Rôle du thésaurus modifié");
                 return;
             }
             if (isBooleanRow(row)) {
                 row.setLanguage("");
             }
+            boolean created = row.getId() < 0;
             modifyThesaurusService.saveMetadata(thesaurusId, row);
             reloadRows(thesaurusId);
             refreshHome();
-            MessageUtils.showInformationMessage("Métadonnée enregistrée");
+            inform(metadataConfirmation(row, created));
         } catch (InvalidToolboxDataException e) {
-            MessageUtils.showErrorMessage(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
     public void deleteRow(EditionMetadata row) {
+        clearNotice();
         if (!editing || !isEditable() || row == null) {
             return;
         }
         if (isMasterRow(row)) {
-            MessageUtils.showErrorMessage("La propriété maitre ne peut pas être supprimée");
+            fail("La propriété maitre ne peut pas être supprimée");
             return;
         }
         if (row.getId() == -1) {
+            String message = metadataConfirmation(row, "deleted");
             rows.remove(row);
+            inform(message);
             return;
         }
         try {
@@ -186,9 +204,9 @@ public class ThesaurusHomeMetadataBean implements Serializable {
             modifyThesaurusService.deleteMetadata(thesaurusId, row.getId());
             reloadRows(thesaurusId);
             refreshHome();
-            MessageUtils.showInformationMessage("Métadonnée supprimée");
+            inform(metadataConfirmation(row, "deleted"));
         } catch (RuntimeException e) {
-            MessageUtils.showErrorMessage("Erreur lors de la suppression de la métadonnée");
+            fail("Erreur lors de la suppression de la métadonnée");
         }
     }
 
@@ -278,6 +296,69 @@ public class ThesaurusHomeMetadataBean implements Serializable {
     private static boolean isTrueOrFalse(String value) {
         String normalized = StringUtils.trimToEmpty(value).toLowerCase(Locale.ROOT);
         return normalized.equals("true") || normalized.equals("false");
+    }
+
+    private String metadataConfirmation(EditionMetadata row, boolean created) {
+        return metadataConfirmation(row, created ? "created" : "updated");
+    }
+
+    private String metadataConfirmation(EditionMetadata row, String action) {
+        String label = propertyLabel(row == null ? "" : row.getName());
+        String verb = switch (action) {
+            case "created" -> "enregistrée";
+            case "deleted" -> "supprimée";
+            default -> "modifiée";
+        };
+        String base = StringUtils.isBlank(label)
+                ? "Métadonnée " + verb
+                : "Métadonnée « " + label + " » " + verb;
+        String value = StringUtils.trimToEmpty(row == null ? "" : row.getValue());
+        return StringUtils.isBlank(value) ? base : base + " : " + value;
+    }
+
+    private String propertyLabel(String name) {
+        return switch (StringUtils.defaultString(name)) {
+            case "creator" -> "Créateur";
+            case "contributor" -> "Contributeur";
+            case "subject" -> "Sujet";
+            case "description" -> "Description";
+            case "publisher" -> "Éditeur";
+            case "date" -> "Date";
+            case "type" -> "Type";
+            case "format" -> "Format";
+            case "identifier" -> "Identifiant";
+            case "source" -> "Source";
+            case "language" -> "Langue";
+            case "relation" -> "Relation";
+            case "coverage" -> "Couverture";
+            case "rights" -> "Droits";
+            case "rightsHolder" -> "Titulaire des droits";
+            case "conformsTo" -> "Conforme à";
+            case "created" -> "Créé";
+            case "modified" -> "Modifié";
+            case "license" -> "Licence";
+            case "replaces" -> "Remplace";
+            case "alternative" -> "Alternative";
+            case "title" -> "Titre";
+            default -> StringUtils.defaultString(name);
+        };
+    }
+
+    private void inform(String message) {
+        notice = message;
+        noticeError = false;
+        MessageUtils.showInformationMessage(message);
+    }
+
+    private void fail(String message) {
+        notice = message;
+        noticeError = true;
+        MessageUtils.showErrorMessage(message);
+    }
+
+    private void clearNotice() {
+        notice = "";
+        noticeError = false;
     }
 
     private void refreshHome() {

@@ -618,6 +618,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
+      || hideConfirm("#previewMetadataConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
       || hideConfirm("#candReactivateConfirm") || hideConfirm("#candDeleteConfirm")
@@ -858,6 +859,23 @@ document.addEventListener("click", (e) => {
   if (act === "th-dc-toggle") {
     e.preventDefault();
     toggleThDcPanel(t);
+    return;
+  }
+  if (act === "th-dc-save-ask" || act === "th-dc-delete-ask") {
+    e.preventDefault();
+    askMetadataConfirm(act === "th-dc-delete-ask" ? "delete" : "save", t);
+    return;
+  }
+  if (act === "th-dc-confirm-dismiss") {
+    e.preventDefault();
+    metadataConfirmTarget = null;
+    if (typeof hideConfirm === "function") hideConfirm("#previewMetadataConfirm");
+    return;
+  }
+  if (act === "th-dc-confirm-modal") return;
+  if (act === "th-dc-confirm-go") {
+    e.preventDefault();
+    confirmMetadataAction();
     return;
   }
   if (act === "sb-toggle") {
@@ -2388,8 +2406,10 @@ function onV2Ajax(data) {
       applyStatusFilter();
       applySort();
       restoreSelection();
-      if (srcId.indexOf("previewMetadataForm") >= 0) {
+      const metadataForm = data.source && data.source.closest && data.source.closest("#previewMetadataForm");
+      if (srcId.indexOf("previewMetadataForm") >= 0 || metadataForm) {
         if (typeof restoreThDcPanel === "function") restoreThDcPanel();
+        showMetadataToast();
         return;
       }
       showLiveDetail();
@@ -2410,7 +2430,13 @@ function applyThDcOpen(root, open) {
   if (!root) return;
   root.classList.toggle("is-open", open);
   const btn = root.querySelector("[data-act='th-dc-toggle']");
-  if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+  if (!btn) return;
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  const label = open
+    ? (btn.getAttribute("data-label-close") || "Replier")
+    : (btn.getAttribute("data-label-open") || "Déplier");
+  btn.setAttribute("title", label);
+  btn.setAttribute("aria-label", label);
 }
 
 function toggleThDcPanel(t) {
@@ -2422,6 +2448,103 @@ function toggleThDcPanel(t) {
     sessionStorage.setItem(TH_DC_OPEN_KEY, open ? "1" : "0");
   } catch (ex) {}
 }
+
+let metadataConfirmTarget = null;
+let metadataPendingToast = "";
+let metadataPendingDetail = "";
+let metadataPendingKind = "update";
+
+function metadataNoticeText(id) {
+  const el = document.getElementById(id) || document.querySelector("[id$='" + id + "']");
+  if (!el) return "";
+  const raw = el.tagName === "INPUT" || el.tagName === "TEXTAREA" ? el.value : el.textContent;
+  return (raw || "").replace(/\s+/g, " ").trim();
+}
+
+function publishMetadataResult(text, error) {
+  const live = document.getElementById("previewMetadataLive");
+  if (live) {
+    live.textContent = text || "";
+    live.classList.toggle("is-error", !!error);
+    live.hidden = !text;
+  }
+  if (text && typeof toast === "function") toast(text, error ? { error: true } : { soft: true });
+}
+
+function showMetadataToast() {
+  const box = document.querySelector("[id$='previewMetadataMsgs']");
+  const item = box && box.querySelector(".th-dc-msg");
+  const fromServer = metadataNoticeText("previewMetadataNotice")
+    || (item ? (item.textContent || "").replace(/\s+/g, " ").trim() : "");
+  const error = metadataNoticeText("previewMetadataNoticeError") === "true"
+    || !!(item && item.classList.contains("is-error"));
+  const text = error ? (fromServer || metadataPendingToast) : (metadataPendingToast || fromServer);
+  metadataPendingToast = "";
+  if (!text) return;
+  publishMetadataResult(text, error);
+}
+
+function metadataConfirmDetail(row) {
+  if (!row) return "";
+  const name = row.querySelector("select.th-dc-name");
+  const nameText = name && name.selectedIndex >= 0 ? name.options[name.selectedIndex].text.trim() : "";
+  const input = row.querySelector("input.th-dc-value");
+  const boolSel = row.querySelector("select.th-dc-bool");
+  let value = "";
+  if (input) value = input.value.trim();
+  else if (boolSel && boolSel.selectedIndex >= 0) value = boolSel.options[boolSel.selectedIndex].text.trim();
+  if (nameText && value) return nameText + " : " + value;
+  return nameText || value;
+}
+
+function askMetadataConfirm(kind, source) {
+  const row = source.closest("tr");
+  const proxy = row && row.querySelector(kind === "delete" ? ".th-dc-delete-go" : ".th-dc-save-go");
+  const dlg = document.getElementById("previewMetadataConfirm");
+  if (!row || !proxy || !dlg || typeof showConfirm !== "function") return;
+  metadataConfirmTarget = proxy;
+  metadataPendingKind = kind === "delete" ? "delete" : (source.getAttribute("data-new") === "1" ? "save" : "update");
+  metadataPendingDetail = metadataConfirmDetail(row) || "—";
+  const mode = metadataPendingKind;
+  const title = document.getElementById("previewMetadataConfirmTitle");
+  const text = document.getElementById("previewMetadataConfirmText");
+  const go = document.getElementById("previewMetadataConfirmGo");
+  const detail = metadataConfirmDetail(row) || "—";
+  if (title) title.textContent = dlg.getAttribute("data-" + mode + "-title") || "";
+  if (text) text.textContent = (dlg.getAttribute("data-" + mode) || "").replace("{0}", detail);
+  if (go) {
+    go.textContent = dlg.getAttribute(kind === "delete" ? "data-go-delete" : "data-go-save") || go.textContent;
+    go.classList.toggle("is-danger", kind === "delete");
+  }
+  showConfirm("#previewMetadataConfirm");
+}
+
+function confirmMetadataAction() {
+  const target = metadataConfirmTarget;
+  metadataConfirmTarget = null;
+  const dlg = document.getElementById("previewMetadataConfirm");
+  const pattern = dlg ? (dlg.getAttribute("data-done-" + metadataPendingKind) || "") : "";
+  metadataPendingToast = pattern.replace("{0}", metadataPendingDetail || "—");
+  if (typeof hideConfirm === "function") hideConfirm("#previewMetadataConfirm");
+  if (!target) return;
+  if (target.classList.contains("th-dc-delete-go")) {
+    const tr = target.closest("tr");
+    if (tr) tr.hidden = true;
+  }
+  target.click();
+}
+
+window.onMetadataSaved = function (data) {
+  if (!data || data.status === "begin" || data.status === "complete") return;
+  if (data.status === "error") {
+    metadataPendingToast = "";
+    document.querySelectorAll("#previewMetadataForm tr[hidden]").forEach((tr) => { tr.hidden = false; });
+    publishMetadataResult("L'opération n'a pas pu être effectuée.", true);
+    return;
+  }
+  if (data.status !== "success") return;
+  showMetadataToast();
+};
 
 function restoreThDcPanel() {
   const root = document.querySelector("#previewMetadataForm .th-dc");

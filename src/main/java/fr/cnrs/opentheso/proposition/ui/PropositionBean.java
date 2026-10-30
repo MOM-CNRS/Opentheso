@@ -31,6 +31,9 @@ import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 import org.springframework.beans.factory.ObjectProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLEncoder;
@@ -46,6 +49,8 @@ import java.util.Map;
 @Named("propositionBean")
 @RequiredArgsConstructor
 public class PropositionBean implements Serializable {
+
+    private static final Logger log = LoggerFactory.getLogger(PropositionBean.class);
 
     private final transient PropositionReadService propositionReadService;
     private final transient PropositionMutationService propositionMutationService;
@@ -105,10 +110,14 @@ public class PropositionBean implements Serializable {
      * Badge header uniquement : met à jour les compteurs sans recharger la liste.
      */
     public void refreshBadgeCount() {
-        String thesaurusId = currentThesaurusId();
-        pendingCount = propositionReadService.countPending(thesaurusId);
-        totalCount = propositionReadService.countAll(thesaurusId);
-        requestBadgeUpdate();
+        try {
+            String thesaurusId = currentThesaurusId();
+            pendingCount = propositionReadService.countPending(thesaurusId);
+            totalCount = propositionReadService.countAll(thesaurusId);
+            requestBadgeUpdate();
+        } catch (RuntimeException ex) {
+            log.warn("Badge des propositions non rafraîchi", ex);
+        }
     }
 
     /**

@@ -155,7 +155,29 @@ class ThesaurusHomeMetadataBeanTest {
         assertEquals(2, bean.getRows().size());
         assertEquals("maitre", bean.getRows().get(0).getName());
         assertEquals(12, bean.getRows().get(1).getId());
-        messageUtils.verify(() -> MessageUtils.showInformationMessage("Métadonnée enregistrée"));
+        messageUtils.verify(() -> MessageUtils.showInformationMessage("Métadonnée « Titre » enregistrée : Pactols"));
+        assertEquals("Métadonnée « Titre » enregistrée : Pactols", bean.getNotice());
+        assertFalse(bean.isNoticeError());
+    }
+
+    @Test
+    void saveRow_confirmsUpdate() {
+        stubAdmin("TH1", 9, true);
+        when(modifyThesaurusService.loadMetadata("TH1")).thenReturn(List.of());
+        when(modifyThesaurusService.loadDcmiResources()).thenReturn(List.of("title"));
+        when(modifyThesaurusService.loadDcmiTypes()).thenReturn(List.of("string"));
+        bean.startEditing();
+        EditionMetadata row = EditionMetadata.emptyRow();
+        row.setId(12);
+        row.setName("title");
+        row.setValue("Pactols");
+        when(modifyThesaurusService.loadMetadata("TH1")).thenReturn(List.of(row));
+
+        bean.saveRow(row);
+
+        messageUtils.verify(() -> MessageUtils.showInformationMessage("Métadonnée « Titre » modifiée : Pactols"));
+        assertEquals("Métadonnée « Titre » modifiée : Pactols", bean.getNotice());
+        assertFalse(bean.isNoticeError());
     }
 
     @Test
@@ -199,6 +221,8 @@ class ThesaurusHomeMetadataBeanTest {
 
         verify(thesaurusViewBean, never()).refreshHomeOverview();
         messageUtils.verify(() -> MessageUtils.showErrorMessage("La valeur est obligatoire"));
+        assertEquals("La valeur est obligatoire", bean.getNotice());
+        assertTrue(bean.isNoticeError());
     }
 
     @Test
@@ -216,6 +240,8 @@ class ThesaurusHomeMetadataBeanTest {
         assertEquals(1, bean.getRows().size());
         assertEquals("maitre", bean.getRows().get(0).getName());
         verify(modifyThesaurusService, never()).deleteMetadata("TH1", -1);
+        messageUtils.verify(() -> MessageUtils.showInformationMessage("Métadonnée « Titre » supprimée"));
+        assertEquals("Métadonnée « Titre » supprimée", bean.getNotice());
     }
 
     @Test
@@ -237,7 +263,9 @@ class ThesaurusHomeMetadataBeanTest {
         verify(thesaurusViewBean).refreshHomeOverview();
         assertEquals(1, bean.getRows().size());
         assertEquals("maitre", bean.getRows().get(0).getName());
-        messageUtils.verify(() -> MessageUtils.showInformationMessage("Métadonnée supprimée"));
+        messageUtils.verify(() -> MessageUtils.showInformationMessage("Métadonnée « Créateur » supprimée : FRANTIQ"));
+        assertEquals("Métadonnée « Créateur » supprimée : FRANTIQ", bean.getNotice());
+        assertFalse(bean.isNoticeError());
     }
 
     @Test
@@ -302,7 +330,7 @@ class ThesaurusHomeMetadataBeanTest {
         verify(modifyThesaurusService).updateMasterRole("TH1", true);
         verify(modifyThesaurusService, never()).saveMetadata("TH1", master);
         assertTrue(bean.isMasterThesaurus());
-        messageUtils.verify(() -> MessageUtils.showInformationMessage("Rôle du thésaurus enregistré"));
+        messageUtils.verify(() -> MessageUtils.showInformationMessage("Rôle du thésaurus modifié"));
     }
 
     @Test
