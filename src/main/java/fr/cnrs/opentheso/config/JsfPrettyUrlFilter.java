@@ -29,6 +29,9 @@ import java.util.Map;
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class JsfPrettyUrlFilter extends OncePerRequestFilter {
 
+    /** Paramètre de chemin recopié pour survivre au forward vers {@code index.xhtml}. */
+    static final String PATH_ATTRIBUTE_PREFIX = "opentheso.concept.path.";
+
     private static final String FORMER_UI_PREFIX = "/v2";
     private static final String FORMER_PREVIEW_PREFIX = "/v2-preview";
 
@@ -93,6 +96,8 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
         String path = conceptRequestPath(request);
         Map<String, String[]> pathParams = conceptPathParameters(path);
         if (pathParams != null) {
+            pathParams = withQueryParameters(pathParams, request.getQueryString());
+            rememberPathAttributes(request, pathParams);
             request.getRequestDispatcher("/index.xhtml")
                     .forward(new ConceptPathRequest(request, pathParams), response);
             return;
@@ -131,6 +136,27 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
     /** Reprend une query {@code idt=…&idc=…} et la réécrit en chemin. */
     public static String conceptBrowserPathFromQuery(String query) {
         return conceptBrowserPath(parseQuery(query));
+    }
+
+    /**
+     * Relit {@code idc} (et les autres clés du chemin) quand le conteneur
+     * ne les expose plus comme paramètres après le forward.
+     */
+    public static String rememberedPathParameter(Map<String, Object> requestMap, String name) {
+        if (requestMap == null || name == null || name.isBlank()) {
+            return null;
+        }
+        Object stored = requestMap.get(PATH_ATTRIBUTE_PREFIX + name);
+        if (stored != null && hasText(stored.toString())) {
+            return stored.toString().trim();
+        }
+        Map<String, String[]> parsed = conceptPathParameters(forwardConceptPath(requestMap));
+        String fromPath = parsed == null ? null : first(parsed.get(name));
+        if (hasText(fromPath)) {
+            return fromPath.trim();
+        }
+        String fromQuery = first(parseQuery(text(requestMap.get("jakarta.servlet.forward.query_string"))).get(name));
+        return hasText(fromQuery) ? fromQuery.trim() : null;
     }
 
     /** Paramètre porté par {@code /idt=…&idc=…}, absent de la query. */
@@ -253,21 +279,114 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
         return params;
     }
 
+    /**
+     * Le chemin servlet s'arrête parfois avant {@code &} ({@code /idt=TH_1})
+     * alors que l'URI contient encore {@code &idc=…}. On garde le chemin le plus complet.
+     */
+    static String richestConceptPath(String servletPath, String pathInfo, String requestUri) {
+        String best = null;
+        int bestScore = -1;
+        for (String candidate : conceptPathCandidates(servletPath, pathInfo, requestUri)) {
+            Map<String, String[]> params = conceptPathParameters(candidate);
+            int score = params == null ? -1 : params.size();
+            if (score > bestScore) {
+                bestScore = score;
+                best = candidate;
+            }
+        }
+        return best;
+    }
+
     private static String conceptRequestPath(HttpServletRequest request) {
         String servletPath = request.getServletPath();
-        String path = servletPath == null ? "" : normalize(servletPath);
-        if (conceptPathParameters(path) != null) {
-            return path;
+        String pathInfo = request.getPathInfo();
+        String richest = richestConceptPath(servletPath, pathInfo, requestUriPath(request));
+        if (richest != null) {
+            return richest;
         }
+        String path = servletPath == null || servletPath.isEmpty() ? "/" : normalize(servletPath);
+        return path.isEmpty() ? "/" : path;
+    }
+
+    private static List<String> conceptPathCandidates(String servletPath, String pathInfo, String requestUri) {
+        List<String> candidates = new ArrayList<>();
+        addConceptCandidate(candidates, servletPath);
+        if (pathInfo != null && !pathInfo.isEmpty()) {
+            String base = servletPath == null ? "" : servletPath;
+            addConceptCandidate(candidates, base + pathInfo);
+        }
+        addConceptCandidate(candidates, requestUri);
+        return candidates;
+    }
+
+    private static void addConceptCandidate(List<String> candidates, String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return;
+        }
+        String path = raw.startsWith("/") ? raw : "/" + raw;
+        path = normalize(path);
+        if (!candidates.contains(path)) {
+            candidates.add(path);
+        }
+    }
+
+    private static String requestUriPath(HttpServletRequest request) {
         String uri = request.getRequestURI();
         String context = request.getContextPath() == null ? "" : request.getContextPath();
-        if (uri != null && uri.startsWith(context)) {
+        if (uri != null && !context.isEmpty() && uri.startsWith(context)) {
             uri = uri.substring(context.length());
         }
         if (uri == null || uri.isEmpty()) {
-            return path.isEmpty() ? "/" : path;
+            return null;
         }
         return normalize(decodePath(uri));
+    }
+
+    private static Map<String, String[]> withQueryParameters(Map<String, String[]> pathParams, String query) {
+        Map<String, String[]> merged = new LinkedHashMap<>(pathParams);
+        parseQuery(query).forEach((name, values) -> {
+            if (!merged.containsKey(name) && name.matches("[A-Za-z_][A-Za-z0-9_]*") && hasText(first(values))) {
+                merged.put(name, values);
+            }
+        });
+        return merged;
+    }
+
+    private static void rememberPathAttributes(HttpServletRequest request, Map<String, String[]> pathParams) {
+        pathParams.forEach((name, values) -> {
+            String value = first(values);
+            if (hasText(value)) {
+                request.setAttribute(PATH_ATTRIBUTE_PREFIX + name, value);
+            }
+        });
+    }
+
+    private static String forwardConceptPath(Map<String, Object> requestMap) {
+        return richestConceptPath(
+                text(requestMap.get("jakarta.servlet.forward.servlet_path")),
+                text(requestMap.get("jakarta.servlet.forward.path_info")),
+                forwardRequestUri(requestMap)
+        );
+    }
+
+    private static String forwardRequestUri(Map<String, Object> requestMap) {
+        String uri = text(requestMap.get("jakarta.servlet.forward.request_uri"));
+        if (uri == null) {
+            return null;
+        }
+        String context = text(requestMap.get("jakarta.servlet.forward.context_path"));
+        if (context != null && !context.isEmpty() && uri.startsWith(context)) {
+            uri = uri.substring(context.length());
+        }
+        return uri.isEmpty() ? null : decodePath(uri);
+    }
+
+    private static String text(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = value.toString();
+        return text.isEmpty() ? null : text;
     }
 
     private static String first(String[] values) {

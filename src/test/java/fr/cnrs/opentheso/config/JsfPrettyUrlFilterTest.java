@@ -2,6 +2,8 @@ package fr.cnrs.opentheso.config;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -19,6 +21,10 @@ class JsfPrettyUrlFilterTest {
         assertEquals("/idt=th217", JsfPrettyUrlFilter.conceptBrowserPath("th217", null));
         assertEquals("th217", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753").get("idt")[0]);
         assertEquals("1895753", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753").get("idc")[0]);
+        assertEquals("/idt=TH_1&idc=246692",
+                JsfPrettyUrlFilter.richestConceptPath("/idt=TH_1", null, "/idt=TH_1&idc=246692"));
+        assertEquals("246692", JsfPrettyUrlFilter.conceptPathParameters(
+                JsfPrettyUrlFilter.richestConceptPath("/idt=TH_1", null, "/idt=TH_1&idc=246692")).get("idc")[0]);
         assertEquals("abc", JsfPrettyUrlFilter.conceptPathParameters("/idt=th217&idc=1895753&ssoToken=abc").get("ssoToken")[0]);
         assertEquals("/idt=th217&idc=1895753",
                 JsfPrettyUrlFilter.conceptBrowserPathFromQuery("idt=th217&idc=1895753"));
@@ -48,6 +54,14 @@ class JsfPrettyUrlFilterTest {
         assertEquals("/proposition/propositions.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/proposition/propositions"));
         assertEquals("/graph/graphe.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/graph/graphe"));
         assertEquals("/thesaurus/consultation.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/thesaurus/consultation"));
+    }
+
+    @Test
+    void forwardedConceptPathStillExposesConceptId() {
+        assertEquals("246692", JsfPrettyUrlFilter.rememberedPathParameter(Map.of(
+                "jakarta.servlet.forward.servlet_path", "/idt=TH_1",
+                "jakarta.servlet.forward.request_uri", "/idt=TH_1&idc=246692"
+        ), "idc"));
     }
 
     @Test

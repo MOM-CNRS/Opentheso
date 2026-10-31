@@ -114,47 +114,34 @@ public class RestRDFHelper {
             idTheso = groupService.getIdThesaurusFromArkId(naan + "/" + idArk);
             choix = Choix.GROUP;
         }        
-        if(StringUtils.isEmpty(idTheso)){
+        if (StringUtils.isEmpty(idTheso)) {
             return null;
         }
-        
-        var nodePreference = preferenceService.getThesaurusPreferences(idTheso);
-        switch (choix) {
-            case CONCEPT:
+
+        return switch (choix) {
+            case CONCEPT -> {
                 String idConcept = conceptService.getIdConceptFromArkId(naan + "/" + idArk, idTheso);
-                if(StringUtils.isEmpty(idConcept)){    
-                    return null;
-                }     
-                if (nodePreference == null) {
-                    return null;
-                }
-                return nodePreference.getCheminSite() + "?idc=" + idConcept + "&idt=" + idTheso;                  
-
-            case GROUP:
+                yield StringUtils.isEmpty(idConcept) ? null : localBrowsePath(idTheso, idConcept, null);
+            }
+            case GROUP -> {
                 String idGroup = groupService.getIdGroupFromArkId(naan + "/" + idArk, idTheso);
-                if(StringUtils.isEmpty(idGroup)){    
-                    return null;
-                }     
-                if (nodePreference == null) {
-                    return null;
-                }
-                return nodePreference.getCheminSite() + "?idg=" + idGroup + "&idt=" + idTheso;                  
-            case THESO:
-                // cas où c'est l'identifiant d'un thésaurus
-                idTheso = thesaurusService.getIdThesaurusFromArkId(naan + "/" + idArk);
-                if(StringUtils.isEmpty(idTheso)){    
-                    return null;
-                }
+                yield StringUtils.isEmpty(idGroup) ? null : localBrowsePath(idTheso, null, idGroup);
+            }
+            case THESO -> localBrowsePath(idTheso, null, null);
+        };
+    }
 
-                if (nodePreference == null) {
-                    return null;
-                }
-                return nodePreference.getCheminSite() + "?idt=" + idTheso;                
-              
-            default:
-                return null;
+    /** Page locale du thésaurus, du concept ou de la collection. */
+    static String localBrowsePath(String thesaurusId, String conceptId, String groupId) {
+        if (StringUtils.isNotBlank(conceptId)) {
+            return fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPath(thesaurusId, conceptId);
         }
-
+        if (StringUtils.isNotBlank(groupId)) {
+            return fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPathFromQuery(
+                    "idt=" + java.net.URLEncoder.encode(thesaurusId, java.nio.charset.StandardCharsets.UTF_8)
+                            + "&idg=" + java.net.URLEncoder.encode(groupId, java.nio.charset.StandardCharsets.UTF_8));
+        }
+        return fr.cnrs.opentheso.config.JsfPrettyUrlFilter.conceptBrowserPath(thesaurusId, null);
     }
 
     public NodeFullConcept getNodeFullConcept(String idThesaurus, String idConcept, String lang) {

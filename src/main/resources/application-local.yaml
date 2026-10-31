@@ -31,7 +31,7 @@ primefaces:
 
 app:
   security:
-    keycloak-enabled: true  # ou false pour désactiver
+    keycloak-enabled: true
   neo4j:
     enabled: false
 
@@ -43,8 +43,6 @@ management:
 spring:
   application:
     name: opentheso
-
-  # Boot 4 : Jackson 3 par défaut ; préférer Jackson 2 tant que le code utilise com.fasterxml.jackson
   http:
     converters:
       preferred-json-mapper: jackson2
@@ -54,10 +52,10 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 100MB  # Définit la taille max d'un fichier
-      max-request-size: 100MB  # Taille totale max de la requête
+      max-file-size: 100MB
+      max-request-size: 100MB
   datasource:
-    url: jdbc:postgresql://localhost:5432/
+    url: jdbc:postgresql://localhost:5432/opentheso6 #opentheso_beta big_opentheso
     password: postgres
     username: postgres
   jpa:

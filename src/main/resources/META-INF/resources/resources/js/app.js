@@ -2777,6 +2777,13 @@ document.addEventListener("click", function (e) {
 
 var params = new URLSearchParams(location.search);
 
+function pageParam(name) {
+  const fromQuery = params.get(name);
+  if (fromQuery) return fromQuery;
+  if (typeof currentConceptParam === "function") return currentConceptParam(name) || "";
+  return "";
+}
+
 if (SCREEN === "atelier") {
   setBatch(params.get("obj") || "alignements", params.get("op"));
 }
@@ -2786,20 +2793,20 @@ if (SCREEN === "synchronisation") {
 if (SCREEN === "portail") {
   portalPublishPollTick();
 }
-if ((IS_CONSULT || SCREEN === "accueil") && params.get("create") === "concept") {
+if ((IS_CONSULT || SCREEN === "accueil") && pageParam("create") === "concept") {
   createConceptDraft({
     getAttribute: (name) => {
-      if (name === "data-pref") return params.get("pref") || "";
-      if (name === "data-id") return params.get("idc") || "";
+      if (name === "data-pref") return pageParam("pref") || "";
+      if (name === "data-id") return pageParam("idc") || "";
       return "";
     }
   });
 }
-if ((IS_CONSULT || SCREEN === "accueil") && params.get("create") === "facet") {
+if ((IS_CONSULT || SCREEN === "accueil") && pageParam("create") === "facet") {
   createFacetDraft({
     getAttribute: (name) => {
-      if (name === "data-pref") return params.get("pref") || "";
-      if (name === "data-id") return params.get("idc") || "";
+      if (name === "data-pref") return pageParam("pref") || "";
+      if (name === "data-id") return pageParam("idc") || "";
       return "";
     }
   });
@@ -2814,9 +2821,9 @@ if (SCREEN === "candidats" && (params.get("new") === "1" || params.get("pref") |
   });
 }
 if (IS_CONSULT || SCREEN === "accueil") {
-  const q = params.get("q");
-  const id = params.get("id") || params.get("idc");
-  const view = params.get("view");
+  const q = pageParam("q");
+  const id = pageParam("id") || pageParam("idc");
+  const view = pageParam("view");
   if (q) {
     if (input) input.value = q;
     if (clear) clear.hidden = !q;
@@ -2825,7 +2832,7 @@ if (IS_CONSULT || SCREEN === "accueil") {
     if (typeof showLiveDetail === "function") showLiveDetail();
     paint();
   } else if (id) {
-    if (!openLiveDetail(id, params.get("type") || "")) {
+    if (!openLiveDetail(id, pageParam("type") || "")) {
       openConcept(id);
     }
   } else if (IS_CONSULT && view) {

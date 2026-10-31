@@ -1005,14 +1005,15 @@ public class Rest_new {
 ////////////////////////////////////////////////////////////////////////////////////
 
     // pour faire la redirection entre un IdArk et l'URL Opentheso
-    @GetMapping(
-            value = {
-                    "/ark:/{naan}/{idArk}",   // ark:/naan/id
-                    "/ark:{naan}/{idArk}"     // ark:naan/id
-            },
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getUriFromArk(@PathVariable("naan") String naan,
-                                           @PathVariable("idArk") String arkId) throws URISyntaxException {
+    @GetMapping({
+            "/ark:/{naan}/{idArk}",
+            "/ark:{naan}/{idArk}"
+    })
+    public ResponseEntity<?> getUriFromArk(
+            @PathVariable("naan") String naan,
+            @PathVariable("idArk") String arkId,
+            jakarta.servlet.http.HttpServletRequest request
+    ) throws URISyntaxException {
 
         if (!org.springframework.util.StringUtils.hasText(naan) || !org.springframework.util.StringUtils.hasText(arkId)) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(messageEmptyJson());
@@ -1022,8 +1023,12 @@ public class Rest_new {
         if (webUrl == null) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(getJsonMessage("Ark ID does not exist"));
         }
+        String context = request.getContextPath();
+        if (context != null && !context.isBlank() && !"/".equals(context) && webUrl.startsWith("/")) {
+            webUrl = context + webUrl;
+        }
 
-        return ResponseEntity.status(307) // 307 corresponds to temporary redirect
+        return ResponseEntity.status(307)
                 .location(new URI(webUrl))
                 .build();
     }

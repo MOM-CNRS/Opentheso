@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.ui;
 
+import fr.cnrs.opentheso.config.JsfPrettyUrlFilter;
 import fr.cnrs.opentheso.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.concept.model.BreadcrumbStep;
 import fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem;
@@ -130,6 +131,7 @@ public class ThesaurusViewBean implements Serializable {
     private boolean candidateRejected;
     @Getter
     private boolean detailRequested;
+    private boolean openedConceptFromRequest;
     @Getter
     private int branchConceptCount;
     @Getter
@@ -392,6 +394,21 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public void restoreOpenedConcept() {
+        ensureOpenedConceptFromRequest();
+    }
+
+    /**
+     * La fiche est rendue après {@code showThesaurusHome}. On rouvre {@code idc}
+     * au moment du rendu, quand les paramètres du chemin sont disponibles.
+     */
+    private void ensureOpenedConceptFromRequest() {
+        if (openedConceptFromRequest) {
+            return;
+        }
+        openedConceptFromRequest = true;
+        if (detailRequested && StringUtils.isNotBlank(selectedId)) {
+            return;
+        }
         restoreOpenedConcept(
                 firstNonBlank(requestParameter("idc"), requestParameter("id")),
                 requestParameter("type")
@@ -440,7 +457,16 @@ public class ThesaurusViewBean implements Serializable {
         if (facesContext == null || StringUtils.isBlank(name)) {
             return "";
         }
-        return StringUtils.trimToEmpty(facesContext.getExternalContext().getRequestParameterMap().get(name));
+        String fromParameter = StringUtils.trimToNull(
+                facesContext.getExternalContext().getRequestParameterMap().get(name));
+        if (fromParameter != null) {
+            return fromParameter;
+        }
+        String fromPath = JsfPrettyUrlFilter.rememberedPathParameter(
+                facesContext.getExternalContext().getRequestMap(),
+                name
+        );
+        return StringUtils.trimToEmpty(fromPath);
     }
 
     public List<ThesaurusTreeNode> getTreeRoots() {
@@ -531,6 +557,7 @@ public class ThesaurusViewBean implements Serializable {
         selectedKind = "";
         selectedId = "";
         detailRequested = false;
+        openedConceptFromRequest = false;
         revealId = "";
         revealedConceptId = "";
         resetConceptExtras();
@@ -880,6 +907,7 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public boolean isDetailVisible() {
+        ensureOpenedConceptFromRequest();
         return selectedConcept != null || selectedFacet != null;
     }
 
