@@ -472,13 +472,64 @@ class ConsultationShellBeanTest {
     }
 
     @Test
+    void applyThesaurusFromUrl_redirectsPrivateThesaurusWithoutOpeningIt() throws Exception {
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listProjects(null, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr")).thenReturn(List.of());
+        when(thesaurusConsultationAccessPolicy.canConsult("PRIV", false)).thenReturn(false);
+        when(thesaurusConsultationAccessPolicy.isPrivateThesaurus("PRIV")).thenReturn(true);
+        when(thesaurusContext.getIdThesoFromUri()).thenReturn(null);
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            when(facesContext.getExternalContext()).thenReturn(externalContext);
+            when(facesContext.getResponseComplete()).thenReturn(false);
+            when(externalContext.getRequestParameterMap()).thenReturn(Map.of("idt", "PRIV", "idc", "246692"));
+            when(externalContext.getRequestContextPath()).thenReturn("");
+
+            consultationShellBean.applyThesaurusFromUrl();
+
+            verify(externalContext, org.mockito.Mockito.atLeastOnce()).redirect("/acces-refuse.xhtml");
+        }
+
+        assertTrue(consultationShellBean.isThesaurusAccessDenied());
+        verify(thesaurusContext, org.mockito.Mockito.never()).selectThesaurus("PRIV");
+    }
+
+    @Test
+    void applyThesaurusFromUrl_redirectsUnknownCombination() throws Exception {
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listProjects(null, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr")).thenReturn(List.of());
+        when(thesaurusConsultationAccessPolicy.canConsult("NOPE", false)).thenReturn(false);
+        when(thesaurusConsultationAccessPolicy.isPrivateThesaurus("NOPE")).thenReturn(false);
+        when(thesaurusContext.getIdThesoFromUri()).thenReturn(null);
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            when(facesContext.getExternalContext()).thenReturn(externalContext);
+            when(facesContext.getResponseComplete()).thenReturn(false);
+            when(externalContext.getRequestParameterMap()).thenReturn(Map.of("idt", "NOPE", "idc", "12"));
+            when(externalContext.getRequestContextPath()).thenReturn("");
+
+            consultationShellBean.applyThesaurusFromUrl();
+
+            verify(externalContext, org.mockito.Mockito.atLeastOnce())
+                    .redirect("/concept-introuvable.xhtml?theso=NOPE&concept=12");
+        }
+    }
+
+    @Test
     void dismissThesaurusAccessDenied_clearsStateAndRedirects() throws Exception {
         consultationShellBean.setThesaurusAccessDenied(true);
 
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
             faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
             when(facesContext.getExternalContext()).thenReturn(externalContext);
-            when(facesContext.getResponseComplete()).thenReturn(false);
             when(externalContext.getRequestContextPath()).thenReturn("/ot");
 
             consultationShellBean.dismissThesaurusAccessDenied();

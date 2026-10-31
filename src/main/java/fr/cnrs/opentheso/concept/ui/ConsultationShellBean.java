@@ -125,6 +125,9 @@ public class ConsultationShellBean implements Serializable {
      * puis positionne l'écran sur l'accueil détail du thésaurus.
      */
     public void applyThesaurusFromUrl() {
+        if (BrowseErrorRedirect.alreadyHandled()) {
+            return;
+        }
         acceptPendingSso();
         notifySsoError();
         // Reset à chaque requête : évite un écran « Accès refusé » collant en session.
@@ -135,6 +138,12 @@ public class ConsultationShellBean implements Serializable {
             if (facesContext != null) {
                 idFromUri = StringUtils.trimToNull(
                         facesContext.getExternalContext().getRequestParameterMap().get("idt"));
+                if (idFromUri == null) {
+                    idFromUri = StringUtils.trimToNull(
+                            fr.cnrs.opentheso.config.JsfPrettyUrlFilter.rememberedPathParameter(
+                                    facesContext.getExternalContext().getRequestMap(),
+                                    "idt"));
+                }
             }
         }
         if (idFromUri == null && userSession.isLoggedIn()) {
@@ -149,12 +158,63 @@ public class ConsultationShellBean implements Serializable {
         // Le catalogue shell peut être vide / filtré par projet : on le recharge
         // pour récupérer titre + langue source, sinon fallback selectThesaurus(id).
         refreshCatalog();
-        applyThesaurusSelection(selectedThesaurusId);
+        // denyThesaurusAccess() vide selectedThesaurusId : on garde l'id demandé.
+        String requestedThesaurusId = selectedThesaurusId;
+        applyThesaurusSelection(requestedThesaurusId);
+        if (redirectIfBrowseForbidden(requestedThesaurusId)) {
+            return;
+        }
         conceptSelectionContext.clear();
         conceptTreeRefreshState.requestRefresh();
         syncSelectionFromContext();
         syncHomePanels();
         safeClearSearchResults();
+    }
+
+    /**
+     * Thésaurus privé inaccessible : page dédiée, sans fiche.
+     * Thésaurus inconnu avec un concept demandé : page « combinaison introuvable ».
+     *
+     * @return {@code true} si la réponse est déjà une redirection
+     */
+    private boolean redirectIfBrowseForbidden(String thesaurusId) {
+        if (BrowseErrorRedirect.alreadyHandled()) {
+            return true;
+        }
+        if (!thesaurusAccessDenied || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        String conceptId = requestConceptId();
+        selectedThesaurusId = null;
+        conceptSelectionContext.clear();
+        if (thesaurusConsultationAccessPolicy.isPrivateThesaurus(thesaurusId)) {
+            BrowseErrorRedirect.toPrivateThesaurus();
+            return BrowseErrorRedirect.alreadyHandled();
+        }
+        if (conceptId != null) {
+            BrowseErrorRedirect.toConceptMissing(thesaurusId, conceptId);
+            return BrowseErrorRedirect.alreadyHandled();
+        }
+        return false;
+    }
+
+    private String requestConceptId() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return null;
+        }
+        var parameters = facesContext.getExternalContext().getRequestParameterMap();
+        String conceptId = StringUtils.trimToNull(parameters.get("idc"));
+        if (conceptId == null) {
+            conceptId = StringUtils.trimToNull(parameters.get("id"));
+        }
+        if (conceptId != null) {
+            return conceptId;
+        }
+        return StringUtils.trimToNull(fr.cnrs.opentheso.config.JsfPrettyUrlFilter.rememberedPathParameter(
+                facesContext.getExternalContext().getRequestMap(),
+                "idc"
+        ));
     }
 
     /**
@@ -376,6 +436,9 @@ public class ConsultationShellBean implements Serializable {
     }
 
     private void applyThesaurusSelection(String thesaurusId) {
+        if (BrowseErrorRedirect.alreadyHandled()) {
+            return;
+        }
         if (StringUtils.isBlank(thesaurusId)) {
             clearThesaurusSelection();
             thesaurusAccessDenied = false;
@@ -410,6 +473,9 @@ public class ConsultationShellBean implements Serializable {
         }
         refreshThesaurusOptions();
         applyThesaurusSelection(thesaurusId);
+        if (BrowseErrorRedirect.alreadyHandled()) {
+            return false;
+        }
         syncSelectionFromContext();
         return !thesaurusAccessDenied && hasSelectedThesaurus();
     }
@@ -418,6 +484,7 @@ public class ConsultationShellBean implements Serializable {
         pendingConsultationThesaurusId = StringUtils.trimToNull(thesaurusId);
         thesaurusAccessDenied = true;
         clearThesaurusSelection();
+        redirectIfBrowseForbidden(thesaurusId);
     }
 
     /**

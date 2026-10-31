@@ -152,8 +152,7 @@ public class ThesaurusViewBean implements Serializable {
         if (facesContext == null) {
             return;
         }
-        String idt = StringUtils.trimToNull(
-                facesContext.getExternalContext().getRequestParameterMap().get("idt"));
+        String idt = StringUtils.trimToNull(requestParameter("idt"));
         if (idt == null) {
             return;
         }
@@ -402,17 +401,26 @@ public class ThesaurusViewBean implements Serializable {
      * au moment du rendu, quand les paramètres du chemin sont disponibles.
      */
     private void ensureOpenedConceptFromRequest() {
-        if (openedConceptFromRequest) {
+        if (openedConceptFromRequest || BrowseErrorRedirect.alreadyHandled()) {
             return;
         }
         openedConceptFromRequest = true;
+        if (consultationShellBean.isThesaurusAccessDenied()) {
+            return;
+        }
         if (detailRequested && StringUtils.isNotBlank(selectedId)) {
             return;
         }
-        restoreOpenedConcept(
-                firstNonBlank(requestParameter("idc"), requestParameter("id")),
-                requestParameter("type")
-        );
+        String conceptId = firstNonBlank(requestParameter("idc"), requestParameter("id"));
+        if (StringUtils.isBlank(conceptId)) {
+            return;
+        }
+        restoreOpenedConcept(conceptId, requestParameter("type"));
+        if (selectedConcept == null && selectedFacet == null) {
+            detailRequested = false;
+            selectedId = "";
+            BrowseErrorRedirect.toConceptMissing(requestParameter("idt"), conceptId);
+        }
     }
 
     public void restoreOpenedConcept(String conceptId, String nodeType) {
@@ -552,6 +560,9 @@ public class ThesaurusViewBean implements Serializable {
      * Accueil détail du thésaurus (pas de concept ouvert) — utilisé depuis le picker.
      */
     public void showThesaurusHome() {
+        if (BrowseErrorRedirect.alreadyHandled()) {
+            return;
+        }
         selectedConcept = null;
         selectedFacet = null;
         selectedKind = "";
