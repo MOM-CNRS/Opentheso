@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.services.ThesaurusService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -20,6 +21,15 @@ class ArkBrowseRedirectTest {
         assertTrue(matcher.matches());
         assertEquals("55555", matcher.group(1));
         assertEquals("df-wl1h0lrqjw621hbc8v0t-4", matcher.group(2));
+    }
+
+    @Test
+    void missingArk_redirectsBrowserToErrorPage() {
+        assertTrue(ArkBrowseRedirectFilter.prefersHtml("text/html,application/xhtml+xml"));
+        assertTrue(ArkBrowseRedirectFilter.prefersHtml(null));
+        assertFalse(ArkBrowseRedirectFilter.prefersHtml("application/json"));
+        assertEquals("/ark-introuvable.xhtml?ark=26678%2Finconnu",
+                ArkBrowseRedirectFilter.missingArkPage("", "26678", "inconnu"));
     }
 
     @Test
