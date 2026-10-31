@@ -29,8 +29,8 @@ public class ApiKeyInterceptor implements HandlerInterceptor {
 
         String uri = request.getRequestURI();
 
-        // Réconciliation OpenRefine et export lancé depuis l'interface (session, pas de clé API).
-        if (uri.contains("/reconcile") || uri.contains("/api/selection-export")) {
+        // Écritures lancées depuis l'interface : session JSF, pas de clé API.
+        if (uri.contains("/reconcile") || isSessionWrite(uri)) {
             return true;
         }
 
@@ -57,5 +57,15 @@ public class ApiKeyInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    static boolean isSessionWrite(String uri) {
+        if (uri == null) {
+            return false;
+        }
+        return uri.contains("/api/selection-export")
+                || uri.endsWith("/api/account/tree-status")
+                || uri.endsWith("/api/account/table-cols")
+                || uri.endsWith("/api/account/concept-blocks");
     }
 }

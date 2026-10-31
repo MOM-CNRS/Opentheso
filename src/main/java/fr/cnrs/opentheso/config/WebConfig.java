@@ -24,10 +24,16 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**", "/openapi/**");
 
         // Clé API pour les écritures /api/** (POST, PUT, DELETE).
-        // L'export lancé depuis l'interface utilise la session, pas une clé API.
+        // L'export et les préférences d'affichage utilisent la session, pas une clé API.
         registry.addInterceptor(apiKeyInterceptor)
                 .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/selection-export", "/api/selection-export/**");
+                .excludePathPatterns(
+                        "/api/selection-export",
+                        "/api/selection-export/**",
+                        "/api/account/tree-status",
+                        "/api/account/table-cols",
+                        "/api/account/concept-blocks"
+                );
     }
 
     // CORS

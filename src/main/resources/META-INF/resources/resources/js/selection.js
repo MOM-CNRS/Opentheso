@@ -51,6 +51,50 @@ function persistTreeStatus() {
   }, 180);
 }
 
+function flushUserPreferences() {
+  if (document.body.getAttribute("data-logged-in") !== "1") {
+    return Promise.reject(new Error("auth"));
+  }
+  clearTimeout(persistTableCols._t);
+  clearTimeout(persistTreeStatus._t);
+  if (typeof persistCardLayout === "function") clearTimeout(persistCardLayout._t);
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  const calls = [
+    ["data-tree-status", "/api/account/tree-status"],
+    ["data-table-cols", "/api/account/table-cols"],
+    ["data-card-layout", "/api/account/concept-blocks"]
+  ];
+  return Promise.all(calls.map(([attr, path]) => {
+    const body = document.body.getAttribute(attr);
+    if (!body) return Promise.resolve();
+    return fetch(ctx + path, {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: headers,
+      body: body
+    }).then((res) => {
+      if (!res.ok) throw new Error(String(res.status));
+    });
+  }));
+}
+
+function showPrefSaveToast(ok) {
+  const root = $("#prefSaveToast");
+  if (!ok) {
+    const fail = (root && root.getAttribute("data-msg-error")) || "L'enregistrement a échoué. Réessayez.";
+    if (typeof toast === "function") toast(fail);
+    return;
+  }
+  if (!root) return;
+  const txt = $("#prefSaveToastTxt");
+  const message = root.getAttribute("data-msg-ok");
+  if (txt && message) txt.textContent = message;
+  root.hidden = false;
+  clearTimeout(root._t);
+  root._t = setTimeout(() => { root.hidden = true; }, 2200);
+}
+
 function resetTreeStatusPref() {
   if (document.body.getAttribute("data-logged-in") !== "1") return;
   state.statusSet = new Set(TREE_STATUS_DEFAULT);

@@ -132,6 +132,33 @@
                     </div>
                   </div>
                 </div>
+                <div class="fsave">
+                  <button type="button" class="fsave-btn" data-act="pref-save-ask">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    #{localeBean.getMsg('save')}
+                  </button>
+                </div>
+                <div class="block-overlay confirm-overlay" id="prefSaveConfirm" hidden="hidden"
+                     data-act="pref-save-dismiss" role="presentation">
+                  <div class="confirm-modal" role="dialog" aria-modal="true"
+                       aria-labelledby="prefSaveConfirmTitle" data-act="pref-save-modal">
+                    <div class="confirm-h" id="prefSaveConfirmTitle">#{localeBean.getMsg('profile.prefs.saveConfirm.title')}</div>
+                    <p class="confirm-p">#{localeBean.getMsg('profile.prefs.saveConfirm.body')}</p>
+                    <div class="confirm-actions">
+                      <button type="button" class="bo-btn ghost confirm-cancel" data-act="pref-save-dismiss">#{localeBean.getMsg('cancel')}</button>
+                      <button type="button" class="bo-btn primary" data-act="pref-save-go">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        #{localeBean.getMsg('save')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-toast above" id="prefSaveToast" hidden="hidden"
+                     data-msg-ok="#{localeBean.getMsg('profile.prefs.saved')}"
+                     data-msg-error="#{localeBean.getMsg('profile.prefs.saveFailed')}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span id="prefSaveToastTxt">#{localeBean.getMsg('profile.prefs.saved')}</span>
+                </div>
               </div>
             </div>
           </div>

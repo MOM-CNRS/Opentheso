@@ -2999,6 +2999,8 @@ a.fsave-btn{color:#fff;text-decoration:none}
 .st-server:not(:has(> .bo-card-h .st-sw-input:checked)) .st-server-body{opacity:.55}
 .st-server:not(:has(> .bo-card-h .st-sw-input:checked)) .st-server-body .st-input,
 .st-server:not(:has(> .bo-card-h .st-sw-input:checked)) .st-server-body .st-sw{cursor:not-allowed}
+.st-server.st-ark-local:not(:has(> .bo-card-h .st-sw-input:checked)) .st-server-body .st-input,
+.st-server.st-ark-local:not(:has(> .bo-card-h .st-sw-input:checked)) .st-server-body .st-sw{pointer-events:none}
 .st-server-body .st-sw:has(input:disabled){cursor:not-allowed;pointer-events:none}
 .st-input:disabled{background:var(--surface-2);color:var(--ink-3);cursor:not-allowed;pointer-events:none}
 .bo-card-h .st-sw{margin-top:0;margin-left:auto}

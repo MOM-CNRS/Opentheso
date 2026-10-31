@@ -485,7 +485,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card is-closed st-server#{thesaurusIdentifierBean.preference.useArkLocal ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server st-ark-local#{thesaurusIdentifierBean.preference.useArkLocal ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
                     <button type="button" class="st-card-tog" aria-expanded="false">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
@@ -506,31 +506,30 @@
                         <div class="st-toggle-l">Générer l'identifiant Ark en majuscules</div>
                       </div>
                       <label class="st-sw">
-                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                        <h:selectBooleanCheckbox id="previewUppercaseForArk" styleClass="st-sw-input"
                                                  value="#{thesaurusIdentifierBean.preference.uppercaseForArk}"
-                                                 title="Générer l'identifiant Ark en majuscules"
-                                                 disabled="#{not thesaurusIdentifierBean.preference.useArkLocal}"/>
+                                                 title="Générer l'identifiant Ark en majuscules"/>
                       </label>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Votre Naan</div>
                       <div class="st-row-c">
-                        <h:inputText styleClass="st-input" value="#{thesaurusIdentifierBean.preference.naanArkLocal}"
-                                     disabled="#{not thesaurusIdentifierBean.preference.useArkLocal}"/>
+                        <h:inputText id="previewNaanArkLocal" styleClass="st-input"
+                                     value="#{thesaurusIdentifierBean.preference.naanArkLocal}"/>
                       </div>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Préfixe Ark</div>
                       <div class="st-row-c">
-                        <h:inputText styleClass="st-input" value="#{thesaurusIdentifierBean.preference.prefixArkLocal}"
-                                     disabled="#{not thesaurusIdentifierBean.preference.useArkLocal}"/>
+                        <h:inputText id="previewPrefixArkLocal" styleClass="st-input"
+                                     value="#{thesaurusIdentifierBean.preference.prefixArkLocal}"/>
                       </div>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Taille de l'identifiant Ark</div>
                       <div class="st-row-c">
-                        <h:inputText styleClass="st-input" value="#{thesaurusIdentifierBean.preference.sizeIdArkLocal}"
-                                     disabled="#{not thesaurusIdentifierBean.preference.useArkLocal}"/>
+                        <h:inputText id="previewSizeIdArkLocal" styleClass="st-input"
+                                     value="#{thesaurusIdentifierBean.preference.sizeIdArkLocal}"/>
                       </div>
                     </div>
                     <div class="st-note">(*) La génération des identifiants ARK respecte l'algorithme de vérification NOID (NOID CHECK DIGIT ALGORITHM). Exemple : bLH-ZKKF563R-D</div>

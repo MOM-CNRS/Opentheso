@@ -111,6 +111,22 @@ function bindPrefSwitches() {
 }
 
 const settingsOpenCards = new Set();
+const arkLocalFieldIds = ["previewNaanArkLocal", "previewPrefixArkLocal", "previewSizeIdArkLocal"];
+const arkLocalDraft = {};
+
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  if (!el || arkLocalFieldIds.indexOf(el.id) < 0) return;
+  arkLocalDraft[el.id] = el.value;
+});
+
+function restoreArkLocalDraft() {
+  arkLocalFieldIds.forEach((id) => {
+    if (!Object.prototype.hasOwnProperty.call(arkLocalDraft, id)) return;
+    const el = document.getElementById(id);
+    if (el && el.value !== arkLocalDraft[id]) el.value = arkLocalDraft[id];
+  });
+}
 
 function settingsCardTitle(card) {
   const title = card && card.querySelector(".st-card-tog .bo-card-t");
@@ -141,6 +157,7 @@ function restoreSettingsCards() {
     const card = tog.closest(".bo-card");
     applySettingsCardOpen(card, settingsOpenCards.has(settingsCardTitle(card)));
   });
+  restoreArkLocalDraft();
 }
 
 function bindSettingsCards() {

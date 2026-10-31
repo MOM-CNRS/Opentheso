@@ -618,6 +618,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
+      || hideConfirm("#prefSaveConfirm")
       || hideConfirm("#previewMetadataConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
@@ -1092,6 +1093,30 @@ document.addEventListener("click", (e) => {
   } else if (act === "account-save") {
     e.preventDefault();
     clickPreviewJsf("previewAccountSaveGo");
+  } else if (act === "pref-save-ask") {
+    showConfirm("#prefSaveConfirm");
+  } else if (act === "pref-save-go") {
+    e.preventDefault();
+    if (t.getAttribute("aria-busy") === "true") return;
+    t.setAttribute("aria-busy", "true");
+    hideConfirm("#prefSaveConfirm");
+    const done = () => t.removeAttribute("aria-busy");
+    if (typeof flushUserPreferences !== "function") {
+      done();
+      if (typeof showPrefSaveToast === "function") showPrefSaveToast(false);
+      return;
+    }
+    flushUserPreferences().then(() => {
+      done();
+      showPrefSaveToast(true);
+    }).catch(() => {
+      done();
+      showPrefSaveToast(false);
+    });
+  } else if (act === "pref-save-dismiss") {
+    hideConfirm("#prefSaveConfirm");
+  } else if (act === "pref-save-modal") {
+    return;
   } else if (act === "st-save-dismiss") {
     hideConfirm("#stSaveConfirm");
   } else if (act === "st-save-modal") {
