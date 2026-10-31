@@ -101,4 +101,20 @@ public interface NoteRepository extends JpaRepository<Note, Integer> {
     void updateThesaurusByConcept(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 
     boolean existsByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(String identifier, String idThesaurus, String noteTypeCode, String lang);
+
+    @Query(value = """
+        SELECT EXISTS (
+            SELECT 1 FROM note n
+            WHERE n.id_thesaurus = :idThesaurus
+              AND LOWER(n.notetypecode) = 'definition'
+              AND n.lexicalvalue IS NOT NULL
+              AND BTRIM(n.lexicalvalue) <> ''
+              AND (
+                n.identifier = :conceptId
+                OR n.id_concept = :conceptId
+                OR ((n.identifier IS NULL OR BTRIM(n.identifier) = '') AND n.id_term = :conceptId)
+              )
+        )
+        """, nativeQuery = true)
+    boolean existsNonBlankDefinition(@Param("conceptId") String conceptId, @Param("idThesaurus") String idThesaurus);
 }

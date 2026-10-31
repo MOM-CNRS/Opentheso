@@ -5916,7 +5916,11 @@ function setConceptDraftTitleError(on) {
   const title = $("#cptTitle");
   const err = $("#cptTitleErr");
   if (title) title.classList.toggle("is-err", !!on);
-  if (err) err.hidden = !on;
+  if (err) err.hidden = true;
+  if (on && err && typeof toast === "function") {
+    const msg = String(err.textContent || "").trim();
+    if (msg) toast(msg, { error: true });
+  }
 }
 
 function syncConceptDraftPref() {
@@ -6079,12 +6083,14 @@ function resolveConceptDraft(kind) {
 function onConceptDraftAjax(data) {
   if (data.status !== "success") return;
   const result = $("#cptResult");
+  const error = result && String(result.getAttribute("data-error") || "").trim();
+  if (error && typeof toast === "function") toast(error, { error: true });
   if (conceptDraftFlagOn(result, "data-dup")) {
     return;
   }
   if (!conceptDraftFlagOn(result, "data-created")) {
     const title = $("#cptTitle");
-    if (title && !String(title.value || "").trim()) setConceptDraftTitleError(true);
+    if (!error && title && !String(title.value || "").trim()) setConceptDraftTitleError(true);
     return;
   }
   const root = conceptDraftRoot();

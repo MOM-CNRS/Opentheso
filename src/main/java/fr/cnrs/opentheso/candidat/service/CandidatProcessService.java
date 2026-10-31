@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
+import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.candidat.persistence.CandidatProcessPersistence;
 import fr.cnrs.opentheso.shared.session.ConceptTreeRefreshSupport;
@@ -27,12 +28,23 @@ public class CandidatProcessService {
     private final CandidatReadService candidatReadService;
     private final ConceptDcTermRepository conceptDcTermRepository;
     private final ConceptTreeRefreshSupport conceptTreeRefreshSupport;
+    private final NoteRepository noteRepository;
 
     public byte[] exportProcessedCandidatesCsv(List<CandidatDto> candidates) {
         return candidatProcessPersistence.exportProcessedCandidatesCsv(candidates);
     }
 
+    public boolean hasDefinition(String thesaurusId, String conceptId) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return false;
+        }
+        return noteRepository.existsNonBlankDefinition(conceptId, thesaurusId);
+    }
+
     public CandidateProcessOutcome insertCandidate(CandidatDto candidate, String adminMessage, int userId) {
+        if (candidate == null || !hasDefinition(candidate.getIdThesaurus(), candidate.getIdConcepte())) {
+            return CandidateProcessOutcome.fail();
+        }
         return candidatProcessPersistence.insertCandidate(candidate, adminMessage, userId);
     }
 
@@ -68,6 +80,14 @@ public class CandidatProcessService {
             return null;
         }
         List<CandidatDto> accepted = new ArrayList<>(candidates.size());
+        for (CandidatDto candidate : candidates) {
+            if (candidate == null) {
+                continue;
+            }
+            if (!hasDefinition(candidate.getIdThesaurus(), candidate.getIdConcepte())) {
+                return candidate;
+            }
+        }
         for (CandidatDto candidate : candidates) {
             if (candidatProcessPersistence.insertCandidate(candidate, adminMessage, userId).isFailure()) {
                 return candidate;

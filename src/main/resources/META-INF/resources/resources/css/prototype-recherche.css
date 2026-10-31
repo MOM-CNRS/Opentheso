@@ -1567,6 +1567,9 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 .cand-banner-actions .bo-btn.ghost{background:var(--surface);border:1px solid var(--line)}
 .cand-banner-actions .bo-btn.ghost.danger{color:var(--danger);border-color:rgba(181,52,31,.35)}
 .cand-banner-actions .bo-btn.ghost.danger:hover,.cand-banner-actions .bo-btn.ghost.danger.is-on{background:var(--danger);color:#fff;border-color:var(--danger)}
+.cand-banner-actions span.bo-btn.is-off,
+.cand-banner-actions a.bo-btn.is-off{opacity:.45;cursor:not-allowed;pointer-events:none;background:var(--ink-4);border-color:var(--ink-4);color:#fff}
+.cand-banner-need{margin:8px 0 0;font-size:12.5px;line-height:1.4;color:var(--ink-2)}
 
 /* ── Proposition (suggestion de modification) ── */
 .prop-cta{display:inline-flex;align-items:center;gap:6px;margin-left:8px;text-decoration:none}

@@ -143,6 +143,8 @@ function onCvAddNtAjax(data) {
   }
   bindAddNtUi(dlg);
   const live = dlg && dlg.querySelector("[data-flash-nt]");
+  const error = live && String(live.getAttribute("data-error-nt") || "").trim();
+  if (error && isGo && typeof toast === "function") toast(error, { error: true });
   const dirty = !!(live && live.getAttribute("data-add-nt-dirty") === "true");
   const dup = !!(live && live.getAttribute("data-add-nt-dup") === "true");
   if (dirty) {
@@ -153,15 +155,10 @@ function onCvAddNtAjax(data) {
     }
   }
   const body = dlg && dlg.querySelector(".cv-dlg-body");
-  const warn = dlg && dlg.querySelector(".confirm-p.is-warn");
-  if (dup && warn && typeof warn.scrollIntoView === "function") {
-    warn.scrollIntoView({ block: "nearest" });
-  } else if (body && !dup) {
-    body.scrollTop = 0;
-  }
+  if (body && !dup) body.scrollTop = 0;
   const msg = live && live.getAttribute("data-flash-nt");
   const token = live && live.getAttribute("data-flash-nt-token");
-  if (msg && typeof toast === "function") {
+  if (msg && !error && typeof toast === "function") {
     if (typeof applyConceptLabelUi === "function" && token) {
       applyConceptLabelUi._ntToken = token;
     }

@@ -109,6 +109,14 @@ public class CandidateFicheBean implements Serializable {
         return canProcess;
     }
 
+    public boolean isCanValidate() {
+        ensureLoaded();
+        if (!isCanProcess() || candidat == null) {
+            return false;
+        }
+        return candidatProcessService.hasDefinition(candidat.getIdThesaurus(), candidat.getIdConcepte());
+    }
+
     public boolean isCanReactivate() {
         ensureLoaded();
         return isRejected()
@@ -335,6 +343,10 @@ public class CandidateFicheBean implements Serializable {
             return;
         }
         int userId = requireUserId();
+        if (!candidatProcessService.hasDefinition(candidat.getIdThesaurus(), candidat.getIdConcepte())) {
+            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.validate.needDefinition"));
+            return;
+        }
         if (candidatProcessService.insertCandidate(candidat, rejectReason, userId).isFailure()) {
             MessageUtils.showErrorMessage(localeBean.getMsg("candidat.insertError"));
             return;

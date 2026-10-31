@@ -160,8 +160,14 @@ public class CandidatBoardBean implements Serializable {
                 preferences
         );
         if (failed != null) {
-            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.insertError")
-                    + " : " + failed.getNomPref());
+            String detail = StringUtils.defaultIfBlank(failed.getNomPref(), failed.getIdConcepte());
+            if (!candidatProcessService.hasDefinition(failed.getIdThesaurus(), failed.getIdConcepte())) {
+                MessageUtils.showWarnMessage(localeBean.getMsg("candidat.validate.needDefinition")
+                        + (StringUtils.isBlank(detail) ? "" : " : " + detail));
+            } else {
+                MessageUtils.showErrorMessage(localeBean.getMsg("candidat.insertError")
+                        + " : " + detail);
+            }
             return;
         }
         notifyCreatorsAccepted(candidates);

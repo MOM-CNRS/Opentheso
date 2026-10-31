@@ -336,6 +336,25 @@ document.addEventListener("keydown", (e) => {
       requestDraftCreate("create");
     }
   }
+  if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    const panel = $("#viewConceptDraft");
+    const target = e.target;
+    if (panel && panel.classList.contains("is-on") && target && panel.contains(target)) {
+      const tag = String(target.tagName || "").toLowerCase();
+      const type = String(target.type || "").toLowerCase();
+      const leave = $("#cptLeaveConfirm");
+      const chain = panel.querySelector("[data-act='cpt-create-ask'][data-kind='chain']");
+      const multiline = tag === "textarea" || target.isContentEditable;
+      const control = tag === "button" || tag === "a" || tag === "select"
+        || type === "button" || type === "submit" || type === "checkbox" || type === "radio";
+      if (!multiline && !control && chain && !(leave && !leave.hidden)
+          && typeof requestConceptDraftCreate === "function") {
+        e.preventDefault();
+        requestConceptDraftCreate("chain");
+        return;
+      }
+    }
+  }
   if (e.key !== "Escape") return;
   if (typeof closeImgLightbox === "function" && closeImgLightbox()) return;
   if (typeof closeDraftImgLightbox === "function" && closeDraftImgLightbox()) return;

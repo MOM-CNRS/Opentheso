@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
+import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.candidat.persistence.CandidatProcessPersistence;
 import fr.cnrs.opentheso.shared.session.ConceptTreeRefreshSupport;
@@ -19,7 +20,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +37,8 @@ class CandidatProcessServiceTest {
     private ConceptDcTermRepository conceptDcTermRepository;
     @Mock
     private ConceptTreeRefreshSupport conceptTreeRefreshSupport;
+    @Mock
+    private NoteRepository noteRepository;
 
     private CandidatProcessService service;
 
@@ -43,7 +48,8 @@ class CandidatProcessServiceTest {
                 candidatProcessPersistence,
                 candidatReadService,
                 conceptDcTermRepository,
-                conceptTreeRefreshSupport
+                conceptTreeRefreshSupport,
+                noteRepository
         );
     }
 
@@ -82,6 +88,8 @@ class CandidatProcessServiceTest {
         c2.setIdThesaurus("TH1");
         c2.setIdConcepte("C2");
         var preferences = Preferences.builder().build();
+        when(noteRepository.existsNonBlankDefinition("C1", "TH1")).thenReturn(true);
+        when(noteRepository.existsNonBlankDefinition("C2", "TH1")).thenReturn(true);
         when(candidatProcessPersistence.insertCandidate(c1, "ok", 7)).thenReturn(CandidateProcessOutcome.ok());
         when(candidatProcessPersistence.insertCandidate(c2, "ok", 7)).thenReturn(CandidateProcessOutcome.ok());
 
@@ -90,6 +98,34 @@ class CandidatProcessServiceTest {
         verify(candidatProcessPersistence).generatePersistentIds(preferences, List.of(c1, c2));
         verify(conceptTreeRefreshSupport).refreshConceptTree();
         verify(conceptDcTermRepository, org.mockito.Mockito.times(2)).save(org.mockito.ArgumentMatchers.any(ConceptDcTerm.class));
+    }
+
+    @Test
+    void insertCandidate_refusesWhenDefinitionIsMissing() {
+        var candidate = new CandidatDto();
+        candidate.setIdThesaurus("TH1");
+        candidate.setIdConcepte("C1");
+        when(noteRepository.existsNonBlankDefinition("C1", "TH1")).thenReturn(false);
+
+        assertTrue(service.insertCandidate(candidate, "", 7).isFailure());
+
+        verify(candidatProcessPersistence, never()).insertCandidate(candidate, "", 7);
+    }
+
+    @Test
+    void acceptCandidatesBatch_stopsBeforeInsertWhenDefinitionIsMissing() {
+        var defined = new CandidatDto();
+        defined.setIdThesaurus("TH1");
+        defined.setIdConcepte("C1");
+        var missing = new CandidatDto();
+        missing.setIdThesaurus("TH1");
+        missing.setIdConcepte("C2");
+        when(noteRepository.existsNonBlankDefinition("C1", "TH1")).thenReturn(true);
+        when(noteRepository.existsNonBlankDefinition("C2", "TH1")).thenReturn(false);
+
+        assertSame(missing, service.acceptCandidatesBatch(List.of(defined, missing), "ok", 7, "admin", Preferences.builder().build()));
+
+        verify(candidatProcessPersistence, never()).insertCandidate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test

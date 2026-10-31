@@ -15,7 +15,8 @@
             data-created="#{conceptLifecycleEditorBean.created ? '1' : '0'}"
             data-chain="#{conceptLifecycleEditorBean.chainNext ? '1' : '0'}"
             data-id="#{conceptLifecycleEditorBean.lastCreatedId}"
-            data-dup="#{conceptLifecycleEditorBean.duplicateLabelWarning ? '1' : '0'}"></span>
+            data-dup="#{conceptLifecycleEditorBean.duplicateLabelWarning ? '1' : '0'}"
+            data-error="#{conceptLifecycleEditorBean.createErrorMessage}"></span>
       <h:inputHidden id="cptCreateMode" value="#{conceptLifecycleEditorBean.createMode}"/>
       <h:inputHidden id="cptParentId" value="#{conceptLifecycleEditorBean.createParentId}"/>
       <h:inputHidden id="cptParentLabel" value="#{conceptLifecycleEditorBean.createParentLabel}"/>
@@ -128,13 +129,6 @@
             </div>
           </section>
         </div>
-
-        <ui:fragment rendered="#{conceptLifecycleEditorBean.duplicateLabelWarning}">
-          <p class="confirm-p is-warn" role="alert">#{localeBean.getMsg('concept.addDup')}</p>
-        </ui:fragment>
-        <ui:fragment rendered="#{not empty conceptLifecycleEditorBean.createErrorMessage and not conceptLifecycleEditorBean.duplicateLabelWarning}">
-          <p class="confirm-p is-warn">#{conceptLifecycleEditorBean.createErrorMessage}</p>
-        </ui:fragment>
 
         <div class="fsave">
           <button type="button" class="bo-btn ghost" data-act="cpt-leave">#{localeBean.getMsg('concept.draft.cancel')}</button>

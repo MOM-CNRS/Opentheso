@@ -37,10 +37,12 @@
         </div>
         <div class="cand-banner-actions">
           <ui:fragment rendered="#{candidateFicheBean.pending and candidateFicheBean.canProcess}">
-            <h:commandLink styleClass="bo-btn primary sm"
+            <h:commandLink styleClass="bo-btn primary sm#{candidateFicheBean.canValidate ? '' : ' is-off'}"
+                           disabled="#{not candidateFicheBean.canValidate}"
+                           title="#{candidateFicheBean.canValidate ? localeBean.getMsg('candidat.action.addToThesaurus') : localeBean.getMsg('candidat.validate.needDefinition')}"
                            action="#{candidateFicheBean.insertCandidate}">
               <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree"/>
-              ✓ #{localeBean.getMsg('candidat.action.insert')}
+              ✓ #{localeBean.getMsg('candidat.action.addToThesaurus')}
             </h:commandLink>
             <h:commandLink styleClass="bo-btn ghost danger sm#{candidateFicheBean.rejectMode ? ' is-on' : ''}"
                            action="#{candidateFicheBean.toggleRejectMode}">
@@ -53,56 +55,11 @@
               #{localeBean.getMsg('candidat.action.reactivate')}
             </button>
           </ui:fragment>
-          <ui:fragment rendered="#{candidateFicheBean.canDelete or candidateFicheBean.canExport}">
-            <div class="th-create cand-ctx">
-              <h:commandLink styleClass="th-create-btn#{candidateFicheBean.actionsOpen ? ' is-open' : ''}"
-                             action="#{candidateFicheBean.toggleActions}"
-                             title="#{localeBean.getMsg('candidat.actions')}"
-                             pt:aria-label="#{localeBean.getMsg('candidat.actions')}"
-                             pt:aria-haspopup="menu"
-                             pt:aria-expanded="#{candidateFicheBean.actionsOpen}">
-                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="5" r="1.6"/>
-                  <circle cx="12" cy="12" r="1.6"/>
-                  <circle cx="12" cy="19" r="1.6"/>
-                </svg>
-              </h:commandLink>
-              <div class="th-create-menu#{candidateFicheBean.actionsOpen ? ' is-open' : ''}"
-                   role="menu"
-                   aria-label="#{localeBean.getMsg('candidat.actions')}">
-                <div class="th-create-menu-h">#{localeBean.getMsg('candidat.actions')}</div>
-                <ui:fragment rendered="#{candidateFicheBean.canExport}">
-                  <h:commandLink styleClass="th-create-item" role="menuitem"
-                                 action="#{candidateFicheBean.exportSkos}"
-                                 title="#{localeBean.getMsg('candidat.action.exportSkos')}">
-                    <span class="th-create-ico" aria-hidden="true">
-                      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-                    </span>
-                    <span class="th-create-txt">
-                      <span class="th-create-name">#{localeBean.getMsg('candidat.action.exportSkos')}</span>
-                      <span class="th-create-hint">#{localeBean.getMsg('candidat.action.exportSkos.hint')}</span>
-                    </span>
-                  </h:commandLink>
-                </ui:fragment>
-                <ui:fragment rendered="#{candidateFicheBean.canDelete}">
-                  <button type="button" class="th-create-item is-danger" role="menuitem"
-                          data-act="cand-delete-ask"
-                          title="#{localeBean.getMsg('candidat.action.delete')}">
-                    <span class="th-create-ico" aria-hidden="true">
-                      <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                    </span>
-                    <span class="th-create-txt">
-                      <span class="th-create-name">#{localeBean.getMsg('candidat.action.delete')}</span>
-                      <span class="th-create-hint">#{localeBean.getMsg('candidat.action.delete.hint')}</span>
-                    </span>
-                  </button>
-                </ui:fragment>
-              </div>
-            </div>
-          </ui:fragment>
         </div>
       </div>
+      <ui:fragment rendered="#{candidateFicheBean.pending and candidateFicheBean.canProcess and not candidateFicheBean.canValidate}">
+        <p class="cand-banner-need">#{localeBean.getMsg('candidat.validate.needDefinition')}</p>
+      </ui:fragment>
       <ui:fragment rendered="#{candidateFicheBean.rejectMode}">
         <div class="cand-banner-reject">
           <h:inputTextarea styleClass="disc-input"
@@ -206,17 +163,6 @@
           </div>
         </div>
       </section>
-    </ui:fragment>
-
-    <ui:fragment rendered="#{candidateFicheBean.pending and candidateFicheBean.canProcess}">
-      <div class="fsave">
-        <h:commandLink styleClass="fsave-btn"
-                       action="#{candidateFicheBean.insertCandidate}">
-          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree"/>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-          #{localeBean.getMsg('candidat.action.validate')}
-        </h:commandLink>
-      </div>
     </ui:fragment>
 
     <ui:fragment rendered="#{candidateFicheBean.canReactivate}">

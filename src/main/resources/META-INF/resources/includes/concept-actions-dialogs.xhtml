@@ -26,7 +26,8 @@
                 data-flash-nt="#{conceptLifecycleEditorBean.createFlashMessage}"
                 data-flash-nt-token="#{conceptLifecycleEditorBean.createFlashToken}"
                 data-add-nt-dirty="#{conceptLifecycleEditorBean.createDirty}"
-                data-add-nt-dup="#{conceptLifecycleEditorBean.duplicateLabelWarning}"></span>
+                data-add-nt-dup="#{conceptLifecycleEditorBean.duplicateLabelWarning}"
+                data-error-nt="#{conceptLifecycleEditorBean.createErrorMessage}"></span>
           <div class="cv-add-composer">
             <ui:fragment rendered="#{not conceptLifecycleEditorBean.addAsTopConcept}">
             <div class="cv-add-composer-parent">
@@ -114,12 +115,6 @@
             </div>
             <p class="cv-type-recip-hint cv-add-more-hint">#{localeBean.getMsg('concept.addIdHint')}</p>
           </details>
-          <ui:fragment rendered="#{conceptLifecycleEditorBean.duplicateLabelWarning}">
-            <p class="confirm-p is-warn" role="alert">#{localeBean.getMsg('concept.addDup')}</p>
-          </ui:fragment>
-          <ui:fragment rendered="#{not empty conceptLifecycleEditorBean.createErrorMessage and not conceptLifecycleEditorBean.duplicateLabelWarning}">
-            <p class="confirm-p is-warn">#{conceptLifecycleEditorBean.createErrorMessage}</p>
-          </ui:fragment>
         </h:panelGroup>
       </div>
       <div class="confirm-actions cv-add-foot">
