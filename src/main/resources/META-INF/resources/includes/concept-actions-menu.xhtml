@@ -4,16 +4,14 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
-  <div class="th-create cv-ctx" id="cvCtx">
-    <button type="button" class="th-create-btn" id="cvCtxBtn"
+  <div class="cv-ctx cv-actions" id="cvCtx">
+    <button type="button" class="bo-btn ghost sm cv-actions-btn" id="cvCtxBtn"
             data-act="cv-ctx-toggle"
             title="#{localeBean.getMsg('rightbody.concept.global_actions')}"
             aria-label="#{localeBean.getMsg('rightbody.concept.global_actions')}"
             aria-haspopup="menu"
-            aria-expanded="false">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-    </button>
-    <div class="th-create-menu cv-ctx-menu" role="menu"
+            aria-expanded="false">⋯</button>
+    <div class="cv-actions-menu" role="menu"
          aria-label="#{localeBean.getMsg('rightbody.concept.global_actions')}">
 
       <ui:fragment rendered="#{thesaurusViewBean.suggestionEnabled

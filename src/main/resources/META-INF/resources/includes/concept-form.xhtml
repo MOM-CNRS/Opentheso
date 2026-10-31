@@ -70,20 +70,48 @@
       <h1 class="cv-pref">
         <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-dot" aria-hidden="true"></span></ui:fragment>
         <span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
+        <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.preferredLabel}">
+          <button type="button" class="copy-btn"
+                  title="#{localeBean.getMsg('concept.headTitle.copy')}"
+                  aria-label="#{localeBean.getMsg('concept.headTitle.copy')}"
+                  data-act="copy"
+                  data-copy="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}"
+                  data-msg="#{localeBean.getMsg('concept.headTitle.copied')}">⧉</button>
+        </ui:fragment>
         <span class="cv-lang">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.lang)}</span>
         <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-status">#{localeBean.getMsg('concept.badge.candidate')}</span></ui:fragment>
         <ui:fragment rendered="#{thesaurusViewBean.rejectedSelected}"><span class="cv-status is-rej">#{localeBean.getMsg('concept.badge.rejected')}</span></ui:fragment>
         <ui:fragment rendered="#{thesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">#{localeBean.getMsg('concept.badge.deprecated')}</span></ui:fragment>
+        <ui:fragment rendered="#{(thesaurusViewBean.conceptActionsVisible
+            or (thesaurusViewBean.suggestionEnabled
+                and thesaurusViewBean.conceptSelected
+                and not thesaurusViewBean.candidateSelected))
+            and not propositionBean.consultation
+            and not propositionSubmitBean.composing}">
+          <ui:include src="/includes/concept-actions-menu.xhtml"/>
+        </ui:fragment>
       </h1>
-      <ui:fragment rendered="#{(thesaurusViewBean.conceptActionsVisible
-          or (thesaurusViewBean.suggestionEnabled
-              and thesaurusViewBean.conceptSelected
-              and not thesaurusViewBean.candidateSelected))
-          and not propositionBean.consultation
-          and not propositionSubmitBean.composing}">
-        <ui:include src="/includes/concept-actions-menu.xhtml"/>
-      </ui:fragment>
       </div>
+      <p class="cv-head-uri">
+        <ui:fragment rendered="#{not empty thesaurusViewBean.conceptUri}">
+          <span class="is-mono">#{thesaurusViewBean.conceptUri}</span>
+          <button type="button" class="copy-btn"
+                  title="#{localeBean.getMsg('concept.headUri.copy')}"
+                  aria-label="#{localeBean.getMsg('concept.headUri.copy')}"
+                  data-act="copy"
+                  data-copy="#{thesaurusViewBean.conceptUri}"
+                  data-msg="#{localeBean.getMsg('concept.headUri.copied')}">⧉</button>
+        </ui:fragment>
+        <ui:fragment rendered="#{empty thesaurusViewBean.conceptUri}">
+          <span class="is-mono">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span>
+          <button type="button" class="copy-btn"
+                  title="#{localeBean.getMsg('concept.headUri.copy')}"
+                  aria-label="#{localeBean.getMsg('concept.headUri.copy')}"
+                  data-act="copy"
+                  data-copy="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
+                  data-msg="#{localeBean.getMsg('concept.headUri.copied')}">⧉</button>
+        </ui:fragment>
+      </p>
     </div>
     <ui:fragment rendered="#{propositionSubmitBean.composing}">
       <h:panelGroup id="propComposePanel" layout="block" styleClass="cv-blocks prop-compose"

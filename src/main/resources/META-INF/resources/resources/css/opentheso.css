@@ -1461,7 +1461,16 @@ body[data-page="atelier"] .content::after,
 }
 .th-home .cv-head{margin-bottom:22px}
 .cv-head-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;position:relative;z-index:6}
+.cv-head-uri{margin:4px 0 0;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-3)}
+.cv-head-uri .is-mono{font-family:var(--mono);min-width:0;overflow-wrap:anywhere}
+.cv-head-uri .copy-btn{margin-left:0;flex:0 0 auto}
 .cv-head-bar .cv-pref{flex:1;min-width:0}
+.cv-pref > button.copy-btn{
+  margin-left:8px;flex:0 0 auto;align-self:center;
+  width:24px;height:22px;padding:0;
+  font-size:13px;font-weight:400;line-height:1;
+  color:var(--ink-3);border-radius:7px
+}
 .cv-pref-label{min-width:0}
 .cv-sync-ico{
   display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
@@ -1470,6 +1479,32 @@ body[data-page="atelier"] .content::after,
 .cv-sync-ico svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round}
 .cv-head-bar .th-create{margin-top:4px;z-index:8}
+.cv-pref .cv-actions{position:relative;margin-left:auto;flex:0 0 auto;align-self:center}
+.bo-btn.ghost.sm.cv-actions-btn{
+  height:26px;padding:4px 10px;border-radius:7px;
+  font-size:18px;font-weight:600;line-height:1
+}
+.cv-actions-menu{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:20;
+  min-width:220px;max-height:260px;overflow-y:auto;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow-lg);padding:5px;
+  flex-direction:column;gap:1px
+}
+.cv-actions .cv-actions-btn.is-open + .cv-actions-menu{display:flex}
+.cv-actions .th-create-menu-h,
+.cv-actions .th-create-ico{display:none}
+.cv-actions .th-create-item,
+.cv-actions a.th-create-item{
+  display:block;width:100%;text-align:left;font-size:13.5px;font-weight:400;
+  color:var(--ink-2);background:none;border:0;border-radius:7px;padding:9px 10px
+}
+.cv-actions .th-create-name{font-size:13.5px;font-weight:400;color:inherit;line-height:1.3}
+.cv-actions .th-create-item:hover{background:var(--surface-2);color:var(--ink)}
+.cv-actions .th-create-item.is-danger,
+.cv-actions .th-create-item.is-danger .th-create-name{color:var(--danger-ink)}
+.cv-actions .th-create-item.is-danger:hover{background:var(--danger-soft-2);color:var(--danger-ink)}
+.cv-actions .th-create-item.is-danger:hover .th-create-name{color:var(--danger-ink)}
 .th-create{position:relative;flex:0 0 auto;margin-top:2px}
 .th-create-btn{
   width:36px;height:36px;border-radius:10px;padding:0;

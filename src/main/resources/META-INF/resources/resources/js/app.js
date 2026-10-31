@@ -1431,8 +1431,9 @@ document.addEventListener("click", (e) => {
     try { navigator.clipboard.writeText(value); } catch (_) {}
     t.classList.add("is-copied");
     const copied = (document.body && document.body.getAttribute("data-msg-copied")) || "Copié";
+    const msg = t.getAttribute("data-msg") || copied;
     t.title = copied;
-    toast(copied, { soft: true });
+    toast(msg, { soft: true });
     setTimeout(() => { t.classList.remove("is-copied"); }, 1400);
   } else if (act === "st-save") {
     hideConfirm("#stSaveConfirm");
