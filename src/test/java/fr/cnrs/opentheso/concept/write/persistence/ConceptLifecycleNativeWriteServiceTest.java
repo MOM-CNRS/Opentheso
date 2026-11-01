@@ -105,6 +105,24 @@ class ConceptLifecycleNativeWriteServiceTest {
     }
 
     @Test
+    void changeConceptsStatus_rejectsPendingCandidatesAndSkipsValidated() {
+        var command = new ChangeConceptsStatusCommand("TH1", List.of("C1", "C2"), "reject", 7, "admin");
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C1", "TH1", "", "CA", "", false)));
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C2"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C2", "TH1", "", "D", "", false)));
+        when(candidatLifecyclePersistence.rejectIfPending("TH1", "C1")).thenReturn(true);
+
+        var result = service.changeConceptsStatus(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("1 candidat refusé", result.message());
+        verify(candidatLifecyclePersistence).rejectIfPending("TH1", "C1");
+        verify(candidatLifecyclePersistence, never()).rejectIfPending("TH1", "C2");
+        verify(conceptLifecycleWriteRepository, never()).updateConceptStatus(anyString(), anyString(), anyString());
+    }
+
+    @Test
     void changeConceptsStatus_deprecatesActiveAndSkipsCandidates() {
         var command = new ChangeConceptsStatusCommand("TH1", List.of("C1", "C2"), "deprecate", 7, "admin");
         when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1"))

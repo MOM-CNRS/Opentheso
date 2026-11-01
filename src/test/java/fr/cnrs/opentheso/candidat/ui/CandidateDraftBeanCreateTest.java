@@ -24,9 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -103,6 +105,7 @@ class CandidateDraftBeanCreateTest {
     void create_withChainMode_samePersistThenReadyForNextDraft() {
         CandidateDraftBean bean = bean();
         bean.setTitle("Rivière");
+        bean.setDefinition("Cours d'eau");
         bean.setCreateMode("chain");
         stubSuccessfulSave();
 
@@ -119,6 +122,8 @@ class CandidateDraftBeanCreateTest {
     void create_withoutChain_persistsAndRedirectsToCandidate() throws Exception {
         CandidateDraftBean bean = bean();
         bean.setTitle("Montagne");
+        bean.setDefinition("Relief élevé");
+        bean.setBroaderTerm("");
         bean.setCreateMode("create");
         stubSuccessfulSave();
         when(externalContext.getRequestContextPath()).thenReturn("/ot");
@@ -135,5 +140,43 @@ class CandidateDraftBeanCreateTest {
         assertFalse(bean.isChainNext());
         assertEquals("", bean.getTitle());
         verify(externalContext).redirect("/ot/thesaurus/consultation.xhtml?id=C99&type=candidat&from=candidats");
+    }
+
+    @Test
+    void create_withoutBroaderTerm_persistsWhenTitleAndDefinitionAreSet() {
+        CandidateDraftBean bean = bean();
+        bean.setTitle("Plaine");
+        bean.setDefinition("Étendue plane");
+        bean.setBroaderTerm("");
+        stubSuccessfulSave();
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(null);
+            bean.create();
+        }
+
+        assertEquals("", bean.getCreateError());
+        verify(candidatMutationService).saveNewCandidat(any(CandidatDto.class), eq("TH1"), eq("fr"), eq(7),
+                eq("alice"), eq("fr"), eq("Étendue plane"));
+    }
+
+    @Test
+    void create_withoutDefinition_doesNotPersist() {
+        CandidateDraftBean bean = bean();
+        bean.setTitle("Forêt");
+        bean.setDefinition("   ");
+        when(thesaurusViewBean.getId()).thenReturn("TH1");
+        when(candidatAccessPolicy.canCreate(userSession, "TH1")).thenReturn(true);
+        when(localeBean.getMsg("candidat.save.def")).thenReturn("La première définition est obligatoire !");
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.create();
+        }
+
+        assertFalse(bean.isCreated());
+        assertEquals("La première définition est obligatoire !", bean.getCreateError());
+        verify(candidatMutationService, never()).saveNewCandidat(any(), any(), any(), anyInt(),
+                any(), any(), any());
     }
 }

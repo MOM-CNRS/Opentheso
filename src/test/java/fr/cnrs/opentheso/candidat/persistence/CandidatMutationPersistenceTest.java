@@ -59,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -392,6 +393,8 @@ class CandidatMutationPersistenceTest {
         candidat.setTermesGenerique(List.of(fr.cnrs.opentheso.models.nodes.NodeIdValue.builder().id("BT1").build()));
         candidat.setTermesAssocies(List.of(fr.cnrs.opentheso.models.nodes.NodeIdValue.builder().id("RT1").build()));
         candidat.setEmployePourList(List.of("Synonym 1"));
+        when(conceptRepository.findByIdConceptAndIdThesaurus(any(), eq("TH1")))
+                .thenReturn(Optional.of(new Concept()));
 
         persistence.updateCandidateDetails(candidat);
 
@@ -404,14 +407,33 @@ class CandidatMutationPersistenceTest {
         verify(hierarchicalRelationshipRepository).deleteAllByIdThesaurusAndIdConcept1("TH1", "C1");
         verify(hierarchicalRelationshipRepository).deleteAllByIdThesaurusAndIdConcept2("TH1", "C1");
         ArgumentCaptor<HierarchicalRelationship> relationCaptor = ArgumentCaptor.forClass(HierarchicalRelationship.class);
-        verify(hierarchicalRelationshipRepository, org.mockito.Mockito.times(2)).save(relationCaptor.capture());
-        assertTrue(relationCaptor.getAllValues().stream().anyMatch(r -> "BT".equals(r.getRole())));
+        verify(hierarchicalRelationshipRepository, org.mockito.Mockito.times(3)).save(relationCaptor.capture());
+        assertTrue(relationCaptor.getAllValues().stream().anyMatch(r ->
+                "BT".equals(r.getRole()) && "C1".equals(r.getIdConcept1()) && "BT1".equals(r.getIdConcept2())));
+        assertTrue(relationCaptor.getAllValues().stream().anyMatch(r ->
+                "NT".equals(r.getRole()) && "BT1".equals(r.getIdConcept1()) && "C1".equals(r.getIdConcept2())));
         assertTrue(relationCaptor.getAllValues().stream().anyMatch(r -> "RT".equals(r.getRole())));
+        verify(conceptRepository).setTopConceptTag(false, "C1", "TH1");
 
         verify(nonPreferredTermRepository).deleteByIdThesaurusAndIdTermAndLang("TH1", "T1", "fr");
         ArgumentCaptor<NonPreferredTerm> synonymCaptor = ArgumentCaptor.forClass(NonPreferredTerm.class);
         verify(nonPreferredTermRepository).save(synonymCaptor.capture());
         assertEquals("Synonym 1", synonymCaptor.getValue().getLexicalValue());
+    }
+
+    @Test
+    void updateCandidateDetails_withoutParent_marksCandidateAsTreeRoot() {
+        var candidat = new CandidatDto();
+        candidat.setIdThesaurus("TH1");
+        candidat.setIdConcepte("C1");
+        candidat.setIdTerm("T1");
+        candidat.setLang("fr");
+        candidat.setTermesGenerique(List.of(fr.cnrs.opentheso.models.nodes.NodeIdValue.builder().id("inconnu").build()));
+
+        persistence.updateCandidateDetails(candidat);
+
+        verify(hierarchicalRelationshipRepository, never()).save(any());
+        verify(conceptRepository).setTopConceptTag(true, "C1", "TH1");
     }
 
     @Test

@@ -97,4 +97,20 @@ class ConceptLifecycleEditorBeanStatusTest {
         verify(conceptNavigationSupport).invalidateConceptTree();
         verify(thesaurusViewBean).reloadTree();
     }
+
+    @Test
+    void submitStatusFromSelection_rejectsCandidates() {
+        bean.setBulkStatusAction("reject");
+        bean.setBulkConceptIds("C1");
+        when(conceptLifecycleMutationService.changeConceptsStatus(any()))
+                .thenReturn(MutationResult.ok("1 candidat refusé"));
+
+        bean.submitStatusFromSelection();
+
+        ArgumentCaptor<ChangeConceptsStatusCommand> captor = ArgumentCaptor.forClass(ChangeConceptsStatusCommand.class);
+        verify(conceptLifecycleMutationService).changeConceptsStatus(captor.capture());
+        assertTrue(captor.getValue().reject());
+        assertEquals(java.util.List.of("C1"), captor.getValue().conceptIds());
+        assertTrue(bean.isBulkStatusOk());
+    }
 }

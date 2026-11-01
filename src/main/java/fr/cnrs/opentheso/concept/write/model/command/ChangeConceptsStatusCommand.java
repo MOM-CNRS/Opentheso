@@ -3,8 +3,8 @@ package fr.cnrs.opentheso.concept.write.model.command;
 import java.util.List;
 
 /**
- * Changement de statut groupé. {@code action} : {@code approve} (candidats → validés)
- * ou {@code deprecate} (concepts actifs → obsolètes).
+ * Changement de statut groupé. {@code action} : {@code approve} (candidats → validés),
+ * {@code reject} (candidats → refusés) ou {@code deprecate} (concepts actifs → obsolètes).
  */
 public record ChangeConceptsStatusCommand(
         String thesaurusId,
@@ -20,6 +20,10 @@ public record ChangeConceptsStatusCommand(
 
     public boolean approve() {
         return "approve".equals(action);
+    }
+
+    public boolean reject() {
+        return "reject".equals(action);
     }
 
     public boolean deprecate() {

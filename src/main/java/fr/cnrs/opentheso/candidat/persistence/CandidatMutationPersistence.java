@@ -223,13 +223,24 @@ public class CandidatMutationPersistence {
             addCollection(collection.getId(), candidat.getIdThesaurus(), candidat.getIdConcepte());
         }
         deleteAllRelations(candidat.getIdConcepte(), candidat.getIdThesaurus());
+        boolean placedUnderParent = false;
         if (!CollectionUtils.isEmpty(candidat.getTermesGenerique())) {
-            candidat.getTermesGenerique().forEach(nodeBT ->
-                    addHierarchicalRelation(candidat.getIdConcepte(), candidat.getIdThesaurus(), "BT", nodeBT.getId()));
+            for (NodeIdValue nodeBT : candidat.getTermesGenerique()) {
+                if (nodeBT == null || StringUtils.isBlank(nodeBT.getId()) || !conceptExists(nodeBT.getId(), candidat.getIdThesaurus())) {
+                    continue;
+                }
+                addBroaderRelation(candidat.getIdConcepte(), candidat.getIdThesaurus(), nodeBT.getId());
+                placedUnderParent = true;
+            }
         }
+        conceptRepository.setTopConceptTag(!placedUnderParent, candidat.getIdConcepte(), candidat.getIdThesaurus());
         if (!CollectionUtils.isEmpty(candidat.getTermesAssocies())) {
-            candidat.getTermesAssocies().forEach(nodeRT ->
-                    addHierarchicalRelation(candidat.getIdConcepte(), candidat.getIdThesaurus(), "RT", nodeRT.getId()));
+            candidat.getTermesAssocies().forEach(nodeRT -> {
+                if (nodeRT != null && StringUtils.isNotBlank(nodeRT.getId())
+                        && conceptExists(nodeRT.getId(), candidat.getIdThesaurus())) {
+                    addHierarchicalRelation(candidat.getIdConcepte(), candidat.getIdThesaurus(), "RT", nodeRT.getId());
+                }
+            });
         }
         nonPreferredTermRepository.deleteByIdThesaurusAndIdTermAndLang(
                 candidat.getIdThesaurus(), candidat.getIdTerm(), candidat.getLang());
@@ -458,6 +469,10 @@ public class CandidatMutationPersistence {
                         .idUser(note.getIdUser())
                         .build())
                 .toList();
+    }
+
+    private boolean conceptExists(String conceptId, String thesaurusId) {
+        return conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId).isPresent();
     }
 
     public void addBroaderRelation(String conceptId, String thesaurusId, String targetConceptId) {

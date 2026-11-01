@@ -131,7 +131,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
             return;
         }
         String action = StringUtils.trimToEmpty(bulkStatusAction).toLowerCase();
-        if (!"approve".equals(action) && !"deprecate".equals(action)) {
+        if (!"approve".equals(action) && !"reject".equals(action) && !"deprecate".equals(action)) {
             bulkStatusMessage = "Choisissez un statut.";
             return;
         }

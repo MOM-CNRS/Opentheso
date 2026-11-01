@@ -46,8 +46,6 @@ function beginLiveOpen() {
   live.classList.add("is-loading");
   live.classList.remove("is-ready", "is-opening");
   showPanel(".view-panel", "viewLive");
-  const back = $("#liveBackList");
-  if (back && fromCandList()) back.hidden = false;
   paintListBack();
   const view = $("#previewView");
   if (view) view.scrollTop = 0;
@@ -4130,8 +4128,6 @@ function fromPropList() {
 
 function paintListBack() {
   const liveDetail = liveDetailRequested() && !state.home && !state.draft;
-  const cand = $("#liveBackList");
-  if (cand) cand.hidden = !(fromCandList() && liveDetail);
   const prop = $("#liveBackPropList");
   if (prop) prop.hidden = !(fromPropList() && liveDetail);
 }
@@ -5615,6 +5611,17 @@ function setDraftTitleError(on) {
   if (err) err.hidden = !on;
 }
 
+function setDraftDefError(on, silent) {
+  const def = $("#draftDef");
+  const err = $("#draftDefErr");
+  if (def) def.classList.toggle("is-err", !!on);
+  if (err) err.hidden = !on;
+  if (on && !silent && typeof toast === "function") {
+    const msg = err ? String(err.textContent || "").trim() : "";
+    if (msg) toast(msg, { error: true });
+  }
+}
+
 function syncDraftLocation() {
   const root = draftRoot();
   const loc = $("#draftLoc");
@@ -5626,7 +5633,7 @@ function syncDraftLocation() {
       ? tpl.replace("{0}", bt)
       : (root.getAttribute("data-loc-root") || loc.textContent);
   }
-  if (warn) warn.hidden = !!bt;
+  if (warn) warn.hidden = true;
 }
 
 function syncDraftPrefMirror() {
@@ -5661,6 +5668,11 @@ function hideDraftCreateConfirm() {
   if (dlg) dlg.hidden = true;
 }
 
+function draftDefinitionValue() {
+  const def = $("#draftDef");
+  return def ? String(def.value || "").trim() : "";
+}
+
 function requestDraftCreate(kind) {
   const title = $("#draftTitle");
   const name = title ? String(title.value || "").trim() : "";
@@ -5670,6 +5682,13 @@ function requestDraftCreate(kind) {
     return;
   }
   setDraftTitleError(false);
+  if (!draftDefinitionValue()) {
+    setDraftDefError(true);
+    const def = $("#draftDef");
+    if (def) def.focus();
+    return;
+  }
+  setDraftDefError(false, true);
   draftCreateKind = kind === "chain" ? "chain" : "create";
   const root = draftRoot();
   const dlg = $("#draftCreateConfirm");
@@ -5723,6 +5742,13 @@ function resolveDraft(kind) {
       return;
     }
     setDraftTitleError(false);
+    if (!draftDefinitionValue()) {
+      setDraftDefError(true);
+      const def = $("#draftDef");
+      if (def) def.focus();
+      return;
+    }
+    setDraftDefError(false, true);
     bindDraftCreateFields();
     const mode = $("#draftCreateMode");
     if (mode) mode.value = kind === "chaîne" ? "chain" : "create";
@@ -5748,9 +5774,13 @@ function resolveDraft(kind) {
 function onDraftCreateAjax(data) {
   if (data.status !== "success") return;
   const result = $("#draftResult");
+  const error = result && String(result.getAttribute("data-error") || "").trim();
   if (!draftFlagOn(result, "data-created")) {
+    if (error && typeof toast === "function") toast(error, { error: true });
     const title = $("#draftTitle");
     if (title && !String(title.value || "").trim()) setDraftTitleError(true);
+    if (!draftDefinitionValue()) setDraftDefError(true, !!error);
+    if (typeof syncDraftLocation === "function") syncDraftLocation();
     return;
   }
   const root = draftRoot();
@@ -5772,6 +5802,13 @@ function guardDraftCreate() {
     return false;
   }
   setDraftTitleError(false);
+  if (!draftDefinitionValue()) {
+    setDraftDefError(true);
+    const def = $("#draftDef");
+    if (def) def.focus();
+    return false;
+  }
+  setDraftDefError(false, true);
   bindDraftCreateFields();
   return true;
 }
@@ -5789,6 +5826,7 @@ function resolveDraftUi(kind) {
 if (typeof window !== "undefined") {
   window.resolveDraftUi = resolveDraftUi;
   window.syncDraftPrefMirror = syncDraftPrefMirror;
+  window.setDraftDefError = setDraftDefError;
   window.syncDraftLocation = syncDraftLocation;
   window.guardDraftCreate = guardDraftCreate;
   window.requestDraftLeave = requestDraftLeave;

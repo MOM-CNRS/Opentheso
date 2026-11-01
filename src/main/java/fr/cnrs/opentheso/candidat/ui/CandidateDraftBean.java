@@ -57,6 +57,7 @@ public class CandidateDraftBean implements Serializable {
     private String relatedTerms = "";
     private String translationsPayload = "";
     private String createdConceptId;
+    private String createError = "";
     private boolean created;
     private boolean chainNext;
     /** {@code create} ou {@code chain} — posé par le formulaire avant soumission. */
@@ -80,6 +81,7 @@ public class CandidateDraftBean implements Serializable {
         resetFields();
         broaderTerm = "";
         createdConceptId = null;
+        createError = "";
         created = false;
         chainNext = false;
         createMode = "create";
@@ -116,24 +118,39 @@ public class CandidateDraftBean implements Serializable {
     private void persist(boolean chain) {
         created = false;
         createdConceptId = null;
+        createError = "";
         chainNext = chain;
         String thesaurusId = thesaurusViewBean.getId();
         if (!candidatAccessPolicy.canCreate(userSession, thesaurusId)) {
-            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.draft.unauthorized"));
+            createError = localeBean.getMsg("candidat.draft.unauthorized");
+            MessageUtils.showErrorMessage(createError);
+            chainNext = false;
             return;
         }
         if (StringUtils.isBlank(title)) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.draft.titleRequired"));
+            createError = localeBean.getMsg("candidat.draft.titleRequired");
+            MessageUtils.showWarnMessage(createError);
+            chainNext = false;
+            return;
+        }
+        if (StringUtils.isBlank(definition)) {
+            createError = localeBean.getMsg("candidat.save.def");
+            MessageUtils.showWarnMessage(createError);
+            chainNext = false;
             return;
         }
         if (thesaurusPreferencesProvider.findPreferences(thesaurusId).isEmpty()) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.save.msg2"));
+            createError = localeBean.getMsg("candidat.save.msg2");
+            MessageUtils.showWarnMessage(createError);
+            chainNext = false;
             return;
         }
 
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.draft.unauthorized"));
+            createError = localeBean.getMsg("candidat.draft.unauthorized");
+            MessageUtils.showErrorMessage(createError);
+            chainNext = false;
             return;
         }
 
@@ -159,6 +176,8 @@ public class CandidateDraftBean implements Serializable {
                 userSession.getCurrentUsername(),
                 thesaurusContext.resolveWorkLanguage(),
                 def)) {
+            createError = latestFacesDetail();
+            chainNext = false;
             return;
         }
 
@@ -193,6 +212,9 @@ public class CandidateDraftBean implements Serializable {
         createdConceptId = candidat.getIdConcepte();
         created = true;
         candidatBoardBean.load(thesaurusId);
+        thesaurusViewBean.reloadTree();
+        thesaurusViewBean.setRevealId(createdConceptId);
+        thesaurusViewBean.revealInTree();
         MessageUtils.showInformationMessage(localeBean.getMsg("candidat.draft.created"));
 
         if (chain) {
@@ -215,6 +237,22 @@ public class CandidateDraftBean implements Serializable {
             }
         }
         reset();
+    }
+
+    private static String latestFacesDetail() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return "";
+        }
+        String last = "";
+        var messages = faces.getMessages(null);
+        while (messages.hasNext()) {
+            var message = messages.next();
+            if (message != null && StringUtils.isNotBlank(message.getDetail())) {
+                last = message.getDetail();
+            }
+        }
+        return last;
     }
 
     private List<NodeIdValue> parseCollectionIds(String csv) {

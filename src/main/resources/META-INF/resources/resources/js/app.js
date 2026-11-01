@@ -1244,10 +1244,6 @@ document.addEventListener("click", (e) => {
     if (user) window.setTimeout(() => user.focus(), 0);
   } else if (act === "home") openHome();
   else if (act === "back-graph") backToGraph();
-  else if (act === "back-cand-list") {
-    e.preventDefault();
-    backToCandList();
-  }
   else if (act === "back-prop-list") {
     e.preventDefault();
     const href = t.getAttribute("href");

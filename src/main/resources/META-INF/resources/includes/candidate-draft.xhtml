@@ -17,7 +17,8 @@
     <h:form id="candDraftForm" prependId="false" styleClass="cand-draft-form">
       <span id="draftResult" hidden="hidden"
             data-created="#{candidateDraftBean.created ? '1' : '0'}"
-            data-chain="#{candidateDraftBean.chainNext ? '1' : '0'}"></span>
+            data-chain="#{candidateDraftBean.chainNext ? '1' : '0'}"
+            data-error="#{candidateDraftBean.createError}"></span>
       <h:inputHidden id="draftCreateMode" value="#{candidateDraftBean.createMode}"/>
       <div class="cv is-on is-draft" data-status="candidat">
         <div class="cv-head df-head">
@@ -54,10 +55,11 @@
                 <div class="crow-val">
                   <h:inputTextarea id="draftDef" styleClass="disc-input"
                                    value="#{candidateDraftBean.definition}"
-                                   pt:placeholder="#{localeBean.getMsg('candidat.draft.defPlaceholder')}"/>
+                                   pt:placeholder="#{localeBean.getMsg('candidat.draft.defPlaceholder')}"
+                                   pt:oninput="if(window.setDraftDefError)setDraftDefError(false)"/>
                 </div>
               </div>
-              <div class="df-warn" id="draftRootWarn">#{localeBean.getMsg('candidat.draft.noBt')}</div>
+              <div class="df-err" id="draftDefErr" hidden="hidden">#{localeBean.getMsg('candidat.save.def')}</div>
             </div>
           </section>
         </div>
@@ -323,12 +325,12 @@
             <h:commandButton id="draftCreateNext" styleClass="preview-open-btn" style="display:none"
                              value="#{localeBean.getMsg('candidat.draft.chain')}"
                              action="#{candidateDraftBean.createAndContinue}">
-              <f:ajax execute="@form" render="@form" onevent="onDraftCreateAjax"/>
+              <f:ajax execute="@form" render="@form :previewTree" onevent="onDraftCreateAjax"/>
             </h:commandButton>
             <h:commandButton id="draftCreate" styleClass="preview-open-btn" style="display:none"
                              value="#{localeBean.getMsg('candidat.draft.create')}"
                              action="#{candidateDraftBean.create}">
-              <f:ajax execute="@form" render="@form" onevent="onDraftCreateAjax"/>
+              <f:ajax execute="@form" render="@form :previewTree" onevent="onDraftCreateAjax"/>
             </h:commandButton>
           </ui:fragment>
           <h:commandButton id="draftCancel" styleClass="preview-open-btn" style="display:none"

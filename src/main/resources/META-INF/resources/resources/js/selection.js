@@ -1050,7 +1050,7 @@ function statusMemberKey() {
 
 function statusMatchesAction(status, action) {
   const st = String(status || "").toLowerCase();
-  if (action === "approve") return st === "candidat";
+  if (action === "approve" || action === "reject") return st === "candidat";
   if (action === "deprecate") return !st || st === "valide" || st === "insere";
   return true;
 }
@@ -1189,7 +1189,7 @@ function paintStatusMembers() {
   if (!all.length) {
     renderSelectionChips(host, [], '<p class="bap-members-empty">Aucun concept dans la sélection. Les facettes ne changent pas de statut.</p>');
   } else if (action && !members.length) {
-    renderSelectionChips(host, [], action === "approve"
+    renderSelectionChips(host, [], action === "approve" || action === "reject"
       ? '<p class="bap-members-empty">Aucun candidat dans la sélection.</p>'
       : '<p class="bap-members-empty">Aucun concept validé à rendre obsolète.</p>');
   } else {
@@ -1207,6 +1207,7 @@ function paintStatusMembers() {
   const hint = $("#bulkStatusHint span");
   if (hint) {
     if (action === "approve") hint.textContent = "Seuls les candidats de la sélection seront validés.";
+    else if (action === "reject") hint.textContent = "Seuls les candidats de la sélection seront refusés.";
     else if (action === "deprecate") hint.textContent = "Seuls les concepts validés seront rendus obsolètes. Les candidats et les déjà obsolètes restent inchangés.";
     else hint.textContent = "Choisissez une action. Seuls les concepts au statut correspondant seront modifiés.";
   }
@@ -1224,7 +1225,7 @@ function syncStatusRun() {
 }
 
 function pickStatusAction(action) {
-  state.bulkStatusAction = action === "approve" || action === "deprecate" ? action : "";
+  state.bulkStatusAction = action === "approve" || action === "reject" || action === "deprecate" ? action : "";
   $$("#bulkStatus .bap-choice").forEach((btn) => {
     btn.classList.toggle("is-on", btn.getAttribute("data-status") === state.bulkStatusAction);
   });
@@ -1282,7 +1283,7 @@ function runBulkStatus() {
   if (!members.length) {
     showStatusErr(action === "approve"
       ? "Aucun candidat à valider."
-      : "Aucun concept à rendre obsolète.");
+      : (action === "reject" ? "Aucun candidat à refuser." : "Aucun concept à rendre obsolète."));
     return;
   }
   ensureBulkStatusConfirm();
@@ -1294,6 +1295,9 @@ function runBulkStatus() {
     if (title) title.textContent = "Valider ces candidats ?";
     if (text) text.textContent = n + " candidat" + s + " " + (n > 1 ? "passeront" : "passera")
       + " au statut de concept validé.";
+  } else if (action === "reject") {
+    if (title) title.textContent = "Refuser ces candidats ?";
+    if (text) text.textContent = n + " candidat" + s + " " + (n > 1 ? "seront refusés" : "sera refusé") + ".";
   } else {
     if (title) title.textContent = "Rendre ces concepts obsolètes ?";
     if (text) text.textContent = n + " concept" + s + " " + (n > 1 ? "seront dépréciés" : "sera déprécié")

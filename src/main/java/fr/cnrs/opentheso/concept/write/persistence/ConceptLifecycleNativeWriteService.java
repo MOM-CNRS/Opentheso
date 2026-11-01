@@ -88,7 +88,7 @@ public class ConceptLifecycleNativeWriteService {
         if (command == null || StringUtils.isBlank(command.thesaurusId())) {
             return MutationResult.validationError("Thésaurus manquant");
         }
-        if (!command.approve() && !command.deprecate()) {
+        if (!command.approve() && !command.reject() && !command.deprecate()) {
             return MutationResult.validationError("Choisissez un statut.");
         }
         List<String> conceptIds = uniqueIds(command.conceptIds());
@@ -102,13 +102,21 @@ public class ConceptLifecycleNativeWriteService {
             }
         }
         if (applied == 0) {
-            return MutationResult.validationError(command.approve()
-                    ? "Aucun candidat à valider dans la sélection."
-                    : "Aucun concept actif à rendre obsolète.");
+            if (command.approve()) {
+                return MutationResult.validationError("Aucun candidat à valider dans la sélection.");
+            }
+            if (command.reject()) {
+                return MutationResult.validationError("Aucun candidat à refuser dans la sélection.");
+            }
+            return MutationResult.validationError("Aucun concept actif à rendre obsolète.");
         }
         if (command.approve()) {
             return MutationResult.ok(applied + " candidat" + (applied > 1 ? "s" : "")
                     + " validé" + (applied > 1 ? "s" : ""));
+        }
+        if (command.reject()) {
+            return MutationResult.ok(applied + " candidat" + (applied > 1 ? "s" : "")
+                    + " refusé" + (applied > 1 ? "s" : ""));
         }
         return MutationResult.ok(applied + " concept" + (applied > 1 ? "s" : "")
                 + " rendu" + (applied > 1 ? "s" : "") + " obsolète" + (applied > 1 ? "s" : ""));
@@ -178,6 +186,16 @@ public class ConceptLifecycleNativeWriteService {
             }
             candidatLifecyclePersistence.updateCandidateStatus(
                     command.thesaurusId(), conceptId, CandidatStatusCode.ACCEPTED);
+            finalizeMutation(command.thesaurusId(), conceptId, command.userId(), command.contributorName());
+            return true;
+        }
+        if (command.reject()) {
+            if (!isCandidateStatus(current)) {
+                return false;
+            }
+            if (!candidatLifecyclePersistence.rejectIfPending(command.thesaurusId(), conceptId)) {
+                return false;
+            }
             finalizeMutation(command.thesaurusId(), conceptId, command.userId(), command.contributorName());
             return true;
         }

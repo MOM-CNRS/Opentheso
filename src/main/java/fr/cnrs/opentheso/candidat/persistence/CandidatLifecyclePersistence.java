@@ -59,6 +59,30 @@ public class CandidatLifecyclePersistence {
         return true;
     }
 
+    /**
+     * Refuse un candidat encore en attente. Un candidat déjà accepté ou déjà refusé
+     * n'est pas modifié.
+     */
+    @Transactional
+    public boolean rejectIfPending(String thesaurusId, String conceptId) {
+        if (StringUtils.isBlank(conceptId)) {
+            return false;
+        }
+        Optional<CandidatStatus> candidatStatus = StringUtils.isNotBlank(thesaurusId)
+                ? candidatStatusRepository.findAllByIdConceptAndIdThesaurus(conceptId, thesaurusId)
+                : Optional.empty();
+        if (candidatStatus.isEmpty()) {
+            candidatStatus = candidatStatusRepository.findByIdConcept(conceptId);
+        }
+        if (candidatStatus.isEmpty() || candidatStatus.get().getStatus() == null) {
+            return false;
+        }
+        if (candidatStatus.get().getStatus().getIdStatus() != CandidatStatusCode.PENDING) {
+            return false;
+        }
+        return updateCandidateStatus(thesaurusId, conceptId, CandidatStatusCode.REJECTED);
+    }
+
     public CandidateProcessOutcome insertCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
         var candidatStatus = candidatStatusRepository.findByIdConcept(candidatDto.getIdConcepte());
         if (candidatStatus.isEmpty()) {
