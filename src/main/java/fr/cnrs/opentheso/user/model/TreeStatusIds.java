@@ -15,10 +15,10 @@ public final class TreeStatusIds {
 
     public static final List<String> ALL = List.of(VALIDE, INSERE, CANDIDAT, REJETE, DEPRECIE);
 
-    public static final Set<String> DEFAULT_SELECTED = Set.of(VALIDE, INSERE, CANDIDAT);
+    public static final Set<String> DEFAULT_SELECTED = Set.of(VALIDE, INSERE, CANDIDAT, DEPRECIE);
 
     /** Même sélection que par défaut, sans les candidats (visiteurs). */
-    public static final Set<String> GUEST_SELECTED = Set.of(VALIDE, INSERE);
+    public static final Set<String> GUEST_SELECTED = Set.of(VALIDE, INSERE, DEPRECIE);
 
     public static final Map<String, List<String>> GROUPS = Map.of(
             "actif", List.of(VALIDE, INSERE),

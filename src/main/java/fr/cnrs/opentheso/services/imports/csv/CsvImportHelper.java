@@ -608,11 +608,7 @@ public class CsvImportHelper {
     }
 
     static String imageCaptionPart(String value) {
-        String text = StringUtils.trimToEmpty(value);
-        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
-            return "";
-        }
-        return text;
+        return fr.cnrs.opentheso.utils.SkosText.imageCaptionPart(value);
     }
 
     private String getNotes(CsvReadHelper.ConceptObject conceptObject){

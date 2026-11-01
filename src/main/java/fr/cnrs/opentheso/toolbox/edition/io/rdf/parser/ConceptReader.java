@@ -125,6 +125,7 @@ public class ConceptReader {
             case "publisher":
             case "coverage":
             case "rights":
+            case "source":
             case "type":
             case "format":
             case "relation":

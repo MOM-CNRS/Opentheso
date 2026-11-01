@@ -241,14 +241,14 @@ public class ConceptFullAssembler {
 
         for (Object[] row : conceptFullQueryRepository.findAllConceptNotes(conceptId, thesaurusId)) {
             ConceptSnapshotNote note = toConceptNote(row);
-            switch (stringAt(row, 1)) {
-                case "note" -> notes.add(note);
+            switch (stringAt(row, 1).trim().toLowerCase(java.util.Locale.ROOT)) {
+                case "note", "customnote" -> notes.add(note);
                 case "definition" -> definitions.add(note);
                 case "example" -> examples.add(note);
-                case "editorialNote" -> editorialNotes.add(note);
-                case "changeNote" -> changeNotes.add(note);
-                case "scopeNote" -> scopeNotes.add(note);
-                case "historyNote" -> historyNotes.add(note);
+                case "editorialnote" -> editorialNotes.add(note);
+                case "changenote" -> changeNotes.add(note);
+                case "scopenote" -> scopeNotes.add(note);
+                case "historynote" -> historyNotes.add(note);
                 default -> {
                     // Unknown note type; ignore it rather than fail the snapshot.
                 }
@@ -453,11 +453,7 @@ public class ConceptFullAssembler {
     }
 
     static String imageCaptionPart(String value) {
-        String text = StringUtils.trimToEmpty(value);
-        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
-            return "";
-        }
-        return text;
+        return fr.cnrs.opentheso.utils.SkosText.imageCaptionPart(value);
     }
 
     private static String stringAt(Object[] row, int index) {

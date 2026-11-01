@@ -14,6 +14,37 @@ public interface ConceptDcTermRepository extends JpaRepository<ConceptDcTerm, In
 
     List<ConceptDcTerm> findAllByIdThesaurusAndIdConcept(String idThesaurus, String idConcept);
 
+    /**
+     * Même identifiant que la fiche, ou l'ARK stocké à la place de {@code id_concept}.
+     */
+    @Query(value = """
+            SELECT cd.name, cd.value, COALESCE(cd.language, ''), COALESCE(cd.data_type, '')
+            FROM concept_dcterms cd
+            WHERE cd.id_thesaurus = :idThesaurus
+              AND (
+                cd.id_concept = :idConcept
+                OR cd.id_concept LIKE '%/' || :idConcept
+                OR cd.id_concept LIKE '%idc=' || :idConcept || '&%'
+                OR cd.id_concept LIKE '%idf=' || :idConcept || '&%'
+                OR cd.id_concept LIKE '%idc=' || :idConcept
+                OR cd.id_concept LIKE '%idf=' || :idConcept
+                OR cd.id_concept IN (
+                    SELECT c.id_ark FROM concept c
+                    WHERE c.id_concept = :idConcept
+                      AND c.id_thesaurus = :idThesaurus
+                      AND c.id_ark IS NOT NULL AND btrim(c.id_ark) <> ''
+                    UNION
+                    SELECT regexp_replace(c.id_ark, '^.*/', '') FROM concept c
+                    WHERE c.id_concept = :idConcept
+                      AND c.id_thesaurus = :idThesaurus
+                      AND c.id_ark IS NOT NULL AND position('/' in c.id_ark) > 0
+                )
+              )
+            ORDER BY cd.name, cd.value
+            """, nativeQuery = true)
+    List<Object[]> findDisplayedMetadata(@Param("idThesaurus") String idThesaurus,
+                                         @Param("idConcept") String idConcept);
+
     @Modifying
     @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);

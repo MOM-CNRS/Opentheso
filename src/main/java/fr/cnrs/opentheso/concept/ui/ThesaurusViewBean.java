@@ -16,7 +16,6 @@ import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.concept.model.ThesaurusMetadataItem;
-import fr.cnrs.opentheso.entites.ConceptDcTerm;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
@@ -742,10 +741,25 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     private static boolean matchesNoteLang(String noteLang, String selected) {
-        return Strings.CI.equals(
-                StringUtils.trimToEmpty(noteLang),
-                StringUtils.trimToEmpty(selected)
-        );
+        String note = languagePrimary(noteLang);
+        if (note.isEmpty()) {
+            return true;
+        }
+        return Strings.CI.equals(note, languagePrimary(selected));
+    }
+
+    private static String languagePrimary(String lang) {
+        String value = StringUtils.trimToEmpty(lang);
+        if (value.isEmpty() || "null".equalsIgnoreCase(value)) {
+            return "";
+        }
+        int dash = value.indexOf('-');
+        int underscore = value.indexOf('_');
+        int cut = dash > 0 ? dash : underscore;
+        if (cut > 0) {
+            value = value.substring(0, cut);
+        }
+        return value;
     }
 
     /** Libellés préférentiels des autres langues — structure {@code tr-list} de la maquette. */
@@ -1500,31 +1514,54 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     private void loadConceptMetadata(String conceptId) {
-        List<ConceptDcTerm> rows = conceptDcTermRepository.findAllByIdThesaurusAndIdConcept(getId(), conceptId);
+        List<Object[]> rows = conceptDcTermRepository.findDisplayedMetadata(getId(), conceptId);
         if (rows == null || rows.isEmpty()) {
             conceptMetadata = List.of();
             return;
         }
         List<ThesaurusMetadataItem> items = new ArrayList<>();
-        for (ConceptDcTerm row : rows) {
-            String value = StringUtils.trimToEmpty(row.getValue());
-            String name = StringUtils.trimToEmpty(row.getName());
+        for (Object[] row : rows) {
+            String name = metadataCell(row, 0);
+            String value = metadataCell(row, 1);
             if (value.isEmpty() || "null".equalsIgnoreCase(value) || name.isEmpty() || "maitre".equalsIgnoreCase(name)) {
                 continue;
             }
-            items.add(new ThesaurusMetadataItem(
-                    0,
-                    name,
-                    value,
-                    StringUtils.trimToEmpty(row.getLanguage()),
-                    StringUtils.trimToEmpty(row.getDataType())
-            ));
+            if (replacementShownInForm(name)) {
+                continue;
+            }
+            String language = metadataCell(row, 2);
+            if ("null".equalsIgnoreCase(language)) {
+                language = "";
+            }
+            items.add(new ThesaurusMetadataItem(0, name, value, language, metadataCell(row, 3)));
         }
         conceptMetadata = List.copyOf(items);
     }
 
+    private static String metadataCell(Object[] row, int index) {
+        if (row == null || index >= row.length || row[index] == null) {
+            return "";
+        }
+        return StringUtils.trimToEmpty(row[index].toString());
+    }
+
+    private boolean replacementShownInForm(String name) {
+        if (selectedConcept == null) {
+            return false;
+        }
+        String key = dcLocalName(name).toLowerCase(Locale.ROOT);
+        if ("replaces".equals(key)) {
+            return selectedConcept.getReplaces() != null && !selectedConcept.getReplaces().isEmpty();
+        }
+        if ("isreplacedby".equals(key)) {
+            return selectedConcept.getReplacedBy() != null && !selectedConcept.getReplacedBy().isEmpty();
+        }
+        return false;
+    }
+
     public String metadataLabel(String name) {
-        return switch (StringUtils.defaultString(name)) {
+        String key = dcLocalName(name);
+        return switch (key.toLowerCase(Locale.ROOT)) {
             case "creator" -> "Créateur";
             case "contributor" -> "Contributeur";
             case "subject" -> "Sujet";
@@ -1539,17 +1576,27 @@ public class ThesaurusViewBean implements Serializable {
             case "relation" -> "Relation";
             case "coverage" -> "Couverture";
             case "rights" -> "Droits";
-            case "rightsHolder" -> "Titulaire des droits";
-            case "conformsTo" -> "Conforme à";
+            case "rightsholder" -> "Titulaire des droits";
+            case "conformsto" -> "Conforme à";
             case "created" -> "Créé";
             case "modified" -> "Modifié";
             case "license" -> "Licence";
             case "replaces" -> "Remplace";
+            case "isreplacedby" -> "Est remplacé par";
             case "alternative" -> "Alternative";
             case "title" -> "Titre";
             case "maitre" -> "Maître";
-            default -> name;
+            default -> key.isEmpty() ? StringUtils.defaultString(name) : key;
         };
+    }
+
+    private static String dcLocalName(String name) {
+        String value = StringUtils.trimToEmpty(name);
+        int cut = Math.max(value.lastIndexOf('#'), Math.max(value.lastIndexOf('/'), value.lastIndexOf(':')));
+        if (cut >= 0 && cut < value.length() - 1) {
+            value = value.substring(cut + 1);
+        }
+        return value;
     }
 
     private static String formatGpsPoint(ConceptGpsPoint point) {

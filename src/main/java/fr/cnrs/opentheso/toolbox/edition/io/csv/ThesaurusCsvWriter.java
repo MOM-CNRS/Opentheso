@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvAlignmentRow;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvByIdRow;
 import fr.cnrs.opentheso.toolbox.edition.persistence.ThesaurusEditionCsvExportPersistence;
+import fr.cnrs.opentheso.models.skosapi.SKOSAgent;
 import fr.cnrs.opentheso.models.skosapi.SKOSDate;
 import fr.cnrs.opentheso.models.skosapi.SKOSDocumentation;
 import fr.cnrs.opentheso.models.skosapi.SKOSGPSCoordinates;
@@ -37,6 +38,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import fr.cnrs.opentheso.utils.SkosText;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -131,11 +133,14 @@ public class ThesaurusCsvWriter {
                 header.add("owl:deprecated");
                 // pour signaler que le concept est remplacé par un autre concept
                 header.add("dcterms:isReplacedBy");
+                header.add("dcterms:replaces");
                 
                 // pour les images
                 header.add("foaf:Image");                
                 
-                header.add("dcterms:source");                
+                header.add("dcterms:source");
+                header.add("dcterms:creator");
+                header.add("dcterms:contributor");
                 header.add("dcterms:created");
                 header.add("dcterms:modified");
                 csvFilePrinter.printRecord(header);
@@ -241,7 +246,8 @@ public class ThesaurusCsvWriter {
 
         csvRow.add(skosResource.getStatus() == SKOSProperty.DEPRECATED ? "true" : "false");
         // dcterms:isReplacedBy pour référencer les concepts qui remplacent celui qui est déprécié 
-        csvRow.add(getReplaceBy(skosResource.getsKOSReplaces()));    
+        csvRow.add(getReplaceBy(skosResource.getsKOSReplaces()));
+        csvRow.add(getReplaces(skosResource.getsKOSReplaces()));
         
         // foaf:Image pour les images
         csvRow.add(getImages(skosResource.getNodeImages()));
@@ -251,7 +257,9 @@ public class ThesaurusCsvWriter {
             csvRow.add(getExternalReources(skosResource.getExternalResources()));
         } else {
             csvRow.add("");
-        }        
+        }
+        csvRow.add(getAgents(skosResource, SKOSProperty.CREATOR));
+        csvRow.add(getAgents(skosResource, SKOSProperty.CONTRIBUTOR));
         
         
         //sdct:created
@@ -312,6 +320,9 @@ public class ThesaurusCsvWriter {
     }       
     
     private String getImages(ArrayList<NodeImage> nodeImages) {
+        if (nodeImages == null) {
+            return "";
+        }
         StringBuilder value = new StringBuilder();
         for (NodeImage nodeImage : nodeImages) {
             if(value.isEmpty()){
@@ -319,18 +330,41 @@ public class ThesaurusCsvWriter {
             } else {
                 value.append(DELIM_MULTI_DATAS).append("rdf:about=").append(nodeImage.getUri());
             }
-            if(!StringUtils.isEmpty(nodeImage.getCopyRight())) {
-                value.append("@@dcterms:rights=").append(nodeImage.getCopyRight());
-            }      
-            if(!StringUtils.isEmpty(nodeImage.getImageName())) {
-                value.append("@@dcterms:title=").append(nodeImage.getImageName());
-            }
-            if(!StringUtils.isEmpty(nodeImage.getCreator())) {
-                value.append("@@dcterms:creator=").append(nodeImage.getCreator());
-            }              
+            appendImagePart(value, "dcterms:rights", nodeImage.getCopyRight());
+            appendImagePart(value, "dcterms:title", nodeImage.getImageName());
+            appendImagePart(value, "dcterms:creator", nodeImage.getCreator());
         }
         return value.toString();
-    }     
+    }
+
+    private static void appendImagePart(StringBuilder value, String field, String raw) {
+        String text = SkosText.imageCaptionPart(raw);
+        if (!text.isEmpty()) {
+            value.append("@@").append(field).append("=").append(text);
+        }
+    }
+
+    private String getAgents(SKOSResource resource, int property) {
+        if (resource.getAgentList() == null) {
+            return "";
+        }
+        return resource.getAgentList().stream()
+                .filter(agent -> agent.getProperty() == property)
+                .map(SKOSAgent::getAgent)
+                .map(SkosText::imageCaptionPart)
+                .filter(text -> !text.isEmpty())
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
+    }
+
+    private String getReplaces(ArrayList<SKOSReplaces> sKOSReplaceses) {
+        if (sKOSReplaceses == null) {
+            return "";
+        }
+        return sKOSReplaceses.stream()
+                .filter(sKOSReplace -> sKOSReplace.getProperty() == SKOSProperty.REPLACES)
+                .map(SKOSReplaces::getTargetUri)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
+    }
 
     private String getReplaceBy(ArrayList<SKOSReplaces> sKOSReplaceses) {
         return sKOSReplaceses.stream()

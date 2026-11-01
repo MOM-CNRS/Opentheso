@@ -134,7 +134,33 @@ public class ConceptFullQueryRepository {
               AND (
                 n.identifier = :conceptId
                 OR n.id_concept = :conceptId
-                OR ((n.identifier IS NULL OR btrim(n.identifier) = '') AND n.id_term = :conceptId)
+                OR n.id_term = :conceptId
+                OR n.identifier LIKE '%/' || :conceptId
+                OR n.id_concept LIKE '%/' || :conceptId
+                OR n.id_term LIKE '%/' || :conceptId
+                OR n.identifier LIKE '%idc=' || :conceptId || '&%'
+                OR n.identifier LIKE '%idf=' || :conceptId || '&%'
+                OR n.id_concept LIKE '%idc=' || :conceptId || '&%'
+                OR n.id_concept LIKE '%idf=' || :conceptId || '&%'
+                OR n.id_term LIKE '%idc=' || :conceptId || '&%'
+                OR n.id_term LIKE '%idf=' || :conceptId || '&%'
+                OR n.identifier LIKE '%idc=' || :conceptId
+                OR n.identifier LIKE '%idf=' || :conceptId
+                OR n.id_concept LIKE '%idc=' || :conceptId
+                OR n.id_concept LIKE '%idf=' || :conceptId
+                OR n.id_term LIKE '%idc=' || :conceptId
+                OR n.id_term LIKE '%idf=' || :conceptId
+                OR n.id_term IN (
+                    SELECT pt.id_term FROM preferred_term pt
+                    WHERE pt.id_concept = :conceptId AND pt.id_thesaurus = :thesaurusId
+                )
+                OR n.identifier IN (
+                    SELECT c.id_ark FROM concept c
+                    WHERE c.id_concept = :conceptId
+                      AND c.id_thesaurus = :thesaurusId
+                      AND c.id_ark IS NOT NULL
+                      AND btrim(c.id_ark) <> ''
+                )
               )
             ORDER BY n.notetypecode, n.lang
             """)
@@ -328,7 +354,24 @@ public class ConceptFullQueryRepository {
 
     public List<Object[]> findImages(String conceptId, String thesaurusId) {
         return em.createNativeQuery("""
-            SELECT ei.id, ei.image_name, ei.image_copyright, ei.external_uri, COALESCE(ei.image_creator, '')
+            SELECT ei.id,
+                   CASE
+                       WHEN ei.image_name IS NULL OR lower(btrim(ei.image_name)) = 'null' THEN ''
+                       ELSE ei.image_name
+                   END,
+                   CASE
+                       WHEN ei.image_copyright IS NULL
+                            OR lower(btrim(ei.image_copyright)) = 'null'
+                            OR btrim(ei.image_copyright) ~* '_(sparql|rest)$' THEN ''
+                       ELSE ei.image_copyright
+                   END,
+                   ei.external_uri,
+                   CASE
+                       WHEN ei.image_creator IS NULL
+                            OR lower(btrim(ei.image_creator)) = 'null'
+                            OR btrim(ei.image_creator) ~* '_(sparql|rest)$' THEN ''
+                       ELSE ei.image_creator
+                   END
             FROM external_images ei
             WHERE ei.id_thesaurus = :thesaurusId
               AND ei.id_concept = :conceptId
@@ -391,8 +434,17 @@ public class ConceptFullQueryRepository {
             SELECT c.id_concept, c.id_ark, c.id_handle, c.id_doi, COALESCE(t.lexical_value, c.id_concept)
             FROM concept_replacedby cr
             JOIN concept c
-                ON c.id_concept = cr.id_concept1
-                AND c.id_thesaurus = cr.id_thesaurus
+                ON c.id_thesaurus = cr.id_thesaurus
+                AND (
+                    c.id_concept = cr.id_concept1
+                    OR cr.id_concept1 LIKE '%/' || c.id_concept
+                    OR (c.id_ark IS NOT NULL AND btrim(c.id_ark) <> '' AND (
+                        c.id_ark = cr.id_concept1
+                        OR c.id_ark = 'ark:/' || cr.id_concept1
+                        OR c.id_ark LIKE '%/' || cr.id_concept1
+                        OR cr.id_concept1 LIKE '%/' || c.id_ark
+                    ))
+                )
             LEFT JOIN preferred_term pt
                 ON pt.id_concept = c.id_concept
                 AND pt.id_thesaurus = c.id_thesaurus
@@ -400,8 +452,31 @@ public class ConceptFullQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = pt.id_thesaurus
                 AND t.lang = :lang
-            WHERE cr.id_concept2 = :conceptId
-              AND cr.id_thesaurus = :thesaurusId
+            WHERE cr.id_thesaurus = :thesaurusId
+              AND (
+                cr.id_concept2 = :conceptId
+                OR cr.id_concept2 IN (
+                    SELECT c0.id_ark FROM concept c0
+                    WHERE c0.id_concept = :conceptId
+                      AND c0.id_thesaurus = :thesaurusId
+                      AND c0.id_ark IS NOT NULL AND btrim(c0.id_ark) <> ''
+                    UNION
+                    SELECT regexp_replace(c0.id_ark, '^.*/', '') FROM concept c0
+                    WHERE c0.id_concept = :conceptId
+                      AND c0.id_thesaurus = :thesaurusId
+                      AND c0.id_ark IS NOT NULL AND position('/' in c0.id_ark) > 0
+                )
+                OR EXISTS (
+                    SELECT 1 FROM concept c0
+                    WHERE c0.id_concept = :conceptId
+                      AND c0.id_thesaurus = :thesaurusId
+                      AND (
+                        cr.id_concept2 LIKE '%/' || c0.id_concept
+                        OR (c0.id_ark IS NOT NULL AND btrim(c0.id_ark) <> ''
+                            AND cr.id_concept2 LIKE '%/' || c0.id_ark)
+                      )
+                )
+              )
             ORDER BY COALESCE(t.lexical_value, c.id_concept)
             """)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
@@ -415,8 +490,17 @@ public class ConceptFullQueryRepository {
             SELECT c.id_concept, c.id_ark, c.id_handle, c.id_doi, COALESCE(t.lexical_value, c.id_concept)
             FROM concept_replacedby cr
             JOIN concept c
-                ON c.id_concept = cr.id_concept2
-                AND c.id_thesaurus = cr.id_thesaurus
+                ON c.id_thesaurus = cr.id_thesaurus
+                AND (
+                    c.id_concept = cr.id_concept2
+                    OR cr.id_concept2 LIKE '%/' || c.id_concept
+                    OR (c.id_ark IS NOT NULL AND btrim(c.id_ark) <> '' AND (
+                        c.id_ark = cr.id_concept2
+                        OR c.id_ark = 'ark:/' || cr.id_concept2
+                        OR c.id_ark LIKE '%/' || cr.id_concept2
+                        OR cr.id_concept2 LIKE '%/' || c.id_ark
+                    ))
+                )
             LEFT JOIN preferred_term pt
                 ON pt.id_concept = c.id_concept
                 AND pt.id_thesaurus = c.id_thesaurus
@@ -424,8 +508,31 @@ public class ConceptFullQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = pt.id_thesaurus
                 AND t.lang = :lang
-            WHERE cr.id_concept1 = :conceptId
-              AND cr.id_thesaurus = :thesaurusId
+            WHERE cr.id_thesaurus = :thesaurusId
+              AND (
+                cr.id_concept1 = :conceptId
+                OR cr.id_concept1 IN (
+                    SELECT c0.id_ark FROM concept c0
+                    WHERE c0.id_concept = :conceptId
+                      AND c0.id_thesaurus = :thesaurusId
+                      AND c0.id_ark IS NOT NULL AND btrim(c0.id_ark) <> ''
+                    UNION
+                    SELECT regexp_replace(c0.id_ark, '^.*/', '') FROM concept c0
+                    WHERE c0.id_concept = :conceptId
+                      AND c0.id_thesaurus = :thesaurusId
+                      AND c0.id_ark IS NOT NULL AND position('/' in c0.id_ark) > 0
+                )
+                OR EXISTS (
+                    SELECT 1 FROM concept c0
+                    WHERE c0.id_concept = :conceptId
+                      AND c0.id_thesaurus = :thesaurusId
+                      AND (
+                        cr.id_concept1 LIKE '%/' || c0.id_concept
+                        OR (c0.id_ark IS NOT NULL AND btrim(c0.id_ark) <> ''
+                            AND cr.id_concept1 LIKE '%/' || c0.id_ark)
+                      )
+                )
+              )
             ORDER BY COALESCE(t.lexical_value, c.id_concept)
             """)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)

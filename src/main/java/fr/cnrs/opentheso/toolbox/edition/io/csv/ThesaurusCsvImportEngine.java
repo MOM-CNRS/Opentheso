@@ -13,8 +13,10 @@ import fr.cnrs.opentheso.entites.ThesaurusLabel;
 import fr.cnrs.opentheso.entites.UserGroupThesaurus;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
+import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.repositories.ConceptFacetRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
+import fr.cnrs.opentheso.repositories.ConceptReplacedByRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupLabelHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupRepository;
@@ -28,6 +30,7 @@ import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptLabel;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptObject;
 import fr.cnrs.opentheso.toolbox.edition.support.ThesaurusCsvGpsParser;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxThesaurusPersistence;
+import fr.cnrs.opentheso.utils.SkosText;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +65,7 @@ public class ThesaurusCsvImportEngine {
 
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ConceptRepository conceptRepository;
+    private final ConceptReplacedByRepository conceptReplacedByRepository;
     private final ConceptFacetRepository conceptFacetRepository;
     private final ConceptGroupRepository conceptGroupRepository;
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
@@ -112,28 +116,79 @@ public class ThesaurusCsvImportEngine {
     }
 
 
-    private String getNotes(ThesaurusCsvConceptObject conceptObject){
+    private String getNotes(ThesaurusCsvConceptObject conceptObject) {
+        return notesPayload(conceptObject);
+    }
+
+    static String notesPayload(ThesaurusCsvConceptObject conceptObject) {
         StringBuilder notes = new StringBuilder();
-        appendConceptNotes(notes, conceptObject.getNote(), "note", conceptObject.getIdConcept());
-        appendConceptNotes(notes, conceptObject.getDefinitions(), "definition", conceptObject.getIdConcept());
-        appendConceptNotes(notes, conceptObject.getChangeNotes(), "changeNote", conceptObject.getIdConcept());
-        appendConceptNotes(notes, conceptObject.getEditorialNotes(), "editorialNote", conceptObject.getIdConcept());
-        appendConceptNotes(notes, conceptObject.getHistoryNotes(), "historyNote", conceptObject.getIdConcept());
-        appendConceptNotes(notes, conceptObject.getScopeNotes(), "scopeNote", conceptObject.getIdConcept());
-        appendConceptNotes(notes, conceptObject.getExamples(), "example", conceptObject.getIdConcept());
+        String fallbackLang = fallbackNoteLanguage(conceptObject);
+        String idConcept = conceptObject.getIdConcept();
+        appendConceptNotes(notes, conceptObject.getNote(), "note", idConcept, fallbackLang);
+        appendConceptNotes(notes, conceptObject.getDefinitions(), "definition", idConcept, fallbackLang);
+        appendConceptNotes(notes, conceptObject.getChangeNotes(), "changeNote", idConcept, fallbackLang);
+        appendConceptNotes(notes, conceptObject.getEditorialNotes(), "editorialNote", idConcept, fallbackLang);
+        appendConceptNotes(notes, conceptObject.getHistoryNotes(), "historyNote", idConcept, fallbackLang);
+        appendConceptNotes(notes, conceptObject.getScopeNotes(), "scopeNote", idConcept, fallbackLang);
+        appendConceptNotes(notes, conceptObject.getExamples(), "example", idConcept, fallbackLang);
         return stripLeadingSeparator(notes);
     }
 
-    private void appendConceptNotes(StringBuilder notes, List<ThesaurusCsvConceptLabel> labels, String type, String idConcept) {
+    private static String fallbackNoteLanguage(ThesaurusCsvConceptObject conceptObject) {
+        if (CollectionUtils.isEmpty(conceptObject.getPrefLabels())) {
+            return "";
+        }
+        for (ThesaurusCsvConceptLabel label : conceptObject.getPrefLabels()) {
+            String lang = SkosText.noteLanguage(label.getLang());
+            if (!lang.isEmpty()) {
+                return lang;
+            }
+        }
+        return "";
+    }
+
+    private static void appendConceptNotes(StringBuilder notes, List<ThesaurusCsvConceptLabel> labels, String type,
+                                           String idConcept, String fallbackLang) {
         if (CollectionUtils.isEmpty(labels)) {
             return;
         }
         for (ThesaurusCsvConceptLabel label : labels) {
-            notes.append(SEPERATEUR).append(label.getLabel())
+            String text = SkosText.notePayloadPart(label.getLabel());
+            if (text.isEmpty()) {
+                continue;
+            }
+            String lang = SkosText.noteLanguage(label.getLang());
+            if (lang.isEmpty()) {
+                lang = fallbackLang;
+            }
+            notes.append(SEPERATEUR).append(text)
                     .append(SOUS_SEPERATEUR).append(type)
-                    .append(SOUS_SEPERATEUR).append(label.getLang())
+                    .append(SOUS_SEPERATEUR).append(lang)
                     .append(SOUS_SEPERATEUR).append(idConcept);
         }
+    }
+
+    static String dcTermsPayload(ThesaurusCsvConceptObject conceptObject) {
+        if (conceptObject.getDcElements() == null || conceptObject.getDcElements().isEmpty()) {
+            return null;
+        }
+        StringBuilder dcterms = new StringBuilder();
+        for (DcElement element : conceptObject.getDcElements()) {
+            if (element == null || StringUtils.isBlank(element.getName()) || StringUtils.isBlank(element.getValue())) {
+                continue;
+            }
+            String value = SkosText.notePayloadPart(element.getValue());
+            if (value.isEmpty() || "maitre".equalsIgnoreCase(element.getName())) {
+                continue;
+            }
+            if (!dcterms.isEmpty()) {
+                dcterms.append(SEPERATEUR);
+            }
+            dcterms.append(element.getName().trim()).append(SOUS_SEPERATEUR)
+                    .append(value).append(SOUS_SEPERATEUR)
+                    .append(SkosText.noteLanguage(element.getLanguage()));
+        }
+        return dcterms.isEmpty() ? null : dcterms.toString();
     }
 
     private void appendAlignments(StringBuilder alignements, List<String> uris, int idUser, int type, String idTheso, String idConcept) {
@@ -251,13 +306,16 @@ public class ThesaurusCsvImportEngine {
         }
         // Import d'un thésaurus neuf : insert direct sans find-before-insert (évite N+1)
         for (ThesaurusCsvConceptLabel note : notes) {
-            String lexicalValue = StringEscapeUtils.unescapeXml(
+            String lexicalValue = SkosText.notePayloadPart(StringEscapeUtils.unescapeXml(
                     fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(
-                            fr.cnrs.opentheso.utils.StringUtils.clearValue(note.getLabel())));
+                            fr.cnrs.opentheso.utils.StringUtils.clearValue(note.getLabel()))));
+            if (lexicalValue.isEmpty()) {
+                continue;
+            }
             noteRepository.save(Note.builder()
                     .noteTypeCode(noteTypeCode)
                     .idThesaurus(idTheso)
-                    .lang(note.getLang())
+                    .lang(SkosText.noteLanguage(note.getLang()))
                     .lexicalValue(lexicalValue)
                     .identifier(identifier)
                     .noteSource("")
@@ -283,11 +341,18 @@ public class ThesaurusCsvImportEngine {
 
         StringBuilder labels = new StringBuilder();
         for (ThesaurusCsvConceptLabel prefLabel : conceptObject.getPrefLabels()) {
-            if(labels.isEmpty()){
-                labels.append(prefLabel.getLabel()).append(SOUS_SEPERATEUR).append(prefLabel.getLang());
-            } else {
-                labels.append(SEPERATEUR).append(prefLabel.getLabel()).append(SOUS_SEPERATEUR).append(prefLabel.getLang());
+            String text = SkosText.notePayloadPart(prefLabel.getLabel());
+            if (text.isEmpty()) {
+                continue;
             }
+            if (labels.isEmpty()) {
+                labels.append(text).append(SOUS_SEPERATEUR).append(SkosText.noteLanguage(prefLabel.getLang()));
+            } else {
+                labels.append(SEPERATEUR).append(text).append(SOUS_SEPERATEUR).append(SkosText.noteLanguage(prefLabel.getLang()));
+            }
+        }
+        if (labels.isEmpty()) {
+            return;
         }
 
         String membres = null;
@@ -364,18 +429,14 @@ public class ThesaurusCsvImportEngine {
         if (!imagesBuilder.isEmpty()) {
             imagesBuilder.append(SEPERATEUR);
         }
-        imagesBuilder.append(imageCaptionPart(nodeImage.getImageName())).append(SOUS_SEPERATEUR)
-                .append(imageCaptionPart(nodeImage.getCopyRight())).append(SOUS_SEPERATEUR)
+        imagesBuilder.append(SkosText.imageCaptionPart(nodeImage.getImageName())).append(SOUS_SEPERATEUR)
+                .append(SkosText.imageCaptionPart(nodeImage.getCopyRight())).append(SOUS_SEPERATEUR)
                 .append(nodeImage.getUri()).append(SOUS_SEPERATEUR)
-                .append(imageCaptionPart(nodeImage.getCreator()));
+                .append(SkosText.imageCaptionPart(nodeImage.getCreator()));
     }
 
     static String imageCaptionPart(String value) {
-        String text = StringUtils.trimToEmpty(value);
-        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
-            return "";
-        }
-        return text;
+        return SkosText.imageCaptionPart(value);
     }
 
     private String buildCsvAlignments(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {
@@ -504,12 +565,39 @@ public class ThesaurusCsvImportEngine {
                 buildCsvNonPrefTerm(idTheso, conceptObject, idUser),
                 buildCsvAlignments(idTheso, conceptObject, idUser),
                 buildCsvImages(conceptObject),
-                status.replacedBy(),
+                null,
                 gps != null,
                 gps,
                 Dates.toSqlDate(parseToInstant(conceptObject.getCreated())),
                 Dates.toSqlDate(parseToInstant(conceptObject.getModified())),
-                null);
+                dcTermsPayload(conceptObject));
+        linkReplacements(idTheso, conceptObject);
+    }
+
+    private void linkReplacements(String idTheso, ThesaurusCsvConceptObject conceptObject) {
+        String idConcept = conceptObject.getIdConcept();
+        if (StringUtils.isBlank(idConcept)) {
+            return;
+        }
+        if (CollectionUtils.isNotEmpty(conceptObject.getReplacedBy())) {
+            for (String replacementId : conceptObject.getReplacedBy()) {
+                if (isReplacementId(replacementId) && !idConcept.equals(replacementId)) {
+                    conceptReplacedByRepository.insertReplacedByIfAbsent(idConcept, replacementId, idTheso, idUser);
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(conceptObject.getReplaces())) {
+            for (String deprecatedId : conceptObject.getReplaces()) {
+                if (isReplacementId(deprecatedId) && !idConcept.equals(deprecatedId)) {
+                    conceptReplacedByRepository.insertReplacedByIfAbsent(deprecatedId, idConcept, idTheso, idUser);
+                }
+            }
+        }
+    }
+
+    private static boolean isReplacementId(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        return !text.isEmpty() && !"null".equalsIgnoreCase(text);
     }
 
     private record ConceptStatus(String conceptStatus, String replacedBy) {

@@ -248,6 +248,18 @@
                       data-copy="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}">⧉</button>
             </div>
           </div>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replaces}">
+          <div class="crow">
+            <div class="crow-lbl">#{localeBean.getMsg('rightbody.concept.replace')}</div>
+            <div class="crow-val">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.replaces}" var="rel">
+                  <button type="button" class="cv-replace" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                </ui:repeat>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
           <div class="crow">
             <div class="crow-lbl">Formes alternatives</div>
             <div class="crow-val">
@@ -280,6 +292,18 @@
               </ui:repeat>
             </div>
           </div>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replacedBy}">
+          <div class="crow">
+            <div class="crow-lbl">#{localeBean.getMsg('rightbody.conceptdialog.is_replaced_by')}</div>
+            <div class="crow-val">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.selectedConcept.replacedBy}" var="rel">
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                </ui:repeat>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
           </ui:fragment>
           <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
           <div class="crow">
@@ -571,30 +595,6 @@
               </ui:fragment>
             </div>
           </div>
-          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replacedBy}">
-          <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-rt">RP</span>Est remplacé par</div>
-            <div class="crow-val">
-              <div class="rel-items">
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.replacedBy}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
-                </ui:repeat>
-              </div>
-            </div>
-          </div>
-          </ui:fragment>
-          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replaces}">
-          <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-rt">RM</span>Remplace</div>
-            <div class="crow-val">
-              <div class="rel-items">
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.replaces}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
-                </ui:repeat>
-              </div>
-            </div>
-          </div>
-          </ui:fragment>
           </ui:fragment>
         </div>
       </section>

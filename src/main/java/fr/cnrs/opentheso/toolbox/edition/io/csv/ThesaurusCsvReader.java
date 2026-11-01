@@ -6,8 +6,10 @@ import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptObject;
 import fr.cnrs.opentheso.models.alignment.NodeAlignmentSmall;
 import fr.cnrs.opentheso.models.concept.NodeCompareTheso;
 import fr.cnrs.opentheso.models.relations.NodeDeprecated;
+import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
+import fr.cnrs.opentheso.utils.SkosText;
 import fr.cnrs.opentheso.models.relations.NodeReplaceValueByValue;
 import fr.cnrs.opentheso.models.notes.NodeNote;
 
@@ -1185,6 +1187,7 @@ public class ThesaurusCsvReader {
             for (CSVRecord csvRecord : cSVParser) {
                 addThesaurusRecord(csvRecord, readEmptyData, missingIds);
             }
+            resolveReplacementIds();
             message = missingIds.toString();
             return true;
         } catch (IOException ex) {
@@ -1221,6 +1224,7 @@ public class ThesaurusCsvReader {
         getGeoLocalisation(conceptObject, csvRecord, readEmptyData);
         populateTypedFields(conceptObject, csvRecord);
         getExternalResources(conceptObject, csvRecord);
+        readConceptDcElements(conceptObject, csvRecord);
         getDates(conceptObject, csvRecord);
         getFoafImages(conceptObject, csvRecord);
         conceptObjects.add(conceptObject);
@@ -1265,8 +1269,15 @@ public class ThesaurusCsvReader {
      * @return
      */
     private ThesaurusCsvConceptObject getFoafImages(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord) {
-        forHashTokens(csvRecord, "foaf:Image", value -> conceptObject.getImages().add(getNodeImage(value)));
+        forHashTokens(csvRecord, "foaf:Image", value -> addImage(conceptObject, value));
         return conceptObject;
+    }
+
+    private void addImage(ThesaurusCsvConceptObject conceptObject, String value) {
+        NodeImage image = getNodeImage(value);
+        if (image != null) {
+            conceptObject.getImages().add(image);
+        }
     }
     
     /**
@@ -1295,13 +1306,13 @@ public class ThesaurusCsvReader {
             nodeImage.setUri(StringUtils.substringAfter(value1, "rdf:about="));
         }
         if(Strings.CS.startsWith(value1, "dcterms:rights=")){
-            nodeImage.setCopyRight(StringUtils.substringAfter(value1, "dcterms:rights="));
+            nodeImage.setCopyRight(SkosText.imageCaptionPart(StringUtils.substringAfter(value1, "dcterms:rights=")));
         }
         if(Strings.CS.startsWith(value1, "dcterms:title=")){
-            nodeImage.setImageName(StringUtils.substringAfter(value1, "dcterms:title="));
+            nodeImage.setImageName(SkosText.imageCaptionPart(StringUtils.substringAfter(value1, "dcterms:title=")));
         }
         if(Strings.CS.startsWith(value1, "dcterms:creator=")){
-            nodeImage.setCreator(StringUtils.substringAfter(value1, "dcterms:creator="));
+            nodeImage.setCreator(SkosText.imageCaptionPart(StringUtils.substringAfter(value1, "dcterms:creator=")));
         }
     }   
     
@@ -1314,34 +1325,37 @@ public class ThesaurusCsvReader {
      * @return
      */
     private ThesaurusCsvConceptObject setDeprecatedConcept(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord) {
-        String value;
-        try {
-            value = csvRecord.get("owl:deprecated");
-            if (!StringUtils.isEmpty(value)) {
-                if("true".equalsIgnoreCase(value)) {
-                    conceptObject.setDeprecated(true);
-                    getReplacedByOfDeprecatedConcept(conceptObject, csvRecord);
-                }
-                else
-                    conceptObject.setDeprecated(false);
-            }
-        } catch (Exception e) {
-            // colonne/valeur optionnelle absente pour cette langue : ignorée volontairement
+        String value = optionalColumn(csvRecord, "owl:deprecated");
+        if (StringUtils.isEmpty(value)) {
+            value = optionalColumn(csvRecord, "deprecated");
         }
+        if (isDeprecatedValue(value)) {
+            conceptObject.setDeprecated(true);
+        }
+        forHashTokens(csvRecord, "dcterms:isReplacedBy", token -> addResolvedId(conceptObject.getReplacedBy(), token));
+        forHashTokens(csvRecord, "isReplacedBy", token -> addResolvedId(conceptObject.getReplacedBy(), token));
+        forHashTokens(csvRecord, "dcterms:replaces", token -> addResolvedId(conceptObject.getReplaces(), token));
+        forHashTokens(csvRecord, "replaces", token -> addResolvedId(conceptObject.getReplaces(), token));
+        if (!conceptObject.getReplacedBy().isEmpty()) {
+            conceptObject.setDeprecated(true);
+        }
+        return conceptObject;
+    }
 
-        return conceptObject;
-    }      
-    
-    /**
-     * permet de récupérer des dcterms:isReplacedBy les concepts de rempalacement
-     *
-     * @param conceptObject
-     * @param csvRecord
-     * @return
-     */
-    private ThesaurusCsvConceptObject getReplacedByOfDeprecatedConcept(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord) {
-        forHashTokens(csvRecord, "dcterms:isReplacedBy", value -> conceptObject.getReplacedBy().add(getId(value)));
-        return conceptObject;
+    private static boolean isDeprecatedValue(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        return "true".equalsIgnoreCase(text)
+                || "1".equals(text)
+                || "yes".equalsIgnoreCase(text)
+                || "oui".equalsIgnoreCase(text)
+                || "vrai".equalsIgnoreCase(text);
+    }
+
+    private void addResolvedId(List<String> target, String token) {
+        String id = getId(token);
+        if (StringUtils.isNotEmpty(id) && !"null".equalsIgnoreCase(id)) {
+            target.add(id);
+        }
     }      
     
     /**
@@ -1445,13 +1459,20 @@ public class ThesaurusCsvReader {
     }
 
     private String extractIdFromQuery(String uri, String key) {
-        if (!uri.contains(key)) {
+        int start = uri.indexOf(key);
+        if (start < 0) {
             return null;
         }
-        if (uri.contains("&")) {
-            return uri.substring(uri.indexOf(key) + key.length(), uri.indexOf("&"));
+        start += key.length();
+        int end = uri.indexOf('&', start);
+        if (end < 0) {
+            end = uri.indexOf('#', start);
         }
-        return uri.substring(uri.indexOf(key) + key.length(), uri.length());
+        if (end < 0) {
+            end = uri.length();
+        }
+        String id = uri.substring(start, end).trim();
+        return id.isEmpty() ? null : id;
     }
 
     private String extractIdFromPath(String uri) {
@@ -1683,6 +1704,9 @@ public class ThesaurusCsvReader {
     }
 
     private ThesaurusCsvConceptObject getNotes(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord, boolean readEmptyData) {
+        if (langs == null) {
+            langs = new ArrayList<>();
+        }
         for (String idLang1 : langs) {
             addHashLabels(csvRecord, "skos:note@" + idLang1.trim(), idLang1, readEmptyData, true,
                     conceptObject.getNote());
@@ -1699,12 +1723,130 @@ public class ThesaurusCsvReader {
             addHashLabels(csvRecord, "skos:editorialNote@" + idLang1.trim(), idLang1, readEmptyData, true,
                     conceptObject.getEditorialNotes());
         }
+        addHashLabels(csvRecord, "skos:note", "", readEmptyData, true, conceptObject.getNote());
+        addHashLabels(csvRecord, "skos:definition", "", readEmptyData, true, conceptObject.getDefinitions());
+        addHashLabels(csvRecord, "skos:scopeNote", "", readEmptyData, true, conceptObject.getScopeNotes());
+        addHashLabels(csvRecord, "skos:example", "", readEmptyData, true, conceptObject.getExamples());
+        addHashLabels(csvRecord, "skos:historyNote", "", readEmptyData, true, conceptObject.getHistoryNotes());
+        addHashLabels(csvRecord, "skos:changeNote", "", readEmptyData, true, conceptObject.getChangeNotes());
+        addHashLabels(csvRecord, "skos:editorialNote", "", readEmptyData, true, conceptObject.getEditorialNotes());
         return conceptObject;
     }
     
     private ThesaurusCsvConceptObject getImages(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord) {
-        forHashTokens(csvRecord, "foaf:image", image -> conceptObject.getImages().add(getNodeImage(image)));
+        forHashTokens(csvRecord, "foaf:image", image -> addImage(conceptObject, image));
         return conceptObject;
+    }
+
+    private void readConceptDcElements(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord) {
+        Map<String, String> cells;
+        try {
+            cells = csvRecord.toMap();
+        } catch (Exception ex) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : cells.entrySet()) {
+            String header = entry.getKey();
+            if (header == null || !header.toLowerCase(Locale.ROOT).startsWith("dcterms:")) {
+                continue;
+            }
+            String rest = header.substring("dcterms:".length());
+            String name = rest;
+            String lang = "";
+            int at = rest.indexOf('@');
+            if (at >= 0) {
+                name = rest.substring(0, at);
+                lang = rest.substring(at + 1);
+            }
+            if (isStructuralDcName(name) || StringUtils.isBlank(entry.getValue())) {
+                continue;
+            }
+            for (String token : entry.getValue().split("##")) {
+                String text = token.trim();
+                if (text.isEmpty() || "null".equalsIgnoreCase(text)) {
+                    continue;
+                }
+                conceptObject.getDcElements().add(new DcElement(name.trim(), text, lang.trim(), ""));
+            }
+        }
+    }
+
+    private static boolean isStructuralDcName(String name) {
+        String key = StringUtils.trimToEmpty(name).toLowerCase(Locale.ROOT);
+        return key.equals("created") || key.equals("modified")
+                || key.equals("isreplacedby") || key.equals("replaces");
+    }
+
+    private void resolveReplacementIds() {
+        Map<String, String> idByKey = new HashMap<>();
+        for (ThesaurusCsvConceptObject concept : conceptObjects) {
+            rememberConceptKey(idByKey, concept.getIdConcept(), concept.getIdConcept());
+            rememberConceptKey(idByKey, concept.getUri(), concept.getIdConcept());
+            rememberConceptKey(idByKey, concept.getArkId(), concept.getIdConcept());
+            rememberConceptKey(idByKey, concept.getLocalId(), concept.getIdConcept());
+            if (StringUtils.isNotEmpty(concept.getUri())) {
+                rememberConceptKey(idByKey, getId(concept.getUri()), concept.getIdConcept());
+            }
+            if (StringUtils.isNotEmpty(concept.getArkId())) {
+                rememberConceptKey(idByKey, getId(concept.getArkId()), concept.getIdConcept());
+            }
+        }
+        for (ThesaurusCsvConceptObject concept : conceptObjects) {
+            concept.setReplacedBy(resolveIds(concept.getReplacedBy(), idByKey));
+            concept.setReplaces(resolveIds(concept.getReplaces(), idByKey));
+            if (StringUtils.isNotEmpty(concept.getSuperOrdinate())) {
+                concept.setSuperOrdinate(resolveOneId(concept.getSuperOrdinate(), idByKey));
+            }
+            if (concept.getMembers() != null && !concept.getMembers().isEmpty()) {
+                concept.setMembers(resolveIds(concept.getMembers(), idByKey));
+            }
+        }
+    }
+
+    private static void rememberConceptKey(Map<String, String> idByKey, String key, String idConcept) {
+        if (StringUtils.isBlank(key) || StringUtils.isBlank(idConcept)) {
+            return;
+        }
+        idByKey.put(key.trim(), idConcept);
+        idByKey.put(key.trim().toLowerCase(Locale.ROOT), idConcept);
+    }
+
+    private ArrayList<String> resolveIds(List<String> ids, Map<String, String> idByKey) {
+        ArrayList<String> resolved = new ArrayList<>();
+        if (ids == null) {
+            return resolved;
+        }
+        for (String id : ids) {
+            String value = resolveOneId(id, idByKey);
+            if (StringUtils.isNotEmpty(value) && !resolved.contains(value)) {
+                resolved.add(value);
+            }
+        }
+        return resolved;
+    }
+
+    private String resolveOneId(String id, Map<String, String> idByKey) {
+        String text = StringUtils.trimToEmpty(id);
+        if (text.isEmpty()) {
+            return text;
+        }
+        String mapped = idByKey.get(text);
+        if (mapped == null) {
+            mapped = idByKey.get(text.toLowerCase(Locale.ROOT));
+        }
+        if (mapped == null) {
+            String extracted = getId(text);
+            if (StringUtils.isNotEmpty(extracted)) {
+                mapped = idByKey.get(extracted);
+                if (mapped == null) {
+                    mapped = idByKey.get(extracted.toLowerCase(Locale.ROOT));
+                }
+                if (mapped == null) {
+                    mapped = extracted;
+                }
+            }
+        }
+        return mapped == null ? text : mapped;
     }
 
     /**

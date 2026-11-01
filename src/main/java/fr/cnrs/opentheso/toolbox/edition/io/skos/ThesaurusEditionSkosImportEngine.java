@@ -860,9 +860,13 @@ public class ThesaurusEditionSkosImportEngine {
         }
         StringBuilder notesBuilder = new StringBuilder();
         for (SKOSDocumentation documentation : conceptResource.getDocumentationsList()) {
-            notesBuilder.append(SEPERATEUR).append(documentation.getText())
+            String text = notePayloadPart(documentation.getText());
+            if (text.isEmpty()) {
+                continue;
+            }
+            notesBuilder.append(SEPERATEUR).append(text)
                     .append(SOUS_SEPERATEUR).append(toNoteTypeCode(documentation.getProperty()))
-                    .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
+                    .append(SOUS_SEPERATEUR).append(noteLanguage(documentation.getLanguage()))
                     .append(SOUS_SEPERATEUR).append(idConcept);
         }
         return notesBuilder.isEmpty() ? null : notesBuilder.substring(SEPERATEUR.length());
@@ -1003,11 +1007,19 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     static String imageCaptionPart(String value) {
-        String text = StringUtils.trimToEmpty(value);
-        if (text.isEmpty() || "null".equalsIgnoreCase(text) || text.matches("(?i).+_(sparql|rest)")) {
-            return "";
-        }
-        return text;
+        return fr.cnrs.opentheso.utils.SkosText.imageCaptionPart(value);
+    }
+
+    /**
+     * Les séparateurs {@code ##} et {@code @@} découpent le lot passé à
+     * {@code opentheso_add_notes}. Un texte qui les contient était ignoré.
+     */
+    static String notePayloadPart(String value) {
+        return fr.cnrs.opentheso.utils.SkosText.notePayloadPart(value);
+    }
+
+    static String noteLanguage(String language) {
+        return fr.cnrs.opentheso.utils.SkosText.noteLanguage(language);
     }
 
     public void addFacetsV2(List<SKOSResource> facetResources, String idTheso) {
@@ -1028,12 +1040,10 @@ public class ThesaurusEditionSkosImportEngine {
         if (idConceptParent == null) {
             return;
         }
-        String labelsValue = buildFacetLabels(facetSKOSResource);
-        String notes = buildFacetNotes(facetSKOSResource, idFacet);
-        String safeLabels = StringUtils.isNotEmpty(labelsValue) ? labelsValue.replace("'", "''") : null;
-        String safeNotes = StringUtils.isNotEmpty(notes) ? notes.replace("'", "''") : null;
-        conceptFacetRepository.addFacet(idFacet, idUser, idTheso, idConceptParent, safeLabels,
-                buildFacetMembers(facetSKOSResource), safeNotes);
+        conceptFacetRepository.addFacet(idFacet, idUser, idTheso, idConceptParent,
+                buildFacetLabels(facetSKOSResource),
+                buildFacetMembers(facetSKOSResource),
+                buildFacetNotes(facetSKOSResource, idFacet));
     }
 
     private String findSuperOrdinate(SKOSResource facetSKOSResource) {
@@ -1072,9 +1082,13 @@ public class ThesaurusEditionSkosImportEngine {
         }
         StringBuilder notesBuilder = new StringBuilder();
         for (SKOSDocumentation documentation : facetSKOSResource.getDocumentationsList()) {
-            notesBuilder.append(SEPERATEUR).append(documentation.getText())
+            String text = notePayloadPart(documentation.getText());
+            if (text.isEmpty()) {
+                continue;
+            }
+            notesBuilder.append(SEPERATEUR).append(text)
                     .append(SOUS_SEPERATEUR).append(toNoteTypeCode(documentation.getProperty()))
-                    .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
+                    .append(SOUS_SEPERATEUR).append(noteLanguage(documentation.getLanguage()))
                     .append(SOUS_SEPERATEUR).append(idFacet);
         }
         return notesBuilder.isEmpty() ? null : notesBuilder.substring(SEPERATEUR.length());

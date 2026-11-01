@@ -708,9 +708,11 @@ function statusForestNodeHtml(node) {
     + (status === "rejete" ? " is-rejected" : "")
     + (status === "deprecie" ? " is-deprecated" : "")
     + (inactive ? " is-status-inactive" : "");
+  const depLabel = (document.body.getAttribute("data-msg-deprecated") || "obsolète");
   const tags = (status === "candidat" || status === "rejete"
     ? '<span class="tn-dot" title="candidat"></span>' : "")
-    + (status === "rejete" ? '<span class="tn-tag">rejeté</span>' : "");
+    + (status === "rejete" ? '<span class="tn-tag">rejeté</span>' : "")
+    + (status === "deprecie" ? '<span class="tn-tag is-dep">' + escapeHtml(depLabel) + "</span>" : "");
   return '<div class="tn' + (open ? " is-open" : "") + (inactive ? " is-status-inactive" : "") + '"'
     + ' data-id="' + escapeHtml(node.id) + '"'
     + ' data-type="' + escapeHtml(type) + '"'

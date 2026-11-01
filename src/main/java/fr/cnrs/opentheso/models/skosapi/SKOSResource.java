@@ -157,6 +157,10 @@ public class SKOSResource {
         agentList.add(new SKOSAgent(agent, prop));
     }
 
+    public ArrayList<SKOSAgent> getAgentList() {
+        return agentList;
+    }
+
     public void addMatch(String v, int prop) {
         if (new ToolsHelper().isValidURI(v)) {
             matchList.add(new SKOSMatch(v, prop));

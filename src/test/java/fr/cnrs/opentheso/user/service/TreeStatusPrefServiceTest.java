@@ -60,6 +60,34 @@ class TreeStatusPrefServiceTest {
     }
 
     @Test
+    void getPref_includesDeprecatedWhenTheRowIsAbsent() {
+        when(repository.findByUserId(7)).thenReturn(List.of(
+                row("valide", true),
+                row("insere", true),
+                row("candidat", true)
+        ));
+
+        TreeStatusPref pref = service.getPref(7);
+
+        assertTrue(pref.contains("deprecie"));
+        assertTrue(pref.contains("valide"));
+    }
+
+    @Test
+    void getPref_keepsAnExplicitDeprecatedChoice() {
+        when(repository.findByUserId(7)).thenReturn(List.of(
+                row("valide", true),
+                row("insere", true),
+                row("candidat", true),
+                row("deprecie", false)
+        ));
+
+        TreeStatusPref pref = service.getPref(7);
+
+        assertFalse(pref.contains("deprecie"));
+    }
+
+    @Test
     void savePref_writesAllKnownStatuses() {
         service.savePref(3, List.of("deprecie", "unknown", "valide"));
 

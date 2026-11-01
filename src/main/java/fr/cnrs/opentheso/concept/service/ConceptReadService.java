@@ -697,7 +697,7 @@ public class ConceptReadService {
                                             ConceptMapper.stringAt(row, 1)
                                     ))
                                     .toList(),
-                            conceptQueryRepository.findNotesByIdentifier(facetId, thesaurusId, lang).stream()
+                            conceptQueryRepository.findAllNotesByIdentifier(facetId, thesaurusId).stream()
                                     .map(ConceptMapper::toNote)
                                     .toList()
                     );

@@ -26,10 +26,18 @@ public class TreeStatusPrefService {
             return TreeStatusPref.defaults();
         }
         Set<String> selected = new LinkedHashSet<>();
+        boolean sawDeprecated = false;
         for (UserTreeStatusPrefEntity row : rows) {
+            if (TreeStatusIds.DEPRECIE.equals(row.getStatusId())) {
+                sawDeprecated = true;
+            }
             if (row.isSelected() && TreeStatusIds.ALL.contains(row.getStatusId())) {
                 selected.add(row.getStatusId());
             }
+        }
+        // Préférence enregistrée avant l'affichage des dépréciés : la ligne n'existe pas encore.
+        if (!sawDeprecated) {
+            selected.add(TreeStatusIds.DEPRECIE);
         }
         return new TreeStatusPref(Set.copyOf(selected));
     }

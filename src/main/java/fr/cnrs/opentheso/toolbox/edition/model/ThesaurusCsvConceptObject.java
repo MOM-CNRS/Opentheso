@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.toolbox.edition.model;
 
+import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
 import lombok.Data;
@@ -51,6 +52,8 @@ public class ThesaurusCsvConceptObject implements Serializable {
     private String superOrdinate;
     private ArrayList<String> subGroups;
     private ArrayList<String> replacedBy;
+    private ArrayList<String> replaces;
+    private ArrayList<DcElement> dcElements;
 
     private transient ArrayList<NodeImage> images;
     private ArrayList<String> externalResources;
@@ -89,6 +92,8 @@ public class ThesaurusCsvConceptObject implements Serializable {
 
         subGroups = new ArrayList<>();
         replacedBy = new ArrayList<>();
+        replaces = new ArrayList<>();
+        dcElements = new ArrayList<>();
         images = new ArrayList<>();
         externalResources = new ArrayList<>();
         memberOfFacets = new ArrayList<>();
@@ -118,6 +123,9 @@ public class ThesaurusCsvConceptObject implements Serializable {
         clearIfPresent(members);
         clearIfPresent(alignments);
         clearIfPresent(memberOfFacets);
+        clearIfPresent(replacedBy);
+        clearIfPresent(replaces);
+        clearIfPresent(dcElements);
         conceptType = null;
         gps = null;
     }

@@ -1674,6 +1674,7 @@ function imgGalleryCaption(item) {
     return value;
   };
   return [item.name, item.copyright, item.creator]
+      .flatMap((part) => clean(part).split(" · "))
       .map(clean)
       .filter(Boolean)
       .join(" · ");
@@ -5138,8 +5139,7 @@ function paintDraftRes() {
 }
 
 function draftImgCaption(item) {
-  if (!item) return "";
-  return [item.name, item.copyright, item.creator].map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
+  return imgGalleryCaption(item);
 }
 
 function draftVisibleImages() {
@@ -7115,7 +7115,7 @@ function expandConceptBlock(gear) {
   ov.setAttribute("aria-hidden", "false");
 }
 
-const CARD_IDS = ["contexte", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "temporel"];
+const CARD_IDS = ["contexte", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "metadonnees", "temporel"];
 /** Blocs gouvernance candidat : toujours juste après la bannière (hors réordonnancement fiche). */
 const GOVERNANCE_CARD_ORDER = { candVotes: -2, candDiscussion: -1 };
 

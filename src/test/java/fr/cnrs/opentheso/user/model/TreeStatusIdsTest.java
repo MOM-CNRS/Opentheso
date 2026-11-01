@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TreeStatusIdsTest {
@@ -21,5 +22,14 @@ class TreeStatusIdsTest {
     @Test
     void normalizeSelected_emptyWhenNull() {
         assertTrue(TreeStatusIds.normalizeSelected(null).isEmpty());
+    }
+
+    @Test
+    void defaults_includeDeprecatedAndKeepRejectedHidden() {
+        assertTrue(TreeStatusIds.DEFAULT_SELECTED.contains(TreeStatusIds.DEPRECIE));
+        assertTrue(TreeStatusIds.GUEST_SELECTED.contains(TreeStatusIds.DEPRECIE));
+        assertFalse(TreeStatusIds.DEFAULT_SELECTED.contains(TreeStatusIds.REJETE));
+        assertFalse(TreeStatusIds.GUEST_SELECTED.contains(TreeStatusIds.REJETE));
+        assertFalse(TreeStatusIds.GUEST_SELECTED.contains(TreeStatusIds.CANDIDAT));
     }
 }

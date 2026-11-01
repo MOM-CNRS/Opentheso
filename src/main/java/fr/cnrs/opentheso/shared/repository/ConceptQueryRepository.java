@@ -812,6 +812,45 @@ public class ConceptQueryRepository {
         return findConceptNotes(identifier, thesaurusId, lang);
     }
 
+    /**
+     * Toutes les langues. La fiche facette n'a pas de bascule « autres langues » :
+     * un filtre sur la langue courante masquait la note importée.
+     */
+    public List<Object[]> findAllNotesByIdentifier(String identifier, String thesaurusId) {
+        return em.createNativeQuery("""
+            SELECT n.id, n.notetypecode, n.lang, n.lexicalvalue, n.identifier
+            FROM note n
+            WHERE n.id_thesaurus = :thesaurusId
+              AND (
+                n.identifier = :conceptId
+                OR n.id_concept = :conceptId
+                OR n.id_term = :conceptId
+                OR n.identifier LIKE '%/' || :conceptId
+                OR n.id_concept LIKE '%/' || :conceptId
+                OR n.id_term LIKE '%/' || :conceptId
+                OR n.identifier LIKE '%idc=' || :conceptId || '&%'
+                OR n.identifier LIKE '%idf=' || :conceptId || '&%'
+                OR n.id_concept LIKE '%idc=' || :conceptId || '&%'
+                OR n.id_concept LIKE '%idf=' || :conceptId || '&%'
+                OR n.id_term LIKE '%idc=' || :conceptId || '&%'
+                OR n.id_term LIKE '%idf=' || :conceptId || '&%'
+                OR n.identifier LIKE '%idc=' || :conceptId
+                OR n.identifier LIKE '%idf=' || :conceptId
+                OR n.id_concept LIKE '%idc=' || :conceptId
+                OR n.id_concept LIKE '%idf=' || :conceptId
+                OR n.id_term LIKE '%idc=' || :conceptId
+                OR n.id_term LIKE '%idf=' || :conceptId
+              )
+              AND n.lexicalvalue IS NOT NULL
+              AND btrim(n.lexicalvalue) <> ''
+              AND lower(btrim(n.lexicalvalue)) <> 'null'
+            ORDER BY n.notetypecode, n.lang
+            """)
+                .setParameter(NativeQueryParams.CONCEPT_ID, identifier)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .getResultList();
+    }
+
     public int countBranchConcepts(String thesaurusId, String conceptId) {
         Number result = (Number) em.createNativeQuery("""
             SELECT COUNT(*) FROM opentheso_get_narrowers_ignorefacet(:thesaurusId, :conceptId)

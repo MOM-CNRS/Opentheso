@@ -352,4 +352,19 @@
         <sqlFile path="v26/26-10_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.01" author="Firas">
+        <comment>Backfill note identifiers and drop alignment-source image captions</comment>
+        <sqlFile path="v26/26-11_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.11.02" author="Firas">
+        <comment>Keep CSV notes when the language cell is empty or the literal null</comment>
+        <sqlFile path="v26/26-11_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.11.03" author="Firas">
+        <comment>Show deprecated concepts for the previous default status filter</comment>
+        <sqlFile path="v26/26-11_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

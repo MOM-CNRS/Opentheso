@@ -32,8 +32,8 @@ var GROUPS = {
   inactif: ["rejete", "deprecie"]
 };
 var TREE_STATUS_ALL = ["valide", "insere", "candidat", "rejete", "deprecie"];
-var TREE_STATUS_DEFAULT = ["valide", "insere", "candidat"];
-var TREE_STATUS_GUEST_DEFAULT = ["valide", "insere"];
+var TREE_STATUS_DEFAULT = ["valide", "insere", "candidat", "deprecie"];
+var TREE_STATUS_GUEST_DEFAULT = ["valide", "insere", "deprecie"];
 var TABLE_COL_ALL = ["status", "type", "notation", "path"];
 var TABLE_COL_DEFAULT = TABLE_COL_ALL.slice();
 

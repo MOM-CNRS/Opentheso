@@ -48,6 +48,16 @@ class ThesaurusEditionSkosImportEngineDcTermsTest {
     }
 
     @Test
+    void imageCaptionDropsAlignmentSourceAndNull() {
+        assertEquals("amphore", ThesaurusEditionSkosImportEngine.imageCaptionPart("amphore"));
+        assertEquals("amphore", ThesaurusEditionSkosImportEngine.imageCaptionPart("amphore · Wikidata_sparql · null"));
+        assertEquals("", ThesaurusEditionSkosImportEngine.imageCaptionPart("Wikidata_sparql"));
+        assertEquals("", ThesaurusEditionSkosImportEngine.imageCaptionPart("Wikidata_rest"));
+        assertEquals("", ThesaurusEditionSkosImportEngine.imageCaptionPart("null"));
+        assertEquals("", ThesaurusEditionSkosImportEngine.imageCaptionPart(null));
+    }
+
+    @Test
     void rejectsAnElementWithoutNameOrValue() {
         assertNull(ThesaurusEditionSkosImportEngine.sanitizeThesaurusDcElement(element(" ", "x", "fr")));
         assertNull(ThesaurusEditionSkosImportEngine.sanitizeThesaurusDcElement(element("title", " \0 ", "fr")));
