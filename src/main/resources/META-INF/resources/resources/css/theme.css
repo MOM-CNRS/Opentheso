@@ -1,0 +1,346 @@
+/* ============================================================
+   OpenTheso — couche design system (passe 1 : fondations)
+   Chargée APRÈS le CSS historique de « Recherche OpenTheso.html ».
+   1. TOKENS      — échelles réelles (couleur, typo, espace, rayon, ombre, état)
+   2. COMPOSANTS  — .ds-* : implémentation canonique, une seule par primitive
+   3. PONT        — les classes historiques repassent sur les tokens/états
+   ============================================================ */
+
+/* ─────────────── 1. TOKENS ─────────────── */
+:root{
+  /* Neutres — une seule rampe, hue 85 (ivoire/papier tiède), chroma quasi nul.
+     Direction « fichier de catalogue » (2026-09) : remplace la rampe
+     froide hue 155 — carte-index, pas dashboard SaaS blanc-bleuté. */
+  --n-0:#ffffff;
+  --n-25:oklch(.991 .003 85);
+  --n-50:oklch(.976 .006 85);
+  --n-100:oklch(.958 .008 85);
+  --n-200:oklch(.923 .011 85);
+  --n-300:oklch(.878 .012 85);
+  --n-400:oklch(.655 .013 85);
+  --n-500:oklch(.545 .014 85);
+  --n-600:oklch(.46 .015 85);
+  --n-700:oklch(.412 .015 85);
+  --n-800:oklch(.305 .015 85);
+  --n-900:oklch(.222 .013 85);
+
+  /* Accent — vert de lampe de banquier (Emeralite) : émeraude dense et sombre,
+     remplace le vert-teal plat d'origine (direction actée, voir docs/02).
+     La rampe reste DÉRIVÉE de
+     --accent pour que le tweak d'accent (style inline sur <html>) entraîne ses états. */
+  --accent:oklch(.32 .095 152);
+  --a-50:color-mix(in oklab,var(--accent) 7%,#fff);
+  --a-100:color-mix(in oklab,var(--accent) 15%,#fff);
+  --a-200:color-mix(in oklab,var(--accent) 27%,#fff);
+  --a-300:color-mix(in oklab,var(--accent) 45%,#fff);
+  --a-500:var(--accent);
+  --a-600:color-mix(in oklab,var(--accent) 87%,#000);
+  --a-700:color-mix(in oklab,var(--accent) 72%,#000);
+
+  /* Sémantique */
+  --se-warn:oklch(.615 .128 62);
+  --se-warn-soft:oklch(.958 .036 68);
+  --se-danger:oklch(.522 .162 27);
+  --se-danger-soft:oklch(.958 .028 27);
+  --se-info:oklch(.545 .092 248);
+  --se-info-soft:oklch(.958 .026 248);
+
+  /* Remappage des tokens historiques sur les rampes */
+  --accent-soft:var(--a-50);
+  --accent-line:var(--a-200);
+  --accent-hover:var(--a-600);
+  --accent-press:var(--a-700);
+  --ink:var(--n-900); --ink-2:var(--n-700); --ink-3:var(--n-500); --ink-4:var(--n-400);
+  --bg:var(--n-50); --surface:var(--n-0); --surface-2:var(--n-25);
+  --line:var(--n-200); --line-2:var(--n-100); --line-strong:var(--n-300);
+  --amber:var(--se-warn);
+  --danger:var(--se-danger); --danger-soft:var(--se-danger-soft);
+  --candidat:oklch(.788 .108 48);
+
+  /* Typographie — échelle fermée (9 crans). Avant : 10, 10.5, 11, 11.5, 12,
+     12.5, 13, 13.5, 14, 15, 17, 18, 19, 22, 26, 30 au cas par cas. */
+  --f-2xs:10.5px; --f-xs:11.5px; --f-sm:12.5px; --f-md:13.5px; --f-base:15px;
+  --f-lg:17px; --f-xl:20px; --f-2xl:24px; --f-3xl:30px;
+  --lh-tight:1.2; --lh-snug:1.35; --lh-base:1.5;
+  --w-reg:400; --w-med:500; --w-semi:600; --w-bold:700;
+  --track-tight:-.015em; --track-caps:.04em;
+
+  /* Espacement — pas de 4 px */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px;
+  --s-6:24px; --s-8:32px; --s-10:40px; --s-12:48px;
+
+  /* Rayons — fiche de catalogue : carton découpé, coins francs. 5e passe
+     (21-09) : le palier 2/3/4px ne lisait comme aucun
+     choix (trop peu d'écart entre crans = "design system par défaut non
+     personnalisé"). Tranché à 0, acté le 2026-09-22 — le test A/B carré/doux
+     et son panneau QA ont été retirés, il n'y a plus d'alternative à tester.
+     --r-full reste pour les seuls contrôles ronds par nature (interrupteurs). */
+  --r-sm:0px; --r:0px; --r-lg:0px; --r-full:999px;
+
+  /* Hauteurs de contrôle — resserrées (21-09 : "tout est
+     trop gros", interfaces denses/beaucoup de contenu, pas grand public). */
+  --h-xs:22px; --h-sm:26px; --h-md:30px; --h-lg:34px;
+  --icon-sm:14px; --icon-md:16px; --icon-lg:20px; --icon-xl:28px; --icon-stroke:1.8;
+
+  /* Élévation — filets, pas d'ombres : la séparation vient du trait réglé
+     (fiche bristol), jamais du flou. Remplace les ombres portées d'origine. */
+  --shadow-sm:0 0 0 1px var(--line);
+  --shadow-md:0 0 0 1px var(--line-strong), 0 2px 0 0 var(--line-strong);
+  --shadow-lg:0 0 0 1.5px var(--line-strong), 0 3px 0 0 var(--line-strong);
+
+  /* États */
+  --focus-ring:0 0 0 2px var(--surface), 0 0 0 4px var(--a-300);
+  --hover-bg:var(--n-50);
+  --press-bg:var(--n-100);
+  --sel-bg:var(--a-50);
+  --dur:.13s; --ease:cubic-bezier(.4,0,.2,1);
+}
+
+body{font-size:var(--f-base);line-height:var(--lh-snug)}
+:is(code,kbd,.mono,[class*="-mono"],[class*="-nota"],[class*="-ark"]){font-variant-numeric:tabular-nums}
+
+/* Anneau de focus unique, partout (avant : trois traitements différents) */
+:is(button,a,input,select,textarea,[tabindex]):focus-visible{
+  outline:none;box-shadow:var(--focus-ring);position:relative;z-index:1}
+
+/* ─────────────── 2. COMPOSANTS CANONIQUES (.ds-*) ─────────────── */
+
+/* Bouton */
+.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s-2);
+  height:var(--h-md);padding:0 12px;border:1px solid transparent;border-radius:var(--r-sm);
+  font:var(--w-semi) var(--f-md)/1 var(--sans);letter-spacing:0;white-space:nowrap;cursor:pointer;
+  transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease)}
+.ds-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ds-btn[disabled]{opacity:.45;pointer-events:none}
+.ds-btn--primary{background:var(--a-500);color:var(--n-0)}
+.ds-btn--primary:hover{background:var(--a-600)}
+.ds-btn--primary:active{background:var(--a-700)}
+.ds-btn--secondary{background:var(--surface);border-color:var(--line-strong);color:var(--ink)}
+.ds-btn--secondary:hover{background:var(--hover-bg);border-color:var(--n-400)}
+.ds-btn--secondary:active{background:var(--press-bg)}
+.ds-btn--ghost{background:transparent;color:var(--ink-2)}
+.ds-btn--ghost:hover{background:var(--hover-bg);color:var(--ink)}
+.ds-btn--danger{background:var(--se-danger);color:var(--n-0)}
+.ds-btn--danger:hover{filter:brightness(1.08)}
+.ds-btn--sm{height:var(--h-sm);padding:0 9px;font-size:var(--f-sm)}
+.ds-btn--xs{height:var(--h-xs);padding:0 7px;font-size:var(--f-xs)}
+.ds-btn--icon{width:var(--h-md);padding:0}
+.ds-btn--icon.ds-btn--sm{width:var(--h-sm)}
+
+/* Champ de saisie */
+.ds-input,.ds-select,.ds-textarea{width:100%;height:var(--h-md);border:1px solid var(--line-strong);
+  border-radius:var(--r-sm);padding:0 9px;background:var(--surface);color:var(--ink);
+  font:var(--w-reg) var(--f-md)/1 var(--sans);outline:none;
+  transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.ds-textarea{height:auto;padding:9px 10px;line-height:var(--lh-base);resize:vertical}
+.ds-input::placeholder,.ds-textarea::placeholder{color:var(--ink-3)}
+.ds-input:hover,.ds-select:hover,.ds-textarea:hover{border-color:var(--n-400)}
+.ds-input:focus,.ds-select:focus,.ds-textarea:focus{border-color:var(--a-500);box-shadow:0 0 0 3px var(--a-100)}
+.ds-input[disabled],.ds-select[disabled]{background:var(--n-50);color:var(--ink-4);cursor:not-allowed}
+.ds-input--sm,.ds-select--sm{height:var(--h-sm);font-size:var(--f-sm);padding:0 7px}
+.ds-input--xs,.ds-select--xs{height:var(--h-xs);font-size:var(--f-xs);padding:0 6px}
+.ds-select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:26px;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 14px) center,calc(100% - 9px) center;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;color:var(--ink)}
+.ds-field{display:flex;flex-direction:column;gap:var(--s-1)}
+.ds-label{font:var(--w-semi) var(--f-xs)/1.3 var(--sans);color:var(--ink-3)}
+.ds-error{font-size:var(--f-xs);color:var(--se-danger)}
+.ds-input--error{border-color:var(--se-danger)}
+.ds-input--error:focus{box-shadow:0 0 0 3px var(--se-danger-soft)}
+
+/* Interrupteur */
+.ds-switch{position:relative;width:36px;height:20px;flex:0 0 auto;border-radius:var(--r-full);
+  background:var(--n-300);border:none;cursor:pointer;transition:background var(--dur) var(--ease)}
+.ds-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+  background:var(--n-0);box-shadow:0 1px 2px oklch(.222 .013 162/.25);transition:transform var(--dur) var(--ease)}
+.ds-switch.is-on{background:var(--a-500)}
+.ds-switch.is-on::after{transform:translateX(16px)}
+
+/* Pastille / badge */
+.ds-pill{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:var(--r-full);
+  font:var(--w-semi) var(--f-xs)/1 var(--sans);white-space:nowrap;background:var(--n-100);color:var(--ink-2)}
+.ds-pill--accent{background:var(--a-50);color:var(--a-700)}
+.ds-pill--warn{background:var(--se-warn-soft);color:oklch(.44 .1 62)}
+.ds-pill--danger{background:var(--se-danger-soft);color:var(--se-danger)}
+.ds-pill--info{background:var(--se-info-soft);color:oklch(.42 .08 248)}
+.ds-pill--outline{background:transparent;border:1px solid var(--line-strong);color:var(--ink-3)}
+.ds-pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.ds-code{font:var(--w-med) var(--f-xs)/1 var(--mono);color:var(--ink-3);background:var(--n-50);
+  border:1px solid var(--line-2);border-radius:var(--r-sm);padding:3px 6px;font-variant-numeric:tabular-nums}
+
+/* Carte */
+.ds-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.ds-card-head{display:flex;align-items:center;gap:var(--s-2);padding:var(--s-3) var(--s-4);border-bottom:1px solid var(--line-2)}
+.ds-card-title{font:var(--w-semi) var(--f-md)/1.3 var(--sans);color:var(--ink);margin:0}
+.ds-card-body{padding:var(--s-4)}
+
+/* Surtitre de section — --ink-3 et pas --ink-4 : ce dernier plafonne à 3,18:1
+   sur blanc, insuffisant pour du texte (WCAG AA, voir docs/01). */
+.ds-eyebrow{font:var(--w-semi) var(--f-2xs)/1 var(--sans);letter-spacing:var(--track-caps);
+  text-transform:uppercase;color:var(--ink-3)}
+
+/* ─────────────── 3. PONT — classes historiques ─────────────── */
+/* Un seul traitement pour tous les champs et selects du proto, quelle que
+   soit la classe locale qui les porte. Les tailles restent locales. */
+:is(.tp-fi,.tp-form-i,.cf-in,.tbl-sel,.flat-fi,.al-qsel,.al-type,.re-hsel,
+   .note-c-type,.hi-fsel,.hi-fdate,.st-in,.st-sel,.tree-lang-sel,.cf-in){
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);
+  font-family:var(--sans);outline:none;
+  transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+:is(.tp-fi,.tp-form-i,.cf-in,.tbl-sel,.flat-fi,.al-qsel,.al-type,.re-hsel,
+   .note-c-type,.hi-fsel,.st-in,.st-sel):hover{border-color:var(--n-400)}
+:is(.tp-fi,.tp-form-i,.cf-in,.tbl-sel,.flat-fi,.al-qsel,.al-type,.re-hsel,
+   .note-c-type,.hi-fsel,.st-in,.st-sel):focus{
+  border-color:var(--a-500);box-shadow:0 0 0 3px var(--a-100)}
+:is(.flat-fi,.al-type,.re-hsel,.note-c-type){border-radius:var(--r-sm)}
+:is(.tp-fi,.cf-in,.tbl-sel,.al-qsel,.tp-form-i){border-radius:var(--r-sm)}
+
+/* Boutons-icônes du proto : même hover/press que .ds-btn--secondary */
+:is(.tp-cfg-btn,.cs-exp-b,.tbl-clear){border-radius:var(--r-sm);
+  transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease)}
+
+/* Filets : un seul poids visible, la structure doit se lire */
+hr,.sep{border:none;border-top:1px solid var(--line)}
+
+/* ─────────────── 4. IDENTITÉ FICHIER-CATALOGUE ─────────────────
+   Direction actée : le fichier à onglets-guides, pas le dashboard
+   SaaS (voir docs/02 et /design-system) — ne pas re-décider ici,
+   seulement l'exécuter. Emprunts (raises) marqués sur chaque règle
+   qui les porte. */
+
+/* Statut : encoche d'onglet-guide (bord gauche de couleur, coin carré)
+   plutôt que pastille flottante. Les couleurs par statut restent celles
+   déjà en place (index.html) — seule la FORME change ici. */
+.st-pill{border-radius:0 var(--r-sm) var(--r-sm) 0;border:none;border-left:3px solid currentColor;
+  background:var(--n-0);padding:2px 9px 2px 8px}
+.st-pill.st-candidat{background:var(--n-0);border-color:var(--candidat)}
+.st-pill.st-insere{background:var(--n-0);border-color:var(--accent)}
+.st-pill.st-rejete{background:var(--n-0);border-color:var(--se-danger)}
+.st-pill.st-deprecie{background:var(--n-0);border-color:var(--n-400)}
+.st-pill .st-dot{display:none}
+.st-dot,.dot-status,.tn-dot{border-radius:var(--r-sm) 0 0 var(--r-sm);width:5px;height:9px}
+/* Statut : le libellé seul peut rester ambigu (ex. Concept/Candidat ajouté) —
+   un repère hover à côté porte l'explication (m.hint), sans texte permanent. */
+/* Compte désactivé (admin d'instance) : ligne en texte discret, jamais plus pâle que --ink-3. */
+.ia-tab tr.is-off td{color:var(--ink-3)}
+.ia-off-tag{display:table;margin-top:4px}
+
+/* Barre de titre compacte (sticky-title.jsx) : apparaît quand le grand titre
+   sort par le haut ; left/top/width/padding-left posés en ligne par mesure. */
+.sticky-title{position:fixed;z-index:25;box-sizing:border-box;min-height:52px;padding:10px 24px 12px 0;
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border-bottom:1px solid var(--line);
+  font-size:15px;font-weight:700;line-height:1.3;letter-spacing:-.01em;color:var(--ink);
+  opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;
+  transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease),visibility 0s linear var(--dur)}
+.sticky-title.is-on{opacity:1;visibility:visible;transform:none;pointer-events:auto;
+  transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
+.sticky-title-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Retour compact : même comportement que .bo-back, taille réduite. */
+.sticky-title-back{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;cursor:pointer;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink-2);
+  transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease)}
+.sticky-title-back:hover{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
+.sticky-title-back svg{width:var(--icon-md);height:var(--icon-md);stroke:currentColor;fill:none;
+  stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+.st-info{display:inline-flex;align-items:center;justify-content:center;
+  width:14px;height:14px;margin-left:5px;border-radius:var(--r-sm);
+  border:1px solid var(--line-2);color:var(--ink-3);font-size:10px;line-height:1;
+  cursor:help}
+
+/* Recherche / autocomplétion : lu comme un tiroir de fiches qu'on feuillette,
+   pas un menu flottant — filet au lieu d'ombre, ligne de séparation entre
+   fiches, icône en repère de rayon plutôt qu'en losange décoratif. */
+.ac{border-radius:var(--r-sm);box-shadow:var(--shadow-md)}
+.ac-row{border-bottom:1px solid var(--line-2)}
+.ac-row:last-of-type{border-bottom:none}
+.ac-row.is-active{background:var(--a-100)}
+.ac-ico{font-family:var(--mono);font-size:10px}
+.ac-notation{font-weight:var(--w-med)}
+
+/* Résultats : pile de lignes-fiches réglées — notation en colonne tapée
+   (mono, alignée), filet entre lignes, pas de carte flottante à l'ombre
+   portée au survol (RAISE livrée de course : la sélection inonde la ligne
+   de l'accent plutôt qu'un flash). */
+.rv-list{border-top:1px solid var(--line)}
+.res{border-radius:0;border:none;border-bottom:1px solid var(--line);box-shadow:none;padding:12px 4px}
+.res:hover{border-color:var(--line);box-shadow:none;background:var(--a-50)}
+.res:hover .res-go{color:var(--accent)}
+.res-notation{font-weight:var(--w-med);min-width:6ch;text-align:right}
+.rl-item{border-radius:0;border-bottom:1px solid var(--line-2)}
+.rl-item.is-sel{background:var(--a-100)}
+
+/* Renvois (chemin/breadcrumb) : notation typée façon fiche imprimée
+   (« voir : … »), pas un fil d'Ariane d'app générique. */
+.path{font-family:var(--mono);letter-spacing:0}
+.path-sep{font-family:var(--sans)}
+
+/* Arborescence : rail de tiroirs à onglets-guides — la ligne active se
+   lit comme un onglet sorti (bord gauche plein), pas une simple teinte
+   de fond. RAISE magnétophone vintage : chaque rangée garde une position
+   et une hauteur fixes, jamais de réagencement. */
+.tree{border-right:1px solid var(--line)}
+.tn-row{border-radius:0}
+.tn-row.is-active{background:var(--a-100)}
+.tn-row.is-sel{background:var(--n-100)}
+
+/* Fiche concept : chaque bloc = une fiche bristol, coin carré, filet au lieu
+   d'ombre, tête en surtitre tapé (déjà en majuscules tracées — on ne fait
+   que retirer l'arrondi et l'ombre portée). */
+.cblock{border-radius:var(--r-sm)}
+.cblock-head{font-family:var(--mono)}
+.block-modal{border-radius:var(--r-lg)}
+
+/* Retour direct 2026-09-21 : plus besoin de ce bloc de rattrapage — le
+   sweep complet des rayons codés en dur (index.html) tokenise déjà tout
+   le reste de la coquille app. Restent deux fixes de source ci-dessous
+   pour les cas où le mapping automatique ne matchait pas l'intention. */
+
+/* Accueil — mêmes cotes que la maquette (titre, barre, tableau). */
+body[data-page="thesauri"] .tp-title{
+  font-size:var(--f-xl);font-weight:700;letter-spacing:-.02em;line-height:var(--lh-tight);color:var(--ink)
+}
+body[data-page="thesauri"] .tp-sub{
+  font-size:14.5px;color:var(--ink-2);margin:5px 0 0;font-weight:400;max-width:none
+}
+body[data-page="thesauri"] .tp-head{align-items:flex-start;margin-bottom:26px}
+body[data-page="thesauri"] .tp-bar{align-items:center;margin-bottom:20px}
+body[data-page="thesauri"] .tp-search{
+  min-height:0;height:auto;gap:9px;padding:0 14px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:none
+}
+body[data-page="thesauri"] .tp-search:hover{border-color:var(--line)}
+body[data-page="thesauri"] .tp-search:focus-within{
+  border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)
+}
+body[data-page="thesauri"] .tp-search-ico{width:auto;height:auto}
+body[data-page="thesauri"] .tp-search-ico svg{
+  width:var(--icon-md);height:var(--icon-md);stroke-width:var(--icon-stroke)
+}
+body[data-page="thesauri"] .tp-search-input,
+body[data-page="thesauri"] .tp-search input.tp-search-input,
+body[data-page="thesauri"] .tp-search input[type="text"]{
+  height:var(--h-md);font-size:var(--f-md);font-weight:400
+}
+body[data-page="thesauri"] .tp-create,
+body[data-page="thesauri"] .tp-create:link,
+body[data-page="thesauri"] .tp-create:visited{
+  height:var(--h-md);padding:0 12px;border-radius:var(--r-sm);gap:var(--s-2);
+  font:var(--w-semi) var(--f-md)/1 var(--sans);letter-spacing:0;box-shadow:none
+}
+body[data-page="thesauri"] .tp-create:hover,
+body[data-page="thesauri"] .tp-create:focus-visible,
+body[data-page="thesauri"] .tp-create:active,
+body[data-page="thesauri"] .tp-add.is-open .tp-create{
+  background:var(--accent-hover);box-shadow:none;filter:none
+}
+body[data-page="thesauri"] .tp-create-caret{display:none}
+body[data-page="thesauri"] .tp-table-wrap{
+  border:1px solid var(--line);border-radius:var(--r-lg);
+  background:var(--surface);box-shadow:none
+}
+body[data-page="thesauri"] .tp-tab,
+body[data-page="thesauri"] button.tp-tab{
+  border-radius:var(--r);padding:6px 12px
+}
