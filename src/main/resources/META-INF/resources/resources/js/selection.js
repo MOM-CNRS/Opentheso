@@ -235,28 +235,98 @@ function resetCandBySearch() {
 const impliedSelected = new Set();
 const treeBranchGen = new Map();
 const branchMemberCache = new Map();
+const explicitBranches = new Set();
+const branchExtras = new Map();
+const looseSelected = new Set();
+
+function branchKey(tn) {
+  if (!tn) return "";
+  const path = tn.getAttribute("data-key") || "";
+  const id = tn.getAttribute("data-id") || "";
+  const ids = [];
+  let node = tn;
+  const seen = new Set();
+  while (node && !seen.has(node)) {
+    seen.add(node);
+    ids.push(node.getAttribute("data-id") || "");
+    node = typeof previousTreeParent === "function" ? previousTreeParent(node) : null;
+  }
+  return ids.reverse().join("/") + "\u0001" + path + "\u0001" + id;
+}
+
+function isBranchCovered(tn) {
+  let node = tn;
+  const seen = new Set();
+  while (node && !seen.has(node)) {
+    seen.add(node);
+    const key = branchKey(node);
+    if (key && explicitBranches.has(key)) return true;
+    node = typeof previousTreeParent === "function" ? previousTreeParent(node) : null;
+  }
+  return false;
+}
+
+function branchNodes(tn) {
+  const nodes = [];
+  if (!tn) return nodes;
+  const depth = treeDepth(tn);
+  nodes.push(tn);
+  let next = tn.nextElementSibling;
+  while (next && next.classList.contains("tn")) {
+    if (treeDepth(next) <= depth) break;
+    nodes.push(next);
+    next = next.nextElementSibling;
+  }
+  return nodes;
+}
+
+function paintTreeChecks() {
+  const nodes = typeof treeNodes === "function" ? treeNodes() : [];
+  nodes.forEach(tn => {
+    const on = isBranchCovered(tn);
+    const row = tn.querySelector(".tn-row");
+    const check = row ? row.querySelector(".tn-check") : tn.querySelector(".tn-check");
+    if (check) check.classList.toggle("on", on);
+    if (row) row.classList.toggle("is-sel", on);
+  });
+}
+
+function rebuildSelectedIds() {
+  const next = new Set(looseSelected);
+  const nodes = typeof treeNodes === "function" ? treeNodes() : [];
+  nodes.forEach(tn => {
+    if (!isBranchCovered(tn)) return;
+    const id = tn.getAttribute("data-id");
+    if (id) next.add(id);
+  });
+  explicitBranches.forEach(key => {
+    (branchExtras.get(key) || []).forEach(id => {
+      if (id) next.add(id);
+    });
+  });
+  state.selected.forEach(id => {
+    if (!next.has(id)) {
+      state.selected.delete(id);
+      paintSelectedId(id, false);
+    }
+  });
+  next.forEach(id => {
+    if (state.selected.has(id)) return;
+    state.selected.add(id);
+    paintSelectedId(id, true);
+  });
+  impliedSelected.clear();
+  explicitBranches.forEach(key => {
+    (branchExtras.get(key) || []).forEach(id => {
+      if (id) impliedSelected.add(id);
+    });
+  });
+}
 
 function collectIds(tn) {
   const ids = [];
   const push = id => { if (id && !ids.includes(id)) ids.push(id); };
-  if (!tn) return ids;
-  push(tn.getAttribute("data-id"));
-  const depth = treeDepth(tn);
-  const nodes = typeof treeNodes === "function" ? treeNodes() : [];
-  const start = nodes.indexOf(tn);
-  if (start >= 0) {
-    for (let i = start + 1; i < nodes.length; i++) {
-      if (treeDepth(nodes[i]) <= depth) break;
-      push(nodes[i].getAttribute("data-id"));
-    }
-    return ids;
-  }
-  let next = tn.nextElementSibling;
-  while (next && next.classList.contains("tn")) {
-    if (treeDepth(next) <= depth) break;
-    push(next.getAttribute("data-id"));
-    next = next.nextElementSibling;
-  }
+  branchNodes(tn).forEach(node => push(node.getAttribute("data-id")));
   return ids;
 }
 
@@ -282,86 +352,111 @@ function fetchSubtreeMemberIds(id) {
 function selectTreeBranch(tn, on) {
   const id = tn && tn.getAttribute("data-id");
   if (!id) return;
-  const ids = collectIds(tn);
-  if (!on) {
-    const known = branchMemberCache.get(id) || [];
-    known.forEach(memberId => ids.push(memberId));
+  if (on && typeof canTreeSelect === "function" && !canTreeSelect()) return;
+  const key = branchKey(tn);
+  if (!key) return;
+  if (!on) state.selectedAllThesaurus = false;
+  const dropGen = keys => {
+    keys.forEach(k => {
+      if (!k) return;
+      explicitBranches.delete(k);
+      branchExtras.delete(k);
+      treeBranchGen.set(k, (treeBranchGen.get(k) || 0) + 1);
+    });
+  };
+  if (on) {
+    explicitBranches.add(key);
+    looseSelected.delete(id);
+    dropGen(branchNodes(tn).slice(1).map(branchKey));
+  } else {
+    const drop = branchNodes(tn).map(branchKey);
     let parent = typeof previousTreeParent === "function" ? previousTreeParent(tn) : null;
     while (parent) {
-      const parentId = parent.getAttribute("data-id");
-      if (parentId) ids.push(parentId);
+      drop.push(branchKey(parent));
       parent = typeof previousTreeParent === "function" ? previousTreeParent(parent) : null;
     }
-  } else {
-    ids.forEach(memberId => {
-      if (memberId !== id) impliedSelected.add(memberId);
-    });
+    dropGen(drop);
   }
-  setSelectedIds(ids, on);
+  rebuildSelectedIds();
+  paintTreeChecks();
+  updateBulk();
   refreshSubtreeCounts();
   const type = (tn.getAttribute("data-type") || "").toLowerCase();
-  if (type === "facet") return;
-  const gen = (treeBranchGen.get(id) || 0) + 1;
-  treeBranchGen.set(id, gen);
+  if (type === "facet" || !on) return;
+  const gen = (treeBranchGen.get(key) || 0) + 1;
+  treeBranchGen.set(key, gen);
   fetchSubtreeMemberIds(id).then(extra => {
-    if (treeBranchGen.get(id) !== gen) return;
-    if (state.selected.has(id) !== on) return;
+    if (treeBranchGen.get(key) !== gen) return;
+    if (!explicitBranches.has(key)) return;
+    branchExtras.set(key, extra);
     branchMemberCache.set(id, extra);
-    if (on) extra.forEach(memberId => impliedSelected.add(memberId));
-    setSelectedIds(extra, on);
+    rebuildSelectedIds();
+    paintTreeChecks();
+    updateBulk();
   });
 }
 
 function paintSelectedId(id, on) {
-  $$(`[data-id="${CSS.escape(id)}"]`).forEach(el => {
-    const check = el.matches(".tn-check") ? el : (el.querySelector && el.querySelector(".tn-check"));
-    const row = el.closest && (el.closest(".tn-row") || el.closest("tr"));
+  $$(`tr[data-id="${CSS.escape(id)}"]`).forEach(row => {
+    row.classList.toggle("is-sel", on);
+    const check = row.querySelector(".tn-check");
     if (check) check.classList.toggle("on", on);
-    if (row) row.classList.toggle("is-sel", on);
   });
 }
 
 function setSelectedIds(ids, on) {
   if (on && typeof canTreeSelect === "function" && !canTreeSelect()) return;
   if (!on) state.selectedAllThesaurus = false;
+  const nodes = typeof treeNodes === "function" ? treeNodes() : [];
   ids.forEach(id => {
-    if (on) state.selected.add(id);
-    else {
-      state.selected.delete(id);
+    if (!id) return;
+    const occurrences = nodes.filter(tn => tn.getAttribute("data-id") === id);
+    if (on) {
+      if (occurrences.length) {
+        occurrences.forEach(tn => explicitBranches.add(branchKey(tn)));
+        looseSelected.delete(id);
+      } else looseSelected.add(id);
+    } else {
+      occurrences.forEach(tn => {
+        const key = branchKey(tn);
+        explicitBranches.delete(key);
+        branchExtras.delete(key);
+        treeBranchGen.set(key, (treeBranchGen.get(key) || 0) + 1);
+      });
+      looseSelected.delete(id);
       impliedSelected.delete(id);
     }
-    paintSelectedId(id, on);
   });
+  rebuildSelectedIds();
+  paintTreeChecks();
   updateBulk();
 }
 
 function restoreSelection() {
-  treeNodes().forEach(tn => {
+  const nodes = typeof treeNodes === "function" ? treeNodes() : [];
+  nodes.forEach(tn => {
     const id = tn.getAttribute("data-id");
-    if (!id) return;
-    let selected = state.selected.has(id);
-    if (!selected) {
-      let parent = previousTreeParent(tn);
-      while (parent && !selected) {
-        const parentId = parent.getAttribute("data-id");
-        if (parentId && state.selected.has(parentId)) selected = true;
-        parent = previousTreeParent(parent);
-      }
-    }
-    if (selected) {
-      state.selected.add(id);
-      paintSelectedId(id, true);
-    }
+    if (!id || !looseSelected.has(id)) return;
+    explicitBranches.add(branchKey(tn));
+    looseSelected.delete(id);
   });
+  rebuildSelectedIds();
+  paintTreeChecks();
   updateBulk();
 }
 
 function clearSelection(keepUi) {
+  const ids = [...state.selected];
   impliedSelected.clear();
   treeBranchGen.clear();
   branchMemberCache.clear();
-  if (!keepUi) setSelectedIds([...state.selected], false);
-  else {
+  explicitBranches.clear();
+  branchExtras.clear();
+  looseSelected.clear();
+  if (!keepUi) {
+    ids.forEach(id => paintSelectedId(id, false));
+    paintTreeChecks();
+  } else {
     $$(".tn-check.on").forEach(c => c.classList.remove("on"));
     $$(".is-sel").forEach(r => r.classList.remove("is-sel"));
   }
@@ -374,21 +469,17 @@ function clearSelection(keepUi) {
 function selectionRootIds() {
   const roots = [];
   const seen = new Set();
-  treeNodes().forEach(tn => {
+  const nodes = typeof treeNodes === "function" ? treeNodes() : [];
+  nodes.forEach(tn => {
+    if (!explicitBranches.has(branchKey(tn))) return;
     const id = tn.getAttribute("data-id");
-    if (!id || !state.selected.has(id) || seen.has(id)) return;
-    let parent = previousTreeParent(tn);
-    while (parent) {
-      const parentId = parent.getAttribute("data-id");
-      if (parentId && state.selected.has(parentId)) return;
-      parent = previousTreeParent(parent);
-    }
+    if (!id || seen.has(id)) return;
     seen.add(id);
     roots.push(id);
   });
   state.selected.forEach(id => {
     if (seen.has(id) || impliedSelected.has(id)) return;
-    if (!$$(`.tn[data-id="${CSS.escape(id)}"]`).length) {
+    if (!nodes.some(tn => tn.getAttribute("data-id") === id)) {
       seen.add(id);
       roots.push(id);
     }

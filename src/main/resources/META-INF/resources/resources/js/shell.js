@@ -4375,20 +4375,31 @@ function setView(view) {
   paint();
 }
 
+function rememberTreeFocus(tn, id) {
+  const nodeId = id || (tn && tn.getAttribute && tn.getAttribute("data-id")) || "";
+  state.treeFocusId = nodeId;
+  state.treeFocusKey = tn && tn.getAttribute ? (tn.getAttribute("data-key") || "") : "";
+}
+
 function findTreeNodeById(id) {
   if (!id) return null;
+  const key = state.treeFocusId === id ? (state.treeFocusKey || "") : "";
   const boxes = [treePanel(), $("#panelTree"), $("#panelCollectionTree")].filter(Boolean);
   const seen = new Set();
+  let fallback = null;
   for (let i = 0; i < boxes.length; i++) {
     const box = boxes[i];
     if (seen.has(box)) continue;
     seen.add(box);
     const nodes = box.querySelectorAll(".tn[data-id]");
     for (let j = 0; j < nodes.length; j++) {
-      if (nodes[j].getAttribute("data-id") === id) return nodes[j];
+      const tn = nodes[j];
+      if (tn.getAttribute("data-id") !== id) continue;
+      if (key && tn.getAttribute("data-key") === key) return tn;
+      if (!fallback) fallback = tn;
     }
   }
-  return null;
+  return fallback;
 }
 
 function highlightConcept(id) {

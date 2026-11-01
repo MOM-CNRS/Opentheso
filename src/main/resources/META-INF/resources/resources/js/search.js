@@ -696,7 +696,7 @@ function hideStatusForest() {
   }
 }
 
-function statusForestNodeHtml(node) {
+function statusForestNodeHtml(node, path) {
   const status = node.status || "valide";
   const type = node.nodeType || "concept";
   const depth = Number(node.depth || 0);
@@ -722,7 +722,7 @@ function statusForestNodeHtml(node) {
     + ' data-nota="' + escapeHtml(node.notation || "") + '"'
     + ' data-cand-by="' + escapeHtml(node.candidateBy || "") + '"'
     + ' data-cand-on="' + escapeHtml(node.candidateOn || "") + '"'
-    + ' data-key="' + escapeHtml(node.label || node.id) + '">'
+    + ' data-key="' + escapeHtml(path || node.label || node.id) + '">'
     + '<div class="' + rowCls + '">'
     + (typeof canTreeSelect === "function" && canTreeSelect()
       ? (inactive ? '<span class="tn-check is-off"></span>'
@@ -764,7 +764,13 @@ function renderStatusForest(nodes) {
     box.hidden = false;
     return;
   }
-  box.innerHTML = filtered.map(statusForestNodeHtml).join("");
+  const stack = [];
+  box.innerHTML = filtered.map((node) => {
+    const depth = Number(node.depth || 0);
+    stack.length = depth;
+    stack[depth] = node.label || node.id;
+    return statusForestNodeHtml(node, stack.slice(0, depth + 1).join("/"));
+  }).join("");
   box.hidden = false;
 }
 

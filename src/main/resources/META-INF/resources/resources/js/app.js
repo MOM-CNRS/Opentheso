@@ -1361,6 +1361,7 @@ document.addEventListener("click", (e) => {
     if (nodeType === "more") return;
     const stay = !!(t.closest("#panelTable") || t.closest("#panelResults") || t.closest("#resultsList")
       || t.closest("#panelCollection") || t.closest("#collectionDetail") || state.view === "collection");
+    if (typeof rememberTreeFocus === "function") rememberTreeFocus(t.closest(".tn"), id);
     if (openLiveDetail(id, nodeType)) {
       state.home = false;
       state.draft = false;
@@ -1703,7 +1704,12 @@ document.addEventListener("click", (e) => {
     if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
     const tn = t.closest(".tn");
     if (!tn) return;
-    selectTreeBranch(tn, !t.classList.contains("on"));
+    if (typeof rememberTreeFocus === "function") rememberTreeFocus(tn, tn.getAttribute("data-id"));
+    const covered = typeof isBranchCovered === "function"
+      ? isBranchCovered(tn)
+      : t.classList.contains("on");
+    selectTreeBranch(tn, !covered);
+    if (typeof highlightConcept === "function") highlightConcept(tn.getAttribute("data-id"));
   } else if (act === "sel-id") {
     e.stopPropagation();
     if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
