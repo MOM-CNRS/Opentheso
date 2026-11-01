@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -193,6 +194,33 @@ class CollectionDetailEditorBeanTest {
                 new CreateCollectionCommand("TH1", "fr", "Architecture", "", "MT", 7),
                 List.of("C1", "C2"));
         verify(thesaurusBrowseBean).invalidateCollectionTree();
+    }
+
+    @Test
+    void submitAddSelectionToCollection_addsConceptsToExistingCollection() {
+        bean.setBulkCollectionId("arch");
+        bean.setBulkConceptIds("C1\nC2,C1");
+        when(collectionMutationService.addConceptsToCollection(eq("TH1"), eq("arch"), eq(List.of("C1", "C2"))))
+                .thenReturn(MutationResult.ok("2 concepts ajoutés à la collection"));
+
+        bean.submitAddSelectionToCollection();
+
+        assertTrue(bean.isBulkOk());
+        assertEquals("2 concepts ajoutés à la collection", bean.getBulkMessage());
+        assertEquals("", bean.getBulkCollectionId());
+        verify(thesaurusBrowseBean).invalidateCollectionTree();
+    }
+
+    @Test
+    void submitAddSelectionToCollection_requiresACollection() {
+        bean.setBulkCollectionId("  ");
+        bean.setBulkConceptIds("C1");
+
+        bean.submitAddSelectionToCollection();
+
+        assertFalse(bean.isBulkOk());
+        assertEquals("Choisissez une collection.", bean.getBulkMessage());
+        verify(collectionMutationService, never()).addConceptsToCollection(any(), any(), any());
     }
 
     @Test

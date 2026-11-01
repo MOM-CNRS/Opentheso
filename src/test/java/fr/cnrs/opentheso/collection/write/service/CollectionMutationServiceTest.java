@@ -62,6 +62,35 @@ class CollectionMutationServiceTest {
     private CollectionMutationService service;
 
     @Test
+    void addConceptsToCollection_addsMissingMembersAndSkipsExisting() {
+        when(conceptGroupRepository.findByIdGroupAndIdThesaurus("arch", "TH1"))
+                .thenReturn(Optional.of(ConceptGroup.builder().idGroup("arch").idThesaurus("TH1").build()));
+        when(conceptGroupConceptRepository.findByIdGroupAndIdThesaurus("arch", "TH1"))
+                .thenReturn(List.of(ConceptGroupConcept.builder()
+                        .idGroup("arch").idThesaurus("TH1").idConcept("C1").build()));
+
+        var result = service.addConceptsToCollection("TH1", "arch", List.of("C1", "C2", " C2 "));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("1 concept ajouté à la collection · 1 déjà membre", result.message());
+        ArgumentCaptor<ConceptGroupConcept> captor = ArgumentCaptor.forClass(ConceptGroupConcept.class);
+        verify(conceptGroupConceptRepository).save(captor.capture());
+        assertEquals("C2", captor.getValue().getIdConcept());
+        assertEquals("arch", captor.getValue().getIdGroup());
+        verify(conceptGroupRepository).updateModifiedDate("arch", "TH1");
+    }
+
+    @Test
+    void addConceptsToCollection_rejectsUnknownCollection() {
+        when(conceptGroupRepository.findByIdGroupAndIdThesaurus("missing", "TH1")).thenReturn(Optional.empty());
+
+        var result = service.addConceptsToCollection("TH1", "missing", List.of("C1"));
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptGroupConceptRepository, never()).save(any());
+    }
+
+    @Test
     void renamePreferredLabel_rejectsBlankLabel() {
         var command = new RenameCollectionLabelCommand("TH1", "g1", "fr", "  ", 7);
 

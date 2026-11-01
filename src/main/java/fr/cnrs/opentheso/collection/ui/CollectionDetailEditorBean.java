@@ -64,6 +64,7 @@ public class CollectionDetailEditorBean implements Serializable {
 
     private String label;
     private String bulkLabel = "";
+    private String bulkCollectionId = "";
     private String bulkConceptIds = "";
     private String bulkMessage = "";
     private boolean bulkOk;
@@ -387,6 +388,39 @@ public class CollectionDetailEditorBean implements Serializable {
         bulkOk = true;
         bulkMessage = result.message();
         bulkLabel = "";
+        bulkConceptIds = "";
+    }
+
+    public void submitAddSelectionToCollection() {
+        bulkOk = false;
+        bulkMessage = "";
+        if (!isManagerActionsAvailable()) {
+            bulkMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        String collectionId = StringUtils.trimToEmpty(bulkCollectionId);
+        if (StringUtils.isBlank(collectionId)) {
+            bulkMessage = "Choisissez une collection.";
+            return;
+        }
+        List<String> conceptIds = parseBulkConceptIds(bulkConceptIds);
+        if (conceptIds.isEmpty()) {
+            bulkMessage = "Aucun concept à rattacher.";
+            return;
+        }
+        MutationResult result = collectionMutationService.addConceptsToCollection(
+                thesaurusContext.resolveThesaurusId(),
+                collectionId,
+                conceptIds
+        );
+        if (result == null || !result.success()) {
+            bulkMessage = result != null ? result.message() : "Erreur";
+            return;
+        }
+        thesaurusBrowseBean.invalidateCollectionTree();
+        bulkOk = true;
+        bulkMessage = result.message();
+        bulkCollectionId = "";
         bulkConceptIds = "";
     }
 

@@ -647,7 +647,7 @@ document.addEventListener("keydown", (e) => {
       || hideConfirm("#cptCreateConfirm") || hideConfirm("#cptLeaveConfirm")
       || hideConfirm("#fctCreateConfirm") || hideConfirm("#fctLeaveConfirm")
       || hideConfirm("#selListModal")
-      || hideConfirm("#bulkCollConfirm") || hideConfirm("#bulkMoveConfirm")
+      || hideConfirm("#bulkCollConfirm") || hideConfirm("#bulkAddCollConfirm") || hideConfirm("#bulkMoveConfirm")
       || hideConfirm("#bulkXferConfirm") || hideConfirm("#bulkStatusConfirm")) {
     settingsLeaveAction = null;
     e.preventDefault();
@@ -2013,6 +2013,7 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     pickThesoParent(t.closest(".cv-theso-ac"), t.getAttribute("data-id"), t.getAttribute("data-label"));
   } else if (act === "bulk-coll") bulkMode("coll");
+  else if (act === "bulk-add-coll") bulkMode("addcoll");
   else if (act === "bulk-move") bulkMode("move");
   else if (act === "bulk-xfer") bulkMode("xfer");
   else if (act === "bulk-status") bulkMode("status");
@@ -2127,6 +2128,19 @@ document.addEventListener("click", (e) => {
   else if (act === "bulk-coll-run") runBulkCollection();
   else if (act === "bulk-coll-dismiss") hideBulkCollConfirm();
   else if (act === "bulk-coll-modal") return;
+  else if (act === "bulk-add-coll-run") runBulkAddCollection();
+  else if (act === "bulk-add-coll-dismiss") hideBulkAddCollConfirm();
+  else if (act === "bulk-add-coll-modal") return;
+  else if (act === "bulk-add-coll-pick") {
+    e.preventDefault();
+    pickAddCollTarget(t.getAttribute("data-id"), t.getAttribute("data-pref"));
+  } else if (act === "bulk-add-coll-clear") {
+    e.preventDefault();
+    clearAddCollTarget();
+  } else if (act === "bulk-add-coll-go") {
+    e.preventDefault();
+    confirmBulkAddCollection();
+  }
   else if (act === "bulk-coll-go") {
     e.preventDefault();
     confirmBulkCollection();
@@ -2253,6 +2267,13 @@ if (cfByQuery) {
   });
 }
 
+const addCollQ = $("#bulkAddCollQ");
+if (addCollQ) {
+  addCollQ.addEventListener("input", () => {
+    if (state.addCollTarget) return;
+    paintBulkAddCollPick();
+  });
+}
 const moveQ = $("#bulkMoveQ");
 if (moveQ) {
   moveQ.addEventListener("input", () => {

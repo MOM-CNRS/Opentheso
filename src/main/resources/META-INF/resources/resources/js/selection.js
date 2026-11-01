@@ -640,9 +640,10 @@ function selectAllVisible() {
 function bulkMode(mode) {
   closeSelectionList();
   if (exportBusy && mode !== "export") return;
-  const acts = $("#bulkActs"), coll = $("#bulkColl"), move = $("#bulkMove"), exp = $("#bulkExport"), xfer = $("#bulkXfer"), status = $("#bulkStatus");
+  const acts = $("#bulkActs"), coll = $("#bulkColl"), addColl = $("#bulkAddColl"), move = $("#bulkMove"), exp = $("#bulkExport"), xfer = $("#bulkXfer"), status = $("#bulkStatus");
   if (acts) acts.hidden = mode !== "acts";
   if (coll) coll.hidden = mode !== "coll";
+  if (addColl) addColl.hidden = mode !== "addcoll";
   if (move) move.hidden = mode !== "move";
   if (xfer) xfer.hidden = mode !== "xfer";
   if (status) status.hidden = mode !== "status";
@@ -664,6 +665,8 @@ function bulkMode(mode) {
     scrollExportPanelBottom();
   }
   if (mode === "coll") resetColl();
+  if (mode === "addcoll") resetAddColl();
+  else hideBulkAddCollConfirm();
   if (mode === "status") resetStatus();
   else hideBulkStatusConfirm();
 }
@@ -873,6 +876,8 @@ function paintSelectionListModal() {
 function refreshOpenSelectionLabels() {
   const coll = $("#bulkColl");
   if (coll && !coll.hidden) paintCollMembers();
+  const addColl = $("#bulkAddColl");
+  if (addColl && !addColl.hidden) paintAddCollMembers();
   const move = $("#bulkMove");
   if (move && !move.hidden) paintMoveMembers();
   const xfer = $("#bulkXfer");
@@ -1031,6 +1036,241 @@ function onBulkCollAjax(data) {
   }
   showCollErr(msg || "Création impossible.");
   syncCollRun();
+}
+
+var bulkAddCollItems = null;
+var bulkAddCollKey = "";
+
+function showAddCollErr(msg) {
+  const err = $("#bulkAddCollErr");
+  if (!err) return;
+  err.textContent = msg || "";
+  err.hidden = !msg;
+}
+
+function paintAddCollMembers() {
+  const host = $("#bulkAddCollMembers");
+  const count = $("#bulkAddCollMemberN");
+  if (!host) return;
+  const members = selectedCollectionMembers();
+  renderSelectionChips(
+    host,
+    members.map(id => ({ id: id, label: selectionPrefLabel(id) })),
+    '<p class="bap-members-empty">Aucun concept dans la sélection. Les facettes ne peuvent pas rejoindre une collection.</p>'
+  );
+  if (count) {
+    const n = members.length;
+    count.textContent = n + " concept" + (n > 1 ? "s" : "");
+  }
+  withSelectionPrefLabels(members, paintAddCollMembers);
+  syncAddCollRun();
+}
+
+function syncAddCollRun() {
+  const run = $("#bulkAddCollRun");
+  if (!run) return;
+  run.classList.toggle("is-off", !(state.addCollTarget && state.addCollTarget.id) || !selectedCollectionMembers().length);
+}
+
+function paintBulkAddCollPick() {
+  const pick = $("#bulkAddCollPick");
+  if (!pick || (state.addCollTarget && state.addCollTarget.id)) {
+    if (pick) pick.hidden = true;
+    return;
+  }
+  const qEl = $("#bulkAddCollQ");
+  const raw = qEl ? qEl.value : "";
+  const q = typeof norm === "function" ? norm(raw.trim()) : String(raw || "").trim().toLowerCase();
+  const esc = typeof escapeHtml === "function" ? escapeHtml : (v) => String(v);
+  const items = (bulkAddCollItems || []).filter((item) => {
+    if (!item || !item.id) return false;
+    if (!q) return true;
+    const hay = typeof norm === "function"
+      ? norm((item.label || "") + " " + item.id + " " + (item.notation || ""))
+      : ((item.label || "") + " " + item.id).toLowerCase();
+    return hay.includes(q);
+  });
+  if (!bulkAddCollItems) {
+    pick.innerHTML = '<div class="bulksel-empty">Chargement des collections…</div>';
+    pick.hidden = false;
+    return;
+  }
+  if (!items.length) {
+    pick.innerHTML = '<div class="bulksel-empty">'
+      + (q ? "Aucune collection ne correspond." : "Aucune collection dans ce thésaurus.")
+      + "</div>";
+    pick.hidden = false;
+    return;
+  }
+  pick.innerHTML = items.slice(0, 12).map((item) => (
+    '<button type="button" class="bulksel-po is-shown" data-act="bulk-add-coll-pick" data-id="'
+    + esc(item.id) + '" data-pref="' + esc(item.label || item.id) + '">'
+    + '<span class="bulksel-po-l">' + esc(item.label || item.id) + "</span>"
+    + (item.notation ? '<span class="bulksel-po-p">' + esc(item.notation) + "</span>" : "")
+    + "</button>"
+  )).join("");
+  pick.hidden = false;
+}
+
+function loadBulkAddCollections() {
+  const key = (typeof thesaurusId === "function" ? thesaurusId() : "") + "|"
+    + (typeof thesaurusLang === "function" ? thesaurusLang() : "");
+  if (bulkAddCollItems && bulkAddCollKey === key) {
+    paintBulkAddCollPick();
+    return;
+  }
+  bulkAddCollItems = null;
+  bulkAddCollKey = key;
+  paintBulkAddCollPick();
+  if (typeof collectionApi !== "function") {
+    bulkAddCollItems = [];
+    showAddCollErr("Liste des collections indisponible.");
+    paintBulkAddCollPick();
+    return;
+  }
+  collectionApi("list").then((rows) => {
+    if (bulkAddCollKey !== key) return;
+    bulkAddCollItems = Array.isArray(rows) ? rows : [];
+    paintBulkAddCollPick();
+  }).catch(() => {
+    if (bulkAddCollKey !== key) return;
+    bulkAddCollItems = [];
+    showAddCollErr("Impossible de charger les collections.");
+    paintBulkAddCollPick();
+  });
+}
+
+function pickAddCollTarget(id, label) {
+  if (!id) return;
+  state.addCollTarget = { id: id, label: label || id };
+  const box = $("#bulkAddCollTarget");
+  const lab = $("#bulkAddCollTargetL");
+  if (lab) lab.textContent = label || id;
+  if (box) box.hidden = false;
+  const q = $("#bulkAddCollQ");
+  if (q) {
+    q.value = "";
+    const field = q.closest(".bap-field");
+    if (field) field.hidden = true;
+  }
+  const pick = $("#bulkAddCollPick");
+  if (pick) pick.hidden = true;
+  showAddCollErr("");
+  syncAddCollRun();
+}
+
+function clearAddCollTarget() {
+  state.addCollTarget = null;
+  const box = $("#bulkAddCollTarget");
+  if (box) box.hidden = true;
+  const q = $("#bulkAddCollQ");
+  if (q) {
+    const field = q.closest(".bap-field");
+    if (field) field.hidden = false;
+    q.focus();
+  }
+  showAddCollErr("");
+  paintBulkAddCollPick();
+  syncAddCollRun();
+}
+
+function resetAddColl() {
+  hideBulkAddCollConfirm();
+  state.addCollTarget = null;
+  const box = $("#bulkAddCollTarget");
+  if (box) box.hidden = true;
+  const q = $("#bulkAddCollQ");
+  if (q) {
+    q.value = "";
+    const field = q.closest(".bap-field");
+    if (field) field.hidden = false;
+  }
+  showAddCollErr("");
+  const status = $("#previewBulkAddCollStatus");
+  if (status) {
+    status.textContent = "";
+    status.classList.remove("is-ok", "is-err");
+  }
+  paintAddCollMembers();
+  syncAddCollRun();
+  loadBulkAddCollections();
+  window.setTimeout(() => {
+    if (q && !q.closest(".bap-field")?.hidden) q.focus();
+  }, 40);
+}
+
+function hideBulkAddCollConfirm() {
+  if (typeof hideConfirm === "function") hideConfirm("#bulkAddCollConfirm");
+}
+
+function runBulkAddCollection() {
+  const run = $("#bulkAddCollRun");
+  if (run && run.classList.contains("is-off")) return;
+  const target = state.addCollTarget;
+  const members = selectedCollectionMembers();
+  showAddCollErr("");
+  if (!target || !target.id) {
+    showAddCollErr("Choisissez une collection.");
+    const q = $("#bulkAddCollQ");
+    if (q) q.focus();
+    return;
+  }
+  if (!members.length) {
+    showAddCollErr("Aucun concept à rattacher.");
+    return;
+  }
+  const text = $("#bulkAddCollConfirmText");
+  if (text) {
+    const n = members.length;
+    const s = n > 1 ? "s" : "";
+    text.textContent = n + " concept" + s + " "
+      + (n > 1 ? "seront ajoutés" : "sera ajouté")
+      + " à « " + (target.label || target.id) + " ».";
+  }
+  if (typeof showConfirm === "function") showConfirm("#bulkAddCollConfirm");
+}
+
+function confirmBulkAddCollection() {
+  hideBulkAddCollConfirm();
+  const target = state.addCollTarget;
+  const members = selectedCollectionMembers();
+  if (!target || !target.id || !members.length) {
+    runBulkAddCollection();
+    return;
+  }
+  if (typeof clickPreviewJsf !== "function") {
+    showAddCollErr("Ajout indisponible.");
+    return;
+  }
+  clickPreviewJsf("previewBulkAddCollGo", {
+    previewBulkAddCollId: target.id,
+    previewBulkAddCollIds: members.join("\n")
+  });
+}
+
+function onBulkAddCollAjax(data) {
+  if (!data) return;
+  const run = $("#bulkAddCollRun");
+  if (data.status === "begin") {
+    hideBulkAddCollConfirm();
+    if (run) run.classList.add("is-off");
+    return;
+  }
+  if (data.status !== "success") {
+    syncAddCollRun();
+    return;
+  }
+  const status = document.getElementById("previewBulkAddCollStatus");
+  const ok = !!(status && status.classList.contains("is-ok"));
+  const msg = status ? (status.textContent || "").trim() : "";
+  if (ok) {
+    if (typeof toast === "function") toast(msg || "Concepts ajoutés à la collection");
+    if (typeof invalidateCollectionTree === "function") invalidateCollectionTree();
+    clearSelection();
+    return;
+  }
+  showAddCollErr(msg || "Ajout impossible.");
+  syncAddCollRun();
 }
 
 function bulkAct(label) {

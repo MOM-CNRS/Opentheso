@@ -32,8 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.cnrs.opentheso.shared.time.Dates;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -193,6 +195,68 @@ public class CollectionMutationService {
         return MutationResult.ok(command.applyToBranch()
                 ? "La branche a bien été ajoutée à la collection"
                 : "Le concept a été ajouté à la collection");
+    }
+
+    @Transactional
+    public MutationResult addConceptsToCollection(String thesaurusId, String collectionId, List<String> conceptIds) {
+        if (StringUtils.isBlank(collectionId)) {
+            return MutationResult.validationError("Choisissez une collection.");
+        }
+        Optional<ConceptGroup> group = findCollection(thesaurusId, collectionId.trim());
+        if (group.isEmpty()) {
+            return MutationResult.validationError(COLLECTION_NOT_FOUND);
+        }
+        String groupId = group.get().getIdGroup();
+        LinkedHashSet<String> wanted = new LinkedHashSet<>();
+        if (conceptIds != null) {
+            for (String conceptId : conceptIds) {
+                if (StringUtils.isNotBlank(conceptId)) {
+                    wanted.add(conceptId.trim());
+                }
+            }
+        }
+        if (wanted.isEmpty()) {
+            return MutationResult.validationError("Aucun concept à rattacher.");
+        }
+        Set<String> already = new LinkedHashSet<>();
+        for (ConceptGroupConcept link : conceptGroupConceptRepository.findByIdGroupAndIdThesaurus(groupId, thesaurusId)) {
+            if (link != null && StringUtils.isNotBlank(link.getIdConcept())) {
+                already.add(link.getIdConcept());
+            }
+        }
+        int added = 0;
+        for (String conceptId : wanted) {
+            if (already.contains(conceptId)) {
+                continue;
+            }
+            conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
+                    .idGroup(groupId)
+                    .idThesaurus(thesaurusId)
+                    .idConcept(conceptId)
+                    .build());
+            added++;
+        }
+        if (added > 0) {
+            touchCollection(thesaurusId, groupId);
+        }
+        int skipped = wanted.size() - added;
+        if (added == 0) {
+            return MutationResult.ok("Ces concepts sont déjà dans la collection.");
+        }
+        String plural = added > 1 ? "s" : "";
+        String message = added + " concept" + plural + " ajouté" + plural + " à la collection";
+        if (skipped > 0) {
+            message += " · " + skipped + " déjà membre" + (skipped > 1 ? "s" : "");
+        }
+        return MutationResult.ok(message);
+    }
+
+    private Optional<ConceptGroup> findCollection(String thesaurusId, String collectionId) {
+        Optional<ConceptGroup> group = conceptGroupRepository.findByIdGroupAndIdThesaurus(collectionId, thesaurusId);
+        if (group.isPresent() || collectionId.equals(collectionId.toLowerCase())) {
+            return group;
+        }
+        return conceptGroupRepository.findByIdGroupAndIdThesaurus(collectionId.toLowerCase(), thesaurusId);
     }
 
     @Transactional
