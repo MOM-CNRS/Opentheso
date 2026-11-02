@@ -16,16 +16,10 @@
               <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
             </button>
             <span class="bo-acc-sp"></span>
-            <h:form prependId="false" styleClass="bo-inline-form">
-              <span class="bo-btn ghost sm bo-btn-hit">
-                <h:commandButton id="imgImportTpl" styleClass="bo-btn-hit-in" value="Modèle"
-                                 action="#{actionsLotImageBean.downloadImportTemplate}"/>
-                <span class="bo-btn-hit-ui" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-                  Modèle
-                </span>
-              </span>
-            </h:form>
+            <a class="bo-btn ghost sm" href="#{request.contextPath}/api/toolbox/images/template" download="modele-images.csv">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              Modèle
+            </a>
             <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
             </button>
