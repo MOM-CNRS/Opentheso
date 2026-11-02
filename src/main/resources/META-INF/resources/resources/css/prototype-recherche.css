@@ -3136,7 +3136,7 @@ a.st-pager-btn,a.st-pager-n,button.st-pager-btn,button.st-pager-n{color:inherit;
 .bo-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .bo-btn.ghost{border-color:var(--line);color:var(--ink-2);background:var(--surface)}
 .bo-btn.ghost:hover{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
-.bo-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);
+.bo-btn.primary{font-weight: 600;background:var(--accent);color:#fff;border-color:var(--accent);
   box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 1px 2px rgba(16,24,20,.12)}
 .bo-btn.primary:hover{background:var(--accent);border-color:var(--accent);filter:brightness(1.06);color:#fff}
 .bo-btn.danger{background:var(--danger);color:#fff;border-color:var(--danger);
