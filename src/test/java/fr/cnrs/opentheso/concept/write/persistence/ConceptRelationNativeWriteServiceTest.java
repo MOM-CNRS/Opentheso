@@ -250,6 +250,25 @@ class ConceptRelationNativeWriteServiceTest {
     }
 
     @Test
+    void moveConceptsUnder_keepsAChildUnderItsSelectedParent() {
+        when(conceptRelationWriteRepository.listBroaderParentConceptIds("PARENT", "TH1")).thenReturn(List.of("OLD"));
+        when(conceptRelationWriteRepository.listBroaderParentConceptIds("CHILD", "TH1")).thenReturn(List.of("PARENT"));
+        when(branchConceptSupport.collectBranchConceptIds("TH1", "PARENT")).thenReturn(List.of("PARENT", "CHILD"));
+        when(conceptRelationWriteRepository.hasRelatedRelation(anyString(), anyString(), anyString())).thenReturn(false);
+        when(conceptRelationWriteRepository.hasHierarchicalRelation(anyString(), anyString(), anyString())).thenReturn(false);
+        when(conceptLifecycleWriteRepository.isTopConcept(anyString(), anyString())).thenReturn(false);
+
+        var result = service.moveConceptsUnder(new MoveConceptsUnderCommand(
+                "TH1", List.of("PARENT", "CHILD"), "NEW", 7, "admin"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("1 concept déplacé, hiérarchie conservée", result.message());
+        verify(conceptRelationWriteRepository).addBroaderRelation("PARENT", "NEW", "TH1", 7);
+        verify(conceptRelationWriteRepository, never()).deleteBroaderRelation("CHILD", "PARENT", "TH1", 7);
+        verify(conceptRelationWriteRepository, never()).addBroaderRelation("CHILD", "NEW", "TH1", 7);
+    }
+
+    @Test
     void moveConceptsUnder_rejectsEmptySelection() {
         var result = service.moveConceptsUnder(new MoveConceptsUnderCommand(
                 "TH1", List.of("  "), null, 7, "admin"));

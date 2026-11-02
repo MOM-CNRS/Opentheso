@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +80,12 @@ public class ConceptRelationNativeWriteService {
             return MutationResult.validationError("Aucun concept à déplacer.");
         }
         String newBroaderId = command == null ? null : StringUtils.trimToNull(command.newBroaderId());
+        Set<String> moving = new LinkedHashSet<>();
+        for (String conceptId : conceptIds) {
+            moving.add(conceptId.toLowerCase(Locale.ROOT));
+        }
         int moved = 0;
+        int preserved = 0;
         String lastError = null;
         for (String conceptId : conceptIds) {
             if (newBroaderId != null && conceptId.equalsIgnoreCase(newBroaderId)) {
@@ -86,6 +93,10 @@ public class ConceptRelationNativeWriteService {
             }
             List<String> current = conceptRelationWriteRepository.listBroaderParentConceptIds(
                     conceptId, command.thesaurusId());
+            if (hasParentInSelection(current, moving)) {
+                preserved++;
+                continue;
+            }
             if (newBroaderId == null && current.isEmpty()) {
                 continue;
             }
@@ -111,7 +122,25 @@ public class ConceptRelationNativeWriteService {
                     StringUtils.defaultIfBlank(lastError, "Aucun concept déplacé."));
         }
         String s = moved > 1 ? "s" : "";
-        return MutationResult.ok(moved + " concept" + s + " déplacé" + s);
+        String message = moved + " concept" + s + " déplacé" + s;
+        if (preserved > 0) {
+            message += ", hiérarchie conservée";
+        }
+        return MutationResult.ok(message);
+    }
+
+    /** Un concept déjà sous un autre concept de la sélection suit sa branche. */
+    private static boolean hasParentInSelection(List<String> parents, Set<String> movingLower) {
+        if (parents == null || parents.isEmpty()) {
+            return false;
+        }
+        for (String parent : parents) {
+            if (StringUtils.isNotBlank(parent)
+                    && movingLower.contains(parent.trim().toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<String> normalizeMoveIds(List<String> raw) {
