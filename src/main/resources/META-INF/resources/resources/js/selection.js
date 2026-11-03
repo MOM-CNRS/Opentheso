@@ -1751,7 +1751,7 @@ function ensureBulkMoveConfirm() {
   box.innerHTML = '<div class="confirm-modal" role="dialog" aria-modal="true"'
     + ' aria-labelledby="bulkMoveConfirmTitle" data-act="bulk-move-modal">'
     + '<div class="confirm-h" id="bulkMoveConfirmTitle">Déplacer ces concepts ?</div>'
-    + '<p class="confirm-p" id="bulkMoveConfirmText">Les concepts sélectionnés changeront de terme générique.</p>'
+    + '<p class="confirm-p" id="bulkMoveConfirmText">Les concepts sélectionnés changeront de terme générique. La hiérarchie entre eux est conservée.</p>'
     + '<div class="confirm-actions">'
     + '<button type="button" class="bo-btn ghost confirm-cancel" data-act="bulk-move-dismiss">Annuler</button>'
     + '<button type="button" class="bo-btn primary" id="bulkMoveConfirmGo" data-act="bulk-move-go">Déplacer</button>'
@@ -1780,7 +1780,8 @@ function runBulkMove() {
     const dest = state.moveTarget.id === "__root"
       ? "à la racine du thésaurus"
       : "sous « " + state.moveTarget.pref + " »";
-    text.textContent = n + " concept" + s + " seront déplacé" + s + " " + dest + ".";
+    text.textContent = n + " concept" + s + " seront déplacé" + s + " " + dest
+      + ". La hiérarchie entre les concepts sélectionnés est conservée.";
   }
   if (typeof showConfirm === "function") {
     showConfirm("#bulkMoveConfirm");

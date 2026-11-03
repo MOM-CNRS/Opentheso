@@ -7,6 +7,9 @@ import java.text.Normalizer;
 public class StringUtils {
 
     public static String clearNoteFromP(String rawNote) {
+        if (rawNote == null) {
+            return null;
+        }
         if (rawNote.startsWith("<p>")) {
             rawNote = rawNote.substring(3); // Retire les 3 premiers caractères
         }
@@ -18,6 +21,9 @@ public class StringUtils {
     }
 
     public static String clearValue(String rawNote) {
+        if (rawNote == null) {
+            return null;
+        }
         // enlève les code ascii non visibles
         return rawNote.replace((char) 27, ' ');
     }

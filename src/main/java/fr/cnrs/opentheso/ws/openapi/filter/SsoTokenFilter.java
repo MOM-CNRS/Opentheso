@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.ws.openapi.filter;
 
 import fr.cnrs.opentheso.shared.auth.SsoTokenService;
+import fr.cnrs.opentheso.shared.session.SessionAuthenticatedUserSource;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,8 +36,12 @@ public class SsoTokenFilter implements Filter {
             Integer userId = ssoTokenService.validateAndConsumeToken(ssoToken);
             if (userId != null) {
                 HttpSession session = request.getSession(true);
+                // Même clé qu'une connexion par formulaire ou Keycloak : l'utilisateur
+                // est connecté dès l'ouverture du lien, sans attendre un second écran.
+                session.setAttribute(SessionAuthenticatedUserSource.SESSION_USER_ID_KEY, userId);
                 session.setAttribute("ssoUserId", userId);
                 session.setAttribute("ssoProcessed", false);
+                log.info("Connexion automatique via l'API, utilisateur id={}", userId);
 
                 String idc = firstText(
                         request.getParameter("idc"),
