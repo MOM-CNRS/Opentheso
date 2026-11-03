@@ -383,6 +383,27 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
+    void saveNewCandidat_withoutDefinition_createsTheCandidate() {
+        var candidat = new CandidatDto();
+        candidat.setNomPref("New label");
+        when(termRepository.existsPrefLabel("New label", "fr", "TH1")).thenReturn(false);
+        when(nonPreferredTermRepository.isAltLabelExist("New label", "TH1", "fr")).thenReturn(false);
+        when(preferencesRepository.findByIdThesaurus("TH1")).thenReturn(Optional.empty());
+        when(conceptRepository.getNextConceptNumericId()).thenReturn(100L);
+        when(conceptRepository.findByIdConcept(any())).thenReturn(List.of());
+        when(statusRepository.findById(1)).thenReturn(Optional.empty());
+        when(termRepository.getMaxInternalId()).thenReturn(5);
+        when(termRepository.findByIdTermAndIdThesaurus(any(), any())).thenReturn(Optional.empty());
+        when(termRepository.save(any(fr.cnrs.opentheso.entites.Term.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertTrue(persistence.saveNewCandidat(candidat, "TH1", "fr", 7, "admin", "fr", null));
+
+        verify(conceptRepository).save(any(Concept.class));
+        verify(noteRepository, never()).save(any());
+    }
+
+    @Test
     void updateCandidateDetails_rebuildsCollectionsRelationsAndSynonyms() {
         var candidat = new CandidatDto();
         candidat.setIdThesaurus("TH1");

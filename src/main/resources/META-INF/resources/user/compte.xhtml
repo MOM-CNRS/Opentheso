@@ -135,9 +135,22 @@
                         <div class="st-row">
                           <div class="st-row-l">#{localeBean.getMsg('profile.apiKey')}</div>
                           <div class="st-row-c st-inline">
-                            <input class="st-input is-mono" type="text" readonly="readonly"
+                            <input id="previewAccountApiKey" class="st-input is-mono" type="text" readonly="readonly"
                                    value="#{myAccountBean.apiKeyDisplay}"/>
                             <ui:fragment rendered="#{myAccountBean.canRegenerateApiKey}">
+                              <ui:fragment rendered="#{not empty myAccountBean.apiKeyPlain}">
+                                <button type="button" class="bo-btn ghost sm" data-act="copy"
+                                        data-copy="#{myAccountBean.apiKeyPlain}"
+                                        title="#{localeBean.getMsg('ui.copy')}">
+                                  #{localeBean.getMsg('ui.copy')}
+                                </button>
+                              </ui:fragment>
+                              <ui:fragment rendered="#{empty myAccountBean.apiKeyPlain}">
+                                <button type="button" class="bo-btn ghost sm" disabled="disabled"
+                                        title="#{localeBean.getMsg('ui.copy')}">
+                                  #{localeBean.getMsg('ui.copy')}
+                                </button>
+                              </ui:fragment>
                               <button type="button" class="bo-btn ghost sm"
                                       onclick="clickPreviewJsf('previewAccountApiGo'); return false;">
                                 #{localeBean.getMsg('profile.api.regenerate')}

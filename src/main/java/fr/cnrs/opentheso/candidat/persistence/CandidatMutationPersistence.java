@@ -858,6 +858,9 @@ public class CandidatMutationPersistence {
 
     private void addNote(String identifier, String idLang, String thesaurusId, String note, String noteTypeCode,
                          String noteSource, int userId) {
+        if (StringUtils.isBlank(note)) {
+            return;
+        }
         note = fr.cnrs.opentheso.utils.StringUtils.clearValue(note);
         note = fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(note);
         note = StringEscapeUtils.unescapeXml(note);
