@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.shared.time.Dates;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
+import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -25,9 +26,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -74,6 +78,9 @@ public class CandidatBoardBean implements Serializable {
     private final Set<String> selectedIds = new LinkedHashSet<>();
     @Getter
     @Setter
+    private String selectId;
+    @Getter
+    @Setter
     private String batchMessage = "";
     @Getter
     @Setter
@@ -90,16 +97,76 @@ public class CandidatBoardBean implements Serializable {
     private int pendingCount;
     private int acceptedCount;
     private int rejectedCount;
+    @Getter
+    private int badgeCount;
 
     public void load() {
         loaded = false;
         ensureLoaded();
+        badgeCount = pendingCount;
+    }
+
+    /**
+     * Bouton du rail, à côté des propositions : thésaurus ouvert et accès au module candidats.
+     */
+    public boolean isBoardLinkVisible() {
+        String thesaurusId = currentThesaurusId();
+        return StringUtils.isNotBlank(thesaurusId)
+                && candidatAccessPolicy.canAccessModule(userSession, thesaurusId);
+    }
+
+    /**
+     * Compteur du bouton, sans charger les trois listes.
+     */
+    public void refreshBadgeCount() {
+        if (loaded) {
+            badgeCount = pendingCount;
+            return;
+        }
+        String thesaurusId = currentThesaurusId();
+        if (StringUtils.isBlank(thesaurusId) || !candidatAccessPolicy.canAccessModule(userSession, thesaurusId)) {
+            badgeCount = 0;
+            return;
+        }
+        try {
+            badgeCount = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.PENDING);
+        } catch (RuntimeException ex) {
+            badgeCount = 0;
+        }
+    }
+
+    public void openBoard() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || facesContext.getResponseComplete()) {
+            return;
+        }
+        ExternalContext context = facesContext.getExternalContext();
+        String id = currentThesaurusId();
+        StringBuilder url = new StringBuilder(context.getRequestContextPath())
+                .append("/candidat/candidats.xhtml");
+        if (StringUtils.isNotBlank(id)) {
+            url.append("?idt=").append(URLEncoder.encode(id, StandardCharsets.UTF_8));
+        }
+        try {
+            context.redirect(url.toString());
+        } catch (IOException ignored) {
+            // La page courante reste affichée.
+        }
+    }
+
+    private String currentThesaurusId() {
+        String fromView = thesaurusViewBean == null ? null : StringUtils.trimToNull(thesaurusViewBean.getId());
+        if (fromView != null) {
+            return fromView;
+        }
+        return StringUtils.trimToNull(thesaurusContext.resolveThesaurusId());
     }
 
     public void load(String thesaurusId) {
         loaded = false;
         reload(thesaurusId, thesaurusViewBean.getSelectedLang());
         loaded = true;
+        badgeCount = pendingCount;
     }
 
     public void search() {
@@ -131,8 +198,25 @@ public class CandidatBoardBean implements Serializable {
         }
     }
 
+    public void toggleSelected() {
+        toggleSelect(selectId);
+        selectId = null;
+    }
+
     public boolean isSelected(String conceptId) {
         return StringUtils.isNotBlank(conceptId) && selectedIds.contains(conceptId);
+    }
+
+    public boolean isHasSelection() {
+        return !selectedIds.isEmpty();
+    }
+
+    public boolean isHasPendingSelection() {
+        return selectedIn(pending);
+    }
+
+    public boolean isHasRejectedSelection() {
+        return selectedIn(rejected);
     }
 
     public void acceptSelected() {
@@ -210,46 +294,64 @@ public class CandidatBoardBean implements Serializable {
         MessageUtils.showInformationMessage(localeBean.getMsg("candidat.rejectOk"));
     }
 
+    public void reopenSelected() {
+        if (!isCanProcess()) {
+            return;
+        }
+        List<CandidatDto> candidates = loadSelectedRejected();
+        if (candidates.isEmpty()) {
+            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.board.reopenSelected"));
+            return;
+        }
+        CandidatDto failed = candidatProcessService.reactivateCandidatesBatch(candidates);
+        selectedIds.clear();
+        if (failed == null) {
+            activeTab = TAB_PENDING;
+        }
+        load(thesaurusViewBean.getId());
+        if (failed != null) {
+            String detail = StringUtils.defaultIfBlank(failed.getNomPref(), failed.getIdConcepte());
+            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.reactivateError")
+                    + (StringUtils.isBlank(detail) ? "" : " : " + detail));
+            return;
+        }
+        MessageUtils.showInformationMessage(localeBean.getMsg("candidat.reactivateOk"));
+    }
+
     public void exportSelectedSkos() {
-        exportPendingSkos();
+        exportCandidates();
     }
 
     public void exportPendingSkos() {
+        exportCandidates();
+    }
+
+    public void exportCandidates() {
         if (!isCanExport()) {
             return;
         }
-        String thesaurusId = thesaurusViewBean.getId();
-        String lang = StringUtils.defaultIfBlank(thesaurusViewBean.getSelectedLang(), "fr");
-        List<CandidatDto> pendingCandidates = candidatReadService.loadByStatus(
-                thesaurusId, lang, CandidatStatusCode.PENDING);
-        List<CandidatDto> toExport;
-        if (!selectedIds.isEmpty()) {
-            toExport = pendingCandidates.stream()
-                    .filter(dto -> selectedIds.contains(dto.getIdConcepte()))
-                    .toList();
-        } else {
-            toExport = pendingCandidates;
-        }
+        List<CandidatDto> toExport = loadVisibleCandidates();
         if (toExport.isEmpty()) {
             MessageUtils.showWarnMessage(localeBean.getMsg("candidat.exportError"));
             return;
         }
+        byte[] csv = candidatProcessService.exportProcessedCandidatesCsv(toExport);
+        if (csv == null || csv.length == 0) {
+            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.exportError"));
+            return;
+        }
         try {
-            var result = candidatExportService.exportPendingCandidates(
-                    thesaurusId,
-                    toExport,
-                    StringUtils.defaultIfBlank(exportFormat, "rdf"),
-                    ignored -> { });
             FacesContext faces = FacesContext.getCurrentInstance();
             if (faces == null) {
                 return;
             }
             HttpServletResponse response = (HttpServletResponse) faces.getExternalContext().getResponse();
             response.reset();
-            response.setContentType(result.contentType());
-            response.setHeader("Content-Disposition", "attachment; filename=\"" + result.filename() + "\"");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.setContentType("text/csv;charset=UTF-8");
+            response.setHeader("Content-Disposition", "attachment; filename=\"candidats.csv\"");
             try (OutputStream out = response.getOutputStream()) {
-                out.write(result.content());
+                out.write(csv);
                 out.flush();
             }
             faces.responseComplete();
@@ -339,6 +441,15 @@ public class CandidatBoardBean implements Serializable {
         return candidatAccessPolicy.canCreate(userSession, thesaurusViewBean.getId());
     }
 
+    public boolean isExportEnabled() {
+        ensureLoaded();
+        return switch (StringUtils.defaultString(activeTab)) {
+            case TAB_ACCEPTED -> accepted != null && !accepted.isEmpty();
+            case TAB_REJECTED -> rejected != null && !rejected.isEmpty();
+            default -> pending != null && !pending.isEmpty();
+        };
+    }
+
     public boolean isCapped(String tab) {
         ensureLoaded();
         int shown = itemsFor(tab).size();
@@ -421,6 +532,27 @@ public class CandidatBoardBean implements Serializable {
         );
     }
 
+    private List<CandidatDto> loadVisibleCandidates() {
+        String thesaurusId = thesaurusViewBean.getId();
+        String lang = StringUtils.defaultIfBlank(thesaurusViewBean.getSelectedLang(), "fr");
+        boolean pendingTab = !TAB_ACCEPTED.equals(activeTab) && !TAB_REJECTED.equals(activeTab);
+        int status = switch (StringUtils.defaultString(activeTab)) {
+            case TAB_ACCEPTED -> CandidatStatusCode.ACCEPTED;
+            case TAB_REJECTED -> CandidatStatusCode.REJECTED;
+            default -> CandidatStatusCode.PENDING;
+        };
+        List<CandidatDto> source = candidatReadService.searchByStatus(
+                thesaurusId, lang, status, StringUtils.trimToNull(searchTerm));
+        if (source == null || source.isEmpty()) {
+            return List.of();
+        }
+        Integer userId = mineOnly && isLoggedIn() ? userSession.getCurrentUserId() : null;
+        return source.stream()
+                .filter(dto -> userId == null || dto.getCreatedById() == userId)
+                .filter(dto -> !pendingTab || selectedIds.isEmpty() || selectedIds.contains(dto.getIdConcepte()))
+                .toList();
+    }
+
     private List<CandidatDto> loadSelectedPending() {
         if (selectedIds.isEmpty()) {
             return List.of();
@@ -436,6 +568,38 @@ public class CandidatBoardBean implements Serializable {
             }
         }
         return selected;
+    }
+
+    private List<CandidatDto> loadSelectedRejected() {
+        if (selectedIds.isEmpty()) {
+            return List.of();
+        }
+        String thesaurusId = thesaurusViewBean.getId();
+        String lang = StringUtils.defaultIfBlank(thesaurusViewBean.getSelectedLang(), "fr");
+        List<CandidatDto> rejectedCandidates = candidatReadService.loadByStatus(
+                thesaurusId, lang, CandidatStatusCode.REJECTED);
+        if (rejectedCandidates == null || rejectedCandidates.isEmpty()) {
+            return List.of();
+        }
+        List<CandidatDto> selected = new ArrayList<>();
+        for (CandidatDto dto : rejectedCandidates) {
+            if (selectedIds.contains(dto.getIdConcepte())) {
+                selected.add(dto);
+            }
+        }
+        return selected;
+    }
+
+    private boolean selectedIn(List<CandidatBoardItem> items) {
+        if (selectedIds.isEmpty() || items == null || items.isEmpty()) {
+            return false;
+        }
+        for (CandidatBoardItem item : items) {
+            if (item != null && selectedIds.contains(item.conceptId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void notifyCreatorsAccepted(List<CandidatDto> candidates) {

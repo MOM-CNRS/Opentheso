@@ -1,0 +1,49 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+  <div class="cand-line">
+    <ui:fragment rendered="#{selectable}">
+      <button type="button"
+              class="cand-row-check#{candidatBoardBean.isSelected(item.conceptId) ? ' is-on' : ''}"
+              data-act="cand-select" data-id="#{item.conceptId}"
+              aria-pressed="#{candidatBoardBean.isSelected(item.conceptId)}"
+              title="#{localeBean.getMsg('candidat.board.select')}">
+        <span class="cand-tick" aria-hidden="true"></span>
+      </button>
+    </ui:fragment>
+    <a class="prop-item is-#{tone}"
+       href="thesaurus/consultation.xhtml?id=#{item.conceptId}&amp;type=#{item.openType}&amp;from=candidats"
+       data-act="open" data-id="#{item.conceptId}" data-type="#{item.openType}"
+       title="#{item.title}">
+      <span class="prop-item-mark" aria-hidden="true">
+        <ui:fragment rendered="#{tone eq 'new'}">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </ui:fragment>
+        <ui:fragment rendered="#{tone eq 'approved'}">
+          <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+        </ui:fragment>
+        <ui:fragment rendered="#{tone eq 'refused'}">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </ui:fragment>
+      </span>
+      <span class="prop-item-body">
+        <span class="prop-item-top">
+          <span class="prop-item-title">#{item.title}</span>
+          <span class="prop-item-id">#{item.conceptId}</span>
+        </span>
+        <span class="prop-item-meta">
+          <span>#{item.meta}</span>
+          <ui:fragment rendered="#{not empty item.votes}">
+            <span class="prop-item-sep" aria-hidden="true">·</span>
+            <span class="prop-item-votes">#{item.votes}</span>
+          </ui:fragment>
+        </span>
+      </span>
+      <span class="prop-status is-#{tone}">#{statusLabel}</span>
+      <span class="prop-item-go" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+    </a>
+  </div>
+</ui:composition>

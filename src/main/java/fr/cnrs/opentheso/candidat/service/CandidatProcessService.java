@@ -126,6 +126,29 @@ public class CandidatProcessService {
         return null;
     }
 
+    /**
+     * Remet en cours un lot de candidats rejetés.
+     *
+     * @return le premier candidat en échec, ou {@code null} si tout a réussi
+     */
+    @Transactional
+    public CandidatDto reactivateCandidatesBatch(List<CandidatDto> candidates) {
+        if (CollectionUtils.isEmpty(candidates)) {
+            return null;
+        }
+        boolean reactivated = false;
+        for (CandidatDto candidate : candidates) {
+            if (candidatProcessPersistence.reactivateCandidate(candidate).isFailure()) {
+                return candidate;
+            }
+            reactivated = true;
+        }
+        if (reactivated) {
+            conceptTreeRefreshSupport.refreshConceptTree();
+        }
+        return null;
+    }
+
     public void prepareCandidatesForAccept(List<CandidatDto> candidates, String thesaurusId, String lang) {
         candidatReadService.prepareCandidatesForAccept(candidates, thesaurusId, lang);
     }

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="legal"/>
+  <ui:define name="title">OpenTheso — #{legalPageBean.title}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewParam name="code" value="#{legalPageBean.code}"/>
+    <f:viewAction action="#{legalPageBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="sidebar"/>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <f:event type="preRenderView" listener="#{legalPageBean.load}"/>
+    <div class="legal">
+      <header class="legal-top">
+        <a class="legal-back" href="thesauri.xhtml">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          #{localeBean.getMsg('legal.back')}
+        </a>
+        <nav class="legal-nav" aria-label="#{localeBean.getMsg('legal.nav')}">
+          <a class="legal-tab#{legalPageBean.code eq 'mentions' ? ' is-on' : ''}"
+             href="info/page.xhtml?code=mentions">#{legalPageBean.mentionsTitle}</a>
+          <a class="legal-tab#{legalPageBean.code eq 'donnees' ? ' is-on' : ''}"
+             href="info/page.xhtml?code=donnees">#{legalPageBean.privacyTitle}</a>
+          <a class="legal-tab#{legalPageBean.code eq 'accessibilite' ? ' is-on' : ''}"
+             href="info/page.xhtml?code=accessibilite">#{legalPageBean.accessibilityTitle}</a>
+        </nav>
+      </header>
+      <h:form id="legalPageForm" styleClass="legal-form">
+        <h:inputHidden id="legalCode" value="#{legalPageBean.code}"/>
+        <article class="legal-sheet#{legalPageBean.editing ? ' is-editing' : ''}">
+          <p class="legal-kicker">#{localeBean.getMsg('legal.nav')}</p>
+          <div class="legal-title-row">
+            <div class="legal-copy">
+              <ui:fragment rendered="#{not legalPageBean.editing}">
+                <h1 class="legal-title">#{legalPageBean.title}</h1>
+              </ui:fragment>
+              <ui:fragment rendered="#{legalPageBean.editing}">
+                <label class="legal-field" for="legalPageForm:legalTitle">#{localeBean.getMsg('legal.name')}</label>
+                <h:inputText id="legalTitle" value="#{legalPageBean.title}"
+                             styleClass="legal-name" maxlength="400" required="false"
+                             pt:autocomplete="off"/>
+                <p class="legal-lang">#{localeBean.getMsg('legal.langHint')}</p>
+              </ui:fragment>
+            </div>
+            <div class="legal-meta">
+              <span class="legal-chip">#{localeBean.flagEmoji} #{localeBean.idLangue}</span>
+              <h:commandButton value="#{localeBean.getMsg('edit')}" styleClass="bo-btn ghost sm abt-edit-btn legal-edit"
+                               rendered="#{legalPageBean.canEdit and not legalPageBean.editing}"
+                               action="#{legalPageBean.startEditing}">
+                <f:ajax execute="@this" render="@form"/>
+              </h:commandButton>
+            </div>
+          </div>
+
+          <ui:fragment rendered="#{not legalPageBean.editing}">
+            <ui:fragment rendered="#{legalPageBean.contentPresent}">
+              <div class="legal-body">
+                <h:outputText value="#{legalPageBean.html}" escape="false"/>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{legalPageBean.known and not legalPageBean.contentPresent}">
+              <p class="legal-empty">#{localeBean.getMsg('legal.empty')}</p>
+            </ui:fragment>
+          </ui:fragment>
+
+          <ui:fragment rendered="#{legalPageBean.editing}">
+            <div class="abt-composer">
+              <div class="abt-composer-bar">
+                <div class="abt-fmt" role="toolbar" aria-label="#{localeBean.getMsg('home.about.format')}">
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="undo" title="#{localeBean.getMsg('undo')}" aria-label="#{localeBean.getMsg('undo')}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 2.2-7.4L3 7"/></svg>
+                  </button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="redo" title="#{localeBean.getMsg('redo')}" aria-label="#{localeBean.getMsg('redo')}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-2.2-7.4L21 7"/></svg>
+                  </button>
+                  <span class="abt-fmt-sep" aria-hidden="true"></span>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="bold" title="#{localeBean.getMsg('bold')}" aria-label="#{localeBean.getMsg('bold')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h7a3.5 3.5 0 0 1 0 7H7z"/><path d="M7 12h8a3.5 3.5 0 0 1 0 7H7z"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="italic" title="#{localeBean.getMsg('italic')}" aria-label="#{localeBean.getMsg('italic')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h6"/><path d="M7 19h6"/><path d="M14 5 10 19"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="underline" title="#{localeBean.getMsg('underline')}" aria-label="#{localeBean.getMsg('underline')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="strikeThrough" title="#{localeBean.getMsg('strike')}" aria-label="#{localeBean.getMsg('strike')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 7a4 4 0 0 0-8 1c0 2 2 3 8 4s8 2 8 4a4 4 0 0 1-8 1"/><path d="M4 12h16"/></svg></button>
+                  <span class="abt-fmt-sep" aria-hidden="true"></span>
+                  <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h2">H2</button>
+                  <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h3">H3</button>
+                  <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="p">P</button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="formatBlock" data-val="blockquote" title="#{localeBean.getMsg('quote')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h5v5H8a3 3 0 0 0 3 3"/><path d="M15 8h5v5h-3a3 3 0 0 0 3 3"/></svg></button>
+                  <span class="abt-fmt-sep" aria-hidden="true"></span>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertUnorderedList" title="#{localeBean.getMsg('list')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/><path d="M5 6h.01"/><path d="M5 12h.01"/><path d="M5 18h.01"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertOrderedList" title="#{localeBean.getMsg('olist')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><path d="M4 6h1v4"/><path d="M4 16h2"/><path d="M5 16v4"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="createLink" title="#{localeBean.getMsg('link')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="unlink" title="#{localeBean.getMsg('unlink')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a5 5 0 0 1 0 10h-1"/><path d="M6 16H5a5 5 0 0 1 0-10h1"/><path d="M8 12h8"/><path d="m4 4 16 16"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertHorizontalRule" title="#{localeBean.getMsg('hr')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/></svg></button>
+                  <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="removeFormat" title="#{localeBean.getMsg('clearFormat')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10"/><path d="M9 7v10"/><path d="m15 11 5 8"/><path d="m20 11-5 8"/></svg></button>
+                </div>
+                <button type="button" class="abt-src-btn" data-act="about-src" aria-pressed="false" title="#{localeBean.getMsg('home.about.html')}">HTML</button>
+              </div>
+              <div class="abt-visual abt-html" id="aboutVisual" contenteditable="true" spellcheck="true"
+                   data-placeholder="#{localeBean.getMsg('legal.placeholder')}">
+                <h:outputText value="#{legalPageBean.html}" escape="false"/>
+              </div>
+              <h:inputTextarea id="legalEditor" styleClass="abt-editor" value="#{legalPageBean.html}"/>
+              <div class="abt-composer-foot">
+                <p class="abt-hint">#{localeBean.getMsg('legal.hint')}</p>
+                <div class="abt-actions">
+                  <h:commandLink styleClass="abt-cancel" action="#{legalPageBean.cancelEditing}">
+                    <f:ajax execute="@this" render="@form"/>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <span>#{localeBean.getMsg('cancel')}</span>
+                  </h:commandLink>
+                  <button type="button" class="abt-save" data-act="legal-save">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    <span>#{localeBean.getMsg('save')}</span>
+                  </button>
+                  <h:commandButton id="legalSave" styleClass="legal-save-go"
+                                   action="#{legalPageBean.save}">
+                    <f:ajax execute="@form" render="@form" onevent="onLegalPageSave"/>
+                  </h:commandButton>
+                </div>
+              </div>
+            </div>
+          </ui:fragment>
+          <span id="previewAboutSaveMsg" hidden="hidden" data-ok="#{not legalPageBean.saveError}">#{legalPageBean.saveMessage}</span>
+        </article>
+      </h:form>
+    </div>
+  </ui:define>
+</ui:composition>

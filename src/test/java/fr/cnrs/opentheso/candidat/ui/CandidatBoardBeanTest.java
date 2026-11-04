@@ -30,6 +30,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -73,8 +75,8 @@ class CandidatBoardBeanTest {
                 userSession,
                 localeBean
         );
-        when(thesaurusViewBean.getId()).thenReturn("TH1");
-        when(thesaurusViewBean.getSelectedLang()).thenReturn("fr");
+        lenient().when(thesaurusViewBean.getId()).thenReturn("TH1");
+        lenient().when(thesaurusViewBean.getSelectedLang()).thenReturn("fr");
     }
 
     @Test
@@ -104,6 +106,103 @@ class CandidatBoardBeanTest {
         assertTrue(bean.isCapped("attente"));
         assertFalse(bean.isCapped("rejete"));
         verify(thesaurusViewBean).getId();
+    }
+
+    @Test
+    void boardLinkVisible_whenTheUserCanAccessTheCurrentThesaurus() {
+        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(true);
+
+        assertTrue(bean.isBoardLinkVisible());
+    }
+
+    @Test
+    void refreshBadgeCount_countsPendingCandidatesOnly() {
+        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(true);
+        when(candidatReadService.countByStatus("TH1", CandidatStatusCode.PENDING)).thenReturn(3);
+
+        bean.refreshBadgeCount();
+
+        assertEquals(3, bean.getBadgeCount());
+        verify(candidatReadService, never()).searchByStatus(any(), any(), anyInt(), any());
+    }
+
+    @Test
+    void exportEnabled_followsTheVisibleList() {
+        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.PENDING), isNull()))
+                .thenReturn(List.of());
+        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
+                .thenReturn(List.of(candidat("c2", "Patère", "Luc", 7, 3)));
+        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.REJECTED), isNull()))
+                .thenReturn(List.of());
+        when(candidatReadService.countByStatus(eq("TH1"), anyInt())).thenReturn(0);
+
+        bean.load();
+
+        assertFalse(bean.isExportEnabled());
+        bean.setActiveTab("insere");
+        assertTrue(bean.isExportEnabled());
+        bean.setActiveTab("rejete");
+        assertFalse(bean.isExportEnabled());
+    }
+
+    @Test
+    void exportCandidates_exportsTheVisibleListAsCsv() {
+        when(candidatAccessPolicy.canExport(userSession, "TH1")).thenReturn(true);
+        CandidatDto inserted = candidat("c2", "Patère", "Luc", 7, 3);
+        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
+                .thenReturn(List.of(inserted));
+        when(candidatProcessService.exportProcessedCandidatesCsv(any())).thenReturn("Id;Candidat\n".getBytes());
+        bean.setActiveTab("insere");
+
+        bean.exportCandidates();
+
+        verify(candidatProcessService).exportProcessedCandidatesCsv(List.of(inserted));
+    }
+
+    @Test
+    void reopenSelected_putsRejectedCandidatesBackInProgress() {
+        when(candidatAccessPolicy.canProcess(eq(userSession), eq("TH1"), isNull())).thenReturn(true);
+        CandidatDto rejected = candidat("c3", "Fibule", "Ada", 0, 4);
+        when(candidatReadService.loadByStatus("TH1", "fr", CandidatStatusCode.REJECTED))
+                .thenReturn(List.of(rejected));
+        when(candidatProcessService.reactivateCandidatesBatch(List.of(rejected))).thenReturn(null);
+
+        bean.toggleSelect("c3");
+        bean.reopenSelected();
+
+        verify(candidatProcessService).reactivateCandidatesBatch(List.of(rejected));
+        assertEquals("attente", bean.getActiveTab());
+        assertFalse(bean.isHasSelection());
+    }
+
+    @Test
+    void hasSelection_turnsOnOnlyAfterACandidateIsChecked() {
+        assertFalse(bean.isHasSelection());
+
+        bean.toggleSelect("c1");
+
+        assertTrue(bean.isHasSelection());
+        assertTrue(bean.isSelected("c1"));
+
+        bean.toggleSelect("c1");
+
+        assertFalse(bean.isHasSelection());
+        assertFalse(bean.isSelected("c1"));
+    }
+
+    @Test
+    void toggleSelected_checksThePostedCandidate() {
+        bean.setSelectId("c1");
+        bean.toggleSelected();
+
+        assertTrue(bean.isSelected("c1"));
+        assertTrue(bean.isHasSelection());
+
+        bean.setSelectId("c1");
+        bean.toggleSelected();
+
+        assertFalse(bean.isSelected("c1"));
+        assertFalse(bean.isHasSelection());
     }
 
     @Test

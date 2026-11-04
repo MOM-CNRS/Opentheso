@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/prototype-recherche.css?v=20261101-catalogue"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261101-catalogue"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261104-legaldoc"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-picker.css?v=20261101-catalogue"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-admin.css?v=20261101-catalogue"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/theme.css?v=20261101-catalogue"/>
@@ -51,6 +51,7 @@
       pt:data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
       pt:data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
 <f:event type="preRenderView" listener="#{propositionBean.refreshBadgeCount}"/>
+<f:event type="preRenderView" listener="#{candidatBoardBean.refreshBadgeCount}"/>
 <f:event type="preRenderView" listener="#{propositionBean.openDedicatedReview}"/>
 <div class="app" id="app">
   <ui:include src="/includes/thesaurus.xhtml"/>
@@ -171,7 +172,7 @@
 <script src="#{request.contextPath}/resources/js/ark-progress.js"></script>
 <script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
 <script src="#{request.contextPath}/resources/js/session.js"></script>
-<script src="#{request.contextPath}/resources/js/app.js?v=20261101-addcoll"></script>
+<script src="#{request.contextPath}/resources/js/app.js?v=20261104-legal"></script>
 </h:body>
 </f:view>
 </html>

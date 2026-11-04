@@ -573,10 +573,10 @@
                  src="#{request.contextPath}/resources/img/minist%C3%A8re%20de%20la%20culture.png"
                  alt="Ministère de la Culture"/>
           </a>
-          <nav class="gv-mentions" aria-label="Informations légales">
-            <a href="#">Mentions légales</a>
-            <a href="#">Données personnelles</a>
-            <a href="#">Accessibilité : partiellement conforme</a>
+          <nav class="gv-mentions" aria-label="#{localeBean.getMsg('legal.nav')}">
+            <a href="info/page.xhtml?code=mentions">#{legalPageBean.mentionsTitle}</a>
+            <a href="info/page.xhtml?code=donnees">#{legalPageBean.privacyTitle}</a>
+            <a href="info/page.xhtml?code=accessibilite">#{legalPageBean.accessibilityTitle}</a>
             <span class="gv-lic">Code sous licence CeCILL</span>
           </nav>
           <nav class="gv-links" aria-label="Sites publics">

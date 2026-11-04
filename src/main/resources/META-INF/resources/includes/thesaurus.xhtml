@@ -170,6 +170,25 @@
           </div>
         </ui:fragment>
       </h:panelGroup>
+      <h:panelGroup id="previewCandBadge">
+        <ui:fragment rendered="#{candidatBoardBean.boardLinkVisible}">
+          <div class="thesaurus-item">
+            <h:form id="candNavForm" prependId="false" styleClass="prop-nav-form">
+              <h:commandLink id="notificationCand"
+                             styleClass="thesaurus-btn prop-nav-btn#{page eq 'candidats' ? ' is-on' : ''}#{candidatBoardBean.badgeCount gt 0 ? ' has-count' : ''}"
+                             action="#{candidatBoardBean.openBoard}"
+                             title="#{localeBean.getMsg('candidat.board.title')}"
+                             pt:aria-label="#{localeBean.getMsg('candidat.board.title')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z"/><path d="M6 9.01V9"/><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/></svg>
+                <ui:fragment rendered="#{candidatBoardBean.badgeCount gt 0}">
+                  <span class="prop-rail-n">#{candidatBoardBean.badgeCount}</span>
+                </ui:fragment>
+              </h:commandLink>
+              <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+            </h:form>
+          </div>
+        </ui:fragment>
+      </h:panelGroup>
     </div>
     <div class="thesaurus-spacer"></div>
     <div class="thesaurus-group">

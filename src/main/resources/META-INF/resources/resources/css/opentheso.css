@@ -1193,7 +1193,6 @@ a.empty-link{color:var(--accent);font-weight:600}
 .sidebar-lite .sidebar-body{display:block}
 
 .cand-form{margin:0}
-.bo-head .cand-new{margin-left:auto}
 .cand-board{margin-top:2px}
 .cand-toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 -4px 12px;
   padding:8px 4px 12px;position:sticky;top:0;z-index:4;background:var(--bg)}
@@ -1216,13 +1215,17 @@ a.empty-link{color:var(--accent);font-weight:600}
 .cand-board[data-tab="rejete"] .cand-tab[data-tab="rejete"] .cand-tab-n,
 .cand-tab.is-on .cand-tab-n{background:rgba(255,255,255,.22);color:#fff}
 .cand-pane{display:none;flex-direction:column;gap:6px}
-.cand-board[data-tab]:not([data-tab="attente"]) [id$='candAcceptSelected'],
-.cand-board[data-tab]:not([data-tab="attente"]) [id$='candRejectSelected'],
-.cand-board[data-tab]:not([data-tab="attente"]) [id$='candBatchMsg']{display:none!important}
+.cand-board[data-tab]:not([data-tab="attente"]) .cand-decide,
+.cand-board[data-tab]:not([data-tab="rejete"]) .cand-reopen{display:none!important}
 .cand-board[data-tab="attente"] .cand-pane[data-tab="attente"],
 .cand-board[data-tab="insere"] .cand-pane[data-tab="insere"],
 .cand-board[data-tab="rejete"] .cand-pane[data-tab="rejete"],
 .cand-pane.is-on{display:flex}
+@keyframes cand-tab-in{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:none}
+}
+#candPanes.is-tab-in{animation:cand-tab-in .22s ease}
 #candPanes{position:relative;transition:opacity .16s ease}
 #candPanes.is-busy{opacity:.45;pointer-events:none}
 .cand-row{display:flex;align-items:baseline;gap:12px;padding:11px 13px;border:1px solid var(--line);
@@ -1293,7 +1296,7 @@ button.coll-item{
   100%{transform:translateX(320%)}
 }
 @media (prefers-reduced-motion:reduce){
-  #viewLive.is-ready.is-opening .cv,#candPanes,#propPanes,.cand-row,.prop-item,.cand-tab{animation:none;transition:none}
+  #viewLive.is-ready.is-opening .cv,#candPanes,#candPanes.is-tab-in,#propPanes,.cand-row,.prop-item,.cand-tab{animation:none;transition:none}
   #viewLive.is-loading #previewDetailState > .cv,
   #viewLive.is-loading #previewDetailState > .empty{opacity:1}
   .cv-progress::after{animation:none;width:100%}
@@ -2083,27 +2086,39 @@ body[data-page="proposition-review"] .content.is-full .view{padding:0}
 body[data-page="propositions"] .view-lang-refresh,
 body[data-page="proposition-review"] .view-lang-refresh{display:block;width:100%;min-height:100%}
 body[data-page="propositions"] #viewPropList,
-body[data-page="proposition-review"] #viewPropReview{
+body[data-page="proposition-review"] #viewPropReview,
+body[data-page="candidats"] #viewCandList.is-on,
+body[data-page="candidats"] #viewDraft.is-on,
+body[data-page="candidats"] #viewConceptDraft.is-on,
+body[data-page="candidats"] #viewFacetDraft.is-on{
   display:block;height:auto;min-height:100%;overflow:visible
 }
+body[data-page="candidats"] #viewDraft .fsave,
+body[data-page="candidats"] #viewConceptDraft .fsave,
+body[data-page="candidats"] #viewFacetDraft .fsave{left:60px}
 body[data-page="propositions"] .bo.bo-solo,
-body[data-page="proposition-review"] .bo.bo-solo{max-width:920px}
+body[data-page="proposition-review"] .bo.bo-solo,
+body[data-page="candidats"] .bo.bo-solo{max-width:920px}
 body[data-page="propositions"] .bo-solo > .bo-back,
-body[data-page="proposition-review"] .bo-solo > .bo-back{
+body[data-page="proposition-review"] .bo-solo > .bo-back,
+body[data-page="candidats"] .bo-solo > .bo-back{
   position:static !important;left:auto !important;top:auto !important;
   grid-row:1
 }
 body[data-page="propositions"] .bo-solo > .bo-head,
-body[data-page="proposition-review"] .bo-solo > .bo-head{
+body[data-page="proposition-review"] .bo-solo > .bo-head,
+body[data-page="candidats"] .bo-solo > .bo-head{
   grid-row:1;align-items:flex-start;justify-content:flex-start;padding-left:0;margin-bottom:20px
 }
 body[data-page="propositions"] .bo-title,
-body[data-page="proposition-review"] .bo-title{
+body[data-page="proposition-review"] .bo-title,
+body[data-page="candidats"] .bo-title{
   font-size:clamp(22px, 2.4vw, 28px);font-weight:700;letter-spacing:-.028em;line-height:1.15;
   display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap
 }
 body[data-page="propositions"] .bo-sub,
-body[data-page="proposition-review"] .bo-sub{
+body[data-page="proposition-review"] .bo-sub,
+body[data-page="candidats"] .bo-sub{
   margin:8px 0 0;font-size:14px;line-height:1.45;color:var(--ink-3);max-width:42rem
 }
 /* Le bouton retour suit le layout bo-solo (pas le fixed calé sur l'arbre). */
@@ -2923,7 +2938,6 @@ html{height:100%}
   .cand-toolbar{align-items:stretch}
   .cand-tools{margin-left:0;width:100%}
   .cand-search-wrap{flex:1 1 100%}
-  .bo-head .cand-new{margin-left:auto}
   .bo-card-h{align-items:flex-start}
   .bo-card-b,.bo-acc-b,.bo-valid,.bo-full.st-scope,.acc-roles .bo-card-b{
     overflow-x:auto;-webkit-overflow-scrolling:touch
@@ -2991,7 +3005,6 @@ html{height:100%}
   .skos-links{flex-wrap:wrap}
   .bo-title{font-size:20px}
   .bo-head{padding-left:48px;align-items:flex-start}
-  .bo-head .cand-new{width:100%;margin-left:0;justify-content:center}
   .cand-row{flex-wrap:wrap;align-items:flex-start;gap:4px 10px}
   .cand-row-t{flex:1 1 100%;white-space:normal}
   .cand-row-m,.cand-row-v{white-space:normal}
@@ -3087,4 +3100,207 @@ html{height:100%}
   .sidebar-panel.is-nav-in.is-on,
   .tn.is-branch-in.is-open > .tn-kids,
   .sidebar,.sb-scrim,.menu-pop,.confirm-modal{animation:none;transition:none}
+}
+
+body[data-page="candidats"] .bo-solo > .prop-state,
+body[data-page="candidats"] .bo-solo > .cand-form{grid-column:2;grid-row:2}
+body[data-page="candidats"] .cand-board{margin:0}
+body[data-page="candidats"] .cand-toolbar{margin:0;align-items:center}
+body[data-page="candidats"] .cand-tabs{flex:0 1 auto}
+body[data-page="candidats"] .cand-tab{
+  border:0;background:transparent;color:var(--ink-2);box-shadow:none
+}
+body[data-page="candidats"] .cand-board[data-tab="attente"] .cand-tab[data-tab="attente"],
+body[data-page="candidats"] .cand-board[data-tab="insere"] .cand-tab[data-tab="insere"],
+body[data-page="candidats"] .cand-board[data-tab="rejete"] .cand-tab[data-tab="rejete"],
+body[data-page="candidats"] .cand-tab.is-on{
+  background:var(--accent);color:#fff;border-color:transparent
+}
+body[data-page="candidats"] .cand-search-wrap{flex:1 1 220px;max-width:360px}
+body[data-page="candidats"] .cand-form .st-input.cand-search,
+body[data-page="candidats"] .cand-search{
+  width:100%;max-width:100%;height:36px;padding:7px 32px 7px 34px;border-radius:var(--r)
+}
+body[data-page="candidats"] .cand-search-go{flex:0 0 auto}
+body[data-page="candidats"] .cand-actions{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)
+}
+body[data-page="candidats"] .cand-mine-box{
+  display:flex;align-items:center;margin:0;min-height:34px
+}
+body[data-page="candidats"] .cand-mine{
+  height:34px;min-height:34px;margin:0;padding:0 12px;border-radius:var(--r);
+  font-size:12.5px;line-height:1;box-sizing:border-box
+}
+body[data-page="candidats"] .cand-actions-end{
+  margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end
+}
+body[data-page="candidats"] .cand-actions-end .bo-btn{height:34px}
+body[data-page="candidats"] .cand-decide,
+body[data-page="candidats"] .cand-reopen{
+  display:inline-flex;align-items:center;gap:8px;flex:0 0 auto
+}
+body[data-page="candidats"] .cand-reopen-btn{
+  height:34px;min-height:34px;margin:0;padding:0 12px;border-radius:var(--r);
+  line-height:1;box-sizing:border-box
+}
+body[data-page="candidats"] .cand-reopen-btn.is-off{
+  opacity:.42;pointer-events:none;cursor:not-allowed;box-shadow:none;filter:none
+}
+body[data-page="candidats"] .cand-accept,
+body[data-page="candidats"] .cand-reject{
+  height:34px;min-height:34px;margin:0;padding:0 12px;border-radius:var(--r);
+  line-height:1;box-sizing:border-box;vertical-align:middle
+}
+body[data-page="candidats"] .cand-accept.is-off,
+body[data-page="candidats"] .cand-reject.is-off{
+  opacity:.42;pointer-events:none;cursor:not-allowed;box-shadow:none;filter:none
+}
+body[data-page="candidats"] .cand-reject{
+  gap:6px;padding:0 12px 0 10px;
+  color:var(--danger);background:var(--danger-soft);
+  border-color:color-mix(in srgb, var(--danger) 42%, var(--line))
+}
+body[data-page="candidats"] .cand-reject svg{width:14px;height:14px}
+body[data-page="candidats"] .cand-reject:hover{
+  background:var(--danger);border-color:var(--danger);color:#fff
+}
+body[data-page="candidats"] .cand-line{
+  display:flex;align-items:stretch;border-bottom:1px solid var(--line-2)
+}
+body[data-page="candidats"] .cand-line:last-child{border-bottom:0}
+body[data-page="candidats"] .cand-line .prop-item{flex:1;min-width:0;border-bottom:0}
+body[data-page="candidats"] .cand-select-go{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);border:0
+}
+body[data-page="candidats"] .cand-row-check{
+  flex:0 0 46px;display:grid;place-items:center;align-self:stretch;
+  margin:0;padding:0;border:0;border-right:1px solid var(--line-2);
+  color:var(--ink-4);text-decoration:none;background:transparent;
+  font:inherit;cursor:pointer;-webkit-appearance:none;appearance:none
+}
+body[data-page="candidats"] .cand-row-check:hover{background:var(--accent-soft);color:var(--accent)}
+body[data-page="candidats"] .cand-row-check.is-on{background:var(--accent-soft)}
+body[data-page="candidats"] .cand-tick{
+  width:16px;height:16px;border:1.5px solid var(--line);border-radius:var(--r-sm);
+  display:grid;place-items:center;background:var(--surface)
+}
+body[data-page="candidats"] .cand-row-check.is-on .cand-tick{
+  background:var(--accent);border-color:var(--accent)
+}
+body[data-page="candidats"] .cand-row-check.is-on .cand-tick::after{
+  content:"";width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;
+  transform:rotate(-45deg) translate(0,-1px)
+}
+body[data-page="candidats"] .prop-item-votes{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+body[data-page="candidats"] .prop-chip.is-ok{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
+body[data-page="candidats"] .prop-chip.is-ok b{color:var(--accent)}
+body[data-page="candidats"] .prop-chip.is-no{border-color:rgba(181,52,31,.35);background:var(--danger-soft);color:var(--danger)}
+body[data-page="candidats"] .prop-chip.is-no b{color:var(--danger)}
+body[data-page="candidats"] .cand-cap{
+  padding:12px 16px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--ink-3)
+}
+@media (max-width:760px){
+  body[data-page="candidats"] .cand-actions-end{margin-left:0;width:100%}
+}
+
+body[data-page="legal"] .sidebar,
+body[data-page="legal"] .resizer,
+body[data-page="legal"] .sb-rail-btn,
+body[data-page="legal"] .view-rail,
+body[data-page="legal"] .fiche,
+body[data-page="legal"] .detail-panel{display:none !important}
+body[data-page="legal"] .panes{display:block;height:100%}
+body[data-page="legal"] .main{overflow:auto;min-width:0;flex:1;background:transparent}
+body[data-page="legal"] .content{
+  display:flex;flex-direction:column;width:100%;max-width:none;height:100%;min-width:0;overflow:auto;
+  background:transparent
+}
+body[data-page="legal"] #previewView{padding:0;background:transparent;height:auto;min-height:100%}
+body[data-page="legal"] .view-lang-refresh{display:block;width:100%;min-height:100%}
+body[data-page="legal"] .legal{max-width:820px;margin:0 auto;padding:28px 24px 80px}
+body[data-page="legal"] .legal-top{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-bottom:22px}
+body[data-page="legal"] .legal-back{
+  display:inline-flex;align-items:center;gap:6px;color:var(--ink-3);
+  font-size:13px;font-weight:550;text-decoration:none
+}
+body[data-page="legal"] .legal-back:hover{color:var(--accent)}
+body[data-page="legal"] .legal-back svg{
+  width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+body[data-page="legal"] .legal-nav{display:flex;flex-wrap:wrap;gap:8px}
+body[data-page="legal"] .legal-tab{
+  display:inline-flex;align-items:center;min-height:34px;padding:0 12px;
+  border:1px solid var(--line);border-radius:999px;background:var(--surface);
+  color:var(--ink-2);font-size:13px;text-decoration:none
+}
+body[data-page="legal"] .legal-tab:hover{border-color:var(--accent-line);color:var(--ink)}
+body[data-page="legal"] .legal-tab.is-on{
+  background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:650
+}
+body[data-page="legal"] .legal-sheet{
+  background:var(--surface);border:1px solid var(--line);border-radius:calc(var(--r) + 6px);
+  box-shadow:var(--shadow-sm);padding:28px 32px 32px
+}
+body[data-page="legal"] .legal-kicker{
+  margin:0 0 10px;font-size:11px;font-weight:650;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-4)
+}
+body[data-page="legal"] .legal-title-row{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px
+}
+body[data-page="legal"] .legal-copy{flex:1;min-width:0}
+body[data-page="legal"] .legal-title{
+  margin:0;font-size:clamp(26px, 3vw, 34px);line-height:1.15;font-weight:680;letter-spacing:-.03em;
+  white-space:normal;overflow-wrap:break-word
+}
+body[data-page="legal"] .legal-meta{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+body[data-page="legal"] .legal-chip{
+  display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);
+  font-size:12px;letter-spacing:.04em;text-transform:uppercase
+}
+body[data-page="legal"] .legal-edit{height:34px}
+body[data-page="legal"] .legal-field{display:block;margin:0 0 6px;font-size:12px;color:var(--ink-3)}
+body[data-page="legal"] .legal-name{
+  width:100%;box-sizing:border-box;margin:0;padding:4px 0 8px;border:0;
+  border-bottom:1px solid var(--line);border-radius:0;background:transparent;
+  color:var(--ink);font:inherit;font-size:clamp(22px, 2.6vw, 30px);font-weight:650;letter-spacing:-.03em
+}
+body[data-page="legal"] .legal-name:focus{outline:none;border-bottom-color:var(--accent)}
+body[data-page="legal"] .legal-lang{margin:8px 0 0;color:var(--ink-3);font-size:13px}
+body[data-page="legal"] .legal-body{
+  margin-top:22px;padding-top:18px;border-top:1px solid var(--line-2);
+  font-size:15.5px;line-height:1.7;color:var(--ink-2)
+}
+body[data-page="legal"] .legal-body h2{
+  margin:26px 0 8px;font-size:18px;line-height:1.3;font-weight:680;letter-spacing:-.02em;color:var(--ink)
+}
+body[data-page="legal"] .legal-body h3{margin:18px 0 6px;font-size:15.5px;font-weight:680;color:var(--ink)}
+body[data-page="legal"] .legal-body p{margin:0 0 12px}
+body[data-page="legal"] .legal-body a{color:var(--accent);text-underline-offset:2px}
+body[data-page="legal"] .legal-body ul,
+body[data-page="legal"] .legal-body ol{margin:0 0 14px;padding-left:1.25em}
+body[data-page="legal"] .legal-body li{margin:4px 0}
+body[data-page="legal"] .legal-body blockquote{
+  margin:14px 0;padding:10px 14px;border-left:3px solid var(--accent-line);
+  background:var(--surface-2);color:var(--ink-2)
+}
+body[data-page="legal"] .legal-empty{
+  margin:22px 0 0;padding:28px 18px;border:1px dashed var(--line);border-radius:var(--r);
+  background:var(--surface-2);text-align:center;color:var(--ink-3);font-size:14px
+}
+body[data-page="legal"] .legal-sheet .abt-composer{margin-top:20px}
+body[data-page="legal"] .legal-save-go{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0
+}
+@media (max-width:720px){
+  body[data-page="legal"] .legal{padding:20px 14px 64px}
+  body[data-page="legal"] .legal-sheet{padding:20px 16px 22px}
+  body[data-page="legal"] .legal-title-row{flex-direction:column;align-items:stretch}
+  body[data-page="legal"] .legal-copy{width:100%}
+  body[data-page="legal"] .legal-title{font-size:24px}
 }

@@ -42,6 +42,16 @@ public class CandidatProcessPersistence {
         return candidatLifecyclePersistence.rejectCandidate(candidate, adminMessage, userId);
     }
 
+    public CandidateProcessOutcome reactivateCandidate(CandidatDto candidate) {
+        if (candidate == null) {
+            return CandidateProcessOutcome.fail();
+        }
+        return candidatLifecyclePersistence.reactivateIfRejected(
+                candidate.getIdThesaurus(), candidate.getIdConcepte())
+                ? CandidateProcessOutcome.ok()
+                : CandidateProcessOutcome.fail();
+    }
+
     public void updateConceptDate(String thesaurusId, String conceptId, int userId) {
         conceptRepository.updateDateOfConcept(thesaurusId, conceptId, userId);
     }

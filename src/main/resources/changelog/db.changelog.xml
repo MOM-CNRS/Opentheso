@@ -367,4 +367,9 @@
         <sqlFile path="v26/26-11_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.04" author="Firas">
+        <comment>Editable legal footer pages per interface language</comment>
+        <sqlFile path="v26/26-11_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

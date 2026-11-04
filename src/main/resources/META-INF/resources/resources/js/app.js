@@ -144,6 +144,32 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
   go.click();
 });
+function onLegalPageSave(data) {
+  if (!data) return;
+  if (data.status === "begin" && typeof syncAboutEditor === "function") syncAboutEditor();
+  if (data.status === "success" && typeof showAboutSaveToast === "function") {
+    requestAnimationFrame(showAboutSaveToast);
+  }
+}
+
+function onCandDecisionAjax(data) {
+  if (!data || data.status !== "begin") return;
+  if (typeof hideConfirm === "function") {
+    hideConfirm("#candAcceptConfirm");
+    hideConfirm("#candRejectConfirm");
+    hideConfirm("#candReopenConfirm");
+  }
+}
+
+function syncCandExport(tab) {
+  const btn = document.getElementById("candExportBtn");
+  if (!btn) return;
+  const pane = document.querySelector('#candBoard .cand-pane[data-tab="' + tab + '"]');
+  const empty = !pane || !pane.querySelector(".cand-line");
+  btn.disabled = empty;
+  btn.classList.toggle("is-off", empty);
+}
+
 function triggerCandSearch() {
   const go = document.getElementById("candBoardForm:candSearchGo");
   if (go) go.click();
@@ -642,6 +668,8 @@ document.addEventListener("keydown", (e) => {
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
       || hideConfirm("#candReactivateConfirm") || hideConfirm("#candDeleteConfirm")
+      || hideConfirm("#candAcceptConfirm") || hideConfirm("#candRejectConfirm")
+      || hideConfirm("#candReopenConfirm")
       || hideConfirm("#fcDeleteConfirm")
       || hideConfirm("#propDecisionConfirm") || hideConfirm("#propDeleteConfirm") || hideConfirm("#propSendConfirm")
       || hideConfirm("#cptCreateConfirm") || hideConfirm("#cptLeaveConfirm")
@@ -1280,9 +1308,54 @@ document.addEventListener("click", (e) => {
     }
     syncCandSearchClear();
     triggerCandSearch();
+  } else if (act === "cand-accept-ask") {
+    e.preventDefault();
+    if (t.disabled || t.classList.contains("is-off")) return;
+    showConfirm("#candAcceptConfirm");
+  } else if (act === "cand-accept-dismiss") {
+    e.preventDefault();
+    hideConfirm("#candAcceptConfirm");
+  } else if (act === "cand-accept-modal") {
+    return;
+  } else if (act === "cand-accept-go") {
+    return;
+  } else if (act === "cand-reject-ask") {
+    e.preventDefault();
+    if (t.disabled || t.classList.contains("is-off")) return;
+    showConfirm("#candRejectConfirm");
+  } else if (act === "cand-reject-dismiss") {
+    e.preventDefault();
+    hideConfirm("#candRejectConfirm");
+  } else if (act === "cand-reject-modal") {
+    return;
+  } else if (act === "cand-reject-go") {
+    return;
+  } else if (act === "cand-reopen-ask") {
+    e.preventDefault();
+    if (t.disabled || t.classList.contains("is-off")) return;
+    showConfirm("#candReopenConfirm");
+  } else if (act === "cand-reopen-dismiss") {
+    e.preventDefault();
+    hideConfirm("#candReopenConfirm");
+  } else if (act === "cand-reopen-modal") {
+    return;
+  } else if (act === "cand-export") {
+    e.preventDefault();
+    if (t.disabled || t.classList.contains("is-off")) return;
+    const btn = document.getElementById("candBoardForm:candExportSkos");
+    if (btn) btn.click();
+  } else if (act === "cand-select") {
+    e.preventDefault();
+    const id = t.getAttribute("data-id") || "";
+    const hidden = document.getElementById("candBoardForm:candSelectId");
+    const go = document.getElementById("candBoardForm:candSelectGo");
+    if (!hidden || !go || !id) return;
+    hidden.value = id;
+    go.click();
   } else if (act === "cand-tab") {
     const board = t.closest(".cand-board") || $("#candBoard");
     const tab = t.getAttribute("data-tab") || "attente";
+    const previous = board ? board.getAttribute("data-tab") : "";
     if (board) {
       board.setAttribute("data-tab", tab);
       board.querySelectorAll(".cand-tab").forEach((btn) => {
@@ -1295,10 +1368,15 @@ document.addEventListener("click", (e) => {
     if (hidden) hidden.value = tab;
     const tools = document.getElementById("candBoardForm:candBoardTools") || document.getElementById("candBoardTools");
     if (tools) {
-      tools.querySelectorAll("[id$='candAcceptSelected'], [id$='candRejectSelected'], [id$='candBatchMsg']").forEach((el) => {
-        el.hidden = tab !== "attente";
-      });
+      const decide = tools.querySelector(".cand-decide");
+      if (decide) decide.hidden = tab !== "attente";
+      const reopen = tools.querySelector(".cand-reopen");
+      if (reopen) reopen.hidden = tab !== "rejete";
     }
+    if (previous !== tab && typeof replayAnim === "function") {
+      replayAnim(document.getElementById("candPanes"), "is-tab-in");
+    }
+    syncCandExport(tab);
   } else if (act === "bo-op") {
     setBatch(t.getAttribute("data-obj"), t.getAttribute("data-op"));
   } else if (act === "bo-acc") {
@@ -1431,6 +1509,11 @@ document.addEventListener("click", (e) => {
       const html = fold.querySelector(".abt-html");
       if (html) html.addEventListener("transitionend", () => window.syncViewRail(), { once: true });
     }
+  } else if (act === "legal-save") {
+    e.preventDefault();
+    if (typeof syncAboutEditor === "function") syncAboutEditor();
+    const btn = document.getElementById("legalPageForm:legalSave");
+    if (btn) window.setTimeout(() => btn.click(), 0);
   } else if (act === "about-fmt") {
     e.preventDefault();
     applyAboutFormat(t.getAttribute("data-cmd"), t.getAttribute("data-val"));
