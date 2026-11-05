@@ -178,7 +178,7 @@ public class CandidatBoardBean implements Serializable {
     }
 
     public boolean isCanProcess() {
-        return candidatAccessPolicy.canProcess(userSession, thesaurusViewBean.getId(), null);
+        return candidatAccessPolicy.canProcess(userSession, thesaurusViewBean.getId());
     }
 
     public boolean isCanImport() {

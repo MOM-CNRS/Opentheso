@@ -735,6 +735,10 @@ public class CandidatMutationPersistence {
     }
 
     public void generateLocalArkForConcepts(String thesaurusId, List<String> conceptIds, Preferences preferences) {
+        if (preferences == null || preferences.getSizeIdArkLocal() == null || preferences.getSizeIdArkLocal() <= 0) {
+            log.warn("ARK local ignoré pour {} : taille d'identifiant absente", thesaurusId);
+            return;
+        }
         for (String conceptId : conceptIds) {
             var concept = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId).orElse(null);
             if (concept == null || StringUtils.isNotEmpty(concept.getIdArk())) {

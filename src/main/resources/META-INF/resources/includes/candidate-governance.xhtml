@@ -6,7 +6,7 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
   <!-- Gouvernance candidat — maquette : banner + votes + discussion -->
   <ui:fragment rendered="#{candidateFicheBean.active}">
-    <div class="cand-banner#{candidateFicheBean.rejectMode ? ' is-open' : ''}">
+    <div class="cand-banner#{(candidateFicheBean.rejectMode or candidateFicheBean.acceptMode) ? ' is-open' : ''}">
       <div class="cand-banner-row">
         <span class="cand-banner-dot" aria-hidden="true"></span>
         <div class="cand-banner-main">
@@ -37,11 +37,11 @@
         </div>
         <div class="cand-banner-actions">
           <ui:fragment rendered="#{candidateFicheBean.pending and candidateFicheBean.canProcess}">
-            <h:commandLink styleClass="bo-btn primary sm#{candidateFicheBean.canValidate ? '' : ' is-off'}"
+            <h:commandLink styleClass="bo-btn primary sm#{candidateFicheBean.acceptMode ? ' is-on' : ''}#{candidateFicheBean.canValidate ? '' : ' is-off'}"
                            disabled="#{not candidateFicheBean.canValidate}"
                            title="#{candidateFicheBean.canValidate ? localeBean.getMsg('candidat.action.addToThesaurus') : localeBean.getMsg('candidat.validate.needDefinition')}"
-                           action="#{candidateFicheBean.insertCandidate}">
-              <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree"/>
+                           action="#{candidateFicheBean.toggleAcceptMode}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
               ✓ #{localeBean.getMsg('candidat.action.addToThesaurus')}
             </h:commandLink>
             <h:commandLink styleClass="bo-btn ghost danger sm#{candidateFicheBean.rejectMode ? ' is-on' : ''}"
@@ -59,6 +59,24 @@
       </div>
       <ui:fragment rendered="#{candidateFicheBean.pending and candidateFicheBean.canProcess and not candidateFicheBean.canValidate}">
         <p class="cand-banner-need">#{localeBean.getMsg('candidat.validate.needDefinition')}</p>
+      </ui:fragment>
+      <ui:fragment rendered="#{candidateFicheBean.acceptMode}">
+        <div class="cand-banner-accept">
+          <h:inputTextarea styleClass="disc-input"
+                           value="#{candidateFicheBean.acceptMessage}"
+                           pt:placeholder="#{localeBean.getMsg('candidat.insert.placeholder')}"/>
+          <div class="cand-decide-actions">
+            <h:commandLink styleClass="bo-btn primary sm"
+                           action="#{candidateFicheBean.insertCandidate}">
+              #{localeBean.getMsg('candidat.insert.confirm')}
+            </h:commandLink>
+            <h:commandLink styleClass="bo-btn ghost sm"
+                           action="#{candidateFicheBean.cancelAccept}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              #{localeBean.getMsg('cancel')}
+            </h:commandLink>
+          </div>
+        </div>
       </ui:fragment>
       <ui:fragment rendered="#{candidateFicheBean.rejectMode}">
         <div class="cand-banner-reject">

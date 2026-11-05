@@ -175,9 +175,6 @@ public class CandidatApiController {
         CandidatDto candidat = candidatReadService.findByConceptId(
                         thesaurusId, conceptId, resolvedLang, userId)
                 .orElseThrow(() -> new CandidateNotFoundException(conceptId));
-        if (candidat.getCreatedById() > 0 && candidat.getCreatedById() == userId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot process own candidate");
-        }
 
         String adminMessage = StringUtils.defaultString(request.message());
         String username = resolveUsername(userId);

@@ -161,7 +161,7 @@ class CandidatBoardBeanTest {
 
     @Test
     void reopenSelected_putsRejectedCandidatesBackInProgress() {
-        when(candidatAccessPolicy.canProcess(eq(userSession), eq("TH1"), isNull())).thenReturn(true);
+        when(candidatAccessPolicy.canProcess(eq(userSession), eq("TH1"))).thenReturn(true);
         CandidatDto rejected = candidat("c3", "Fibule", "Ada", 0, 4);
         when(candidatReadService.loadByStatus("TH1", "fr", CandidatStatusCode.REJECTED))
                 .thenReturn(List.of(rejected));

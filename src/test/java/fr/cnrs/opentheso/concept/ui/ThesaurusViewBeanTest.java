@@ -960,6 +960,63 @@ class ThesaurusViewBeanTest {
         );
     }
 
+    @Test
+    void markTreeNodeInserted_updatesLoadedCandidateWithoutCollapsingParent() {
+        ThesaurusTreeNode parent = new ThesaurusTreeNode();
+        parent.setId("parent");
+        parent.setNodeType("concept");
+        parent.setStatus("valide");
+        parent.setExpanded(true);
+        parent.setChildrenLoaded(true);
+        parent.setHasChildren(true);
+        parent.setPath("Parent");
+
+        ThesaurusTreeNode candidate = new ThesaurusTreeNode();
+        candidate.setId("c1");
+        candidate.setNodeType("candidat");
+        candidate.setStatus("candidat");
+        candidate.setCandidateBy("Ada");
+        candidate.setCandidateOn("2026-01-01");
+        candidate.setHasChildren(false);
+        candidate.setPath("Parent/Candidat");
+        parent.getChildren().add(candidate);
+
+        ReflectionTestUtils.setField(bean, "treeRoots", new java.util.ArrayList<>(List.of(parent)));
+
+        bean.markTreeNodeInserted("c1");
+
+        assertEquals("insere", candidate.getStatus());
+        assertEquals("file", candidate.getNodeType());
+        assertEquals("", candidate.getCandidateBy());
+        assertFalse(candidate.isCandidate());
+        assertTrue(parent.isExpanded());
+    }
+
+    @Test
+    void markTreeNodeInserted_reloadsTreeWhenNodeIsNotLoaded() {
+        ThesaurusTreeNode other = new ThesaurusTreeNode();
+        other.setId("other");
+        other.setStatus("valide");
+        ReflectionTestUtils.setField(bean, "treeRoots", new java.util.ArrayList<>(List.of(other)));
+
+        bean.markTreeNodeInserted("missing");
+
+        assertNull(ReflectionTestUtils.getField(bean, "treeRoots"));
+    }
+
+    @Test
+    void markSelectedAsConcept_leavesCandidateMode() {
+        ReflectionTestUtils.setField(bean, "selectedConcept", conceptDetail("c1", "Lieux", "CA"));
+        ReflectionTestUtils.setField(bean, "selectedKind", "candidat");
+        ReflectionTestUtils.setField(bean, "candidateRejected", true);
+
+        bean.markSelectedAsConcept();
+
+        assertTrue(bean.isConceptSelected());
+        assertFalse(bean.isCandidateSelected());
+        assertFalse(bean.isRejectedSelected());
+    }
+
     private static ConceptDetail conceptDetailWithNotes(ConceptNote... notes) {
         return new ConceptDetail(
                 new ConceptSummary("c1", "th17", "Lieux", "fr", "C", "", "concept", "", "", "", ""),

@@ -686,6 +686,16 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
+    void generateLocalArkForConcepts_skipsWhenLocalArkSizeIsMissing() {
+        var preferences = Preferences.builder().useArkLocal(true).build();
+
+        persistence.generateLocalArkForConcepts("TH1", List.of("C1"), preferences);
+
+        verify(conceptRepository, never()).findByIdConceptAndIdThesaurus(any(), any());
+        verify(conceptRepository, never()).setIdArk(any(), any(), any(), any());
+    }
+
+    @Test
     void generateLocalArkForConcepts_skipsConceptsThatAlreadyHaveAnArk() {
         var preferences = Preferences.builder()
                 .sizeIdArkLocal(8).uppercaseForArk(false).naanArkLocal("naan").prefixArkLocal("pfx").build();

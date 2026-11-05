@@ -65,14 +65,13 @@ class CandidatAccessPolicyTest {
     }
 
     @Test
-    void canProcess_blocksCreatorAndRequiresAdmin() {
+    void canProcess_allowsAdminOnOwnCandidate() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(rightsService.can(7, Permission.SUPER_ADMIN)).thenReturn(false);
         when(rightsService.canOnThesaurus(7, Permission.MANAGE_THESAURUS, "TH1")).thenReturn(true);
 
-        assertFalse(policy.canProcess(userSession, "TH1", 7));
-        assertTrue(policy.canProcess(userSession, "TH1", 3));
+        assertTrue(policy.canProcess(userSession, "TH1"));
         assertTrue(policy.canReactivate(userSession, "TH1"));
         assertTrue(policy.canDelete(userSession, "TH1"));
         assertTrue(policy.canImport(userSession, "TH1"));

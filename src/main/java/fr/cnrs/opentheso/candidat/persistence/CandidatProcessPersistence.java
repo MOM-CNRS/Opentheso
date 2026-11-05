@@ -82,20 +82,32 @@ public class CandidatProcessPersistence {
         }
 
         if (preferences.isUseHandle()) {
-            for (String conceptId : conceptIds) {
-                if (!conceptHandleWriteService.assignHandleOnCreation(conceptId, thesaurusId)) {
-                    log.error("La création Handle a échoué pour {}", conceptId);
+            try {
+                for (String conceptId : conceptIds) {
+                    if (!conceptHandleWriteService.assignHandleOnCreation(conceptId, thesaurusId)) {
+                        log.error("La création Handle a échoué pour {}", conceptId);
+                    }
                 }
+            } catch (RuntimeException ex) {
+                log.error("La création Handle a échoué pour le lot ({} concepts)", conceptIds.size(), ex);
             }
         }
         if (preferences.isUseArk()) {
-            var result = conceptArkWriteService.generateArkIds(thesaurusId, conceptIds, lang);
-            if (result != null && !result.isEmpty()) {
-                log.error("La création Ark a échoué pour le lot ({} concepts)", conceptIds.size());
+            try {
+                var result = conceptArkWriteService.generateArkIds(thesaurusId, conceptIds, lang);
+                if (result != null && !result.isEmpty()) {
+                    log.error("La création Ark a échoué pour le lot ({} concepts)", conceptIds.size());
+                }
+            } catch (RuntimeException ex) {
+                log.error("La création Ark a échoué pour le lot ({} concepts)", conceptIds.size(), ex);
             }
         }
         if (preferences.isUseArkLocal()) {
-            candidatMutationPersistence.generateLocalArkForConcepts(thesaurusId, conceptIds, preferences);
+            try {
+                candidatMutationPersistence.generateLocalArkForConcepts(thesaurusId, conceptIds, preferences);
+            } catch (RuntimeException ex) {
+                log.error("La création de l'ARK local a échoué pour le lot ({} concepts)", conceptIds.size(), ex);
+            }
         }
     }
 

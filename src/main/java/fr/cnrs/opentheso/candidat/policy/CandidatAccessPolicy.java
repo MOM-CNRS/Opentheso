@@ -62,20 +62,11 @@ public class CandidatAccessPolicy {
     }
 
     /**
-     * Traitement (insérer / rejeter) : admin thésaurus ou super-admin, pas le proposant.
+     * Traitement (insérer / rejeter) : admin du thésaurus ou super-admin,
+     * y compris pour ses propres candidats.
      */
-    public boolean canProcess(UserSession userSession, String thesaurusId, Integer candidateCreatorId) {
-        if (!isThesaurusAdmin(userSession, thesaurusId)) {
-            return false;
-        }
-        Integer currentUserId = userSession != null ? userSession.getCurrentUserId() : null;
-        if (currentUserId == null) {
-            return false;
-        }
-        if (candidateCreatorId != null && candidateCreatorId > 0 && candidateCreatorId.equals(currentUserId)) {
-            return false;
-        }
-        return true;
+    public boolean canProcess(UserSession userSession, String thesaurusId) {
+        return isThesaurusAdmin(userSession, thesaurusId);
     }
 
     public boolean canReactivate(UserSession userSession, String thesaurusId) {

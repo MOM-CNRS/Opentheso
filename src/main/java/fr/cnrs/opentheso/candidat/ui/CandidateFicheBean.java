@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.candidat.service.CandidatExportService;
 import fr.cnrs.opentheso.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.candidat.service.CandidatProcessService;
 import fr.cnrs.opentheso.candidat.service.CandidatReadService;
+import fr.cnrs.opentheso.config.JsfPrettyUrlFilter;
 import fr.cnrs.opentheso.concept.model.ConceptTreeNodeKinds;
 import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
@@ -67,6 +68,11 @@ public class CandidateFicheBean implements Serializable {
     @Getter
     private boolean rejectMode;
     @Getter
+    @Setter
+    private String acceptMessage = "";
+    @Getter
+    private boolean acceptMode;
+    @Getter
     private Boolean canProcess;
     @Getter
     private boolean actionsOpen;
@@ -103,9 +109,7 @@ public class CandidateFicheBean implements Serializable {
         if (canProcess != null) {
             return canProcess;
         }
-        Integer creatorId = candidat == null ? null : candidat.getCreatedById();
-        canProcess = candidatAccessPolicy.canProcess(
-                userSession, thesaurusViewBean.getId(), creatorId);
+        canProcess = candidatAccessPolicy.canProcess(userSession, thesaurusViewBean.getId());
         return canProcess;
     }
 
@@ -234,8 +238,30 @@ public class CandidateFicheBean implements Serializable {
         actionsOpen = !actionsOpen;
     }
 
+    public void toggleAcceptMode() {
+        if (!isCanValidate()) {
+            return;
+        }
+        acceptMode = !acceptMode;
+        if (acceptMode) {
+            rejectMode = false;
+            rejectReason = "";
+        } else {
+            acceptMessage = "";
+        }
+    }
+
+    public void cancelAccept() {
+        acceptMode = false;
+        acceptMessage = "";
+    }
+
     public void toggleRejectMode() {
         rejectMode = !rejectMode;
+        if (rejectMode) {
+            acceptMode = false;
+            acceptMessage = "";
+        }
         if (!rejectMode) {
             rejectReason = "";
         }
@@ -347,11 +373,11 @@ public class CandidateFicheBean implements Serializable {
             MessageUtils.showWarnMessage(localeBean.getMsg("candidat.validate.needDefinition"));
             return;
         }
-        if (candidatProcessService.insertCandidate(candidat, rejectReason, userId).isFailure()) {
+        if (candidatProcessService.insertCandidate(candidat, acceptMessage, userId).isFailure()) {
             MessageUtils.showErrorMessage(localeBean.getMsg("candidat.insertError"));
             return;
         }
-        notifyCreatorAccepted(candidat, rejectReason);
+        notifyCreatorAccepted(candidat, acceptMessage);
         int uid = userId;
         String username = userSession.getCurrentUsername();
         CandidatDto accepted = candidat;
@@ -359,9 +385,10 @@ public class CandidateFicheBean implements Serializable {
                 .ifPresent(preferences -> candidatProcessService.afterCandidateAccepted(
                         accepted, uid, username, preferences));
         String conceptId = candidat.getIdConcepte();
+        String thesaurusId = StringUtils.defaultIfBlank(candidat.getIdThesaurus(), thesaurusViewBean.getId());
         clear();
-        thesaurusViewBean.openTreeNode(conceptId, ConceptTreeNodeKinds.CONCEPT);
         MessageUtils.showInformationMessage(localeBean.getMsg("candidat.insertOk"));
+        redirectToAcceptedConcept(thesaurusId, conceptId);
     }
 
     public void confirmReject() {
@@ -382,6 +409,7 @@ public class CandidateFicheBean implements Serializable {
                 candidat, userId, userSession.getCurrentUsername());
         String conceptId = candidat.getIdConcepte();
         clear();
+        thesaurusViewBean.markTreeNodeRejected(conceptId);
         thesaurusViewBean.openTreeNode(conceptId, ConceptTreeNodeKinds.REJETE);
         MessageUtils.showInformationMessage(localeBean.getMsg("candidat.rejectOk"));
     }
@@ -546,6 +574,8 @@ public class CandidateFicheBean implements Serializable {
         loadedConceptId = conceptId;
         rejectMode = false;
         rejectReason = "";
+        acceptMode = false;
+        acceptMessage = "";
         message = "";
         canProcess = null;
         actionsOpen = false;
@@ -556,9 +586,35 @@ public class CandidateFicheBean implements Serializable {
         loadedConceptId = null;
         rejectMode = false;
         rejectReason = "";
+        acceptMode = false;
+        acceptMessage = "";
         message = "";
         canProcess = null;
         actionsOpen = false;
+    }
+
+    /**
+     * Recharge la consultation du concept accepté. La réponse ajax partielle
+     * laisse la fiche candidat à l'écran alors que l'enregistrement a réussi.
+     */
+    private void redirectToAcceptedConcept(String thesaurusId, String conceptId) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null || StringUtils.isBlank(conceptId)) {
+            return;
+        }
+        try {
+            faces.getExternalContext().getFlash().setKeepMessages(true);
+            String ctx = faces.getExternalContext().getRequestContextPath();
+            String path = JsfPrettyUrlFilter.conceptBrowserPath(thesaurusId, conceptId);
+            if (StringUtils.isBlank(path)) {
+                path = "/thesaurus/consultation.xhtml?id=" + conceptId;
+            }
+            faces.getExternalContext().redirect(ctx + path);
+        } catch (Exception ignored) {
+            thesaurusViewBean.markTreeNodeInserted(conceptId);
+            thesaurusViewBean.openTreeNode(conceptId, ConceptTreeNodeKinds.CONCEPT);
+            thesaurusViewBean.markSelectedAsConcept();
+        }
     }
 
     private void publishFlash(String msg) {

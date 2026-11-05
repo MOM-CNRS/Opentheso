@@ -956,6 +956,70 @@ public class ThesaurusViewBean implements Serializable {
         }
     }
 
+    /**
+     * Après acceptation : la fiche ouverte est un concept, même si la lecture
+     * du statut renvoie encore {@code CA} dans la même requête.
+     */
+    public void markSelectedAsConcept() {
+        candidateRejected = false;
+        candidateBy = "";
+        candidateOn = "";
+        if (selectedConcept != null) {
+            selectedKind = ConceptTreeNodeKinds.CONCEPT;
+        }
+    }
+
+    /**
+     * Le nœud déjà chargé passe en « inséré » sans reconstruire l'arbre
+     * (l'arbre de la vue reste en cache tant que la page n'est pas rechargée).
+     * S'il n'est pas dans les nœuds chargés, l'arbre est invalidé pour le prochain rendu.
+     */
+    public void markTreeNodeInserted(String conceptId) {
+        ThesaurusTreeNode node = loadedTreeNode(conceptId);
+        if (node == null) {
+            invalidateTree();
+            return;
+        }
+        node.setNodeType(node.isHasChildren() ? "concept" : "file");
+        node.setStatus("insere");
+        node.setCandidateBy("");
+        node.setCandidateOn("");
+    }
+
+    /** Même mise à jour immédiate pour un candidat refusé depuis la fiche. */
+    public void markTreeNodeRejected(String conceptId) {
+        ThesaurusTreeNode node = loadedTreeNode(conceptId);
+        if (node == null) {
+            invalidateTree();
+            return;
+        }
+        node.setNodeType(ConceptTreeNodeKinds.REJETE);
+        node.setStatus(ConceptTreeNodeKinds.REJETE);
+    }
+
+    private ThesaurusTreeNode loadedTreeNode(String conceptId) {
+        if (StringUtils.isBlank(conceptId) || treeRoots == null) {
+            return null;
+        }
+        return findLoadedTreeNode(treeRoots, conceptId);
+    }
+
+    private ThesaurusTreeNode findLoadedTreeNode(List<ThesaurusTreeNode> nodes, String conceptId) {
+        if (nodes == null) {
+            return null;
+        }
+        for (ThesaurusTreeNode node : nodes) {
+            if (conceptId.equalsIgnoreCase(node.getId())) {
+                return node;
+            }
+            ThesaurusTreeNode found = findLoadedTreeNode(node.getChildren(), conceptId);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
     public boolean isFacetSelected() {
         return ConceptTreeNodeKinds.FACET.equals(selectedKind) && selectedFacet != null;
     }
