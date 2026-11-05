@@ -186,6 +186,96 @@ function bindLabelFacetPicker() {
   loadLabelFacetItems();
 }
 
+function termTagHidden(root) {
+  return root && root.querySelector("input[type='hidden']");
+}
+
+function termTagValues(root) {
+  const hidden = termTagHidden(root);
+  if (!hidden || !hidden.value) return [];
+  try {
+    const parsed = JSON.parse(hidden.value);
+    if (!Array.isArray(parsed)) return [];
+    const seen = {};
+    const values = [];
+    parsed.forEach((item) => {
+      const value = String(item == null ? "" : item).trim();
+      if (!value || seen[value]) return;
+      seen[value] = true;
+      values.push(value);
+    });
+    return values;
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeTermTags(root, values) {
+  if (!root) return;
+  const hidden = termTagHidden(root);
+  if (hidden) hidden.value = JSON.stringify(values);
+  const chips = root.querySelector(".term-tags-chips");
+  if (!chips) return;
+  const hiddenKind = root.getAttribute("data-kind") === "hidden";
+  chips.innerHTML = values.map((value, index) => {
+    return '<span class="term-chip' + (hiddenKind ? " is-hidden" : "") + '">'
+      + escapeHtml(value)
+      + '<button type="button" data-act="term-tag-remove" data-index="' + index
+      + '" title="Retirer" aria-label="Retirer">×</button></span>';
+  }).join("");
+}
+
+function addTermTag(root, raw) {
+  const value = String(raw || "").trim();
+  if (!root || !value) return false;
+  const values = termTagValues(root);
+  if (values.indexOf(value) >= 0) return false;
+  values.push(value);
+  writeTermTags(root, values);
+  return true;
+}
+
+function removeTermTag(root, index) {
+  const values = termTagValues(root);
+  const at = parseInt(index, 10);
+  if (!root || !Number.isFinite(at) || at < 0 || at >= values.length) return;
+  values.splice(at, 1);
+  writeTermTags(root, values);
+}
+
+function bindTermTags() {
+  document.querySelectorAll(".term-tags").forEach((root) => writeTermTags(root, termTagValues(root)));
+}
+
+function flushTermTagInputs() {
+  document.querySelectorAll(".term-tags").forEach((root) => {
+    const input = root.querySelector(".term-tags-add input");
+    if (!input || !input.value.trim()) return;
+    addTermTag(root, input.value);
+    input.value = "";
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  const input = e.target && e.target.closest && e.target.closest(".term-tags-add input");
+  if (!input) return;
+  if (e.key === "Enter") {
+    e.preventDefault();
+    e.stopPropagation();
+    addTermTag(input.closest(".term-tags"), input.value);
+    input.value = "";
+  } else if (e.key === "Backspace" && !input.value) {
+    const root = input.closest(".term-tags");
+    const values = termTagValues(root);
+    if (!values.length) return;
+    e.preventDefault();
+    removeTermTag(root, String(values.length - 1));
+  }
+}, true);
+document.addEventListener("submit", (e) => {
+  if (e.target && e.target.id === "previewDetailForm") flushTermTagInputs();
+}, true);
+
 function highlightLabelFacetQuery(query) {
   $$("#labelFacetMenu mark.hl").forEach((mark) => {
     const parent = mark.parentNode;
@@ -2236,6 +2326,7 @@ function applyConceptLabelUi(source) {
     closeAllRelPickers();
     closeCrelPicker();
     bindLabelFacetPicker();
+    bindTermTags();
   } else if (card === "collections") {
     closeLabelFacetPicker();
     closeAllRelPickers();
@@ -7692,6 +7783,22 @@ document.addEventListener("click", (e) => {
   if (action === "gps-lightbox-dismiss" || action === "gps-lightbox-close") {
     e.preventDefault();
     closeGpsLightbox();
+    return;
+  }
+  if (action === "term-tag-add") {
+    e.preventDefault();
+    const root = act.closest(".term-tags");
+    const input = root && root.querySelector(".term-tags-add input");
+    if (input) {
+      addTermTag(root, input.value);
+      input.value = "";
+      input.focus();
+    }
+    return;
+  }
+  if (action === "term-tag-remove") {
+    e.preventDefault();
+    removeTermTag(act.closest(".term-tags"), act.getAttribute("data-index"));
     return;
   }
   if (action === "facet-pick-toggle") {

@@ -144,19 +144,41 @@
           <div class="crow cblock-edit-row">
             <div class="crow-lbl">Formes alternatives</div>
             <div class="crow-val">
-              <h:inputText id="labelAltsInput" styleClass="st-input"
-                           value="#{conceptLabelBlockEditorBean.altLabels}"
-                           pt:autocomplete="off"
-                           pt:placeholder="séparées par des virgules"/>
+              <div class="term-tags" data-kind="alts">
+                <div class="term-tags-chips">
+                  <ui:repeat value="#{conceptLabelBlockEditorBean.altLabels}" var="label" varStatus="st">
+                    <span class="term-chip">#{label}<button type="button" data-act="term-tag-remove" data-index="#{st.index}" title="Retirer" aria-label="Retirer">×</button></span>
+                  </ui:repeat>
+                </div>
+                <div class="term-tags-add">
+                  <input type="text" class="st-input" autocomplete="off"
+                         placeholder="Ajouter une forme, puis Entrée"
+                         aria-label="Nouvelle forme alternative"/>
+                  <button type="button" class="bo-btn ghost sm" data-act="term-tag-add">Ajouter</button>
+                </div>
+                <h:inputHidden id="labelAltsJson" styleClass="term-tags-value"
+                               value="#{conceptLabelBlockEditorBean.altLabelsJson}"/>
+              </div>
             </div>
           </div>
           <div class="crow cblock-edit-row">
             <div class="crow-lbl">Formes cachées</div>
             <div class="crow-val">
-              <h:inputText id="labelHiddenInput" styleClass="st-input"
-                           value="#{conceptLabelBlockEditorBean.hiddenLabels}"
-                           pt:autocomplete="off"
-                           pt:placeholder="séparées par des virgules"/>
+              <div class="term-tags" data-kind="hidden">
+                <div class="term-tags-chips">
+                  <ui:repeat value="#{conceptLabelBlockEditorBean.hiddenLabels}" var="label" varStatus="st">
+                    <span class="term-chip is-hidden">#{label}<button type="button" data-act="term-tag-remove" data-index="#{st.index}" title="Retirer" aria-label="Retirer">×</button></span>
+                  </ui:repeat>
+                </div>
+                <div class="term-tags-add">
+                  <input type="text" class="st-input" autocomplete="off"
+                         placeholder="Ajouter une forme, puis Entrée"
+                         aria-label="Nouvelle forme cachée"/>
+                  <button type="button" class="bo-btn ghost sm" data-act="term-tag-add">Ajouter</button>
+                </div>
+                <h:inputHidden id="labelHiddenJson" styleClass="term-tags-value"
+                               value="#{conceptLabelBlockEditorBean.hiddenLabelsJson}"/>
+              </div>
             </div>
           </div>
           <div class="crow cblock-edit-row">
@@ -264,9 +286,13 @@
             <div class="crow-lbl">Formes alternatives</div>
             <div class="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.synonyms}"><span class="muted">—</span></ui:fragment>
-              <ui:repeat value="#{thesaurusViewBean.selectedConcept.synonyms}" var="syn" varStatus="st">
-                <h:outputText value="#{syn}"/><h:outputText value=", " rendered="#{not st.last}"/>
-              </ui:repeat>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.synonyms}">
+                <span class="term-tags-chips">
+                  <ui:repeat value="#{thesaurusViewBean.selectedConcept.synonyms}" var="syn">
+                    <span class="term-chip">#{syn}</span>
+                  </ui:repeat>
+                </span>
+              </ui:fragment>
             </div>
           </div>
           <div class="crow">
@@ -274,11 +300,11 @@
             <div class="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.hiddenSynonyms}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.hiddenSynonyms}">
-              <span class="alts-hidden">
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.hiddenSynonyms}" var="hid" varStatus="st">
-                  <h:outputText value="#{hid}"/><h:outputText value=", " rendered="#{not st.last}"/>
-                </ui:repeat>
-              </span>
+                <span class="term-tags-chips">
+                  <ui:repeat value="#{thesaurusViewBean.selectedConcept.hiddenSynonyms}" var="hid">
+                    <span class="term-chip is-hidden">#{hid}</span>
+                  </ui:repeat>
+                </span>
               </ui:fragment>
             </div>
           </div>

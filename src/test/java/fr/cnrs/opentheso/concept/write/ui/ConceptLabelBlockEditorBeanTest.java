@@ -88,6 +88,27 @@ class ConceptLabelBlockEditorBeanTest {
     }
 
     @Test
+    void labelsJson_keepsCommaInsideOneForm() {
+        assertEquals("[\"variante, de test\"]", ConceptLabelBlockEditorBean.toLabelsJson(List.of("variante, de test")));
+        assertEquals(List.of("variante, de test"), ConceptLabelBlockEditorBean.parseLabelsJson("[\"variante, de test\"]").orElseThrow());
+    }
+
+    @Test
+    void save_keepsCommaInsideOneAlternativeForm() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of(), List.of()));
+        when(conceptLexicalMutationService.addSynonym(any())).thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setAltLabelsJson("[\"variante, de test\"]");
+
+        bean.save();
+
+        ArgumentCaptor<AddSynonymCommand> added = ArgumentCaptor.forClass(AddSynonymCommand.class);
+        verify(conceptLexicalMutationService).addSynonym(added.capture());
+        assertEquals("variante, de test", added.getValue().value());
+        assertFalse(added.getValue().hidden());
+    }
+
+    @Test
     void parseCsv_trimsSkipsBlanksAndKeepsOrder() {
         assertEquals(List.of("a", "b"), ConceptLabelBlockEditorBean.parseCsv(" a, , b ,"));
         assertEquals(List.of(), ConceptLabelBlockEditorBean.parseCsv("  "));
@@ -104,8 +125,9 @@ class ConceptLabelBlockEditorBeanTest {
 
         assertTrue(bean.isEditing());
         assertEquals("Bronze", bean.getPreferredLabel());
-        assertEquals("cuivre", bean.getAltLabels());
-        assertEquals("bronz", bean.getHiddenLabels());
+        assertEquals(List.of("cuivre"), bean.getAltLabels());
+        assertEquals("[\"cuivre\"]", bean.getAltLabelsJson());
+        assertEquals(List.of("bronz"), bean.getHiddenLabels());
         assertEquals(1, bean.getSelectedFacets().size());
         assertEquals("F1", bean.getSelectedFacets().get(0).getId());
         assertEquals("[{\"id\":\"F1\",\"label\":\"Matériaux\"}]", bean.getSelectedFacetsJson());
@@ -139,8 +161,8 @@ class ConceptLabelBlockEditorBeanTest {
         when(conceptLexicalMutationService.deleteSynonym(any())).thenReturn(MutationResult.ok("ok"));
         when(conceptLexicalMutationService.addSynonym(any())).thenReturn(MutationResult.ok("ok"));
         bean.startEditing();
-        bean.setAltLabels("new-a, new-b");
-        bean.setHiddenLabels("");
+        bean.setAltLabelsJson("[\"new-a\",\"new-b\"]");
+        bean.setHiddenLabelsJson("[]");
 
         bean.save();
 
@@ -163,8 +185,8 @@ class ConceptLabelBlockEditorBeanTest {
         when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of("cuivre"), List.of()));
         when(conceptLexicalMutationService.updateSynonym(any())).thenReturn(MutationResult.ok("ok"));
         bean.startEditing();
-        bean.setAltLabels("");
-        bean.setHiddenLabels("cuivre");
+        bean.setAltLabelsJson("[]");
+        bean.setHiddenLabelsJson("[\"cuivre\"]");
 
         bean.save();
 
@@ -204,8 +226,8 @@ class ConceptLabelBlockEditorBeanTest {
     void save_rejectsOverlapBetweenAltAndHidden() {
         when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of(), List.of()));
         bean.startEditing();
-        bean.setAltLabels("cuivre");
-        bean.setHiddenLabels("cuivre");
+        bean.setAltLabelsJson("[\"cuivre\"]");
+        bean.setHiddenLabelsJson("[\"cuivre\"]");
 
         bean.save();
 

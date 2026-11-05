@@ -63,8 +63,8 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     private String editingConceptId;
     private String editingLang;
     private String preferredLabel;
-    private String altLabels;
-    private String hiddenLabels;
+    private List<String> altLabels = new ArrayList<>();
+    private List<String> hiddenLabels = new ArrayList<>();
     private List<FacetEditRow> selectedFacets = new ArrayList<>();
     private boolean duplicateWarning;
     private String errorMessage;
@@ -95,8 +95,8 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         editingConceptId = detail.getSummary().getConceptId();
         editingLang = resolveLang(detail);
         preferredLabel = StringUtils.defaultString(detail.getSummary().getPreferredLabel());
-        altLabels = joinCsv(detail.getSynonyms());
-        hiddenLabels = joinCsv(detail.getHiddenSynonyms());
+        altLabels = copyLabels(detail.getSynonyms());
+        hiddenLabels = copyLabels(detail.getHiddenSynonyms());
         selectedFacets = copyFacets(detail.getFacets());
         duplicateWarning = false;
         errorMessage = "";
@@ -109,6 +109,22 @@ public class ConceptLabelBlockEditorBean implements Serializable {
 
     public void cancel() {
         resetForm(false);
+    }
+
+    public String getAltLabelsJson() {
+        return toLabelsJson(altLabels);
+    }
+
+    public void setAltLabelsJson(String json) {
+        parseLabelsJson(json).ifPresent(parsed -> altLabels = new ArrayList<>(parsed));
+    }
+
+    public String getHiddenLabelsJson() {
+        return toLabelsJson(hiddenLabels);
+    }
+
+    public void setHiddenLabelsJson(String json) {
+        parseLabelsJson(json).ifPresent(parsed -> hiddenLabels = new ArrayList<>(parsed));
     }
 
     public String getSelectedFacetsJson() {
@@ -153,7 +169,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
             errorMessage = "Le libellé est obligatoire.";
             return false;
         }
-        if (hasOverlap(parseCsv(altLabels), parseCsv(hiddenLabels))) {
+        if (hasOverlap(orEmpty(altLabels), orEmpty(hiddenLabels))) {
             errorMessage = "Une forme ne peut pas être à la fois alternative et cachée.";
             return false;
         }
@@ -209,8 +225,8 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         SynonymSets sets = SynonymSets.from(
                 orEmpty(current.getSynonyms()),
                 orEmpty(current.getHiddenSynonyms()),
-                parseCsv(altLabels),
-                parseCsv(hiddenLabels));
+                orEmpty(altLabels),
+                orEmpty(hiddenLabels));
         DirtyUpdate next = deleteRemovedSynonyms(ctx, sets, dirty);
         if (!next.ok) {
             return DirtyUpdate.fail();
@@ -448,8 +464,8 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         editingConceptId = null;
         editingLang = null;
         preferredLabel = "";
-        altLabels = "";
-        hiddenLabels = "";
+        altLabels = new ArrayList<>();
+        hiddenLabels = new ArrayList<>();
         selectedFacets = new ArrayList<>();
         duplicateWarning = false;
         errorMessage = "";
@@ -481,6 +497,54 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     }
 
     private static final ObjectMapper FACET_JSON = new ObjectMapper();
+
+    static String toLabelsJson(List<String> values) {
+        List<String> cleaned = orEmpty(values);
+        if (cleaned.isEmpty()) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < cleaned.size(); i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb.append(jsonQuote(cleaned.get(i)));
+        }
+        return sb.append(']').toString();
+    }
+
+    static Optional<List<String>> parseLabelsJson(String raw) {
+        if (raw == null) {
+            return Optional.empty();
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return Optional.of(List.of());
+        }
+        try {
+            JsonNode root = FACET_JSON.readTree(trimmed);
+            if (!root.isArray()) {
+                return Optional.empty();
+            }
+            LinkedHashSet<String> values = new LinkedHashSet<>();
+            for (JsonNode node : root) {
+                if (node == null || !node.isTextual()) {
+                    continue;
+                }
+                String value = StringUtils.trimToEmpty(node.asText());
+                if (!value.isEmpty()) {
+                    values.add(value);
+                }
+            }
+            return Optional.of(List.copyOf(values));
+        } catch (Exception ignored) {
+            return Optional.empty();
+        }
+    }
+
+    private static List<String> copyLabels(List<String> values) {
+        return new ArrayList<>(orEmpty(values));
+    }
 
     static String toFacetsJson(List<FacetEditRow> rows) {
         if (rows == null || rows.isEmpty()) {

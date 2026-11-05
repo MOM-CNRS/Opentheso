@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,6 +28,12 @@ public class SsoTokenFilter implements Filter {
 
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
+        // Ce filtre est le premier et lit les paramètres. Sans encodage préalable,
+        // le conteneur fige le corps du formulaire en ISO-8859-1 : le libellé
+        // et le titre d'un concept perdent leurs caractères UTF-8.
+        if (!StandardCharsets.UTF_8.name().equalsIgnoreCase(request.getCharacterEncoding())) {
+            request.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        }
 
         String ssoToken = firstText(
                 request.getParameter("ssoToken"),

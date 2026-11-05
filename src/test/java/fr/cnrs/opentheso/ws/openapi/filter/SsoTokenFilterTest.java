@@ -3,14 +3,20 @@ package fr.cnrs.opentheso.ws.openapi.filter;
 import fr.cnrs.opentheso.shared.auth.SsoTokenService;
 import fr.cnrs.opentheso.shared.session.SessionAuthenticatedUserSource;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -53,6 +59,26 @@ class SsoTokenFilterTest {
 
         assertNull(request.getSession(false));
         assertEquals("/index.xhtml?ssoError=true", response.getRedirectedUrl());
+    }
+
+    @Test
+    void formFieldsAreReadAsUtf8() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        AtomicBoolean utf8 = new AtomicBoolean();
+        when(request.getCharacterEncoding()).thenAnswer(invocation -> utf8.get() ? StandardCharsets.UTF_8.name() : null);
+        doAnswer(invocation -> {
+            utf8.set(StandardCharsets.UTF_8.name().equals(invocation.getArgument(0)));
+            return null;
+        }).when(request).setCharacterEncoding(anyString());
+        when(request.getParameter(anyString())).thenAnswer(invocation -> {
+            if (!utf8.get()) {
+                throw new AssertionError("paramètres lus avant l'encodage UTF-8");
+            }
+            return null;
+        });
+        when(request.getRequestURI()).thenReturn("/index.xhtml");
+
+        filter.doFilter(request, new MockHttpServletResponse(), mock(FilterChain.class));
     }
 
     private static MockHttpServletRequest conceptRequest(String path) {
