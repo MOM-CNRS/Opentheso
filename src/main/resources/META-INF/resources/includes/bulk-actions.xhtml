@@ -422,7 +422,7 @@
         <h:inputHidden id="previewBulkStatusIds" value="#{conceptLifecycleEditorBean.bulkConceptIds}"/>
         <h:commandButton id="previewBulkStatusGo" value="statut"
                          action="#{conceptLifecycleEditorBean.submitStatusFromSelection}">
-          <f:ajax execute="@form" render=":previewBulkStatusStatus :previewTree" onevent="onBulkStatusAjax"/>
+          <f:ajax execute="@form" render=":previewBulkStatusStatus :previewTree :previewDetailForm:previewDetail" onevent="onBulkStatusAjax"/>
         </h:commandButton>
       </h:form>
 

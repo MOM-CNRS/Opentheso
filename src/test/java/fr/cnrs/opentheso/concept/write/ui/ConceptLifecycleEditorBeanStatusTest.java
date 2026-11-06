@@ -99,6 +99,20 @@ class ConceptLifecycleEditorBeanStatusTest {
     }
 
     @Test
+    void submitStatusFromSelection_refreshesTheOpenCandidateFiche() {
+        bean.setBulkStatusAction("approve");
+        bean.setBulkConceptIds("C1");
+        when(thesaurusViewBean.getSelectedId()).thenReturn("C1");
+        when(conceptLifecycleMutationService.changeConceptsStatus(any()))
+                .thenReturn(MutationResult.ok("1 candidat validé"));
+
+        bean.submitStatusFromSelection();
+
+        verify(thesaurusViewBean).openTreeNode("C1", "concept");
+        verify(thesaurusViewBean).markSelectedAsConcept();
+    }
+
+    @Test
     void submitStatusFromSelection_rejectsCandidates() {
         bean.setBulkStatusAction("reject");
         bean.setBulkConceptIds("C1");

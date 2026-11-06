@@ -129,6 +129,8 @@ public class ThesaurusViewBean implements Serializable {
     @Getter
     private boolean candidateRejected;
     @Getter
+    private int conceptRevision;
+    @Getter
     private boolean detailRequested;
     private boolean openedConceptFromRequest;
     @Getter
@@ -967,6 +969,21 @@ public class ThesaurusViewBean implements Serializable {
         if (selectedConcept != null) {
             selectedKind = ConceptTreeNodeKinds.CONCEPT;
         }
+        touchOpenedConcept();
+    }
+
+    /** Après refus : la fiche ouverte reste un candidat, au statut rejeté. */
+    public void markSelectedRejected() {
+        candidateRejected = true;
+        if (selectedConcept != null) {
+            selectedKind = ConceptTreeNodeKinds.CANDIDAT;
+        }
+        touchOpenedConcept();
+    }
+
+    /** Force la fiche candidat à relire son statut au prochain affichage. */
+    public void touchOpenedConcept() {
+        conceptRevision++;
     }
 
     /**

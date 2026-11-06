@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.concept.write.model.command.AddChildConceptCommand;
 import fr.cnrs.opentheso.concept.write.model.command.AddReplacedByCommand;
 import fr.cnrs.opentheso.concept.write.model.command.AddTopConceptCommand;
+import fr.cnrs.opentheso.concept.model.ConceptTreeNodeKinds;
 import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.concept.write.model.command.ApproveConceptCommand;
 import fr.cnrs.opentheso.concept.write.model.command.ChangeConceptsStatusCommand;
@@ -150,10 +151,34 @@ public class ConceptLifecycleEditorBean implements Serializable {
         }
         conceptNavigationSupport.invalidateConceptTree();
         thesaurusViewBean.reloadTree();
+        refreshOpenedConcept(conceptIds, action);
         bulkStatusOk = true;
         bulkStatusMessage = result.message();
         bulkStatusAction = "";
         bulkConceptIds = "";
+    }
+
+    /**
+     * La fiche déjà ouverte n'est pas dans la réponse ajax de l'arbre.
+     * On la relit pour que les boutons candidat disparaissent sans rechargement manuel.
+     */
+    private void refreshOpenedConcept(List<String> conceptIds, String action) {
+        String openId = StringUtils.trimToEmpty(thesaurusViewBean.getSelectedId());
+        if (openId.isEmpty() || conceptIds.stream().noneMatch(openId::equalsIgnoreCase)) {
+            return;
+        }
+        if ("approve".equals(action)) {
+            thesaurusViewBean.openTreeNode(openId, ConceptTreeNodeKinds.CONCEPT);
+            thesaurusViewBean.markSelectedAsConcept();
+            return;
+        }
+        if ("reject".equals(action)) {
+            thesaurusViewBean.openTreeNode(openId, ConceptTreeNodeKinds.REJETE);
+            thesaurusViewBean.markSelectedRejected();
+            return;
+        }
+        thesaurusViewBean.openTreeNode(openId, "");
+        thesaurusViewBean.touchOpenedConcept();
     }
 
     private static List<String> parseBulkConceptIds(String raw) {

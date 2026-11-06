@@ -58,6 +58,7 @@ public class CandidateFicheBean implements Serializable {
     private final transient LocaleBean localeBean;
 
     private String loadedConceptId;
+    private int loadedRevision = -1;
     private CandidatDto candidat;
     @Getter
     @Setter
@@ -549,6 +550,13 @@ public class CandidateFicheBean implements Serializable {
     }
 
     private void ensureLoaded() {
+        int revision = thesaurusViewBean.getConceptRevision();
+        if (revision != loadedRevision) {
+            loadedRevision = revision;
+            candidat = null;
+            loadedConceptId = null;
+            canProcess = null;
+        }
         if (!isActive()) {
             clear();
             return;
