@@ -16,6 +16,10 @@
   <ui:define name="main">
 
           <div class="view-panel#{param['new'] eq '1' or not empty param.pref or not empty param.path ? '' : ' is-on'}" id="viewCandList">
+            <span id="candBoardNotice" hidden="hidden"
+                  data-msg="#{candidatBoardBean.notice}"
+                  data-error="#{candidatBoardBean.noticeError ? 'true' : 'false'}"
+                  data-token="#{candidatBoardBean.noticeToken}"/>
             <div class="bo bo-solo prop-page">
               <a class="bo-back" href="index.xhtml#{empty thesaurusViewBean.id ? '' : '?idt='}#{thesaurusViewBean.id}" title="#{localeBean.getMsg('candidat.board.back')}">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -263,9 +267,7 @@
                       <h:commandButton id="candAcceptSelected"
                                        value="#{localeBean.getMsg('candidat.board.acceptSelected')}"
                                        styleClass="bo-btn primary"
-                                       action="#{candidatBoardBean.acceptSelected}">
-                        <f:ajax execute="@form" render="candTabs candPanes candBoardTools" onevent="onCandDecisionAjax"/>
-                      </h:commandButton>
+                                       action="#{candidatBoardBean.acceptSelected}"/>
                     </div>
                   </div>
                 </div>
@@ -280,9 +282,7 @@
                       <h:commandButton id="candRejectSelected"
                                        value="#{localeBean.getMsg('candidat.board.rejectSelected')}"
                                        styleClass="bo-btn danger"
-                                       action="#{candidatBoardBean.rejectSelected}">
-                        <f:ajax execute="@form" render="candTabs candPanes candBoardTools" onevent="onCandDecisionAjax"/>
-                      </h:commandButton>
+                                       action="#{candidatBoardBean.rejectSelected}"/>
                     </div>
                   </div>
                 </div>

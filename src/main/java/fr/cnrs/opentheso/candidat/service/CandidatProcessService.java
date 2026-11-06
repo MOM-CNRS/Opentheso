@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.candidat.persistence.CandidatProcessPersistence;
 import fr.cnrs.opentheso.shared.session.ConceptTreeRefreshSupport;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CandidatProcessService {
@@ -243,6 +245,47 @@ public class CandidatProcessService {
                 + "<br/>L'équipe " + title + ".<br/> <img src=\"" + baseUrl
                 + "/resources/img/icon_opentheso2.png\" height=\"106\"></body></html>";
         return sendMail(mail, subject, contentFile);
+    }
+
+    /**
+     * L'alerte part hors de la requête : le relais SMTP peut rester muet
+     * plus d'une minute et figer toute la session en attendant.
+     */
+    public void sendAcceptedMailLater(
+            String mail,
+            CandidatDto candidat,
+            String adminMessage,
+            String thesaurusTitle,
+            String appBaseUrl
+    ) {
+        sendMailLater(mail, () -> sendAcceptedMail(mail, candidat, adminMessage, thesaurusTitle, appBaseUrl));
+    }
+
+    public void sendRejectedMailLater(
+            String mail,
+            CandidatDto candidat,
+            String adminMessage,
+            String thesaurusTitle,
+            String appBaseUrl
+    ) {
+        sendMailLater(mail, () -> sendRejectedMail(mail, candidat, adminMessage, thesaurusTitle, appBaseUrl));
+    }
+
+    private void sendMailLater(String mail, java.util.function.BooleanSupplier send) {
+        if (StringUtils.isBlank(mail)) {
+            return;
+        }
+        Thread worker = new Thread(() -> {
+            try {
+                if (!send.getAsBoolean()) {
+                    log.warn("Alerte candidat non envoyée vers {}", mail);
+                }
+            } catch (RuntimeException ex) {
+                log.warn("Alerte candidat non envoyée vers {}", mail, ex);
+            }
+        }, "candidat-mail");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     private void applyContributorMetadata(CandidatDto candidate, int userId, String contributorName) {

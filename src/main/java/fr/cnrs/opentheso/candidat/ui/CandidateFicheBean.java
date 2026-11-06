@@ -514,10 +514,8 @@ public class CandidateFicheBean implements Serializable {
         if (StringUtils.isBlank(mail)) {
             return;
         }
-        if (!candidatProcessService.sendAcceptedMail(
-                mail, candidate, adminMessage, resolveThesaurusTitle(), resolveAppBaseUrl())) {
-            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.mailError"));
-        }
+        candidatProcessService.sendAcceptedMailLater(
+                mail, candidate, adminMessage, resolveThesaurusTitle(), resolveAppBaseUrl());
     }
 
     private void notifyCreatorRejected(CandidatDto candidate, String adminMessage) {
@@ -528,10 +526,8 @@ public class CandidateFicheBean implements Serializable {
         if (StringUtils.isBlank(mail)) {
             return;
         }
-        if (!candidatProcessService.sendRejectedMail(
-                mail, candidate, adminMessage, resolveThesaurusTitle(), resolveAppBaseUrl())) {
-            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.mailError"));
-        }
+        candidatProcessService.sendRejectedMailLater(
+                mail, candidate, adminMessage, resolveThesaurusTitle(), resolveAppBaseUrl());
     }
 
     private String resolveThesaurusTitle() {

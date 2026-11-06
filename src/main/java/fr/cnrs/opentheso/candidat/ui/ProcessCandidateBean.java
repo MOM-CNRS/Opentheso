@@ -169,7 +169,8 @@ public class ProcessCandidateBean implements Serializable {
         for (CandidatDto candidate : candidates) {
             String mail = alertMails.get(candidate.getCreatedById());
             if (mail != null) {
-                sendMailCandidateAccepted(mail, candidate);
+                candidatProcessService.sendAcceptedMailLater(
+                        mail, candidate, adminMessage, resolveThesaurusTitle(), getPath());
             }
         }
 
@@ -204,7 +205,8 @@ public class ProcessCandidateBean implements Serializable {
         for (CandidatDto candidate : candidates) {
             String mail = alertMails.get(candidate.getCreatedById());
             if (mail != null) {
-                sendMailCandidateRejected(mail, candidate);
+                candidatProcessService.sendRejectedMailLater(
+                        mail, candidate, adminMessage, resolveThesaurusTitle(), getPath());
             }
         }
 

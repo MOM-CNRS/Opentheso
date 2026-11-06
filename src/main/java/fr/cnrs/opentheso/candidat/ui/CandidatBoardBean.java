@@ -99,6 +99,12 @@ public class CandidatBoardBean implements Serializable {
     private int rejectedCount;
     @Getter
     private int badgeCount;
+    @Getter
+    private String notice = "";
+    @Getter
+    private boolean noticeError;
+    @Getter
+    private String noticeToken = "";
 
     public void load() {
         loaded = false;
@@ -154,6 +160,45 @@ public class CandidatBoardBean implements Serializable {
         }
     }
 
+    private void redirectWithNotice(String message, boolean error) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null || faces.getResponseComplete()) {
+            return;
+        }
+        ExternalContext context = faces.getExternalContext();
+        context.getSessionMap().put("candBoardNotice", StringUtils.defaultString(message));
+        context.getSessionMap().put("candBoardNoticeError", error);
+        String id = currentThesaurusId();
+        StringBuilder url = new StringBuilder(context.getRequestContextPath())
+                .append("/candidat/candidats.xhtml");
+        if (StringUtils.isNotBlank(id)) {
+            url.append("?idt=").append(URLEncoder.encode(id, StandardCharsets.UTF_8));
+        }
+        try {
+            context.redirect(url.toString());
+        } catch (IOException ignored) {
+            notice = StringUtils.defaultString(message);
+            noticeError = error;
+            noticeToken = String.valueOf(System.currentTimeMillis());
+        }
+    }
+
+    private void consumeBoardNotice() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return;
+        }
+        var session = faces.getExternalContext().getSessionMap();
+        Object message = session.remove("candBoardNotice");
+        Object error = session.remove("candBoardNoticeError");
+        if (message == null || StringUtils.isBlank(message.toString())) {
+            return;
+        }
+        notice = message.toString().trim();
+        noticeError = Boolean.TRUE.equals(error);
+        noticeToken = String.valueOf(System.currentTimeMillis());
+    }
+
     private String currentThesaurusId() {
         String fromView = thesaurusViewBean == null ? null : StringUtils.trimToNull(thesaurusViewBean.getId());
         if (fromView != null) {
@@ -167,6 +212,7 @@ public class CandidatBoardBean implements Serializable {
         reload(thesaurusId, thesaurusViewBean.getSelectedLang());
         loaded = true;
         badgeCount = pendingCount;
+        consumeBoardNotice();
     }
 
     public void search() {
@@ -225,7 +271,7 @@ public class CandidatBoardBean implements Serializable {
         }
         List<CandidatDto> candidates = loadSelectedPending();
         if (candidates.isEmpty()) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.board.acceptSelected"));
+            redirectWithNotice(localeBean.getMsg("candidat.board.acceptSelected"), true);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -246,11 +292,11 @@ public class CandidatBoardBean implements Serializable {
         if (failed != null) {
             String detail = StringUtils.defaultIfBlank(failed.getNomPref(), failed.getIdConcepte());
             if (!candidatProcessService.hasDefinition(failed.getIdThesaurus(), failed.getIdConcepte())) {
-                MessageUtils.showWarnMessage(localeBean.getMsg("candidat.validate.needDefinition")
-                        + (StringUtils.isBlank(detail) ? "" : " : " + detail));
+                redirectWithNotice(localeBean.getMsg("candidat.validate.needDefinition")
+                        + (StringUtils.isBlank(detail) ? "" : " : " + detail), true);
             } else {
-                MessageUtils.showErrorMessage(localeBean.getMsg("candidat.insertError")
-                        + " : " + detail);
+                redirectWithNotice(localeBean.getMsg("candidat.insertError")
+                        + " : " + detail, true);
             }
             return;
         }
@@ -258,8 +304,7 @@ public class CandidatBoardBean implements Serializable {
         selectedIds.clear();
         batchMessage = "";
         adminBatchMessage = "";
-        load(thesaurusId);
-        MessageUtils.showInformationMessage(localeBean.getMsg("candidat.insertOk"));
+        redirectWithNotice(localeBean.getMsg("candidat.board.acceptOk"), false);
     }
 
     public void rejectSelected() {
@@ -268,7 +313,7 @@ public class CandidatBoardBean implements Serializable {
         }
         List<CandidatDto> candidates = loadSelectedPending();
         if (candidates.isEmpty()) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.board.rejectSelected"));
+            redirectWithNotice(localeBean.getMsg("candidat.board.rejectSelected"), true);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -282,16 +327,15 @@ public class CandidatBoardBean implements Serializable {
                 userSession.getCurrentUsername()
         );
         if (failed != null) {
-            MessageUtils.showErrorMessage(localeBean.getMsg("candidat.rejectError")
-                    + " : " + failed.getNomPref());
+            redirectWithNotice(localeBean.getMsg("candidat.rejectError")
+                    + " : " + failed.getNomPref(), true);
             return;
         }
         notifyCreatorsRejected(candidates);
         selectedIds.clear();
         batchMessage = "";
         adminBatchMessage = "";
-        load(thesaurusViewBean.getId());
-        MessageUtils.showInformationMessage(localeBean.getMsg("candidat.rejectOk"));
+        redirectWithNotice(localeBean.getMsg("candidat.board.rejectOk"), false);
     }
 
     public void reopenSelected() {
@@ -609,9 +653,8 @@ public class CandidatBoardBean implements Serializable {
         String baseUrl = resolveAppBaseUrl();
         for (CandidatDto candidate : candidates) {
             String mail = alertMails.get(candidate.getCreatedById());
-            if (mail != null && !candidatProcessService.sendAcceptedMail(
-                    mail, candidate, message, title, baseUrl)) {
-                MessageUtils.showErrorMessage(localeBean.getMsg("candidat.mailError"));
+            if (mail != null) {
+                candidatProcessService.sendAcceptedMailLater(mail, candidate, message, title, baseUrl);
             }
         }
     }
@@ -623,9 +666,8 @@ public class CandidatBoardBean implements Serializable {
         String baseUrl = resolveAppBaseUrl();
         for (CandidatDto candidate : candidates) {
             String mail = alertMails.get(candidate.getCreatedById());
-            if (mail != null && !candidatProcessService.sendRejectedMail(
-                    mail, candidate, message, title, baseUrl)) {
-                MessageUtils.showErrorMessage(localeBean.getMsg("candidat.mailError"));
+            if (mail != null) {
+                candidatProcessService.sendRejectedMailLater(mail, candidate, message, title, baseUrl);
             }
         }
     }

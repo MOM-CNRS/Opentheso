@@ -161,6 +161,26 @@ function onCandDecisionAjax(data) {
   }
 }
 
+function showCandBoardNotice() {
+  const n = document.getElementById("candBoardNotice");
+  if (!n || typeof toast !== "function") return;
+  const msg = String(n.getAttribute("data-msg") || "").trim();
+  const token = n.getAttribute("data-token") || "";
+  if (!msg || !token) return;
+  try {
+    if (sessionStorage.getItem("candBoardNotice") === token) return;
+    sessionStorage.setItem("candBoardNotice", token);
+  } catch (e) {
+    /* navigation privée : la notification s'affiche quand même */
+  }
+  toast(msg, { error: n.getAttribute("data-error") === "true" });
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", showCandBoardNotice);
+} else {
+  showCandBoardNotice();
+}
+
 function syncCandExport(tab) {
   const btn = document.getElementById("candExportBtn");
   if (!btn) return;
