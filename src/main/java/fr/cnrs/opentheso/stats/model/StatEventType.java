@@ -3,6 +3,8 @@ package fr.cnrs.opentheso.stats.model;
 public enum StatEventType {
     CONCEPT_VIEW,
     GROUP_VIEW,
+    FACET_VIEW,
+    CANDIDATE_VIEW,
     API_CALL,
     SEARCH_NO_RESULT,
     SEARCH_RESULT_SELECTED,

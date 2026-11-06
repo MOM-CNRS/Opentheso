@@ -36,6 +36,20 @@ public class StatEventService {
     }
 
     @Async(StatAsyncConfig.EXECUTOR_NAME)
+    public void logFacetView(String facetId, String facetLabel, String lang,
+                             String thesaurusId, String thesaurusLabel) {
+        save(StatEventType.FACET_VIEW, thesaurusId, thesaurusLabel, facetId, facetLabel, lang,
+                null, null, null, null, null, null, null);
+    }
+
+    @Async(StatAsyncConfig.EXECUTOR_NAME)
+    public void logCandidateView(String conceptId, String conceptLabel, String lang,
+                                 String thesaurusId, String thesaurusLabel) {
+        save(StatEventType.CANDIDATE_VIEW, thesaurusId, thesaurusLabel, conceptId, conceptLabel, lang,
+                null, null, null, null, null, null, null);
+    }
+
+    @Async(StatAsyncConfig.EXECUTOR_NAME)
     public void logApiCall(String url, String httpMethod) {
         save(StatEventType.API_CALL, null, null, null, null, null,
                 null, null, url, httpMethod, null, null, null);

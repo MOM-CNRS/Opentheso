@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
+import fr.cnrs.opentheso.stats.service.ConsultationViewLogger;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.setting.model.ThesaurusLanguage;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
@@ -85,6 +87,10 @@ class ThesaurusViewBeanTest {
     private fr.cnrs.opentheso.proposition.ui.PropositionBean propositionBean;
     @Mock
     private ConceptDcTermRepository conceptDcTermRepository;
+    @Mock
+    private ConsultationViewLogger consultationViewLogger;
+    @Mock
+    private ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -107,7 +113,9 @@ class ThesaurusViewBeanTest {
                 thesaurusSearchLanguageSync,
                 consultationShellBean,
                 propositionBean,
-                conceptDcTermRepository
+                conceptDcTermRepository,
+                consultationViewLogger,
+                thesaurusBrowseBean
         );
         lenient().when(conceptDcTermRepository.findAllByIdThesaurusAndIdConcept(any(), any()))
                 .thenReturn(List.of());
@@ -764,6 +772,24 @@ class ThesaurusViewBeanTest {
         assertNull(bean.getSelectedConcept());
         verify(conceptReadService).loadFacetDetail("th17", "f1", "fr");
         verify(conceptSelectionContext).clear();
+        verify(consultationViewLogger).logFacet("Techniques", "fr", "f1", "Pactols_Lieux", "th17", "fr");
+    }
+
+    @Test
+    void openTreeNode_logsFacetThroughConceptView() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        FacetDetailOverview facet = new FacetDetailOverview(
+                "f1", "Techniques", "fr", "c1", "Adobe", List.of(), List.of(), List.of());
+        when(conceptReadService.loadFacetDetail("th17", "f1", "fr")).thenReturn(Optional.of(facet));
+        ThesaurusBrowseBean browse = mock(ThesaurusBrowseBean.class);
+        when(thesaurusBrowseBean.getIfAvailable()).thenReturn(browse);
+
+        bean.openTreeNode("f1", "facet");
+
+        verify(browse).logConceptView(facet);
+        verify(consultationViewLogger, never()).logFacet(any(), any(), any(), any(), any(), any());
     }
 
     @Test

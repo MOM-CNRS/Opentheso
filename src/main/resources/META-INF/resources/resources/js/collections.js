@@ -243,6 +243,59 @@ function collectionCrow(label, valueHtml) {
     + valueHtml + "</div></div>";
 }
 
+function collectionLangMeta(code) {
+  const norm = String(code || "").trim().toLowerCase();
+  const opts = document.querySelectorAll("#previewTermLangUi .tree-lang-opt");
+  let opt = null;
+  for (let i = 0; i < opts.length; i++) {
+    if ((opts[i].getAttribute("data-lang") || "").trim().toLowerCase() === norm) {
+      opt = opts[i];
+      break;
+    }
+  }
+  const flagText = opt && opt.querySelector(".tree-lang-opt-flag")
+    ? opt.querySelector(".tree-lang-opt-flag").textContent.trim()
+    : (typeof exportLangFlag === "function" ? exportLangFlag(norm) : "");
+  const nameEl = opt && opt.querySelector(".tree-lang-opt-name");
+  const name = nameEl && nameEl.textContent.trim() ? nameEl.textContent.trim() : norm.toUpperCase();
+  return { flag: flagText && flagText !== "🏳️" ? flagText : "", name: name };
+}
+
+function collectionTextDirection(code) {
+  const base = String(code || "").trim().toLowerCase().split("-")[0];
+  return base === "ar" || base === "he" || base === "fa" || base === "ur" ? "rtl" : "ltr";
+}
+
+function collectionTranslationsHtml(translations) {
+  const rows = (translations || []).filter((tr) => tr && (tr.lang || tr.value));
+  if (!rows.length) {
+    return '<div class="muted">Aucune traduction renseignée.</div>';
+  }
+  const esc = typeof escapeHtml === "function" ? escapeHtml : (v) => String(v);
+  let html = '<div class="tr-list">';
+  rows.forEach((tr) => {
+    const code = String(tr.lang || "").trim();
+    const value = tr.value == null ? "" : String(tr.value);
+    const meta = collectionLangMeta(code);
+    const todo = !value.trim();
+    html += '<div class="tr-block"><div class="tr-item">';
+    html += '<span class="tr-dot ' + (todo ? "tr-dot-todo" : "tr-dot-ok") + '" aria-hidden="true"></span>';
+    if (meta.flag) {
+      html += '<span class="tr-flag">' + meta.flag + "</span>";
+    } else if (code) {
+      html += '<span class="tr-code">' + esc(code) + "</span>";
+    }
+    html += '<button type="button" class="tr-label" data-act="term-lang" data-lang="' + esc(code) + '"'
+      + ' lang="' + esc(code) + '" dir="' + collectionTextDirection(code) + '"'
+      + ' title="' + esc(meta.name) + '">' + esc(value) + "</button>";
+    html += '<span class="tr-lang">' + esc(meta.name) + "</span>";
+    if (todo) html += '<span class="tr-todo">à compléter</span>';
+    html += "</div></div>";
+  });
+  html += "</div>";
+  return html;
+}
+
 function collectionMembersHtml(members) {
   if (!members.length) {
     return '<div class="muted">Aucun concept rattaché à cette collection.</div>';
@@ -291,17 +344,8 @@ function renderCollectionDetail(data) {
   html += '<section class="cblock"><div class="cblock-head">Membres</div><div class="cblock-body">';
   html += collectionMembersHtml(members);
   html += "</div></section>";
-  html += '<section class="cblock"><div class="cblock-head">Traductions</div><div class="cblock-body">';
-  if (!translations.length) {
-    html += '<div class="muted">Aucune traduction renseignée.</div>';
-  } else {
-    translations.forEach(tr => {
-      html += collectionCrow(
-        '<span class="val-lang">' + escapeHtml(tr.lang || "") + "</span>",
-        escapeHtml(tr.value || "")
-      );
-    });
-  }
+  html += '<section class="cblock" data-card-id="traductions"><div class="cblock-head"><span class="cblock-title">Traductions</span></div><div class="cblock-body">';
+  html += collectionTranslationsHtml(translations);
   html += "</div></section>";
   html += '<section class="cblock"><div class="cblock-head">Notes</div><div class="cblock-body">';
   if (!notes.length) {
@@ -329,6 +373,14 @@ function renderCollectionDetail(data) {
   box.hidden = false;
 }
 
+function logCollectionConsultation(groupId) {
+  const idEl = document.getElementById("previewConsultLogForm:groupId");
+  const btn = document.getElementById("previewConsultLogForm:logCollectionGo");
+  if (!idEl || !btn || !groupId) return;
+  idEl.value = groupId;
+  btn.click();
+}
+
 function loadCollectionDetail(groupId) {
   const empty = $("#collectionEmpty");
   const loading = $("#collectionLoading");
@@ -343,6 +395,7 @@ function loadCollectionDetail(groupId) {
   collectionApi("detail", { groupId: groupId }).then(data => {
     if (state.colId !== groupId) return;
     renderCollectionDetail(data);
+    if (data && data.groupId) logCollectionConsultation(data.groupId);
   }).catch(() => {
     if (state.colId !== groupId) return;
     if (loading) loading.hidden = true;

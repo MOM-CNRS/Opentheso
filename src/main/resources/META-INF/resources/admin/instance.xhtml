@@ -3,7 +3,6 @@
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
-                xmlns:c="jakarta.tags.core"
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/includes/layout.xhtml">
   <ui:param name="page" value="admin-instance"/>
@@ -294,7 +293,7 @@
                               <h:inputSecret id="iaNewPassword"
                                              value="#{instanceAdminBean.newPassword}"
                                              styleClass="st-input"
-                                             redisplay="false"
+                                             redisplay="true"
                                              pt:autocomplete="new-password"/>
                             </label>
                             <label class="ia-field">
@@ -302,7 +301,7 @@
                               <h:inputSecret id="iaNewPasswordConfirm"
                                              value="#{instanceAdminBean.newPasswordConfirmation}"
                                              styleClass="st-input"
-                                             redisplay="false"
+                                             redisplay="true"
                                              pt:autocomplete="new-password"/>
                             </label>
                           </ui:fragment>
@@ -429,23 +428,21 @@
                             </ui:fragment>
                             <ui:fragment rendered="#{instanceAdminBean.createProjectAssignmentsPresent}">
                               <div class="ia-proj-chips" role="list">
-                                <c:forEach items="#{instanceAdminBean.newProjectMemberships}" varStatus="st">
+                                <ui:repeat id="iaCreateProjChips" value="#{instanceAdminBean.newProjectMemberships}" var="row" varStatus="st">
                                   <div class="ia-chip" role="listitem">
-                                    <span class="ia-chip-name">#{instanceAdminBean.projectName(instanceAdminBean.newProjectMemberships[st.index].projectId)}</span>
-                                    <span class="ia-chip-role">#{instanceAdminBean.projectRoleLabel(instanceAdminBean.newProjectMemberships[st.index].roleId)}</span>
-                                    <h:commandLink styleClass="ia-chip-x"
+                                    <span class="ia-chip-name">#{instanceAdminBean.projectName(row.projectId)}</span>
+                                    <span class="ia-chip-role">#{instanceAdminBean.projectRoleLabel(row.roleId)}</span>
+                                    <h:commandLink id="iaCreateProjRemove"
+                                                   styleClass="ia-chip-x"
                                                    title="#{localeBean.getMsg('admin.users.create.projects.remove')}"
                                                    pt:aria-label="#{localeBean.getMsg('admin.users.create.projects.remove')}"
-                                                   action="#{instanceAdminBean.removeProjectMembership}">
-                                      <f:setPropertyActionListener target="#{instanceAdminBean.pendingRemoveMembershipIndex}"
-                                                                   value="#{st.index}"/>
-                                      <f:setPropertyActionListener target="#{instanceAdminBean.pendingRemoveFromEdit}"
-                                                                   value="#{false}"/>
+                                                   action="#{instanceAdminBean.removeCreateProjectMembershipFromRequest}">
+                                      <f:param name="iaCreateRemoveIndex" value="#{st.index}"/>
                                       <f:ajax execute="@this" render="iaCreateProjBlock"/>
                                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
                                     </h:commandLink>
                                   </div>
-                                </c:forEach>
+                                </ui:repeat>
                               </div>
                             </ui:fragment>
                             <ui:fragment rendered="#{not instanceAdminBean.createProjectAssignmentsPresent}">
@@ -636,23 +633,21 @@
                             </ui:fragment>
                             <ui:fragment rendered="#{instanceAdminBean.editProjectAssignmentsPresent}">
                               <div class="ia-proj-chips" role="list">
-                                <c:forEach items="#{instanceAdminBean.editProjectMemberships}" varStatus="st">
+                                <ui:repeat id="iaEditProjChips" value="#{instanceAdminBean.editProjectMemberships}" var="row" varStatus="st">
                                   <div class="ia-chip" role="listitem">
-                                    <span class="ia-chip-name">#{instanceAdminBean.projectName(instanceAdminBean.editProjectMemberships[st.index].projectId)}</span>
-                                    <span class="ia-chip-role">#{instanceAdminBean.projectRoleLabel(instanceAdminBean.editProjectMemberships[st.index].roleId)}</span>
-                                    <h:commandLink styleClass="ia-chip-x"
+                                    <span class="ia-chip-name">#{instanceAdminBean.projectName(row.projectId)}</span>
+                                    <span class="ia-chip-role">#{instanceAdminBean.projectRoleLabel(row.roleId)}</span>
+                                    <h:commandLink id="iaEditProjRemove"
+                                                   styleClass="ia-chip-x"
                                                    title="#{localeBean.getMsg('admin.users.create.projects.remove')}"
                                                    pt:aria-label="#{localeBean.getMsg('admin.users.create.projects.remove')}"
-                                                   action="#{instanceAdminBean.removeProjectMembership}">
-                                      <f:setPropertyActionListener target="#{instanceAdminBean.pendingRemoveMembershipIndex}"
-                                                                   value="#{st.index}"/>
-                                      <f:setPropertyActionListener target="#{instanceAdminBean.pendingRemoveFromEdit}"
-                                                                   value="#{true}"/>
+                                                   action="#{instanceAdminBean.removeEditProjectMembershipFromRequest}">
+                                      <f:param name="iaEditRemoveIndex" value="#{st.index}"/>
                                       <f:ajax execute="@this" render="iaEditProjBlock"/>
                                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
                                     </h:commandLink>
                                   </div>
-                                </c:forEach>
+                                </ui:repeat>
                               </div>
                             </ui:fragment>
                             <ui:fragment rendered="#{not instanceAdminBean.editProjectAssignmentsPresent}">

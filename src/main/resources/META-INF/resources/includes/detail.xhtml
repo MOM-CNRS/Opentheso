@@ -27,6 +27,13 @@
       <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onCvMenuAjax"/>
     </h:commandButton>
   </h:form>
+  <h:form id="previewConsultLogForm" styleClass="preview-open-form">
+    <h:inputHidden id="groupId" value="#{thesaurusBrowseBean.consultedGroupId}"/>
+    <h:commandButton id="logCollectionGo" value="Journal" styleClass="preview-open-btn"
+                     action="#{thesaurusBrowseBean.logOpenedCollection}">
+      <f:ajax execute="@form" render="@none"/>
+    </h:commandButton>
+  </h:form>
   <h:form id="previewTreeDropForm" styleClass="preview-open-form">
     <h:inputHidden id="htmlDragId" value="#{conceptTreeDragDropBean.htmlDragId}"/>
     <h:inputHidden id="htmlDropId" value="#{conceptTreeDragDropBean.htmlDropId}"/>

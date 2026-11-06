@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.admin.ui;
 import fr.cnrs.opentheso.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.admin.model.CreatedAdminUser;
 import fr.cnrs.opentheso.admin.model.InstanceAdminAccount;
+import fr.cnrs.opentheso.admin.model.NewUserProjectMembership;
 import fr.cnrs.opentheso.admin.model.ThesaurusMember;
 import fr.cnrs.opentheso.admin.service.AdminCatalogService;
 import fr.cnrs.opentheso.admin.service.AdminUserService;
@@ -19,6 +20,8 @@ import fr.cnrs.opentheso.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.user.model.UserProfile;
 import fr.cnrs.opentheso.user.service.UserProfileService;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,9 +29,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -369,6 +375,28 @@ class InstanceAdminBeanTest {
         assertEquals(AdminUserService.CREATION_MODE_DIRECT, bean.getNewCreationMode());
         assertEquals(0, bean.getNewProjectMemberships().size());
         assertEquals(ProjectAccessPolicy.ROLE_CONTRIBUTOR, bean.getDraftRoleId());
+    }
+
+    @Test
+    void removeCreateProjectMembershipFromRequest_dropsTheClickedProject() throws Exception {
+        bean.getNewProjectMemberships().add(new NewUserProjectMembership(5, ProjectAccessPolicy.ROLE_ADMIN));
+        bean.getNewProjectMemberships().add(new NewUserProjectMembership(8, ProjectAccessPolicy.ROLE_MANAGER));
+        FacesContext faces = mock(FacesContext.class);
+        ExternalContext external = mock(ExternalContext.class);
+        when(faces.getExternalContext()).thenReturn(external);
+        when(external.getRequestParameterMap()).thenReturn(Map.of("iaCreateRemoveIndex", "0"));
+        Method setCurrent = FacesContext.class.getDeclaredMethod("setCurrentInstance", FacesContext.class);
+        setCurrent.setAccessible(true);
+        FacesContext previous = FacesContext.getCurrentInstance();
+        setCurrent.invoke(null, faces);
+        try {
+            bean.removeCreateProjectMembershipFromRequest();
+        } finally {
+            setCurrent.invoke(null, previous);
+        }
+
+        assertEquals(1, bean.getNewProjectMemberships().size());
+        assertEquals(8, bean.getNewProjectMemberships().get(0).getProjectId());
     }
 
     @Test

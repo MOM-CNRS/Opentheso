@@ -584,6 +584,30 @@ public class InstanceAdminBean implements Serializable {
         newProjectMemberships.remove(index);
     }
 
+    public void removeCreateProjectMembershipFromRequest() {
+        removeProjectMembership(requestIndex("iaCreateRemoveIndex"));
+    }
+
+    public void removeEditProjectMembershipFromRequest() {
+        removeEditProjectMembership(requestIndex("iaEditRemoveIndex"));
+    }
+
+    private int requestIndex(String name) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return -1;
+        }
+        String raw = faces.getExternalContext().getRequestParameterMap().get(name);
+        if (raw == null || raw.isBlank()) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
+
     public void askCreateUser() {
         if (!isAccessAllowed() || !createUserOpen) {
             return;

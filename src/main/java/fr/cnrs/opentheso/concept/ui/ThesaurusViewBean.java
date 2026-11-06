@@ -18,6 +18,7 @@ import fr.cnrs.opentheso.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
+import fr.cnrs.opentheso.stats.service.ConsultationViewLogger;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.concept.support.ConceptQrSvgSupport;
@@ -41,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
 import java.text.NumberFormat;
@@ -75,6 +77,8 @@ public class ThesaurusViewBean implements Serializable {
     private final transient ConsultationShellBean consultationShellBean;
     private final transient PropositionBean propositionBean;
     private final transient ConceptDcTermRepository conceptDcTermRepository;
+    private final transient ConsultationViewLogger consultationViewLogger;
+    private final transient ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
@@ -607,6 +611,19 @@ public class ThesaurusViewBean implements Serializable {
             selectedFacet = conceptReadService.loadFacetDetail(getId(), id, getSelectedLang()).orElse(null);
             if (selectedFacet != null) {
                 selectedKind = ConceptTreeNodeKinds.FACET;
+                ThesaurusBrowseBean browse = thesaurusBrowseBean.getIfAvailable();
+                if (browse != null) {
+                    browse.logConceptView(selectedFacet);
+                } else {
+                    consultationViewLogger.logFacet(
+                            selectedFacet.label(),
+                            selectedFacet.lang(),
+                            selectedFacet.facetId(),
+                            getTitle(),
+                            getId(),
+                            getSelectedLang()
+                    );
+                }
             }
             return;
         }
@@ -621,6 +638,15 @@ public class ThesaurusViewBean implements Serializable {
         selectedKind = candidate ? ConceptTreeNodeKinds.CANDIDAT : ConceptTreeNodeKinds.CONCEPT;
         if (candidate) {
             applySelectedCandidateMeta(id);
+            var summary = selectedConcept.getSummary();
+            consultationViewLogger.logCandidate(
+                    summary.getPreferredLabel(),
+                    summary.getLang(),
+                    summary.getConceptId(),
+                    getTitle(),
+                    getId(),
+                    getSelectedLang()
+            );
         }
         branchConceptCount = conceptReadService.countBranchConcepts(getId(), id);
         loadConceptMetadata(id);

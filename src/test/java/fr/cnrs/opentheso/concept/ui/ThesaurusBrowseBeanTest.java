@@ -31,7 +31,7 @@ import fr.cnrs.opentheso.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.shared.ui.UserSession;
-import fr.cnrs.opentheso.stats.service.StatEventService;
+import fr.cnrs.opentheso.stats.service.ConsultationViewLogger;
 import jakarta.faces.component.UIComponent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,7 +100,7 @@ class ThesaurusBrowseBeanTest {
     @Mock
     private PropositionBean propositionBeanInstance;
     @Mock
-    private StatEventService statEventService;
+    private ConsultationViewLogger consultationViewLogger;
 
     private ThesaurusBrowseBean bean;
 
@@ -126,7 +126,7 @@ class ThesaurusBrowseBeanTest {
                 propositionSubmitBean,
                 propositionBean,
                 thesaurusHomeEditorBean,
-                statEventService
+                consultationViewLogger
         );
     }
 
@@ -667,6 +667,34 @@ class ThesaurusBrowseBeanTest {
         assertTrue(bean.isGroupPanel());
         assertTrue(bean.isValueSelected());
         assertEquals(1, bean.getRightTabIndex());
+        verify(consultationViewLogger).logCollection("Groupe", "fr", "G1", null, "TH1", "fr");
+    }
+
+    @Test
+    void openFacet_logsTheConsultation() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        var facet = new FacetDetailOverview("F1", "Matières", "fr", "C1", "Parent", List.of(), List.of(), List.of());
+        when(facetReadService.loadDetail("TH1", "F1", "fr")).thenReturn(Optional.of(facet));
+
+        bean.openFacet("F1");
+
+        assertTrue(bean.isFacetPanel());
+        verify(consultationViewLogger).logFacet("Matières", "fr", "F1", null, "TH1", "fr");
+    }
+
+    @Test
+    void logOpenedCollection_logsTheConsultedGroup() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Pactols");
+        var group = new GroupDetailOverview("G1", "Groupe", "fr", "", "", "", 0, "", "", "", List.of(), List.of(), List.of());
+        when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
+        bean.setConsultedGroupId("G1");
+
+        bean.logOpenedCollection();
+
+        verify(consultationViewLogger).logCollection("Groupe", "fr", "G1", "Pactols", "TH1", "fr");
     }
 
     @Test

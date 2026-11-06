@@ -81,10 +81,7 @@ public class CollectionTreeApiController {
         if (StringUtils.isAnyBlank(groupId, thesaurusId)) {
             return CollectionDetail.empty();
         }
-        return collectionTreeConsultationService.loadDetail(
-                thesaurusId,
-                groupId,
-                StringUtils.firstNonBlank(lang, "fr")
-        );
+        String workLang = StringUtils.firstNonBlank(lang, "fr");
+        return collectionTreeConsultationService.loadDetail(thesaurusId, groupId, workLang);
     }
 }

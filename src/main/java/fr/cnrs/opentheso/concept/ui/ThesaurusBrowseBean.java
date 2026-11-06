@@ -37,14 +37,13 @@ import fr.cnrs.opentheso.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.shared.ui.UserSession;
-import fr.cnrs.opentheso.stats.service.StatEventService;
+import fr.cnrs.opentheso.stats.service.ConsultationViewLogger;
 import jakarta.faces.event.FacesEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
@@ -63,7 +62,6 @@ import java.util.List;
 import java.util.Optional;
 import fr.cnrs.opentheso.concept.model.ConceptTreeNodeKinds;
 
-@Slf4j
 @Getter
 @Setter
 @ViewScoped
@@ -89,7 +87,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final transient ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
     private final transient ObjectProvider<PropositionBean> propositionBean;
     private final transient ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
-    private final transient StatEventService statEventService;
+    private final transient ConsultationViewLogger consultationViewLogger;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -105,6 +103,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean haveActiveCorpus;
     private GroupDetailOverview selectedGroup;
     private FacetDetailOverview selectedFacet;
+    /** Identifiant soumis par la fiche collection de la consultation. */
+    private String consultedGroupId;
     private ThesaurusHomeOverview thesaurusHome;
     private LeftTreeMode activeLeftTreeMode = LeftTreeMode.CONCEPT;
     private RightPanelMode rightPanelMode = RightPanelMode.HOME;
@@ -770,17 +770,80 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     private void logConceptView() {
-        if (selectedConcept == null || selectedConcept.summary() == null) {
+        if (selectedConcept != null && selectedConcept.summary() != null) {
+            var summary = selectedConcept.summary();
+            String fallbackLang = StringUtils.defaultString(thesaurusContext.resolveWorkLanguage());
+            String status = StringUtils.defaultString(summary.status());
+            if ("CA".equalsIgnoreCase(status) || "candidat".equalsIgnoreCase(status)) {
+                consultationViewLogger.logCandidate(
+                        summary.preferredLabel(),
+                        summary.lang(),
+                        summary.conceptId(),
+                        thesaurusContext.getCurrentThesaurusTitle(),
+                        thesaurusContext.resolveThesaurusId(),
+                        fallbackLang
+                );
+                return;
+            }
+            consultationViewLogger.logConcept(
+                    summary.preferredLabel(),
+                    summary.lang(),
+                    summary.conceptId(),
+                    thesaurusContext.getCurrentThesaurusTitle(),
+                    thesaurusContext.resolveThesaurusId(),
+                    fallbackLang
+            );
             return;
         }
-        var summary = selectedConcept.summary();
-        statEventService.logConceptView(
-                summary.conceptId(),
-                summary.preferredLabel(),
-                summary.lang(),
+        if (selectedFacet != null) {
+            logConceptView(selectedFacet);
+            return;
+        }
+        if (selectedGroup != null) {
+            logConceptView(selectedGroup);
+        }
+    }
+
+    public void logConceptView(FacetDetailOverview facet) {
+        if (facet == null) {
+            return;
+        }
+        consultationViewLogger.logFacet(
+                facet.label(),
+                facet.lang(),
+                facet.facetId(),
+                thesaurusContext.getCurrentThesaurusTitle(),
                 thesaurusContext.resolveThesaurusId(),
-                thesaurusContext.getCurrentThesaurusTitle()
+                StringUtils.defaultString(thesaurusContext.resolveWorkLanguage())
         );
+    }
+
+    public void logConceptView(GroupDetailOverview group) {
+        if (group == null) {
+            return;
+        }
+        consultationViewLogger.logCollection(
+                group.label(),
+                group.lang(),
+                group.groupId(),
+                thesaurusContext.getCurrentThesaurusTitle(),
+                thesaurusContext.resolveThesaurusId(),
+                StringUtils.defaultString(thesaurusContext.resolveWorkLanguage())
+        );
+    }
+
+    /**
+     * Consultation d'une collection depuis la fiche (l'arbre des collections charge le détail en JSON).
+     */
+    public void logOpenedCollection() {
+        if (StringUtils.isBlank(consultedGroupId)) {
+            return;
+        }
+        collectionReadService.loadDetail(
+                thesaurusContext.resolveThesaurusId(),
+                consultedGroupId,
+                thesaurusContext.resolveWorkLanguage()
+        ).ifPresent(this::logConceptView);
     }
 
     /**
@@ -907,15 +970,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 groupId,
                 thesaurusContext.resolveWorkLanguage()
         ).orElse(null);
-        if (selectedGroup != null) {
-            statEventService.logCollectionView(
-                    selectedGroup.groupId(),
-                    selectedGroup.label(),
-                    selectedGroup.lang(),
-                    thesaurusContext.resolveThesaurusId(),
-                    thesaurusContext.getCurrentThesaurusTitle()
-            );
-        }
+        logConceptView();
         if (!isSelectedNodeId(groupId)) {
             clearAllLeftTreeSelections();
         }
@@ -933,6 +988,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 facetId,
                 thesaurusContext.resolveWorkLanguage()
         ).orElse(null);
+        logConceptView();
         if (!isSelectedNodeId(facetId)) {
             clearAllLeftTreeSelections();
         }
