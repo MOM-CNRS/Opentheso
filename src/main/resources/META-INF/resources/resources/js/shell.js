@@ -256,14 +256,44 @@ function flushTermTagInputs() {
   });
 }
 
+function saveEditingLabelBlock(from) {
+  const root = (from && from.closest && from.closest("#viewLive")) || document;
+  const block = from && from.closest
+      ? from.closest("section.cblock.is-editing[data-card-id='contexte'], section.cblock.is-editing[data-card-id='f-label'], section.cblock[data-card-id='branche']")
+      : null;
+  if (!block) return;
+  flushTermTagInputs();
+  const save = block.querySelector("[id$='labelEditSave'], [id$='fcLabelEditSave']")
+      || root.querySelector("section.cblock.is-editing [id$='labelEditSave'], section.cblock.is-editing [id$='fcLabelEditSave']");
+  if (save && !save.classList.contains("is-busy")) save.click();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.repeat || e.isComposing || e.defaultPrevented) return;
+  if (!e.target || !e.target.closest) return;
+  const block = e.target.closest("section.cblock.is-editing[data-card-id='contexte'], section.cblock.is-editing[data-card-id='f-label']")
+      || (document.querySelector("section.cblock.is-editing[data-card-id='contexte']")
+          && e.target.closest("section.cblock[data-card-id='branche']"));
+  if (!block) return;
+  if (e.target.closest("a, button, textarea, .term-tags-add")) return;
+  if (e.target.id === "labelFacetQuery") return;
+  e.preventDefault();
+  saveEditingLabelBlock(block);
+});
+
 document.addEventListener("keydown", (e) => {
   const input = e.target && e.target.closest && e.target.closest(".term-tags-add input");
   if (!input) return;
   if (e.key === "Enter") {
     e.preventDefault();
     e.stopPropagation();
-    addTermTag(input.closest(".term-tags"), input.value);
-    input.value = "";
+    const root = input.closest(".term-tags");
+    if (input.value.trim()) {
+      addTermTag(root, input.value);
+      input.value = "";
+      return;
+    }
+    saveEditingLabelBlock(input);
   } else if (e.key === "Backspace" && !input.value) {
     const root = input.closest(".term-tags");
     const values = termTagValues(root);
@@ -3959,7 +3989,7 @@ function gotoConceptResGps(index) {
 
 window.onLabelSave = function (data) {
   const btns = document.querySelectorAll(
-      "#labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #fcTrEditSave, #fcLabelEditSave, #fcMemEditSave, #fcNoteEditSave, #noteEditSave, #resEditSave, #relEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
+      "[id$='labelEditSave'], #labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #fcTrEditSave, #fcLabelEditSave, #fcMemEditSave, #fcNoteEditSave, #noteEditSave, #resEditSave, #relEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
   );
   if (data.status === "begin") {
     if (typeof hideConfirm === "function") {
@@ -7255,7 +7285,7 @@ function expandConceptBlock(gear) {
   ov.setAttribute("aria-hidden", "false");
 }
 
-const CARD_IDS = ["contexte", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "metadonnees", "temporel"];
+const CARD_IDS = ["contexte", "branche", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "metadonnees", "temporel"];
 /** Blocs gouvernance candidat : toujours juste après la bannière (hors réordonnancement fiche). */
 const GOVERNANCE_CARD_ORDER = { candVotes: -2, candDiscussion: -1 };
 
@@ -7273,7 +7303,16 @@ function parseCardLayout() {
     const raw = JSON.parse(document.body.getAttribute("data-card-layout") || "");
     if (Array.isArray(raw.order)) {
       const next = raw.order.filter((id) => CARD_IDS.indexOf(id) >= 0);
-      layout.order = next.concat(CARD_IDS.filter((id) => next.indexOf(id) < 0));
+      CARD_IDS.forEach((id) => {
+        if (next.indexOf(id) >= 0) return;
+        if (id === "branche") {
+          const at = next.indexOf("contexte");
+          next.splice(at < 0 ? 0 : at + 1, 0, id);
+        } else {
+          next.push(id);
+        }
+      });
+      layout.order = next;
     }
     layout.collapsed = {};
     if (Array.isArray(raw.collapsed)) {
@@ -8104,6 +8143,7 @@ document.addEventListener("keydown", (e) => {
       e.preventDefault();
       e.stopPropagation();
       if (open && shownLabelFacetRows().length) pickActiveLabelFacet();
+      else saveEditingLabelBlock(e.target);
     } else if (e.key === "Escape") {
       if (open) {
         e.preventDefault();
