@@ -45,6 +45,9 @@ function beginLiveOpen() {
   if (!live) return;
   live.classList.add("is-loading");
   live.classList.remove("is-ready", "is-opening");
+  live.setAttribute("aria-busy", "true");
+  const bar = $("#liveProgress");
+  if (bar) bar.setAttribute("aria-hidden", "false");
   showPanel(".view-panel", "viewLive");
   paintListBack();
   const view = $("#previewView");
@@ -4074,6 +4077,9 @@ function finishLiveOpen() {
   if (!live) return;
   live.classList.remove("is-loading", "is-opening");
   live.classList.add("is-ready");
+  live.removeAttribute("aria-busy");
+  const bar = $("#liveProgress");
+  if (bar) bar.setAttribute("aria-hidden", "true");
   requestAnimationFrame(() => {
     if (window.applyConceptCardOrder) window.applyConceptCardOrder();
     if (window.syncViewRail) window.syncViewRail();

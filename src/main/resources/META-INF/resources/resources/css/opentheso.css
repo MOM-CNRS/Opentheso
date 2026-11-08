@@ -1305,11 +1305,11 @@ button.coll-item{
 }
 #viewLive.is-loading .confirm-overlay:not([hidden]){pointer-events:auto}
 #viewLive.is-ready.is-opening .cv{animation:none}
-.cv-progress{display:none;position:sticky;top:0;z-index:8;height:2px;margin:0 0 10px;
-  background:var(--line);overflow:hidden;border-radius:var(--r-sm)}
-#viewLive.is-loading .cv-progress{display:none}
-.cv-progress::after{content:"";display:block;height:100%;width:36%;border-radius:var(--r-sm);
-  background:var(--accent);animation:cv-indet .9s ease infinite}
+.cv-progress{display:none;position:sticky;top:0;z-index:8;height:4px;margin:0;
+  background:var(--line);overflow:hidden}
+#viewLive.is-loading .cv-progress{display:block}
+.cv-progress::after{content:"";display:block;height:100%;width:42%;
+  background:var(--accent);animation:cv-indet 1.05s ease-in-out infinite}
 @keyframes cv-in{
   from{opacity:0;transform:translateY(8px)}
   to{opacity:1;transform:none}

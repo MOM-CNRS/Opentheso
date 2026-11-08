@@ -48,7 +48,7 @@
   </h:form>
 
   <div class="view-panel" id="viewLive">
-    <div class="cv-progress" id="liveProgress" aria-hidden="true"></div>
+    <div class="cv-progress" id="liveProgress" role="progressbar" aria-label="Chargement de la fiche" aria-hidden="true"></div>
     <a class="cv-back-graph" id="liveBackPropList" hidden="hidden"
        href="#{propositionBean.boardHref}" data-act="back-prop-list"
        title="#{localeBean.getMsg('proposition.review.backBoard')}">
