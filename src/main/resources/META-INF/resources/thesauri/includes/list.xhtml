@@ -246,50 +246,73 @@
                 <tr>
                   <th class="tp-th tp-th--cfg">
                     <span class="tp-cols">
-                      <h:commandLink styleClass="tp-cfg-btn#{thesaurusPickerBean.columnsMenuOpen ? ' is-on' : ''}"
-                                     title="#{localeBean.getMsg('picker.cols.config')}"
-                                     pt:aria-expanded="#{thesaurusPickerBean.columnsMenuOpen}"
-                                     pt:aria-haspopup="true"
-                                     action="#{thesaurusPickerBean.toggleColumnsMenu}">
+                      <button type="button" id="tpColsBtn" class="tp-cfg-btn"
+                              title="#{localeBean.getMsg('picker.cols.config')}"
+                              aria-haspopup="dialog" aria-expanded="false" aria-controls="tpColsMenu">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <circle cx="12" cy="12" r="3"/>
                           <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
                         </svg>
-                      </h:commandLink>
-                      <ui:fragment rendered="#{thesaurusPickerBean.columnsMenuOpen}">
-                        <div class="tp-cols-menu">
-                          <div class="tp-cols-h">#{localeBean.getMsg('picker.cols.title')}<span>#{localeBean.getMsg('picker.cols.hint')}</span></div>
-                          <div class="tp-cols-list">
-                            <ui:repeat value="#{thesaurusPickerBean.columnCfg}" var="col" varStatus="st">
-                              <div class="tp-cols-row" data-col-key="#{col.key}">
-                                <label class="tp-cols-lbl">
-                                  <h:selectBooleanCheckbox value="#{col.on}" disabled="#{col.nameLocked}"
-                                                           styleClass="tp-cols-cb"
-                                                           pt:data-col-key="#{col.key}"
-                                                           pt:onchange="window.tpOnColumnToggle &amp;&amp; window.tpOnColumnToggle(this);">
-                                  </h:selectBooleanCheckbox>
-                                  <span>#{thesaurusPickerBean.getColumnLabel(col.key)}</span>
-                                </label>
-                                <span class="tp-cols-ord">
-                                  <h:commandButton styleClass="tp-cols-mv" value="▲"
-                                                   disabled="#{st.first}"
-                                                   action="#{thesaurusPickerBean.moveColumnUp(col.key)}">
-                                  </h:commandButton>
-                                  <h:commandButton styleClass="tp-cols-mv" value="▼"
-                                                   disabled="#{st.last}"
-                                                   action="#{thesaurusPickerBean.moveColumnDown(col.key)}">
-                                  </h:commandButton>
-                                </span>
-                              </div>
-                            </ui:repeat>
+                      </button>
+                      <div id="tpColsMenu" class="tp-cols-menu" hidden="hidden" role="dialog"
+                           aria-labelledby="tpColsTitle">
+                        <div class="tp-cols-h">
+                          <div>
+                            <strong id="tpColsTitle">#{localeBean.getMsg('picker.cols.title')}</strong>
+                            <span>#{localeBean.getMsg('picker.cols.hint')}</span>
                           </div>
-                          <h:commandButton styleClass="tp-cols-reset"
-                                           value="#{localeBean.getMsg('picker.cols.reset')}"
-                                           action="#{thesaurusPickerBean.resetColumns}"
-                                           onclick="window.tpResetColumnPrefs &amp;&amp; window.tpResetColumnPrefs();">
-                          </h:commandButton>
+                          <button type="button" class="tp-cols-x" data-act="tp-cols-close"
+                                  aria-label="#{localeBean.getMsg('picker.cols.close')}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                          </button>
                         </div>
-                      </ui:fragment>
+                        <div class="tp-cols-list">
+                          <ui:repeat value="#{thesaurusPickerBean.columnCfg}" var="col" varStatus="st">
+                            <div class="tp-cols-row#{col.nameLocked or col.key eq 'lang' ? ' is-fixed' : ''}"
+                                 data-col-key="#{col.key}"
+                                 data-default-index="#{st.index}"
+                                 data-default-on="#{col.defaultOn ? '1' : '0'}"
+                                 data-fixed="#{col.nameLocked or col.key eq 'lang' ? '1' : '0'}">
+                              <span class="tp-cols-grip" draggable="#{col.nameLocked or col.key eq 'lang' ? 'false' : 'true'}"
+                                    title="#{localeBean.getMsg('picker.cols.drag')}"
+                                    aria-hidden="true">
+                                <svg viewBox="0 0 10 16"><circle cx="2.2" cy="2.2" r="1.15"/><circle cx="7.8" cy="2.2" r="1.15"/><circle cx="2.2" cy="8" r="1.15"/><circle cx="7.8" cy="8" r="1.15"/><circle cx="2.2" cy="13.8" r="1.15"/><circle cx="7.8" cy="13.8" r="1.15"/></svg>
+                              </span>
+                              <label class="tp-cols-lbl">
+                                <h:selectBooleanCheckbox value="#{col.on}" disabled="#{col.nameLocked}"
+                                                         styleClass="tp-cols-cb"
+                                                         pt:data-col-key="#{col.key}"
+                                                         pt:onchange="window.tpOnColumnToggle &amp;&amp; window.tpOnColumnToggle(this);">
+                                </h:selectBooleanCheckbox>
+                                <span>#{thesaurusPickerBean.getColumnLabel(col.key)}</span>
+                              </label>
+                              <ui:fragment rendered="#{col.nameLocked}">
+                                <span class="tp-cols-note">#{localeBean.getMsg('picker.cols.nameLock')}</span>
+                              </ui:fragment>
+                              <ui:fragment rendered="#{col.key eq 'lang'}">
+                                <span class="tp-cols-note">#{localeBean.getMsg('picker.cols.langLock')}</span>
+                              </ui:fragment>
+                              <ui:fragment rendered="#{!col.nameLocked and col.key ne 'lang'}">
+                                <span class="tp-cols-ord">
+                                  <button type="button" class="tp-cols-mv" data-dir="-1"
+                                          aria-label="#{localeBean.getMsg('picker.cols.up')}"
+                                          onclick="return window.tpMoveColumnRow &amp;&amp; window.tpMoveColumnRow(this, -1);">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg>
+                                  </button>
+                                  <button type="button" class="tp-cols-mv" data-dir="1"
+                                          aria-label="#{localeBean.getMsg('picker.cols.down')}"
+                                          onclick="return window.tpMoveColumnRow &amp;&amp; window.tpMoveColumnRow(this, 1);">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg>
+                                  </button>
+                                </span>
+                              </ui:fragment>
+                            </div>
+                          </ui:repeat>
+                        </div>
+                        <button type="button" class="tp-cols-reset" data-act="tp-cols-reset">
+                          #{localeBean.getMsg('picker.cols.reset')}
+                        </button>
+                      </div>
                     </span>
                   </th>
                   <ui:repeat value="#{thesaurusPickerBean.columnCfg}" var="col">
@@ -489,16 +512,24 @@
                         <td data-label="Créé le" data-col="created" class="tp-mono#{col.on ? '' : ' is-col-off'}">#{row.createdLabel}</td>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'domain'}">
-                        <td data-label="Domaine" data-col="domain" class="#{col.on ? '' : 'is-col-off'}">#{empty row.domain ? '—' : row.domain}</td>
+                        <td data-label="Domaine" data-col="domain" class="#{col.on ? '' : 'is-col-off'}">
+                          <span class="tp-clip" title="#{row.domain}">#{empty row.domain ? '—' : row.domain}</span>
+                        </td>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'projects'}">
-                        <td data-label="Projets" data-col="projects" class="#{col.on ? '' : 'is-col-off'}">#{empty row.projects ? '—' : row.projects}</td>
+                        <td data-label="Projets" data-col="projects" class="#{col.on ? '' : 'is-col-off'}">
+                          <span class="tp-clip" title="#{row.projects}">#{empty row.projects ? '—' : row.projects}</span>
+                        </td>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'org'}">
-                        <td data-label="Organisation" data-col="org" class="#{col.on ? '' : 'is-col-off'}">#{empty row.organization ? '—' : row.organization}</td>
+                        <td data-label="Organisation" data-col="org" class="#{col.on ? '' : 'is-col-off'}">
+                          <span class="tp-clip" title="#{row.organization}">#{empty row.organization ? '—' : row.organization}</span>
+                        </td>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'chrono'}">
-                        <td data-label="Chronologie" data-col="chrono" class="tp-mono#{col.on ? '' : ' is-col-off'}">#{empty row.chronology ? '—' : row.chronology}</td>
+                        <td data-label="Chronologie" data-col="chrono" class="tp-mono#{col.on ? '' : ' is-col-off'}">
+                          <span class="tp-clip" title="#{row.chronology}">#{empty row.chronology ? '—' : row.chronology}</span>
+                        </td>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'lang'}">
                         <td data-label="Langues" data-col="lang" class="tp-c-lang#{col.on ? '' : ' is-col-off'}" title="#{thesaurusPickerBean.languagesTitle(row.languages)}">
@@ -528,35 +559,34 @@
                       </ui:fragment>
                     </ui:repeat>
                     <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
-                    <td class="tp-c-edit" data-label="#{localeBean.getMsg('picker.actions')}">
-                      <div class="tp-row-acts">
-                        <h:commandLink styleClass="tp-act tp-act--export"
-                                       title="#{localeBean.getMsg('picker.export')}"
-                                       action="#{thesaurusPickerBean.openExportThesaurus}">
-                          <f:param name="exportThesaurusId" value="#{row.id}"/>
-                          <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <path d="m17 8-5-5-5 5"/>
-                            <path d="M12 3v12"/>
-                          </svg>
-                        </h:commandLink>
-
-                        <ui:fragment rendered="#{thesaurusPickerBean.canManageRow(row)}">
-                          <h:commandLink styleClass="tp-act tp-act--edit"
-                                         title="#{localeBean.getMsg('picker.edit')}"
-                                         action="#{thesaurusPickerBean.openEditThesaurus}">
-                            <f:param name="editThesaurusId" value="#{row.id}"/>
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 0L7 19l-4 1 1-4Z"/></svg>
+                      <td class="tp-c-edit" data-label="#{localeBean.getMsg('picker.actions')}">
+                        <div class="tp-row-acts">
+                          <h:commandLink styleClass="tp-act tp-act--export"
+                                         title="#{localeBean.getMsg('picker.export')}"
+                                         action="#{thesaurusPickerBean.openExportThesaurus}">
+                            <f:param name="exportThesaurusId" value="#{row.id}"/>
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                              <path d="m17 8-5-5-5 5"/>
+                              <path d="M12 3v12"/>
+                            </svg>
                           </h:commandLink>
-                          <h:commandLink styleClass="tp-act tp-act--del"
-                                         title="#{localeBean.getMsg('picker.delete')}"
-                                         action="#{thesaurusPickerBean.prepareDeleteThesaurus}">
-                            <f:param name="deleteThesaurusId" value="#{row.id}"/>
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                          </h:commandLink>
-                        </ui:fragment>
-                      </div>
-                    </td>
+                          <ui:fragment rendered="#{thesaurusPickerBean.canManageRow(row)}">
+                            <h:commandLink styleClass="tp-act tp-act--edit"
+                                           title="#{localeBean.getMsg('picker.edit')}"
+                                           action="#{thesaurusPickerBean.openEditThesaurus}">
+                              <f:param name="editThesaurusId" value="#{row.id}"/>
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 0L7 19l-4 1 1-4Z"/></svg>
+                            </h:commandLink>
+                            <h:commandLink styleClass="tp-act tp-act--del"
+                                           title="#{localeBean.getMsg('picker.delete')}"
+                                           action="#{thesaurusPickerBean.prepareDeleteThesaurus}">
+                              <f:param name="deleteThesaurusId" value="#{row.id}"/>
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                            </h:commandLink>
+                          </ui:fragment>
+                        </div>
+                      </td>
                     </ui:fragment>
                   </tr>
                 </ui:repeat>

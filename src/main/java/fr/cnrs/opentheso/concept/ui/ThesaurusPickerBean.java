@@ -53,16 +53,16 @@ public class ThesaurusPickerBean implements Serializable {
     public static final String TAB_PUBLIC = "public";
 
     private static final List<ColumnDef> COLUMN_DEFS = List.of(
-            new ColumnDef("name", "picker.col.name", true, true),
-            new ColumnDef("access", "picker.col.access", false, false),
-            new ColumnDef("role", "picker.col.role", false, false),
-            new ColumnDef("terms", "picker.col.terms", false, false),
-            new ColumnDef("created", "picker.col.created", false, false),
-            new ColumnDef("domain", "picker.col.domain", true, false),
-            new ColumnDef("projects", "picker.col.projects", true, false),
-            new ColumnDef("org", "picker.col.org", true, false),
-            new ColumnDef("chrono", "picker.col.chrono", false, false),
-            new ColumnDef("lang", "picker.col.lang", false, false)
+            new ColumnDef("name", "picker.col.name", true, true, true),
+            new ColumnDef("terms", "picker.col.terms", false, false, true),
+            new ColumnDef("created", "picker.col.created", false, false, true),
+            new ColumnDef("access", "picker.col.access", false, false, true),
+            new ColumnDef("role", "picker.col.role", false, false, true),
+            new ColumnDef("domain", "picker.col.domain", true, false, false),
+            new ColumnDef("projects", "picker.col.projects", true, false, false),
+            new ColumnDef("org", "picker.col.org", true, false, false),
+            new ColumnDef("chrono", "picker.col.chrono", false, false, false),
+            new ColumnDef("lang", "picker.col.lang", false, false, true)
     );
 
     private final transient ConsultationCatalogService consultationCatalogService;
@@ -1405,7 +1405,7 @@ public class ThesaurusPickerBean implements Serializable {
     private static List<ColumnCfg> defaultColumnCfg() {
         List<ColumnCfg> cfg = new ArrayList<>();
         for (ColumnDef def : COLUMN_DEFS) {
-            cfg.add(new ColumnCfg(def.key(), true));
+            cfg.add(new ColumnCfg(def.key(), def.defaultOn()));
         }
         return cfg;
     }
@@ -1414,7 +1414,7 @@ public class ThesaurusPickerBean implements Serializable {
         return StringUtils.defaultString(value).toLowerCase(Locale.ROOT).trim();
     }
 
-    private record ColumnDef(String key, String labelKey, boolean filterable, boolean grow) {
+    private record ColumnDef(String key, String labelKey, boolean filterable, boolean grow, boolean defaultOn) {
     }
 
     @Getter
@@ -1422,6 +1422,7 @@ public class ThesaurusPickerBean implements Serializable {
     public static class ColumnCfg implements Serializable {
         private String key;
         private boolean on;
+        private boolean defaultOn;
 
         public ColumnCfg() {
         }
@@ -1429,6 +1430,11 @@ public class ThesaurusPickerBean implements Serializable {
         public ColumnCfg(String key, boolean on) {
             this.key = key;
             this.on = on;
+            this.defaultOn = on;
+        }
+
+        public boolean isDefaultOn() {
+            return defaultOn;
         }
 
         public void setOn(boolean on) {
