@@ -1593,8 +1593,11 @@ a.path-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .confirm-modal.is-paste{width:min(520px,92vw);max-height:min(86vh,720px);overflow:hidden;gap:16px;padding:20px 20px 16px}
 .confirm-modal.is-theso{width:min(560px,94vw);max-height:min(88vh,760px);overflow:hidden;gap:16px;padding:20px 20px 16px}
 .confirm-modal.is-ark{width:min(520px,94vw)}
-.confirm-modal.is-csv{width:min(560px,94vw)}
-.confirm-modal.is-csv .cv-dlg-body{gap:12px}
+.confirm-modal.is-csv{width:min(920px,94vw)}
+.confirm-modal.is-csv .cv-dlg-body{gap:12px;min-width:0}
+.confirm-modal.is-csv .cv-dlg-card,
+.confirm-modal.is-csv .cv-csv-help,
+.confirm-modal.is-csv .cv-csv-fmt-wrap{min-width:0;max-width:100%}
 .confirm-modal.is-theso .cv-dlg-body{gap:14px}
 .confirm-modal.is-theso .confirm-actions{margin-top:2px;padding-top:14px;border-top:1px solid var(--line)}
 .cv-dlg-branch{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 12px}
@@ -1770,8 +1773,11 @@ html[lang="AR"] .cv-dlg-move-arrow{transform:scaleX(-1)}
 .cv-csv-help[open] > summary{border-bottom:1px solid var(--line)}
 .cv-csv-help[open] > summary::after{transform:rotate(225deg);margin-top:2px}
 .cv-csv-help > summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.cv-csv-fmt-wrap{overflow:auto;max-height:148px}
-.cv-csv-fmt{width:100%;border-collapse:collapse;font-size:11.5px}
+.cv-csv-fmt-wrap{overflow-x:auto;max-width:100%;scrollbar-width:thin;scrollbar-color:var(--n-400) transparent}
+.cv-csv-fmt-wrap::-webkit-scrollbar{height:8px}
+.cv-csv-fmt-wrap::-webkit-scrollbar-thumb{background:var(--n-300)}
+.cv-csv-fmt-wrap::-webkit-scrollbar-track{background:var(--surface-2)}
+.cv-csv-fmt{width:max-content;min-width:100%;border-collapse:collapse;font-size:11.5px}
 .cv-csv-fmt th,.cv-csv-fmt td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 .cv-csv-fmt th{background:var(--surface-2);font-weight:700;color:var(--ink-3)}
 .cv-csv-fmt td{color:var(--ink-2);font-family:var(--mono, "IBM Plex Mono", ui-monospace, monospace);font-size:11px}
