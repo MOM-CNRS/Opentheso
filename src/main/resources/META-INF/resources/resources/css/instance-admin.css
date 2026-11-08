@@ -1,22 +1,23 @@
 /* Administration de l'instance — hub + sous-pages */
 
-body[data-page="admin-instance"] .sidebar,
-body[data-page="admin-instance"] .resizer,
-body[data-page="admin-instance"] .sb-rail-btn,
-body[data-page="admin-instance"] .view-rail,
-body[data-page="admin-instance"] .fiche,
-body[data-page="admin-instance"] #conceptDetail,
-body[data-page="admin-instance"] .detail-panel{display:none !important}
-body[data-page="admin-instance"] .panes{display:block;height:100%}
-body[data-page="admin-instance"] .content{display:flex;flex-direction:column;height:100%;min-width:0}
-body[data-page="admin-instance"] .main{overflow:auto;min-width:0;flex:1;background:transparent}
-body[data-page="admin-instance"] #previewView{height:100%;overflow:auto}
-body[data-page="admin-instance"] .view-lang-refresh{display:block;width:100%;min-height:100%}
+body:is([data-page="admin-instance"],[data-page="projets"]) .sidebar,
+body:is([data-page="admin-instance"],[data-page="projets"]) .resizer,
+body:is([data-page="admin-instance"],[data-page="projets"]) .sb-rail-btn,
+body:is([data-page="admin-instance"],[data-page="projets"]) .view-rail,
+body:is([data-page="admin-instance"],[data-page="projets"]) .fiche,
+body:is([data-page="admin-instance"],[data-page="projets"]) #conceptDetail,
+body:is([data-page="admin-instance"],[data-page="projets"]) .detail-panel{display:none !important}
+body:is([data-page="admin-instance"],[data-page="projets"]) .panes{display:block;height:100%}
+body:is([data-page="admin-instance"],[data-page="projets"]) .content{display:flex;flex-direction:column;height:100%;min-width:0}
+body:is([data-page="admin-instance"],[data-page="projets"]) .main{overflow:auto;min-width:0;flex:1;background:transparent}
+body:is([data-page="admin-instance"],[data-page="projets"]) #previewView{height:100%;overflow:auto}
+body:is([data-page="admin-instance"],[data-page="projets"]) .view-lang-refresh{display:block;width:100%;min-height:100%}
 
 /* display:contents sur <form> casse les clics après un re-rendu AJAX (éléments
    dynamiques plus associés au formulaire). Garder un vrai bloc. */
 .ia-form-root{display:block;width:100%;min-height:100%;margin:0;padding:0;border:0}
 a.spl-row,a.bc-lk,a.bo-back,a.bo-btn{color:inherit;text-decoration:none}
+a.bo-btn.is-disabled,span.bo-btn.is-disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
 .muted{color:var(--ink-3);font-size:13px;padding:12px 4px}
 .st-td-act{text-align:right;white-space:nowrap}
 .st-td-act .bo-btn{display:inline-flex;align-items:center;gap:6px}
@@ -31,7 +32,7 @@ a.spl-row,a.bc-lk,a.bo-back,a.bo-btn{color:inherit;text-decoration:none}
 }
 .bo-solo>*{grid-column:2;min-width:0}
 .bo-solo>.bc{grid-column:2;grid-row:1;margin:0 0 10px}
-body[data-page="admin-instance"] .bo-back,
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-back,
 .bo-solo>.bo-back{
   grid-column:1;grid-row:2;position:static !important;left:auto !important;top:auto !important;
   align-self:start;margin:2px 0 0;
@@ -58,10 +59,10 @@ button.bo-back{
 .bo-solo>.bo-head{grid-row:2;padding:0;margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .bo-solo>.bo-full{grid-row:3;grid-column:2}
 
-body[data-page="admin-instance"] .bo-title{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-title{
   font-size:clamp(22px, 2.4vw, 28px);font-weight:700;letter-spacing:-.028em;line-height:1.15;margin:0
 }
-body[data-page="admin-instance"] .bo-sub{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-sub{
   margin:8px 0 0;font-size:14px;line-height:1.45;color:var(--ink-3);max-width:42rem
 }
 .ia-head-meta{
@@ -215,32 +216,33 @@ body[data-page="accueil"]:has(.ia-denied) .content{width:100%}
 
 /* ── Content panels ── */
 .ia-pane{animation:iaRise .34s cubic-bezier(.22,1,.36,1) both}
-body[data-page="admin-instance"] .bo-card{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card{
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
   box-shadow:var(--shadow-sm);margin:0;overflow:visible;
   animation:iaRise .34s cubic-bezier(.22,1,.36,1) both
 }
-body[data-page="admin-instance"] .bo-card-h{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-h{
   padding:14px 16px;border-bottom:1px solid var(--line-2);
   display:flex;align-items:center;gap:12px;flex-wrap:wrap;
   background:linear-gradient(180deg, #fcfdfc, #fff)
 }
-body[data-page="admin-instance"] .bo-card-t{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-t{
   font-size:13.5px;font-weight:700;letter-spacing:.01em
 }
-body[data-page="admin-instance"] .bo-card-h .right{margin-left:auto}
-body[data-page="admin-instance"] .bo-card-b{padding:0}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-h .right{margin-left:auto}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-b{padding:0}
 
 /* Search + « Nouvel utilisateur » on one row (override .st-input{width:100%}) */
-body[data-page="admin-instance"] .ia-card-h-users{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-card-h-users{
   flex-wrap:nowrap !important;
   align-items:center;
   gap:12px
 }
-body[data-page="admin-instance"] .ia-card-h-users .bo-card-t{
+body[data-page="projets"] .ia-card-h-users{flex-wrap:wrap !important}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-card-h-users .bo-card-t{
   flex:0 0 auto
 }
-body[data-page="admin-instance"] .ia-toolbar{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar{
   margin-left:auto;
   display:inline-flex !important;
   flex-direction:row !important;
@@ -252,7 +254,7 @@ body[data-page="admin-instance"] .ia-toolbar{
   max-width:100%;
   flex-wrap:wrap !important
 }
-body[data-page="admin-instance"] .ia-toolbar-actions{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar-actions{
   display:inline-flex !important;
   flex-direction:row !important;
   align-items:center;
@@ -260,11 +262,11 @@ body[data-page="admin-instance"] .ia-toolbar-actions{
   flex:0 1 auto;
   min-width:0
 }
-body[data-page="admin-instance"] .ia-toolbar.is-busy,
-body[data-page="admin-instance"] .ia-scroll-users.is-busy{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar.is-busy,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-scroll-users.is-busy{
   opacity:.55;pointer-events:none;cursor:progress;transition:opacity .15s ease
 }
-body[data-page="admin-instance"] .ia-toolbar .ia-filter-select{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-filter-select{
   width:auto !important;
   min-width:132px;
   max-width:170px;
@@ -274,11 +276,11 @@ body[data-page="admin-instance"] .ia-toolbar .ia-filter-select{
   -webkit-appearance:menulist;appearance:menulist;
   font-size:13px !important
 }
-body[data-page="admin-instance"] .ia-create-btn{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-create-btn{
   height:36px;white-space:nowrap
 }
-body[data-page="admin-instance"] .ia-toolbar .ia-q.st-input,
-body[data-page="admin-instance"] .ia-toolbar input.ia-q{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-q.st-input,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.ia-q{
   width:220px !important;
   max-width:min(220px, 42vw) !important;
   min-width:0 !important;
@@ -292,15 +294,15 @@ body[data-page="admin-instance"] .ia-toolbar input.ia-q{
   font-size:13.5px !important;
   transition:border-color .15s ease, box-shadow .15s ease
 }
-body[data-page="admin-instance"] .ia-toolbar .ia-q:focus,
-body[data-page="admin-instance"] .ia-toolbar .ia-q:focus-visible{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-q:focus,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-q:focus-visible{
   border-color:var(--accent) !important;
   box-shadow:0 0 0 3px var(--accent-soft) !important;
   outline:none
 }
-body[data-page="admin-instance"] .ia-toolbar > .bo-btn,
-body[data-page="admin-instance"] .ia-toolbar a.bo-btn,
-body[data-page="admin-instance"] .ia-toolbar input.bo-btn{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar > .bo-btn,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar a.bo-btn,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.bo-btn{
   display:inline-flex !important;
   flex:0 0 auto !important;
   align-items:center;
@@ -310,10 +312,10 @@ body[data-page="admin-instance"] .ia-toolbar input.bo-btn{
   white-space:nowrap;
   box-sizing:border-box
 }
-body[data-page="admin-instance"] .ia-toolbar input.bo-btn{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.bo-btn{
   appearance:none;-webkit-appearance:none;margin:0;cursor:pointer;font:inherit
 }
-body[data-page="admin-instance"] .ia-toolbar .bo-btn svg{width:15px;height:15px}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .bo-btn svg{width:15px;height:15px}
 
 .ia-h-act{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ia-h-act .ia-q,
@@ -407,6 +409,9 @@ button.ia-member-hit{
 .ia-member-hit-name{font-size:13.5px;font-weight:650}
 .ia-member-hit-mail{font-size:12px;color:var(--ink-3)}
 .ia-ac{position:relative;z-index:8}
+#mpUserPick .coll-ac-list{display:flex;flex-direction:column}
+#mpUserPick .ac{max-height:min(32vh,240px);padding-bottom:6px}
+#mpUserPick .search-clear,#mpUserPick .coll-pick-caret{border:0;background:transparent;padding:0;cursor:pointer}
 .ia-ac-list{
   position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;
   display:flex;flex-direction:column;gap:2px;max-height:220px;overflow:auto;
@@ -612,8 +617,8 @@ button.ia-member-hit{
   width:100%;max-width:none;height:38px;padding:6px 12px !important;border-radius:var(--r) !important;
   -webkit-appearance:menulist;appearance:menulist;pointer-events:auto !important
 }
-body[data-page="admin-instance"] .bo-card{overflow:visible}
-body[data-page="admin-instance"] .ia-create{overflow:visible}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card{overflow:visible}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-create{overflow:visible}
 .ia-proj{overflow:visible;position:relative;z-index:1}
 .ia-proj-commit{
   white-space:nowrap;height:36px;cursor:pointer;
@@ -666,6 +671,8 @@ button.ia-chip-x{border:0;background:transparent;padding:0;cursor:pointer;font:i
     );
   box-shadow:inset 0 1px 2px rgba(16,20,18,.045)
 }
+.ia-mode-3{grid-template-columns:1fr 1fr 1fr}
+a.ia-mode-opt{color:inherit;text-decoration:none}
 .ia-mode-opt,
 input.ia-mode-opt{
   appearance:none;-webkit-appearance:none;margin:0;
@@ -802,7 +809,7 @@ input.ia-mode-opt:focus-visible{
   justify-content:flex-end !important;
   background:linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 35%, #fff), #fff) !important
 }
-body[data-page="admin-instance"] .ia-proj-card-h .ia-proj-toolbar{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h .ia-proj-toolbar{
   margin-left:auto;
   width:auto;
   max-width:100%;
@@ -821,8 +828,8 @@ body[data-page="admin-instance"] .ia-proj-card-h .ia-proj-toolbar{
   width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round
 }
-body[data-page="admin-instance"] .ia-proj-card-h .ia-proj-search-input.ia-q.st-input,
-body[data-page="admin-instance"] .ia-proj-card-h input.ia-proj-search-input{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h .ia-proj-search-input.ia-q.st-input,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h input.ia-proj-search-input{
   width:100% !important;max-width:none !important;flex:1 1 auto !important;
   height:40px;padding:8px 14px 8px 38px !important;border-radius:var(--r) !important;
   background:var(--surface) !important
@@ -846,7 +853,7 @@ body[data-page="admin-instance"] .ia-proj-card-h input.ia-proj-search-input{
   padding:4px 0;-webkit-overflow-scrolling:touch
 }
 .ia-proj-pager{flex:0 0 auto;margin:0;padding:10px 12px 12px;background:var(--surface)}
-body[data-page="admin-instance"] .ia-thes-pane .ia-thes-card.bo-card{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-thes-pane .ia-thes-card.bo-card{
   display:flex;flex-direction:column;overflow:hidden;
   max-height:calc(100vh - 168px);min-height:320px
 }
@@ -1083,14 +1090,14 @@ input.ia-ajax-proxy-btn,
   width:auto !important;min-width:72px;height:32px;padding:4px 8px !important;border-radius:var(--r-sm) !important;
   -webkit-appearance:menulist;appearance:menulist;font-size:13px !important
 }
-body[data-page="admin-instance"] .bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
-body[data-page="admin-instance"] .bo-btn.primary.danger,
-body[data-page="admin-instance"] .confirm-modal a.bo-btn.danger,
-body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.primary.danger,
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal a.bo-btn.danger,
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal button.bo-btn.danger{
   background:var(--danger, #b42318);border-color:transparent;color:#fff
 }
-body[data-page="admin-instance"] .confirm-modal a.bo-btn.danger:hover,
-body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger:hover{
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal a.bo-btn.danger:hover,
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal button.bo-btn.danger:hover{
   filter:brightness(1.06);color:#fff
 }
 .ia-delete .ia-create-d b{color:var(--ink)}
@@ -1104,7 +1111,7 @@ body[data-page="admin-instance"] .confirm-modal button.bo-btn.danger:hover{
 }
 .ia-edit-actions-danger{position:relative;display:flex;align-items:center;min-height:38px}
 .ia-edit-actions-main{display:inline-flex;flex-wrap:wrap;gap:8px;margin-left:auto}
-body[data-page="admin-instance"] button.ia-edit-delete{
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete{
   appearance:none;-webkit-appearance:none;
   display:inline-flex !important;align-items:center;justify-content:center;gap:9px;
   height:38px;min-height:38px;padding:0 14px 0 11px;margin:0;
@@ -1125,12 +1132,12 @@ body[data-page="admin-instance"] button.ia-edit-delete{
     box-shadow .16s ease,
     transform .12s ease
 }
-body[data-page="admin-instance"] button.ia-edit-delete svg{
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete svg{
   width:15px;height:15px;flex:0 0 auto;
   stroke:currentColor;stroke-width:2;fill:none;
   stroke-linecap:round;stroke-linejoin:round;pointer-events:none
 }
-body[data-page="admin-instance"] button.ia-edit-delete:hover{
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete:hover{
   color:#7f1515;
   background:linear-gradient(
     180deg,
@@ -1142,12 +1149,12 @@ body[data-page="admin-instance"] button.ia-edit-delete:hover{
     inset 0 1px 0 rgba(255,255,255,.45),
     0 1px 2px color-mix(in srgb, #b42318 14%, transparent)
 }
-body[data-page="admin-instance"] button.ia-edit-delete:active{
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete:active{
   transform:translateY(1px);
   background:color-mix(in srgb, #b42318 16%, var(--surface, #fff));
   box-shadow:inset 0 1px 2px color-mix(in srgb, #b42318 18%, transparent)
 }
-body[data-page="admin-instance"] button.ia-edit-delete:focus-visible{
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete:focus-visible{
   outline:2px solid color-mix(in srgb, #b42318 55%, transparent);
   outline-offset:2px
 }
@@ -1205,24 +1212,24 @@ body[data-page="admin-instance"] button.ia-edit-delete:focus-visible{
 }
 .ia-vis.is-private::before{background:var(--ink-4)}
 
-body[data-page="admin-instance"] .bo-btn.ghost.sm{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm{
   border:1px solid var(--line);border-radius:var(--r);padding:6px 11px;
   font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--surface);
   transition:border-color .15s ease, color .15s ease, background .15s ease, transform .15s ease
 }
-body[data-page="admin-instance"] .bo-btn.ghost.sm:hover{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm:hover{
   border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)
 }
-body[data-page="admin-instance"] .bo-btn.ghost.sm.danger{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm.danger{
   color:var(--danger, #b42318);
   border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))
 }
-body[data-page="admin-instance"] .bo-btn.ghost.sm.danger:hover{
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm.danger:hover{
   color:#7f1515;
   background:color-mix(in srgb, #b42318 10%, var(--surface, #fff));
   border-color:color-mix(in srgb, #b42318 46%, var(--line))
 }
-body[data-page="admin-instance"] .bo-btn.ghost.sm:active{transform:scale(.98)}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm:active{transform:scale(.98)}
 
 .bo-todo-box{
   border:1.5px dashed rgba(217,137,42,.4);background:rgba(217,137,42,.05);
@@ -1266,7 +1273,7 @@ body[data-page="admin-instance"] .bo-btn.ghost.sm:active{transform:scale(.98)}
    des boutons injectés après un re-rendu partiel. */
 .ia-shell{position:relative}
 .ia-confirm-layer{position:static;margin:0;padding:0;border:0;min-height:0}
-body[data-page="admin-instance"] .ia-confirm-overlay.block-overlay{
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-confirm-overlay.block-overlay{
   position:fixed !important;
   inset:0 !important;
   z-index:6000 !important;
@@ -1284,7 +1291,7 @@ body[data-page="admin-instance"] .ia-confirm-overlay.block-overlay{
   -webkit-backdrop-filter:blur(3px)
 }
 body.ia-nav-leaving{cursor:progress}
-body[data-page="admin-instance"] .bo-back.is-leaving,
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-back.is-leaving,
 .bo-solo>.bo-back.is-leaving{
   transform:scale(.9) translateX(-4px);
   border-color:var(--accent-line);
@@ -1318,34 +1325,34 @@ body[data-page="admin-instance"] .bo-back.is-leaving,
   .bo-solo>.bo-head{grid-row:3;margin-bottom:16px}
   .bo-solo>.bo-full{grid-row:4}
   .bo-solo>.bo-head{flex-direction:column;align-items:flex-start}
-  body[data-page="admin-instance"] .ia-card-h-users{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-card-h-users{
     flex-wrap:wrap !important
   }
-  body[data-page="admin-instance"] .ia-toolbar{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar{
     width:100%;
     margin-left:0;
     flex:1 1 100%;
     justify-content:flex-start
   }
-  body[data-page="admin-instance"] .ia-toolbar .ia-q.st-input,
-  body[data-page="admin-instance"] .ia-toolbar input.ia-q{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-q.st-input,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.ia-q{
     flex:1 1 auto !important;
     width:auto !important;
     max-width:none !important
   }
-  body[data-page="admin-instance"] .ia-toolbar-actions{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar-actions{
     width:100%;
     flex-wrap:wrap
   }
-  body[data-page="admin-instance"] .ia-toolbar .ia-filter-select{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-filter-select{
     flex:1 1 calc(50% - 6px);
     max-width:none;
     min-width:0
   }
-  body[data-page="admin-instance"] .ia-toolbar .ia-create-btn,
-  body[data-page="admin-instance"] .ia-toolbar > .bo-btn,
-  body[data-page="admin-instance"] .ia-toolbar a.bo-btn,
-  body[data-page="admin-instance"] .ia-toolbar input.bo-btn{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-create-btn,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar > .bo-btn,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar a.bo-btn,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.bo-btn{
     flex:0 0 auto !important
   }
   .ia-h-act{width:100%}
@@ -1364,16 +1371,16 @@ body[data-page="admin-instance"] .bo-back.is-leaving,
   .ia-edit-actions-main{margin-left:0;width:100%}
   .ia-edit-actions-main .bo-btn{flex:1}
   .ia-edit-actions-danger{width:100%;justify-content:stretch;min-height:0}
-  body[data-page="admin-instance"] button.ia-edit-delete{width:100%;padding:0 14px}
-  body[data-page="admin-instance"] .bo-card-h{align-items:center}
-  body[data-page="admin-instance"] .bo-card-h .right{margin-left:0;width:100%}
+  body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete{width:100%;padding:0 14px}
+  body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-h{align-items:center}
+  body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-h .right{margin-left:0;width:100%}
 
   .ia-proj-card-h{
     flex-wrap:wrap !important;
     align-items:stretch !important;
     justify-content:stretch !important
   }
-  body[data-page="admin-instance"] .ia-proj-card-h .ia-proj-toolbar{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h .ia-proj-toolbar{
     width:100%;
     margin-left:0;
     flex-wrap:wrap !important;
@@ -1989,7 +1996,7 @@ button.ia-dash-bar:hover{background:var(--surface-2, #f4f6f5)}
   .ia-dash-bar-track i,.ia-dash-col-bar,.ia-dash-mini i,.ia-dash-meter{
     transition:none !important
   }
-  .bo-solo,.spl-row,.ia-pane,body[data-page="admin-instance"] .bo-card,.bo-todo-box,
+  .bo-solo,.spl-row,.ia-pane,body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card,.bo-todo-box,
   .ia-denied-panel,.ia-denied-mark{
     animation:none !important
   }
@@ -1999,7 +2006,7 @@ button.ia-dash-bar:hover{background:var(--surface-2, #f4f6f5)}
   }
   .thesaurus-btn.is-nav-pulse{animation:none !important}
   .spl-row,.spl-ico,.spl-go,.bo-solo>.bo-back,
-  body[data-page="admin-instance"] .bo-btn.ghost.sm,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm,
   .ia-proj-row,.ia-proj-main,.ia-proj-avatar,.ia-proj-chev,.ia-proj-acts{
     transition:none !important
   }

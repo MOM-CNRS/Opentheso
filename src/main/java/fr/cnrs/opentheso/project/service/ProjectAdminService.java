@@ -33,6 +33,20 @@ public class ProjectAdminService {
         return rows.stream().map(ProjectMapper::toSummary).toList();
     }
 
+    /**
+     * Projets que l'utilisateur peut administrer : tous pour un super-admin,
+     * sinon uniquement ceux où son rôle est administrateur.
+     */
+    @Transactional(readOnly = true)
+    public List<ProjectSummary> listManagedProjects(int userId) {
+        var profile = userProfileService.getProfile(userId);
+        var rows = profile.superAdmin()
+                ? projectAdminQueryRepository.findAllProjects()
+                : projectAdminQueryRepository.findAdministeredProjectsForUser(
+                        userId, ProjectAccessPolicy.ROLE_MANAGER);
+        return rows.stream().map(ProjectMapper::toSummary).toList();
+    }
+
     @Transactional(readOnly = true)
     public ProjectDashboard loadDashboard(int userId, int projectId, String workLanguage) {
         var profile = userProfileService.getProfile(userId);
@@ -78,12 +92,12 @@ public class ProjectAdminService {
         );
     }
 
+    /**
+     * L'écran Mes projets n'est ouvert qu'à un administrateur d'au moins un projet.
+     * Le statut de super-administrateur, à lui seul, ne suffit pas.
+     */
     @Transactional(readOnly = true)
     public boolean canAccessProjectAdminPage(int userId) {
-        var profile = userProfileService.getProfile(userId);
-        if (profile.superAdmin()) {
-            return true;
-        }
         return projectAdminQueryRepository.hasAdminRoleOnAnyProject(userId, ProjectAccessPolicy.ROLE_MANAGER);
     }
 }

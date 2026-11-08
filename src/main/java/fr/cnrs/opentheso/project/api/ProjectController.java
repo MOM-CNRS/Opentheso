@@ -103,7 +103,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}")
-    @Operation(summary = "Supprimer un projet", description = "Supprime un projet. Réservé aux super-administrateurs.")
+    @Operation(summary = "Supprimer un projet", description = "Supprime un projet sans thésaurus. Réservé au super-administrateur ou à l'administrateur de ce projet.")
     public ResponseEntity<Void> deleteProject(
             @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
             @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,

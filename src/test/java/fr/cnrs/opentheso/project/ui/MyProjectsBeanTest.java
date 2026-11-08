@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -87,7 +88,7 @@ class MyProjectsBeanTest {
     @Test
     void load_listsProjectsWithoutDashboardWhenNoneSelected() {
         when(userSession.getCurrentUserId()).thenReturn(5);
-        when(projectAdminService.listAccessibleProjects(5)).thenReturn(
+        when(projectAdminService.listManagedProjects(5)).thenReturn(
                 List.of(new ProjectSummary(1, "Projet A"))
         );
 
@@ -152,7 +153,7 @@ class MyProjectsBeanTest {
     void createProject_refreshesListAndShowsSuccessMessage() {
         when(userSession.getCurrentUserId()).thenReturn(5);
         when(userSession.isSuperAdmin()).thenReturn(true);
-        when(projectAdminService.listAccessibleProjects(5)).thenReturn(List.of(new ProjectSummary(9, "Nouveau")));
+        when(projectAdminService.listManagedProjects(5)).thenReturn(List.of(new ProjectSummary(9, "Nouveau")));
         myProjectsBean.setNewProjectName("Nouveau");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
@@ -186,7 +187,7 @@ class MyProjectsBeanTest {
         myProjectsBean.setSelectedProjectId(3);
         myProjectsBean.setDashboard(buildDashboard());
         myProjectsBean.setRenameProjectLabel("Renommé");
-        when(projectAdminService.listAccessibleProjects(5)).thenReturn(List.of(new ProjectSummary(3, "Renommé")));
+        when(projectAdminService.listManagedProjects(5)).thenReturn(List.of(new ProjectSummary(3, "Renommé")));
         when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(
                 new ProjectDashboard(3, "Renommé", true, 2, List.of(), List.of(), List.of(), List.of())
         );
@@ -198,6 +199,43 @@ class MyProjectsBeanTest {
         }
 
         verify(projectManagementService).renameProject(5, false, 3, "Renommé");
+    }
+
+    @Test
+    void deleteProject_returnsToTheList() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setDashboard(buildDashboard());
+        when(projectAdminService.listManagedProjects(5)).thenReturn(List.of());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            myProjectsBean.deleteProject();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.deletedSuccess"));
+        }
+
+        verify(projectManagementService).deleteProject(5, false, 3);
+        assertNull(myProjectsBean.getSelectedProjectId());
+        assertTrue(myProjectsBean.getProjects().isEmpty());
+    }
+
+    @Test
+    void deleteProject_keepsThePanelWhenThesauriRemain() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        doThrow(new InvalidProjectDataException(
+                "Retirez ou déplacez les thésaurus du projet avant de le supprimer."))
+                .when(projectManagementService).deleteProject(5, false, 3);
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            myProjectsBean.deleteProject();
+            messages.verify(() -> MessageUtils.showErrorMessage(
+                    "Retirez ou déplacez les thésaurus du projet avant de le supprimer."));
+        }
+
+        assertEquals(3, myProjectsBean.getSelectedProjectId());
+        verify(projectAdminService, never()).listManagedProjects(anyInt());
     }
 
     @Test
@@ -256,7 +294,7 @@ class MyProjectsBeanTest {
     void load_showsErrorWhenDashboardAccessDenied() {
         when(userSession.getCurrentUserId()).thenReturn(5);
         myProjectsBean.setSelectedProjectId(3);
-        when(projectAdminService.listAccessibleProjects(5)).thenReturn(Collections.emptyList());
+        when(projectAdminService.listManagedProjects(5)).thenReturn(Collections.emptyList());
         when(projectAdminService.loadDashboard(5, 3, "fr"))
                 .thenThrow(new ProjectAccessDeniedException());
 
@@ -617,6 +655,18 @@ class MyProjectsBeanTest {
 
         assertEquals(1, result.size());
         assertEquals(9, result.get(0).id());
+    }
+
+    @Test
+    void moveThesaurusEnabled_isFalseWhenAdminHasNoOtherProject() {
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setProjects(List.of(new ProjectSummary(3, "Seul")));
+
+        assertFalse(myProjectsBean.isMoveThesaurusEnabled());
+
+        myProjectsBean.setProjects(List.of(new ProjectSummary(3, "Seul"), new ProjectSummary(9, "Autre")));
+
+        assertTrue(myProjectsBean.isMoveThesaurusEnabled());
     }
 
     private static ProjectDashboard buildDashboard() {

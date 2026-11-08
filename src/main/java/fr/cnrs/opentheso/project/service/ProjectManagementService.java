@@ -70,9 +70,13 @@ public class ProjectManagementService {
     @Transactional
     public void deleteProject(int callerId, boolean superAdmin, int projectId) {
         if (!superAdmin) {
-            throw new InvalidProjectDataException("Seul un super-administrateur peut supprimer un projet.");
+            requireProjectAdmin(callerId, false, projectId);
         }
         projectLookupService.requireEntity(projectId);
+        if (projectAdminQueryRepository.countThesauriOfProject(projectId) > 0) {
+            throw new InvalidProjectDataException(
+                    "Retirez ou déplacez les thésaurus du projet avant de le supprimer.");
+        }
         projectMembershipRepository.deleteProjectMemberships(projectId);
         projectRepository.deleteById(projectId);
         log.info("Projet supprimé id={} par l'utilisateur id={}", projectId, callerId);

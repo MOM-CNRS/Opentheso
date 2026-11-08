@@ -17,18 +17,17 @@ import fr.cnrs.opentheso.project.service.ProjectManagementService;
 import fr.cnrs.opentheso.project.service.ProjectMemberService;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.user.service.UserProfileService;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Slf4j
 @Getter
 @Setter
 @ViewScoped
@@ -108,7 +107,7 @@ public class MyProjectsBean implements Serializable {
     private String thesaurusToRemoveId;
     private String thesaurusToRemoveTitle;
 
-    /** V2 panel: null | create | rename | createMember | addExisting | editMemberRole | removeMember | editLimited | removeLimited | removeThesaurus | moveThesaurus */
+    /** V2 panel: null | create | rename | delete | createMember | addExisting | editMemberRole | removeMember | editLimited | removeLimited | removeThesaurus | moveThesaurus */
     private String activePanel;
     private String existingUserQuery = "";
     private List<UserSearchResult> existingUserHits = Collections.emptyList();
@@ -127,6 +126,7 @@ public class MyProjectsBean implements Serializable {
 
     private static final String PANEL_CREATE = "create";
     private static final String PANEL_RENAME = "rename";
+    private static final String PANEL_DELETE = "delete";
     private static final String PANEL_CREATE_MEMBER = "createMember";
     private static final String PANEL_ADD_EXISTING = "addExisting";
     private static final String PANEL_EDIT_MEMBER_ROLE = "editMemberRole";
@@ -152,13 +152,25 @@ public class MyProjectsBean implements Serializable {
         this.userProfileService = userProfileService;
     }
 
+    /**
+     * Chargement initial. {@code ui:insert name="viewActions"} est souvent ignoré,
+     * le même appel part donc aussi de {@code preRenderView}.
+     */
+    public void ensureLoaded() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces != null && (faces.isPostback() || faces.getPartialViewContext().isAjaxRequest())) {
+            return;
+        }
+        load();
+    }
+
     public void load() {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
             clearState();
             return;
         }
-        projects = projectAdminService.listAccessibleProjects(userId);
+        projects = projectAdminService.listManagedProjects(userId);
         if (selectedProjectId != null) {
             loadDashboard(userId);
         } else {
@@ -174,6 +186,18 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         loadDashboard(userId);
+    }
+
+    public void showThesauri() {
+        activeSectionIndex = 0;
+    }
+
+    public void showMembers() {
+        activeSectionIndex = 1;
+    }
+
+    public void showLimitedRoles() {
+        activeSectionIndex = 2;
     }
 
     public void selectProject(int projectId) {
@@ -206,6 +230,11 @@ public class MyProjectsBean implements Serializable {
     public void openRenamePanel() {
         prepareRenameDialog();
         activePanel = PANEL_RENAME;
+        panelError = null;
+    }
+
+    public void openDeletePanel() {
+        activePanel = PANEL_DELETE;
         panelError = null;
     }
 
@@ -250,7 +279,7 @@ public class MyProjectsBean implements Serializable {
                 && !typed.equalsIgnoreCase(selectedExistingUser.username())) {
             selectedExistingUser = null;
         }
-        if (selectedExistingUser != null || typed.length() < 2) {
+        if (selectedExistingUser != null || typed.length() < 1) {
             existingUserHits = List.of();
             existingUserSearched = false;
             panelError = null;
@@ -298,8 +327,10 @@ public class MyProjectsBean implements Serializable {
 
     public void clearPickedExistingUser() {
         selectedExistingUser = null;
+        existingUserQuery = "";
         existingUserHits = List.of();
         existingUserSearched = false;
+        panelError = null;
     }
 
     public void openEditMemberRolePanel(ProjectMember member) {
@@ -825,6 +856,10 @@ public class MyProjectsBean implements Serializable {
         return result;
     }
 
+    public boolean isMoveThesaurusEnabled() {
+        return !getMoveTargetProjects().isEmpty();
+    }
+
     public String getSelectedProjectName() {
         return dashboard != null ? dashboard.projectName() : "";
     }
@@ -883,6 +918,23 @@ public class MyProjectsBean implements Serializable {
             prepareRenameDialog();
             load();
             closeActivePanel();
+            refreshPage();
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
+            MessageUtils.showErrorMessage(e.getMessage());
+        }
+    }
+
+    public void deleteProject() {
+        Integer userId = requireConnectedUserId();
+        if (userId == null || selectedProjectId == null) {
+            return;
+        }
+        try {
+            projectManagementService.deleteProject(userId, userSession.isSuperAdmin(), selectedProjectId);
+            MessageUtils.showInformationMessage(localeBean.getMsg("project.deletedSuccess"));
+            backToList();
+            load();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
             panelError = e.getMessage();

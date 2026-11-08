@@ -3186,9 +3186,12 @@ if (SCREEN === "preference" && location.hash) {
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    if (document.body && document.body.getAttribute("data-page") === "admin-instance") {
-      const adminBtn = document.querySelector('.thesaurus a.thesaurus-btn[title="Administration de l\'instance"]');
-      if (adminBtn) adminBtn.classList.add("is-on");
+    if (document.body && (document.body.getAttribute("data-page") === "admin-instance"
+        || document.body.getAttribute("data-page") === "projets")) {
+      if (document.body.getAttribute("data-page") === "admin-instance") {
+        const adminBtn = document.querySelector('.thesaurus a.thesaurus-btn[title="Administration de l\'instance"]');
+        if (adminBtn) adminBtn.classList.add("is-on");
+      }
       iaConsumeFlash();
     }
   });
@@ -3375,4 +3378,111 @@ if (SCREEN === "preference" && location.hash) {
   }
   iaBindFlash();
   document.addEventListener("DOMContentLoaded", iaBindFlash);
+
+  function mpUserMenu() {
+    return document.getElementById("mpUserMenu");
+  }
+
+  function mpUserRows() {
+    const menu = mpUserMenu();
+    if (!menu) return [];
+    return [...menu.querySelectorAll(".ac-row.is-shown")];
+  }
+
+  function mpUserOpen(open) {
+    const menu = mpUserMenu();
+    const pick = document.getElementById("mpUserPick");
+    const combo = document.getElementById("mpUserCombo");
+    const input = document.getElementById("mpExistingUserQuery");
+    if (menu) menu.hidden = !open;
+    if (pick) pick.classList.toggle("is-open", !!open);
+    if (combo) combo.classList.toggle("is-open", !!open);
+    if (input) input.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function mpUserSetActive(index) {
+    const rows = mpUserRows();
+    const next = rows.length ? Math.max(0, Math.min(index, rows.length - 1)) : -1;
+    rows.forEach((row, i) => row.classList.toggle("is-active", i === next));
+    if (next >= 0 && rows[next]) rows[next].scrollIntoView({ block: "nearest" });
+    return next;
+  }
+
+  window.mpUserAcAjax = function (data) {
+    if (!data || data.status !== "success") return;
+    const menu = mpUserMenu();
+    const input = document.getElementById("mpExistingUserQuery");
+    const clear = document.getElementById("mpUserClear");
+    if (!menu) return;
+    const show = !menu.hidden && (menu.classList.contains("has-hits") || menu.classList.contains("is-empty"));
+    mpUserOpen(show);
+    if (clear && input) clear.hidden = !input.value;
+    if (show) mpUserSetActive(0);
+  };
+
+  document.addEventListener("input", function (e) {
+    if (!e.target || e.target.id !== "mpExistingUserQuery") return;
+    const clear = document.getElementById("mpUserClear");
+    if (clear) clear.hidden = !e.target.value;
+    clearTimeout(window._mpUserSearchTimer);
+    window._mpUserSearchTimer = setTimeout(function () {
+      const go = document.getElementById("mpExistingUserSearchGo");
+      if (go) go.click();
+    }, 200);
+  });
+
+  document.addEventListener("click", function (e) {
+    const pick = document.getElementById("mpUserPick");
+    if (!pick) return;
+    if (e.target.closest && e.target.closest("#mpUserClear")) {
+      e.preventDefault();
+      const go = document.getElementById("mpExistingUserClearGo");
+      if (go) go.click();
+      return;
+    }
+    if (e.target.closest && e.target.closest("#mpUserCaret")) {
+      e.preventDefault();
+      const menu = mpUserMenu();
+      const open = pick.classList.contains("is-open");
+      if (open) {
+        mpUserOpen(false);
+        return;
+      }
+      if (menu && (menu.classList.contains("has-hits") || menu.classList.contains("is-empty"))) {
+        mpUserOpen(true);
+        mpUserSetActive(0);
+      }
+      const input = document.getElementById("mpExistingUserQuery");
+      if (input) input.focus();
+      return;
+    }
+    if (!pick.contains(e.target)) mpUserOpen(false);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (!e.target || e.target.id !== "mpExistingUserQuery") return;
+    const pick = document.getElementById("mpUserPick");
+    const open = !!(pick && pick.classList.contains("is-open"));
+    const rows = open ? mpUserRows() : [];
+    if (e.key === "ArrowDown") {
+      if (!rows.length) return;
+      e.preventDefault();
+      const current = rows.findIndex((row) => row.classList.contains("is-active"));
+      mpUserSetActive(current < 0 ? 0 : current + 1);
+    } else if (e.key === "ArrowUp") {
+      if (!rows.length) return;
+      e.preventDefault();
+      const current = rows.findIndex((row) => row.classList.contains("is-active"));
+      mpUserSetActive(current < 0 ? 0 : current - 1);
+    } else if (e.key === "Enter") {
+      if (!rows.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const row = rows.find((item) => item.classList.contains("is-active")) || rows[0];
+      if (window.iaQueuePick) window.iaQueuePick(row, e);
+    } else if (e.key === "Escape" && open) {
+      e.preventDefault();
+      mpUserOpen(false);
+    }
+  });
 })();

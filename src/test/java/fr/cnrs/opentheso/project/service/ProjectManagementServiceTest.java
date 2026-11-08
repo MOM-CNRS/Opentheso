@@ -148,6 +148,7 @@ class ProjectManagementServiceTest {
     @Test
     void deleteProject_removesMembershipsAndEntityForSuperAdmin() {
         when(projectLookupService.requireEntity(3)).thenReturn(buildEntity(3, "Projet"));
+        when(projectAdminQueryRepository.countThesauriOfProject(3)).thenReturn(0);
 
         projectManagementService.deleteProject(1, true, 3);
 
@@ -156,9 +157,33 @@ class ProjectManagementServiceTest {
     }
 
     @Test
-    void deleteProject_throwsWhenNotSuperAdmin() {
-        assertThrows(InvalidProjectDataException.class,
+    void deleteProject_removesEmptyProjectForProjectAdmin() {
+        when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(2));
+        when(projectLookupService.requireEntity(3)).thenReturn(buildEntity(3, "Projet"));
+        when(projectAdminQueryRepository.countThesauriOfProject(3)).thenReturn(0);
+
+        projectManagementService.deleteProject(5, false, 3);
+
+        verify(projectMembershipRepository).deleteProjectMemberships(3);
+        verify(projectRepository).deleteById(3);
+    }
+
+    @Test
+    void deleteProject_throwsWhenCallerIsNotProjectAdmin() {
+        when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(4));
+
+        assertThrows(ProjectAccessDeniedException.class,
                 () -> projectManagementService.deleteProject(5, false, 3));
+        verify(projectRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    void deleteProject_throwsWhenThesauriRemain() {
+        when(projectLookupService.requireEntity(3)).thenReturn(buildEntity(3, "Projet"));
+        when(projectAdminQueryRepository.countThesauriOfProject(3)).thenReturn(2);
+
+        assertThrows(InvalidProjectDataException.class,
+                () -> projectManagementService.deleteProject(1, true, 3));
         verify(projectRepository, never()).deleteById(anyInt());
     }
 

@@ -81,6 +81,19 @@ class ProjectAdminServiceTest {
     }
 
     @Test
+    void listManagedProjects_returnsOnlyAdministeredProjects() {
+        when(userProfileService.getProfile(5)).thenReturn(regularProfile(5));
+        when(projectAdminQueryRepository.findAdministeredProjectsForUser(5, ProjectAccessPolicy.ROLE_MANAGER))
+                .thenReturn(List.of(new ProjectSummaryRow(3, "Administré")));
+
+        List<ProjectSummary> projects = projectAdminService.listManagedProjects(5);
+
+        assertEquals(1, projects.size());
+        assertEquals("Administré", projects.get(0).name());
+        verify(projectAdminQueryRepository, never()).findAccessibleProjectsForUser(anyInt());
+    }
+
+    @Test
     void loadDashboard_buildsDashboardForProjectAdmin() {
         when(userProfileService.getProfile(5)).thenReturn(regularProfile(5));
         when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildEntity(3, "Projet X"));
@@ -136,15 +149,23 @@ class ProjectAdminServiceTest {
     }
 
     @Test
-    void canAccessProjectAdminPage_returnsTrueForSuperAdmin() {
-        when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
+    void canAccessProjectAdminPage_returnsFalseForSuperAdminWithoutAdministeredProject() {
+        when(projectAdminQueryRepository.hasAdminRoleOnAnyProject(1, ProjectAccessPolicy.ROLE_MANAGER))
+                .thenReturn(false);
+
+        assertFalse(projectAdminService.canAccessProjectAdminPage(1));
+    }
+
+    @Test
+    void canAccessProjectAdminPage_returnsTrueForSuperAdminWhoAdministersAProject() {
+        when(projectAdminQueryRepository.hasAdminRoleOnAnyProject(1, ProjectAccessPolicy.ROLE_MANAGER))
+                .thenReturn(true);
 
         assertTrue(projectAdminService.canAccessProjectAdminPage(1));
     }
 
     @Test
     void canAccessProjectAdminPage_returnsTrueWhenUserIsAdminOnProject() {
-        when(userProfileService.getProfile(5)).thenReturn(regularProfile(5));
         when(projectAdminQueryRepository.hasAdminRoleOnAnyProject(5, ProjectAccessPolicy.ROLE_MANAGER))
                 .thenReturn(true);
 
@@ -153,7 +174,6 @@ class ProjectAdminServiceTest {
 
     @Test
     void canAccessProjectAdminPage_returnsFalseWhenUserIsOnlyContributor() {
-        when(userProfileService.getProfile(5)).thenReturn(regularProfile(5));
         when(projectAdminQueryRepository.hasAdminRoleOnAnyProject(5, ProjectAccessPolicy.ROLE_MANAGER))
                 .thenReturn(false);
 

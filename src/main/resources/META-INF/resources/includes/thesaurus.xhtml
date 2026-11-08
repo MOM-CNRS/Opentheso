@@ -117,37 +117,24 @@
             </div>
           </ui:fragment>
         </div>
-        <ui:fragment rendered="#{userSession.loggedIn}">
+        <ui:fragment rendered="#{userSession.loggedIn and userSession.canAccessSuperAdminScreen()}">
           <div class="thesaurus-item">
             <h:outputLink value="#{request.contextPath}/admin/instance"
                           styleClass="thesaurus-btn#{page eq 'admin-instance' ? ' is-on' : ''}"
                           title="#{localeBean.getMsg('admin.instance.title')}"
-                          rendered="#{userSession.canAccessSuperAdminScreen()}"
                           onclick="return window.iaAnimateRailToAdmin &amp;&amp; window.iaAnimateRailToAdmin(this, event);">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
             </h:outputLink>
-            <ui:fragment rendered="#{not userSession.canAccessSuperAdminScreen()}">
-              <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
-                      title="#{localeBean.getMsg('nav.projects')}" aria-label="#{localeBean.getMsg('nav.projects')}" aria-expanded="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
-              </button>
-              <div class="menu-pop menu-pop--top" id="menu-projects">
-                <div class="menu-h">#{localeBean.getMsg('nav.projects')}</div>
-                <div class="proj-list">
-                  <a class="proj-row is-active" href="index.xhtml">
-                    <span class="proj-dot" style="background:#1f7a5c"></span>
-                    <div class="proj-main">
-                      <div class="proj-name">PACTOLS<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
-                      <div class="proj-sub">Gestionnaire · 438 concepts</div>
-                    </div>
-                  </a>
-                </div>
-                <h:outputLink value="project/projets.xhtml" styleClass="menu-foot">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-                  #{localeBean.getMsg('nav.manageAccess')}
-                </h:outputLink>
-              </div>
-            </ui:fragment>
+          </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{userSession.loggedIn and userSession.canAccessProjectAdminScreen()}">
+          <div class="thesaurus-item">
+            <h:outputLink value="#{request.contextPath}/project/projets"
+                          styleClass="thesaurus-btn#{page eq 'projets' ? ' is-on' : ''}"
+                          title="#{localeBean.getMsg('nav.projects')}"
+                          pt:aria-label="#{localeBean.getMsg('nav.projects')}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
+            </h:outputLink>
           </div>
         </ui:fragment>
       </h:panelGroup>

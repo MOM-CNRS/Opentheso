@@ -81,6 +81,33 @@ public class ProjectAdminQueryRepository {
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0).intValue());
     }
 
+    @SuppressWarnings("unchecked")
+    public List<ProjectSummaryRow> findAdministeredProjectsForUser(int userId, int managerRoleId) {
+        String sql = """
+                SELECT ugl.id_group, ugl.label_group
+                FROM user_group_label ugl
+                JOIN user_role_group urg ON urg.id_group = ugl.id_group
+                WHERE urg.id_user = :userId AND urg.id_role < :managerRoleId
+                ORDER BY LOWER(ugl.label_group)
+                """;
+        List<Object[]> rows = entityManager.createNativeQuery(sql)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter("managerRoleId", managerRoleId)
+                .getResultList();
+        return rows.stream()
+                .map(row -> new ProjectSummaryRow(((Number) row[0]).intValue(), (String) row[1]))
+                .toList();
+    }
+
+    public int countThesauriOfProject(int projectId) {
+        Number count = (Number) entityManager.createNativeQuery("""
+                        SELECT COUNT(*) FROM user_group_thesaurus WHERE id_group = :projectId
+                        """)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
+                .getSingleResult();
+        return count == null ? 0 : count.intValue();
+    }
+
     public boolean hasAdminRoleOnAnyProject(int userId, int managerRoleId) {
         String sql = """
                 SELECT EXISTS(

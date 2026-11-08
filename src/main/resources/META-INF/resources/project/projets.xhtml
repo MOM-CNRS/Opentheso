@@ -8,21 +8,23 @@
   <ui:param name="page" value="projets"/>
   <ui:define name="title">OpenTheso — Mes projets</ui:define>
   <ui:define name="viewActions">
-    <f:viewAction action="#{myProjectsBean.load}" onPostback="false"/>
+    <f:viewAction action="#{myProjectsBean.ensureLoaded}" onPostback="false"/>
   </ui:define>
+  <ui:define name="sidebar"/>
   <ui:define name="detail"/>
   <ui:define name="main">
-    <h:form id="myProjectsForm" prependId="false">
-      <ui:fragment rendered="#{not userSession.loggedIn}">
+    <f:event type="preRenderView" listener="#{myProjectsBean.ensureLoaded}"/>
+    <h:form id="myProjectsForm" prependId="false" styleClass="ia-form-root">
+      <ui:fragment rendered="#{not userSession.loggedIn or not userSession.canAccessProjectAdminScreen()}">
         <ui:include src="/includes/access-denied.xhtml">
           <ui:param name="deniedKicker" value="#{localeBean.getMsg('projects.accessDenied.kicker')}"/>
-          <ui:param name="deniedTitle" value="#{localeBean.getMsg('projects.accessDenied.title')}"/>
-          <ui:param name="deniedSub" value="#{localeBean.getMsg('projects.accessDenied.sub')}"/>
+          <ui:param name="deniedTitle" value="#{userSession.loggedIn ? localeBean.getMsg('projects.manageDenied.title') : localeBean.getMsg('projects.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{userSession.loggedIn ? localeBean.getMsg('projects.manageDenied.sub') : localeBean.getMsg('projects.accessDenied.sub')}"/>
           <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('projects.accessDenied.back')}"/>
         </ui:include>
       </ui:fragment>
 
-      <ui:fragment rendered="#{userSession.loggedIn}">
+      <ui:fragment rendered="#{userSession.loggedIn and userSession.canAccessProjectAdminScreen()}">
         <h:panelGroup id="mpShell" layout="block" styleClass="view-panel is-on">
           <span id="mpFlashLive"
                 hidden="hidden"
@@ -37,10 +39,9 @@
               </a>
             </ui:fragment>
             <ui:fragment rendered="#{not myProjectsBean.listView}">
-              <h:commandLink styleClass="bo-back"
+              <h:commandLink id="mpAct1" styleClass="bo-back"
                              title="#{localeBean.getMsg('projects.backList')}"
-                             action="#{myProjectsBean.backToList}"
-                             immediate="true">
+                             action="#{myProjectsBean.backToList}">
                 <f:ajax execute="@this" render="mpShell"/>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
               </h:commandLink>
@@ -62,34 +63,11 @@
                 </p>
               </div>
               <ui:fragment rendered="#{myProjectsBean.listView and myProjectsBean.superAdmin}">
-                <h:commandButton styleClass="bo-btn primary sm"
+                <h:commandLink id="mpAct2" styleClass="bo-btn primary sm"
                                  value="#{localeBean.getMsg('projects.create')}"
-                                 action="#{myProjectsBean.openCreatePanel}"
-                                 immediate="true">
+                                 action="#{myProjectsBean.openCreatePanel}">
                   <f:ajax execute="@this" render="mpShell"/>
-                </h:commandButton>
-              </ui:fragment>
-              <ui:fragment rendered="#{myProjectsBean.projectAdminScreen and myProjectsBean.activePanel eq null}">
-                <div class="ia-toolbar-actions">
-                  <h:commandButton styleClass="bo-btn ghost sm"
-                                   value="#{localeBean.getMsg('projects.rename')}"
-                                   action="#{myProjectsBean.openRenamePanel}"
-                                   immediate="true">
-                    <f:ajax execute="@this" render="mpShell"/>
-                  </h:commandButton>
-                  <h:commandButton styleClass="bo-btn ghost sm"
-                                   value="#{localeBean.getMsg('projects.invite')}"
-                                   action="#{myProjectsBean.openCreateMemberPanel}"
-                                   immediate="true">
-                    <f:ajax execute="@this" render="mpShell"/>
-                  </h:commandButton>
-                  <h:commandButton styleClass="bo-btn primary sm"
-                                   value="#{localeBean.getMsg('projects.addMember')}"
-                                   action="#{myProjectsBean.openAddExistingPanel}"
-                                   immediate="true">
-                    <f:ajax execute="@this" render="mpShell"/>
-                  </h:commandButton>
-                </div>
+                </h:commandLink>
               </ui:fragment>
             </div>
 
@@ -103,20 +81,19 @@
                     </ui:fragment>
                     <label class="ia-field">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.name')}</span>
-                      <h:inputText value="#{myProjectsBean.newProjectName}" styleClass="st-input"/>
+                      <h:inputText id="mpNewProjectName" value="#{myProjectsBean.newProjectName}" styleClass="st-input"/>
                     </label>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct5" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct6" styleClass="bo-btn primary"
                                        value="#{localeBean.getMsg('projects.createSubmit')}"
                                        action="#{myProjectsBean.createProject}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                  <f:ajax execute="mpNewProjectName @this" render="mpShell"/>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -131,20 +108,43 @@
                     </ui:fragment>
                     <label class="ia-field">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.name')}</span>
-                      <h:inputText value="#{myProjectsBean.renameProjectLabel}" styleClass="st-input"/>
+                      <h:inputText id="mpRenameLabel" value="#{myProjectsBean.renameProjectLabel}" styleClass="st-input"/>
                     </label>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct7" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct8" styleClass="bo-btn primary"
                                        value="#{localeBean.getMsg('projects.renameSubmit')}"
                                        action="#{myProjectsBean.renameProject}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                        <f:ajax execute="mpRenameLabel @this" render="mpShell"/>
+                      </h:commandLink>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{myProjectsBean.activePanel eq 'delete'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{localeBean.getMsg('projects.deleteTitle')}</span></div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty myProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{myProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <p>#{localeBean.getMsg('projects.deleteConfirm')} <b>#{myProjectsBean.dashboard.projectName()}</b></p>
+                    <div class="ia-create-actions">
+                      <h:commandLink id="mpAct9" styleClass="bo-btn ghost"
+                                       value="#{localeBean.getMsg('projects.cancel')}"
+                                       action="#{myProjectsBean.closeActivePanel}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandLink>
+                      <h:commandLink id="mpAct10" styleClass="bo-btn primary danger"
+                                       value="#{localeBean.getMsg('projects.deleteSubmit')}"
+                                       action="#{myProjectsBean.deleteProject}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -158,16 +158,16 @@
                       <div class="ia-create-err" role="alert">#{myProjectsBean.panelError}</div>
                     </ui:fragment>
                     <div class="ia-mode" role="group" aria-label="#{localeBean.getMsg('projects.invite.mode')}">
-                      <h:commandButton value="#{localeBean.getMsg('projects.invite.mode.direct')}"
+                      <h:commandLink id="mpAct11" value="#{localeBean.getMsg('projects.invite.mode.direct')}"
                                        styleClass="ia-mode-opt#{myProjectsBean.memberEmailInvite ? '' : ' is-on'}"
                                        action="#{myProjectsBean.selectMemberCreationModeDirect}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton value="#{localeBean.getMsg('projects.invite.mode.email')}"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct12" value="#{localeBean.getMsg('projects.invite.mode.email')}"
                                        styleClass="ia-mode-opt#{myProjectsBean.memberEmailInvite ? ' is-on' : ''}"
                                        action="#{myProjectsBean.selectMemberCreationModeEmail}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
                     </div>
                     <p class="ia-mode-hint">
                       #{myProjectsBean.memberEmailInvite
@@ -278,12 +278,11 @@
                       </ui:fragment>
                     </h:panelGroup>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct13" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
                       <button type="button"
                               class="bo-btn primary"
                               onclick="var b=document.getElementById('mpInviteCreateGo');if(b)b.click();return false;">
@@ -303,74 +302,95 @@
                         <div class="ia-create-err" role="alert">#{myProjectsBean.panelError}</div>
                       </ui:fragment>
                     </h:panelGroup>
-                    <div class="ia-field ia-ac">
+                    <div class="ia-field">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.searchUser')}</span>
-                      <h:inputText id="mpExistingUserQuery"
-                                   value="#{myProjectsBean.existingUserQuery}"
-                                   styleClass="st-input"
-                                   pt:placeholder="#{localeBean.getMsg('projects.searchUserPh')}"
-                                   pt:autocomplete="off"
-                                   pt:role="combobox"
-                                   pt:aria-autocomplete="list"
-                                   pt:aria-controls="mpExistingUserResults"
-                                   pt:aria-expanded="#{not empty myProjectsBean.existingUserHits}">
-                        <f:ajax event="keyup" delay="250" execute="@this"
-                                listener="#{myProjectsBean.suggestExistingUsers}"
-                                render="mpExistingUserResults mpExistingUserPicked mpExistingUserError"/>
-                      </h:inputText>
-                      <h:panelGroup id="mpExistingUserResults" layout="block"
-                                    styleClass="ia-ac-list#{empty myProjectsBean.existingUserHits and not myProjectsBean.existingUserSearched ? ' is-off' : ''}"
-                                    pt:role="listbox">
-                        <ui:repeat value="#{myProjectsBean.existingUserHits}" var="hit">
-                          <button type="button" class="ia-member-hit"
-                                  data-ia-user-id="#{hit.userId}"
-                                  data-ia-username="#{hit.username}"
-                                  data-ia-id-field="mpPickUserId"
-                                  data-ia-name-field="mpPickUsername"
-                                  data-ia-query-field="mpExistingUserQuery"
-                                  data-ia-go="mpExistingUserPickGo"
-                                  onmousedown="return iaQueuePick(this, event);">
-                            <span class="ia-member-hit-name">#{hit.username}</span>
-                            <span class="ia-member-hit-mail">#{hit.email}</span>
-                          </button>
-                        </ui:repeat>
-                        <ui:fragment rendered="#{myProjectsBean.existingUserSearched and empty myProjectsBean.existingUserHits and empty myProjectsBean.panelError}">
-                          <p class="ia-move-proj-none">#{localeBean.getMsg('search.noResult')}</p>
-                        </ui:fragment>
-                      </h:panelGroup>
-                      <h:panelGroup id="mpExistingUserPicked" layout="block">
+                      <h:panelGroup id="mpExistingUserPicked" layout="block" styleClass="coll-pick-chips">
                         <ui:fragment rendered="#{myProjectsBean.selectedExistingUser ne null}">
-                          <p class="ia-ac-picked">
-                            #{localeBean.getMsg('projects.selected')}
-                            <b>#{myProjectsBean.selectedExistingUser.username}</b>
-                            <button type="button" class="ia-chip-x"
-                                    title="#{localeBean.getMsg('admin.members.add.clear')}"
-                                    onclick="var b=document.getElementById('mpExistingUserClearGo');if(b)b.click();return false;">
-                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                            </button>
-                          </p>
+                          <button type="button" class="coll-chip"
+                                  title="#{localeBean.getMsg('admin.members.add.clear')}"
+                                  onclick="var b=document.getElementById('mpExistingUserClearGo');if(b)b.click();return false;">
+                            <span>#{myProjectsBean.selectedExistingUser.username}</span>
+                            <span aria-hidden="true">×</span>
+                          </button>
                         </ui:fragment>
                       </h:panelGroup>
+                      <div class="coll-pick" id="mpUserPick">
+                        <div class="search-field coll-pick-field" id="mpUserCombo">
+                          <span class="search-ico" aria-hidden="true">⌕</span>
+                          <h:inputText id="mpExistingUserQuery"
+                                       value="#{myProjectsBean.existingUserQuery}"
+                                       styleClass="search-input"
+                                       pt:placeholder="#{localeBean.getMsg('projects.searchUserPh')}"
+                                       pt:autocomplete="off"
+                                       pt:spellcheck="false"
+                                       pt:role="combobox"
+                                       pt:aria-autocomplete="list"
+                                       pt:aria-controls="mpUserMenu"
+                                       pt:aria-expanded="#{not empty myProjectsBean.existingUserHits or myProjectsBean.existingUserSearched}"/>
+                          <button type="button" class="search-clear" id="mpUserClear"
+                                  hidden="#{empty myProjectsBean.existingUserQuery ? 'hidden' : null}"
+                                  title="#{localeBean.getMsg('admin.members.add.clear')}">×</button>
+                          <button type="button" class="coll-pick-caret" id="mpUserCaret" tabindex="-1"
+                                  title="#{localeBean.getMsg('projects.searchUser')}"
+                                  aria-label="#{localeBean.getMsg('projects.searchUser')}">
+                            <span aria-hidden="true">▾</span>
+                          </button>
+                        </div>
+                        <h:panelGroup id="mpUserMenu" layout="block"
+                                      styleClass="ac#{not empty myProjectsBean.existingUserHits ? ' has-hits' : ''}#{myProjectsBean.existingUserSearched and empty myProjectsBean.existingUserHits ? ' is-empty' : ''}"
+                                      pt:hidden="#{empty myProjectsBean.existingUserHits and not myProjectsBean.existingUserSearched ? 'hidden' : null}"
+                                      pt:role="listbox">
+                          <div class="ac-empty">#{localeBean.getMsg('search.noResult')}</div>
+                          <div class="coll-ac-list">
+                            <ui:repeat value="#{myProjectsBean.existingUserHits}" var="hit">
+                              <button type="button" class="ac-row is-shown" role="option"
+                                      data-ia-user-id="#{hit.userId}"
+                                      data-ia-username="#{hit.username}"
+                                      data-ia-email="#{hit.email}"
+                                      data-ia-id-field="mpPickUserId"
+                                      data-ia-name-field="mpPickUsername"
+                                      data-ia-query-field="mpExistingUserQuery"
+                                      data-ia-go="mpExistingUserPickGo"
+                                      onmousedown="return iaQueuePick(this, event);">
+                                <span class="ac-ico" aria-hidden="true">⌕</span>
+                                <span class="ac-body">
+                                  <span class="ac-pref">#{hit.username}</span>
+                                  <span class="path">#{hit.email}</span>
+                                </span>
+                              </button>
+                            </ui:repeat>
+                          </div>
+                        </h:panelGroup>
+                      </div>
                     </div>
                     <div class="ia-ajax-proxy" aria-hidden="true">
                       <h:inputHidden id="mpPickUserId" value="#{myProjectsBean.pendingPickUserId}"/>
                       <h:inputHidden id="mpPickUsername" value="#{myProjectsBean.pendingPickUsername}"/>
-                      <h:commandButton id="mpExistingUserPickGo"
+                      <h:commandLink id="mpExistingUserSearchGo"
+                                       value="go"
+                                       action="#{myProjectsBean.suggestExistingUsers}">
+                        <f:ajax execute="mpExistingUserQuery @this"
+                                render="mpUserMenu mpExistingUserPicked mpExistingUserError"
+                                onevent="mpUserAcAjax"/>
+                      </h:commandLink>
+                      <h:commandLink id="mpExistingUserPickGo"
                                        value="go"
                                        action="#{myProjectsBean.applyPickedExistingUser}">
                         <f:ajax execute="mpPickUserId mpPickUsername @this"
-                                render="mpExistingUserQuery mpExistingUserResults mpExistingUserPicked"/>
-                      </h:commandButton>
-                      <h:commandButton id="mpExistingUserClearGo"
+                                render="mpExistingUserQuery mpUserMenu mpExistingUserPicked"
+                                onevent="mpUserAcAjax"/>
+                      </h:commandLink>
+                      <h:commandLink id="mpExistingUserClearGo"
                                        value="go"
                                        action="#{myProjectsBean.clearPickedExistingUser}">
-                        <f:ajax execute="@this" render="mpExistingUserQuery mpExistingUserResults mpExistingUserPicked"/>
-                      </h:commandButton>
-                      <h:commandButton id="mpExistingUserAddGo"
+                        <f:ajax execute="@this" render="mpExistingUserQuery mpUserMenu mpExistingUserPicked"
+                                onevent="mpUserAcAjax"/>
+                      </h:commandLink>
+                      <h:commandLink id="mpExistingUserAddGo"
                                        value="go"
                                        action="#{myProjectsBean.addExistingMember}">
                         <f:ajax execute="mpExistingRole mpExistingLimitBlock @this" render="mpShell mpExistingUserError"/>
-                      </h:commandButton>
+                      </h:commandLink>
                     </div>
                     <label class="ia-field" style="max-width:240px">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.role')}</span>
@@ -406,12 +426,11 @@
                       </ui:fragment>
                     </h:panelGroup>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct14" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
                       <button type="button"
                               class="bo-btn primary"
                               onclick="var b=document.getElementById('mpExistingUserAddGo');if(b)b.click();return false;">
@@ -433,7 +452,7 @@
                     </ui:fragment>
                     <label class="ia-field" style="max-width:240px">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.role')}</span>
-                      <h:selectOneMenu value="#{myProjectsBean.editMemberRoleId}" styleClass="st-input ia-select">
+                      <h:selectOneMenu id="mpEditMemberRole" value="#{myProjectsBean.editMemberRoleId}" styleClass="st-input ia-select">
                         <f:selectItems value="#{myProjectsBean.assignableRoles}" var="r"
                                        itemValue="#{r.id}" itemLabel="#{r.name}"/>
                         <f:ajax event="valueChange" execute="@this" render="mpEditLimitBlock"/>
@@ -443,7 +462,7 @@
                       <ui:fragment rendered="#{myProjectsBean.editMemberLimitSectionVisible}">
                         <label class="ia-check" style="margin-top:12px"
                                title="#{localeBean.getMsg('projects.limitRoleHint')}">
-                          <h:selectBooleanCheckbox value="#{myProjectsBean.editMemberLimitOnThesaurus}">
+                          <h:selectBooleanCheckbox id="mpEditMemberLimit" value="#{myProjectsBean.editMemberLimitOnThesaurus}">
                             <f:ajax event="valueChange" execute="@this"
                                     listener="#{myProjectsBean.toggleEditMemberLimitThesaurus}"
                                     render="mpEditLimitBlock"/>
@@ -453,7 +472,7 @@
                         <ui:fragment rendered="#{myProjectsBean.editMemberLimitOnThesaurus}">
                           <div class="ia-field" style="margin-top:10px">
                             <span class="ia-field-l">#{localeBean.getMsg('projects.limitThesauri')}</span>
-                            <h:selectManyCheckbox value="#{myProjectsBean.editMemberThesaurusIds}"
+                            <h:selectManyCheckbox id="mpEditMemberThesauri" value="#{myProjectsBean.editMemberThesaurusIds}"
                                                   layout="pageDirection" styleClass="ia-theso-picks">
                               <f:selectItems value="#{myProjectsBean.projectThesauri}" var="th"
                                              itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
@@ -463,17 +482,16 @@
                       </ui:fragment>
                     </h:panelGroup>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct15" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct16" styleClass="bo-btn primary"
                                        value="#{localeBean.getMsg('projects.save')}"
                                        action="#{myProjectsBean.submitUpdateMemberRole}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                        <f:ajax execute="mpEditMemberRole mpEditMemberLimit mpEditMemberThesauri @this" render="mpShell"/>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -485,17 +503,16 @@
                   <div class="bo-card-b">
                     <p>#{localeBean.getMsg('projects.removeMemberConfirm')} <b>#{myProjectsBean.memberToRemoveName}</b></p>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct17" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary danger"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct18" styleClass="bo-btn primary danger"
                                        value="#{localeBean.getMsg('projects.removeSubmit')}"
                                        action="#{myProjectsBean.submitRemoveMember}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -513,23 +530,22 @@
                     </ui:fragment>
                     <label class="ia-field" style="max-width:240px">
                       <span class="ia-field-l">#{localeBean.getMsg('projects.role')}</span>
-                      <h:selectOneMenu value="#{myProjectsBean.editLimitedNewRoleId}" styleClass="st-input ia-select">
+                      <h:selectOneMenu id="mpEditLimitedRole" value="#{myProjectsBean.editLimitedNewRoleId}" styleClass="st-input ia-select">
                         <f:selectItems value="#{myProjectsBean.assignableRoles}" var="r"
                                        itemValue="#{r.id}" itemLabel="#{r.name}"/>
                       </h:selectOneMenu>
                     </label>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct19" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct20" styleClass="bo-btn primary"
                                        value="#{localeBean.getMsg('projects.save')}"
                                        action="#{myProjectsBean.submitUpdateLimitedRole}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                        <f:ajax execute="mpEditLimitedRole @this" render="mpShell"/>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -551,7 +567,7 @@
                     <ui:fragment rendered="#{not empty myProjectsBean.moveTargetProjects}">
                       <label class="ia-field" style="max-width:320px">
                         <span class="ia-field-l">#{localeBean.getMsg('projects.moveThesaurusTarget')}</span>
-                        <h:selectOneMenu value="#{myProjectsBean.moveTargetProjectId}" styleClass="st-input ia-select">
+                        <h:selectOneMenu id="mpMoveTarget" value="#{myProjectsBean.moveTargetProjectId}" styleClass="st-input ia-select">
                           <f:selectItem itemValue="#{null}" itemLabel="#{localeBean.getMsg('projects.moveThesaurusChoose')}"/>
                           <f:selectItems value="#{myProjectsBean.moveTargetProjects}" var="proj"
                                          itemValue="#{proj.id}" itemLabel="#{proj.name}"/>
@@ -559,18 +575,17 @@
                       </label>
                     </ui:fragment>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct21" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct22" styleClass="bo-btn primary"
                                        value="#{localeBean.getMsg('projects.moveThesaurusSubmit')}"
                                        action="#{myProjectsBean.submitMoveThesaurus}"
                                        disabled="#{empty myProjectsBean.moveTargetProjects}">
-                        <f:ajax execute="@form" render="mpShell"/>
-                      </h:commandButton>
+                        <f:ajax execute="mpMoveTarget @this" render="mpShell"/>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -582,17 +597,16 @@
                   <div class="bo-card-b">
                     <p>#{localeBean.getMsg('projects.removeThesaurusConfirm')} <b>#{myProjectsBean.thesaurusToRemoveTitle}</b></p>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct23" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary danger"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct24" styleClass="bo-btn primary danger"
                                        value="#{localeBean.getMsg('projects.removeSubmit')}"
                                        action="#{myProjectsBean.submitRemoveThesaurus}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -608,17 +622,16 @@
                       (#{myProjectsBean.limitedRoleToRemoveThesaurusName})
                     </p>
                     <div class="ia-create-actions">
-                      <h:commandButton styleClass="bo-btn ghost"
+                      <h:commandLink id="mpAct25" styleClass="bo-btn ghost"
                                        value="#{localeBean.getMsg('projects.cancel')}"
-                                       action="#{myProjectsBean.closeActivePanel}"
-                                       immediate="true">
+                                       action="#{myProjectsBean.closeActivePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
-                      <h:commandButton styleClass="bo-btn primary danger"
+                      </h:commandLink>
+                      <h:commandLink id="mpAct26" styleClass="bo-btn primary danger"
                                        value="#{localeBean.getMsg('projects.removeSubmit')}"
                                        action="#{myProjectsBean.submitRemoveLimitedRole}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
                     </div>
                   </div>
                 </div>
@@ -631,14 +644,16 @@
                     <div class="ia-empty-d">#{localeBean.getMsg('projects.empty.sub')}</div>
                   </div>
                 </ui:fragment>
-                <div class="boc-grid boc-grid-1">
-                  <ui:repeat value="#{myProjectsBean.projects}" var="p">
-                    <h:commandLink styleClass="boc-item boc-nav"
+                <div class="spl">
+                  <ui:repeat id="mpProjectList" value="#{myProjectsBean.projects}" var="p">
+                    <h:commandLink id="mpOpen" styleClass="spl-row"
                                    action="#{myProjectsBean.selectProject(p.id)}">
                       <f:ajax execute="@this" render="mpShell"/>
-                      <span class="proj-dot" style="background:#{myProjectsBean.projectDotColor(p.id)}"></span>
-                      <span class="boc-l">#{p.name}</span>
-                      <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                      <span class="spl-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      </span>
+                      <span class="spl-tx"><span class="spl-t">#{p.name}</span></span>
+                      <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
                     </h:commandLink>
                   </ui:repeat>
                 </div>
@@ -652,39 +667,59 @@
               </ui:fragment>
 
               <ui:fragment rendered="#{myProjectsBean.projectAdminScreen and myProjectsBean.activePanel eq null}">
-                <div class="ia-mode-tabs" role="tablist" style="margin-bottom:14px">
-                  <h:commandButton styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 0 ? ' is-on' : ''}"
-                                   value="#{localeBean.getMsg('projects.tab.thesauri')} (#{myProjectsBean.dashboard.thesauri().size()})"
-                                   action="#{myProjectsBean.setActiveSectionIndex(0)}"
-                                   immediate="true">
+                <div class="ia-mode ia-mode-3" role="tablist">
+                  <h:commandLink id="mpTabThesauri"
+                                styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 0 ? ' is-on' : ''}"
+                                value="#{localeBean.getMsg('projects.tab.thesauri')} (#{myProjectsBean.dashboard.thesauri().size()})"
+                                action="#{myProjectsBean.showThesauri}">
                     <f:ajax execute="@this" render="mpShell"/>
-                  </h:commandButton>
-                  <h:commandButton styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 1 ? ' is-on' : ''}"
-                                   value="#{localeBean.getMsg('projects.tab.members')} (#{myProjectsBean.dashboard.members().size()})"
-                                   action="#{myProjectsBean.setActiveSectionIndex(1)}"
-                                   immediate="true">
+                  </h:commandLink>
+                  <h:commandLink id="mpTabMembers"
+                                styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 1 ? ' is-on' : ''}"
+                                value="#{localeBean.getMsg('projects.tab.members')} (#{myProjectsBean.dashboard.members().size()})"
+                                action="#{myProjectsBean.showMembers}">
                     <f:ajax execute="@this" render="mpShell"/>
-                  </h:commandButton>
-                  <h:commandButton styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 2 ? ' is-on' : ''}"
-                                   value="#{localeBean.getMsg('projects.tab.limited')} (#{myProjectsBean.dashboard.limitedMembers().size()})"
-                                   action="#{myProjectsBean.setActiveSectionIndex(2)}"
-                                   immediate="true">
+                  </h:commandLink>
+                  <h:commandLink id="mpTabLimited"
+                                styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 2 ? ' is-on' : ''}"
+                                value="#{localeBean.getMsg('projects.tab.limited')} (#{myProjectsBean.dashboard.limitedMembers().size()})"
+                                action="#{myProjectsBean.showLimitedRoles}">
                     <f:ajax execute="@this" render="mpShell"/>
-                  </h:commandButton>
+                  </h:commandLink>
                 </div>
 
-                <ui:fragment rendered="#{myProjectsBean.activeSectionIndex eq 0}">
-                  <div class="bo-card">
-                    <div class="bo-card-h ia-card-h-users">
-                      <span class="bo-card-t">#{localeBean.getMsg('admin.projects.thesauri.title')}</span>
-                      <h:commandButton styleClass="bo-btn primary sm"
-                                       value="#{localeBean.getMsg('projects.invite')}"
-                                       action="#{myProjectsBean.openCreateMemberPanel}"
-                                       immediate="true">
+                <div class="bo-card">
+                  <div class="bo-card-h ia-card-h-users">
+                    <span class="bo-card-t">
+                      #{myProjectsBean.activeSectionIndex eq 0 ? localeBean.getMsg('projects.tab.thesauri') : (myProjectsBean.activeSectionIndex eq 1 ? localeBean.getMsg('projects.tab.members') : localeBean.getMsg('projects.tab.limited'))}
+                    </span>
+                    <div class="ia-toolbar" id="mpToolbar">
+                      <h:commandLink id="mpRename"
+                                    styleClass="bo-btn ghost sm"
+                                    value="#{localeBean.getMsg('projects.rename')}"
+                                    action="#{myProjectsBean.openRenamePanel}">
                         <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandButton>
+                      </h:commandLink>
+                      <h:commandLink id="mpDelete"
+                                    styleClass="bo-btn ghost sm"
+                                    value="#{localeBean.getMsg('projects.delete')}"
+                                    action="#{myProjectsBean.openDeletePanel}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandLink>
+                      <h:commandLink id="mpAct3" styleClass="bo-btn ghost sm"
+                                       value="#{localeBean.getMsg('projects.invite')}"
+                                       action="#{myProjectsBean.openCreateMemberPanel}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandLink>
+                      <h:commandLink id="mpAct4" styleClass="bo-btn primary sm"
+                                       value="#{localeBean.getMsg('projects.addMember')}"
+                                       action="#{myProjectsBean.openAddExistingPanel}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandLink>
                     </div>
-                    <div class="bo-card-b ia-scroll">
+                  </div>
+                  <div class="bo-card-b ia-scroll">
+                <ui:fragment rendered="#{myProjectsBean.activeSectionIndex eq 0}">
                       <ui:fragment rendered="#{empty myProjectsBean.dashboard.thesauri()}">
                         <div class="ia-empty"><div class="ia-empty-d">#{localeBean.getMsg('projects.thesauri.empty')}</div></div>
                       </ui:fragment>
@@ -698,7 +733,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <ui:repeat value="#{myProjectsBean.dashboard.thesauri()}" var="th">
+                            <ui:repeat id="mpThesauri" value="#{myProjectsBean.dashboard.thesauri()}" var="th">
                               <tr>
                                 <td><code>#{th.id()}</code></td>
                                 <td>
@@ -706,19 +741,20 @@
                                 </td>
                                 <td class="st-td-act">
                                   <div class="ia-row-acts">
-                                    <h:commandLink styleClass="bo-btn ghost sm"
-                                                   action="#{myProjectsBean.openMoveThesaurusPanel(th)}"
-                                                   immediate="true">
+                                    <h:commandLink id="mpAct29"
+                                                   styleClass="bo-btn ghost sm#{myProjectsBean.moveThesaurusEnabled ? '' : ' is-disabled'}"
+                                                   disabled="#{not myProjectsBean.moveThesaurusEnabled}"
+                                                   title="#{myProjectsBean.moveThesaurusEnabled ? localeBean.getMsg('projects.moveThesaurus') : localeBean.getMsg('projects.moveThesaurusEmpty')}"
+                                                   action="#{myProjectsBean.openMoveThesaurusPanel(th)}">
                                       <f:ajax execute="@this" render="mpShell"/>
                                       #{localeBean.getMsg('projects.moveThesaurus')}
                                     </h:commandLink>
-                                    <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                    <h:commandLink id="mpAct30" styleClass="bo-btn ghost sm ia-icon-btn is-danger"
                                                      title="#{localeBean.getMsg('projects.removeThesaurus')}"
                                                      value="×"
-                                                     action="#{myProjectsBean.openRemoveThesaurusPanel(th)}"
-                                                     immediate="true">
+                                                     action="#{myProjectsBean.openRemoveThesaurusPanel(th)}">
                                       <f:ajax execute="@this" render="mpShell"/>
-                                    </h:commandButton>
+                                    </h:commandLink>
                                   </div>
                                 </td>
                               </tr>
@@ -726,13 +762,9 @@
                           </tbody>
                         </table>
                       </ui:fragment>
-                    </div>
-                  </div>
                 </ui:fragment>
 
                 <ui:fragment rendered="#{myProjectsBean.activeSectionIndex eq 1}">
-                  <div class="bo-card">
-                    <div class="bo-card-b ia-scroll">
                       <ui:fragment rendered="#{empty myProjectsBean.dashboard.members()}">
                         <div class="ia-empty"><div class="ia-empty-d">#{localeBean.getMsg('projects.members.empty')}</div></div>
                       </ui:fragment>
@@ -746,26 +778,24 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <ui:repeat value="#{myProjectsBean.dashboard.members()}" var="m">
+                            <ui:repeat id="mpMembers" value="#{myProjectsBean.dashboard.members()}" var="m">
                               <tr class="#{m.active() ? '' : 'ia-row-inactive'}">
                                 <td><b>#{m.username()}</b></td>
                                 <td>#{m.roleName()}</td>
                                 <td class="st-td-act">
                                   <ui:fragment rendered="#{myProjectsBean.currentUserId ne m.userId()}">
                                     <div class="ia-row-acts">
-                                      <h:commandButton styleClass="bo-btn ghost sm"
+                                      <h:commandLink id="mpAct31" styleClass="bo-btn ghost sm"
                                                        value="#{localeBean.getMsg('projects.editRole')}"
-                                                       action="#{myProjectsBean.openEditMemberRolePanel(m)}"
-                                                       immediate="true">
+                                                       action="#{myProjectsBean.openEditMemberRolePanel(m)}">
                                         <f:ajax execute="@this" render="mpShell"/>
-                                      </h:commandButton>
-                                      <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                      </h:commandLink>
+                                      <h:commandLink id="mpAct32" styleClass="bo-btn ghost sm ia-icon-btn is-danger"
                                                        title="#{localeBean.getMsg('projects.removeMember')}"
                                                        value="×"
-                                                       action="#{myProjectsBean.openRemoveMemberPanel(m)}"
-                                                       immediate="true">
+                                                       action="#{myProjectsBean.openRemoveMemberPanel(m)}">
                                         <f:ajax execute="@this" render="mpShell"/>
-                                      </h:commandButton>
+                                      </h:commandLink>
                                     </div>
                                   </ui:fragment>
                                 </td>
@@ -774,13 +804,9 @@
                           </tbody>
                         </table>
                       </ui:fragment>
-                    </div>
-                  </div>
                 </ui:fragment>
 
                 <ui:fragment rendered="#{myProjectsBean.activeSectionIndex eq 2}">
-                  <div class="bo-card">
-                    <div class="bo-card-b ia-scroll">
                       <ui:fragment rendered="#{empty myProjectsBean.dashboard.limitedMembers()}">
                         <div class="ia-empty"><div class="ia-empty-d">#{localeBean.getMsg('projects.limited.empty')}</div></div>
                       </ui:fragment>
@@ -795,26 +821,24 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <ui:repeat value="#{myProjectsBean.dashboard.limitedMembers()}" var="lm">
+                            <ui:repeat id="mpLimited" value="#{myProjectsBean.dashboard.limitedMembers()}" var="lm">
                               <tr class="#{lm.active() ? '' : 'ia-row-inactive'}">
                                 <td><b>#{lm.username()}</b></td>
                                 <td>#{lm.roleName()}</td>
                                 <td>#{lm.thesaurusName()}</td>
                                 <td class="st-td-act">
                                   <div class="ia-row-acts">
-                                    <h:commandButton styleClass="bo-btn ghost sm"
+                                    <h:commandLink id="mpAct33" styleClass="bo-btn ghost sm"
                                                      value="#{localeBean.getMsg('projects.editRole')}"
-                                                     action="#{myProjectsBean.openEditLimitedPanel(lm)}"
-                                                     immediate="true">
+                                                     action="#{myProjectsBean.openEditLimitedPanel(lm)}">
                                       <f:ajax execute="@this" render="mpShell"/>
-                                    </h:commandButton>
-                                    <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                    </h:commandLink>
+                                    <h:commandLink id="mpAct34" styleClass="bo-btn ghost sm ia-icon-btn is-danger"
                                                      title="#{localeBean.getMsg('projects.removeLimited')}"
                                                      value="×"
-                                                     action="#{myProjectsBean.openRemoveLimitedPanel(lm)}"
-                                                     immediate="true">
+                                                     action="#{myProjectsBean.openRemoveLimitedPanel(lm)}">
                                       <f:ajax execute="@this" render="mpShell"/>
-                                    </h:commandButton>
+                                    </h:commandLink>
                                   </div>
                                 </td>
                               </tr>
@@ -822,9 +846,9 @@
                           </tbody>
                         </table>
                       </ui:fragment>
-                    </div>
-                  </div>
                 </ui:fragment>
+                  </div>
+                </div>
               </ui:fragment>
             </div>
           </div>
@@ -833,22 +857,22 @@
           <h:inputHidden id="mpInvitePickUserId" value="#{myProjectsBean.pendingPickUserId}"/>
           <h:inputHidden id="mpInvitePickUsername" value="#{myProjectsBean.pendingPickUsername}"/>
           <h:inputHidden id="mpInvitePickEmail" value="#{myProjectsBean.pendingPickEmail}"/>
-          <h:commandButton id="mpInvitePickGo"
+          <h:commandLink id="mpInvitePickGo"
                            value="go"
                            action="#{myProjectsBean.applyPickedNewMember}">
             <f:ajax execute="mpInvitePickUserId mpInvitePickUsername mpInvitePickEmail @this" render="mpShell"/>
-          </h:commandButton>
-          <h:commandButton id="mpInviteClearGo"
+          </h:commandLink>
+          <h:commandLink id="mpInviteClearGo"
                            value="go"
                            action="#{myProjectsBean.clearNewMemberPick}">
             <f:ajax execute="@this" render="mpShell"/>
-          </h:commandButton>
-          <h:commandButton id="mpInviteCreateGo"
+          </h:commandLink>
+          <h:commandLink id="mpInviteCreateGo"
                            value="go"
                            action="#{myProjectsBean.createMember}">
             <f:ajax execute="mpInviteUserName mpInviteEmail mpInviteInstitution mpInvitePassword mpInvitePassword2 mpInviteAlert mpInviteRole mpInviteLimitBlock @this"
                     render="mpShell"/>
-          </h:commandButton>
+          </h:commandLink>
         </div>
       </ui:fragment>
     </h:form>

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.shared.ui;
 
+import fr.cnrs.opentheso.project.service.ProjectAdminService;
 import fr.cnrs.opentheso.shared.session.AuthenticatedUserSource;
 import fr.cnrs.opentheso.shared.session.SessionUser;
 import fr.cnrs.opentheso.rights.Permission;
@@ -29,12 +30,14 @@ class UserSessionTest {
     private SessionUserService sessionUserService;
     @Mock
     private RightsService rightsService;
+    @Mock
+    private ProjectAdminService projectAdminService;
 
     private UserSession userSession;
 
     @BeforeEach
     void setUp() {
-        userSession = new UserSession(authenticatedUserSource, sessionUserService, rightsService);
+        userSession = new UserSession(authenticatedUserSource, sessionUserService, rightsService, projectAdminService);
     }
 
     @Test
@@ -82,11 +85,17 @@ class UserSessionTest {
     }
 
     @Test
-    void canAccessProjectAdminScreen_delegatesToRightsService() {
-        when(rightsService.can(userSession, Permission.MANAGE_PROJECT)).thenReturn(false);
+    void canAccessProjectAdminScreen_requiresAnAdministeredProject() {
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
         assertFalse(userSession.canAccessProjectAdminScreen());
 
-        when(rightsService.can(userSession, Permission.MANAGE_PROJECT)).thenReturn(true);
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
+        when(authenticatedUserSource.getUserId()).thenReturn(Optional.of(1));
+        when(sessionUserService.load(1)).thenReturn(new SessionUser(1, "admin", "a@b.c", true, true, true, true));
+        when(projectAdminService.canAccessProjectAdminPage(1)).thenReturn(false);
+        assertFalse(userSession.canAccessProjectAdminScreen());
+
+        when(projectAdminService.canAccessProjectAdminPage(1)).thenReturn(true);
         assertTrue(userSession.canAccessProjectAdminScreen());
     }
 

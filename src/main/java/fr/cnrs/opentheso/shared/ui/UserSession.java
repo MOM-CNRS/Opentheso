@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.shared.ui;
 
+import fr.cnrs.opentheso.project.service.ProjectAdminService;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.shared.session.AuthenticatedUserSource;
@@ -26,6 +27,7 @@ public class UserSession implements Serializable {
     private final transient AuthenticatedUserSource authenticatedUserSource;
     private final transient SessionUserService sessionUserService;
     private final transient RightsService rightsService;
+    private final transient ProjectAdminService projectAdminService;
 
     public boolean isLoggedIn() {
         return authenticatedUserSource.isLoggedIn();
@@ -62,7 +64,8 @@ public class UserSession implements Serializable {
     }
 
     public boolean canAccessProjectAdminScreen() {
-        return rightsService.can(this, Permission.MANAGE_PROJECT);
+        Integer userId = getCurrentUserId();
+        return userId != null && projectAdminService.canAccessProjectAdminPage(userId);
     }
 
     public boolean canAccessSuperAdminScreen() {
