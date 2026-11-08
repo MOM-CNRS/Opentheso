@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
@@ -312,6 +313,17 @@ public class RestExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("timestamp", OffsetDateTime.now());
         problem.setProperty("errorCode", "VALIDATION_ERROR");
+        return problem;
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ProblemDetail handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(ex.getStatusCode());
+        HttpStatus resolved = HttpStatus.resolve(ex.getStatusCode().value());
+        problem.setTitle(resolved != null ? resolved.getReasonPhrase() : "Error");
+        problem.setDetail(ex.getReason() != null ? ex.getReason() : problem.getTitle());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
         return problem;
     }
 

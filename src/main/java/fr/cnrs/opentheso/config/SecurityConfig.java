@@ -57,6 +57,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
                                 "/openapi/v1/**",
+                                "/openapi/v2/**",
                                 "/api/v2/**",
                                 "/api/v2/auth/token",
                                 "/api/**"
