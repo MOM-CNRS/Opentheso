@@ -60,7 +60,8 @@
           </div>
         </div>
 
-        <h:form id="cptAddForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="cptAddForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotConceptBean.addPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="concepts"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="concepts" data-op="import"
                 data-cls="#{actionsLotConceptBean.addPanel.cssClasses}"></span>
@@ -293,7 +294,8 @@
           </div>
         </div>
 
-        <h:form id="cptMergeForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="cptMergeForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotConceptBean.mergePanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="concepts"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="concepts" data-op="replace"
                 data-cls="#{actionsLotConceptBean.mergePanel.cssClasses}"></span>
@@ -518,7 +520,8 @@
           </div>
         </div>
 
-        <h:form id="cptDepForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="cptDepForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotConceptBean.deprecatePanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="concepts"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="concepts" data-op="deprecate"
                 data-cls="#{actionsLotConceptBean.deprecatePanel.cssClasses}"></span>
@@ -751,7 +754,8 @@
           </div>
         </div>
 
-        <h:form id="cptCmpForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="cptCmpForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotConceptBean.comparePanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="concepts"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="concepts" data-op="compare"
                 data-cls="#{actionsLotConceptBean.comparePanel.cssClasses}"></span>

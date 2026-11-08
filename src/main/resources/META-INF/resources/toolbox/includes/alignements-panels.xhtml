@@ -73,7 +73,8 @@
           </div>
         </div>
 
-        <h:form id="alignImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="alignImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotAlignmentBean.importPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="alignements"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="alignements" data-op="import"
                 data-cls="#{actionsLotAlignmentBean.importPanel.cssClasses}"></span>
@@ -306,7 +307,8 @@
           </div>
         </div>
 
-        <h:form id="alignDeleteForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="alignDeleteForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotAlignmentBean.deletePanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="alignements"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="alignements" data-op="delete"
                 data-cls="#{actionsLotAlignmentBean.deletePanel.cssClasses}"></span>
@@ -531,7 +533,8 @@
             <div class="bo-import-s">choisissez le périmètre puis générez le CSV · #{actionsLotAlignmentBean.thesaurusTitle}</div>
           </div>
         </div>
-        <h:form id="alignExportForm" prependId="false" styleClass="bo-card-b#{actionsLotAlignmentBean.exportBusy ? ' is-busy' : ''}">
+        <h:form id="alignExportForm" prependId="false" styleClass="bo-card-b bo-live#{actionsLotAlignmentBean.exportBusy ? ' is-busy' : ''}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="alignements"/></ui:include>
           <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty actionsLotAlignmentBean.exportError}">
             <div class="bo-valid-msg err" role="alert">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>

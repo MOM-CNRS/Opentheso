@@ -71,7 +71,8 @@
           </div>
         </div>
 
-        <h:form id="synImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="synImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotAltLabelBean.importPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="synonymes"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="synonymes" data-op="import"
                 data-cls="#{actionsLotAltLabelBean.importPanel.cssClasses}"></span>
@@ -319,7 +320,8 @@
           </div>
         </div>
 
-        <h:form id="synDeleteForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="synDeleteForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotAltLabelBean.deletePanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="synonymes"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="synonymes" data-op="delete"
                 data-cls="#{actionsLotAltLabelBean.deletePanel.cssClasses}"></span>

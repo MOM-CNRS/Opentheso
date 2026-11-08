@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+  <!-- Le POST du formulaire n'a pas la query ?obj=. Sans ce champ, le c:if
+       de la page retire le panneau et l'upload n'a plus de cible. -->
+  <input type="hidden" name="obj" value="#{lotObj}"/>
+</ui:composition>

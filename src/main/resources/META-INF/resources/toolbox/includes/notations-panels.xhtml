@@ -69,7 +69,8 @@
           </div>
         </div>
 
-        <h:form id="notaImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="notaImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotNotationBean.importPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="notations"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="notations" data-op="import"
                 data-cls="#{actionsLotNotationBean.importPanel.cssClasses}"></span>

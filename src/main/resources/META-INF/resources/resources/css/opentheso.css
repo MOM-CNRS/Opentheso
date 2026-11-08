@@ -823,34 +823,54 @@ button.bap-chip-more:hover{color:var(--accent);border-color:var(--accent)}
 .bo-acc-step:not(.open) .bo-acc-body{display:none}
 
 .bo-panel .bo-drop.has-file{display:none}
-.bo-panel.has-file .bo-drop-empty{display:none}
-.bo-panel.has-file .bo-drop.has-file{display:flex}
+.bo-panel.has-file .bo-drop-empty,
+.bo-live.has-file .bo-drop-empty{display:none}
+.bo-panel.has-file .bo-drop.has-file,
+.bo-live.has-file .bo-drop.has-file{display:flex}
 
 .bo-panel:not(.has-file) [data-act="bo-check"],
-.bo-panel.is-checked [data-act="bo-check"]{opacity:.45;pointer-events:none}
-.bo-panel.has-file .bo-need-file{display:none}
-.bo-panel:not(.has-file) .bo-hint-file{display:none}
-.bo-panel.has-file .bo-hint-idle{display:none}
+.bo-live:not(.has-file) [data-act="bo-check"],
+.bo-panel.is-checked [data-act="bo-check"],
+.bo-live.is-checked [data-act="bo-check"]{opacity:.45;pointer-events:none}
+.bo-live.has-file:not(.is-checked) [data-act="bo-check"]{opacity:1;pointer-events:auto}
+.bo-panel.has-file .bo-need-file,
+.bo-live.has-file .bo-need-file{display:none}
+.bo-panel:not(.has-file) .bo-hint-file,
+.bo-live:not(.has-file) .bo-hint-file{display:none}
+.bo-live.has-file .bo-hint-file{display:inline}
+.bo-panel.has-file .bo-hint-idle,
+.bo-live.has-file .bo-hint-idle{display:none}
 
 .bo-valid{display:none}
-.bo-panel.is-checked:not(.is-done) .bo-valid{display:block}
+.bo-panel.is-checked:not(.is-done) .bo-valid,
+.bo-live.is-checked:not(.is-done) .bo-valid{display:block}
 .bo-valid-ok{display:none}
 .bo-stat-zero{display:none}
-.bo-panel.is-corrected.is-checked .bo-valid-errors{display:none}
-.bo-panel.is-corrected.is-checked .bo-valid-ok{display:block}
-.bo-panel.is-corrected.is-checked .bo-stat-err{display:none}
-.bo-panel.is-corrected.is-checked .bo-stat-zero{display:flex}
+.bo-panel.is-corrected.is-checked .bo-valid-errors,
+.bo-live.is-corrected.is-checked .bo-valid-errors{display:none}
+.bo-panel.is-corrected.is-checked .bo-valid-ok,
+.bo-live.is-corrected.is-checked .bo-valid-ok{display:block}
+.bo-panel.is-corrected.is-checked .bo-stat-err,
+.bo-live.is-corrected.is-checked .bo-stat-err{display:none}
+.bo-panel.is-corrected.is-checked .bo-stat-zero,
+.bo-live.is-corrected.is-checked .bo-stat-zero{display:flex}
 
 .bo-file-corr{display:none}
-.bo-panel.is-corrected .bo-file-n:not(.bo-file-corr){display:none}
-.bo-panel.is-corrected .bo-file-corr{display:block}
+.bo-panel.is-corrected .bo-file-n:not(.bo-file-corr),
+.bo-live.is-corrected .bo-file-n:not(.bo-file-corr){display:none}
+.bo-panel.is-corrected .bo-file-corr,
+.bo-live.is-corrected .bo-file-corr{display:block}
 
 .bo-result{display:none}
-.bo-panel.is-done .bo-result{display:block}
+.bo-panel.is-done .bo-result,
+.bo-live.is-done .bo-result{display:block}
 .bo-n-ok{display:none}
-.bo-panel.is-corrected .bo-n-err{display:none}
-.bo-panel.is-corrected .bo-n-ok{display:inline}
-.bo-panel.is-corrected.is-done .bo-rej{color:inherit}
+.bo-panel.is-corrected .bo-n-err,
+.bo-live.is-corrected .bo-n-err{display:none}
+.bo-panel.is-corrected .bo-n-ok,
+.bo-live.is-corrected .bo-n-ok{display:inline}
+.bo-panel.is-corrected.is-done .bo-rej,
+.bo-live.is-corrected.is-done .bo-rej{color:inherit}
 .bo-import + .bo-import{margin-top:16px}
 .bo-panel[data-op="generate"] form{margin:0}
 
@@ -894,10 +914,13 @@ button.bap-chip-more:hover{color:var(--accent);border-color:var(--accent)}
 .bo-acc-h-btn{display:flex;align-items:center;gap:11px;flex:1;min-width:0;background:none;border:0;padding:0;cursor:pointer;text-align:left;font:inherit;color:inherit}
 .bo-acc-h .bo-acc-chev{background:none;border:0;padding:6px;cursor:pointer;color:inherit}
 .bo-drop.is-drag{border-color:var(--accent)!important;background:var(--accent-soft)!important;transform:scale(1.01)}
-.bo-panel.is-busy{position:relative;pointer-events:none}
-.bo-panel.is-busy::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.45);
+.bo-panel.is-busy,
+.bo-live.is-busy{position:relative;pointer-events:none}
+.bo-panel.is-busy::after,
+.bo-live.is-busy::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.45);
   backdrop-filter:blur(1px);animation:bo-pulse .9s ease infinite}
-.bo-panel.bo-shake{animation:bo-shake .42s ease}
+.bo-panel.bo-shake,
+.bo-live.bo-shake{animation:bo-shake .42s ease}
 .mc-tool-form{display:block;min-width:0}
 .mc-tool-form .mc-tool{flex-direction:column;align-items:stretch;gap:0}
 .mc-tool-row{display:flex;align-items:center;gap:14px;width:100%;min-width:0}

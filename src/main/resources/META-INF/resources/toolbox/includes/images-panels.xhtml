@@ -70,7 +70,8 @@
           </div>
         </div>
 
-        <h:form id="imgImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="imgImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotImageBean.importPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="images"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="images" data-op="import"
                 data-cls="#{actionsLotImageBean.importPanel.cssClasses}"></span>

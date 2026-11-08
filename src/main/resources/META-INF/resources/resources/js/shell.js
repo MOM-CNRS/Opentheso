@@ -7187,14 +7187,34 @@ function boSyncPanel(obj, op, cssClasses) {
 }
 window.boSyncPanel = boSyncPanel;
 
+/** Le rendu ajax du formulaire ne réécrit pas le jeton de vue. On le recopie. */
+function boKeepViewState() {
+  const donor = document.querySelector("input[name='jakarta.faces.ViewState']");
+  if (!donor || !donor.value) return;
+  document.querySelectorAll("form.bo-live").forEach((form) => {
+    let input = form.querySelector("input[name='jakarta.faces.ViewState']");
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "jakarta.faces.ViewState";
+      input.autocomplete = "off";
+      form.appendChild(input);
+    }
+    if (input !== donor) input.value = donor.value;
+  });
+}
+window.boKeepViewState = boKeepViewState;
+
 function boAjaxBusy(data) {
   if (!data) return;
   const src = data.source;
   const panel = src && src.closest ? src.closest(".bo-panel") : null;
   if (data.status === "begin" && panel) panel.classList.add("is-busy");
-  if (data.status === "success" || data.status === "complete") {
+  if (data.status === "complete" && panel) panel.classList.remove("is-busy");
+  // "complete" arrive avant le remplacement du DOM : ne pas y relire data-cls.
+  if (data.status === "success") {
     if (panel) panel.classList.remove("is-busy");
-    // Relire un éventuel marqueur d'état dans le fragment mis à jour
+    boKeepViewState();
     document.querySelectorAll(".bo-state[data-cls]").forEach((el) => {
       const o = el.getAttribute("data-obj");
       const p = el.getAttribute("data-op");
@@ -7238,11 +7258,17 @@ window.bindBoDropZones = bindBoDropZones;
 document.addEventListener("DOMContentLoaded", bindBoDropZones);
 if (window.faces && faces.ajax) {
   faces.ajax.addOnEvent(function (data) {
-    if (data.status === "success") bindBoDropZones();
+    if (data.status === "success") {
+      boKeepViewState();
+      bindBoDropZones();
+    }
   });
 } else if (window.jsf && jsf.ajax) {
   jsf.ajax.addOnEvent(function (data) {
-    if (data.status === "success") bindBoDropZones();
+    if (data.status === "success") {
+      boKeepViewState();
+      bindBoDropZones();
+    }
   });
 }
 

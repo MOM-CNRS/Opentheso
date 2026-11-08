@@ -394,7 +394,7 @@ a.tp-add-opt:hover .tp-add-opt-go{opacity:1;transform:translateX(0);color:var(--
 .tp-tabs.is-guest{display:none}
 .tp-tabs-glider{
   position:absolute;top:0;left:0;z-index:0;height:0;width:0;
-  border-radius:var(--r);background:var(--ink);
+  border-radius:var(--r);background:var(--accent);
   box-shadow:none;
   transform:translate3d(0,0,0);pointer-events:none;will-change:transform,width;
   transition:transform .42s cubic-bezier(.22,1,.36,1),width .42s cubic-bezier(.22,1,.36,1),height .42s cubic-bezier(.22,1,.36,1),opacity .18s ease;
@@ -530,7 +530,7 @@ button.tp-tab{appearance:none;-webkit-appearance:none;margin:0;line-height:1.2}
 .tp-tab svg,.tp-chip svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tp-tab:hover,.tp-chip:hover{color:var(--accent);background:var(--accent-soft)}
 .tp-chip.is-on{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:none}
-.tp-tab.is-on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:none}
+.tp-tab.is-on{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:none}
 .tp-tabs:has(.tp-tabs-glider.is-ready) .tp-tab.is-on{
   background:transparent;border-color:transparent;box-shadow:none;color:#fff
 }

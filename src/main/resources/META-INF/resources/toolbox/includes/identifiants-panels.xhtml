@@ -69,7 +69,8 @@
           </div>
         </div>
 
-        <h:form id="arkImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+        <h:form id="arkImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotArkBean.importPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="identifiants"/></ui:include>
           <span class="bo-state" hidden="hidden"
                 data-obj="identifiants" data-op="import"
                 data-cls="#{actionsLotArkBean.importPanel.cssClasses}"></span>
@@ -281,7 +282,8 @@
         </div>
       </div>
 
-      <h:form id="arkGenForm" prependId="false">
+      <h:form id="arkGenForm" prependId="false" styleClass="bo-live #{actionsLotArkBean.generateState.cssClasses}">
+        <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="identifiants"/></ui:include>
         <span class="bo-state" hidden="hidden"
               data-obj="identifiants" data-op="generate"
               data-cls="#{actionsLotArkBean.generateState.cssClasses}"></span>
