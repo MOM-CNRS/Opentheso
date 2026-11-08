@@ -648,7 +648,6 @@ public class ThesaurusViewBean implements Serializable {
                     getSelectedLang()
             );
         }
-        branchConceptCount = conceptReadService.countBranchConcepts(getId(), id);
         loadConceptMetadata(id);
         conceptSelectionContext.update(getId(), selectedConcept);
     }

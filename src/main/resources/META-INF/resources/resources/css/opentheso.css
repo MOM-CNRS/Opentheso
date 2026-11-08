@@ -1310,6 +1310,12 @@ button.coll-item{
 #viewLive.is-loading .cv-progress{display:block}
 .cv-progress::after{content:"";display:block;height:100%;width:42%;
   background:var(--accent);animation:cv-indet 1.05s ease-in-out infinite}
+.cv-corpus-item{display:block}
+.cv-corpus-item + .cv-corpus-item{margin-top:4px}
+.cv-async[aria-busy="true"]{display:inline-block;width:.72em;height:.72em;border-radius:50%;
+  border:2px solid var(--line);border-top-color:var(--accent);vertical-align:-.05em;
+  animation:cv-spin .7s linear infinite}
+@keyframes cv-spin{to{transform:rotate(360deg)}}
 @keyframes cv-in{
   from{opacity:0;transform:translateY(8px)}
   to{opacity:1;transform:none}
@@ -1323,6 +1329,7 @@ button.coll-item{
   #viewLive.is-loading #previewDetailState > .cv,
   #viewLive.is-loading #previewDetailState > .empty{opacity:1}
   .cv-progress::after{animation:none;width:100%}
+  .cv-async[aria-busy="true"]{animation:none;border-top-color:var(--line)}
   .cand-row:active,.prop-item:active{transform:none}
 }
 .cv-count{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-4);white-space:nowrap}

@@ -222,7 +222,6 @@ class ThesaurusViewBeanTest {
                 .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
         when(conceptReadService.loadDetail("th17", "c1", "en", true))
                 .thenReturn(Optional.of(conceptDetail("c1", "Places", "C")));
-        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(3);
 
         bean.openTreeNode("c1", "concept");
         bean.setSelectedLang("en");
@@ -245,7 +244,6 @@ class ThesaurusViewBeanTest {
                 .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
         when(conceptReadService.loadDetail("th17", "c1", "en", true))
                 .thenReturn(Optional.of(conceptDetail("c1", "Places", "C")));
-        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(3);
 
         bean.openTreeNode("c1", "concept");
         bean.openConceptInTranslationLanguage("en");
@@ -272,7 +270,6 @@ class ThesaurusViewBeanTest {
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
         when(conceptReadService.loadDetail("th17", "c1", "fr", true))
                 .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
-        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(1);
 
         bean.openTreeNode("c1", "concept");
 
@@ -312,7 +309,6 @@ class ThesaurusViewBeanTest {
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
         when(conceptReadService.loadDetail("th17", "c1", "fr", true))
                 .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
-        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(1);
         when(conceptReadService.loadBreadcrumbPaths("th17", "c1", "fr")).thenReturn(List.of());
         when(conceptReadService.loadBreadcrumb("th17", "c1", "fr")).thenReturn(List.of());
 
@@ -549,7 +545,6 @@ class ThesaurusViewBeanTest {
         when(localeBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
         when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
-        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(2);
 
         bean.openTreeNode("c1", "concept");
 
@@ -559,9 +554,9 @@ class ThesaurusViewBeanTest {
         assertEquals("concept", bean.getSelectedKind());
         assertEquals("valide", bean.getConceptDisplayStatus());
         assertEquals("Lieux", bean.getSelectedConcept().getSummary().getPreferredLabel());
-        assertEquals(2, bean.getBranchConceptCount());
+        assertEquals(0, bean.getBranchConceptCount());
         verify(conceptReadService).loadDetail("th17", "c1", "fr", true);
-        verify(conceptReadService).countBranchConcepts("th17", "c1");
+        verify(conceptReadService, never()).countBranchConcepts(any(), any());
         verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
         verify(propositionBean).clearConsultation();
         verify(propositionBean).refreshBadgeCount();
@@ -573,7 +568,6 @@ class ThesaurusViewBeanTest {
         when(localeBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
         when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
-        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(2);
 
         bean.openTreeNode("c1", "concept");
         bean.reloadSelectedConcept();
@@ -713,7 +707,6 @@ class ThesaurusViewBeanTest {
                 .thenReturn(Optional.of(conceptDetail("crej01", "Bronze blanc", "CA")));
         when(conceptReadService.loadCandidateMeta("th17", List.of("crej01")))
                 .thenReturn(Collections.singletonList(new Object[]{"crej01", "a.costa", "2026-02-20", 3}));
-        when(conceptReadService.countBranchConcepts("th17", "crej01")).thenReturn(0);
 
         bean.openTreeNode("crej01", "rejete");
 
@@ -747,7 +740,6 @@ class ThesaurusViewBeanTest {
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
         when(conceptReadService.loadDetail("th17", "c-dep", "fr", true))
                 .thenReturn(Optional.of(conceptDetail("c-dep", "Ancien terme", "DEP")));
-        when(conceptReadService.countBranchConcepts("th17", "c-dep")).thenReturn(0);
 
         bean.openTreeNode("c-dep", "concept");
 

@@ -4072,6 +4072,144 @@ window.onAlignAutoSearch = function (data) {
   }
 }
 
+let conceptExtrasCtrl = null;
+let conceptExtrasToken = 0;
+let conceptExtrasKey = "";
+let conceptExtrasPending = 0;
+
+function conceptExtrasCurrent(token, conceptId) {
+  if (token !== conceptExtrasToken) return false;
+  const state = document.getElementById("previewDetailState");
+  return !!(state && state.getAttribute("data-id") === conceptId);
+}
+
+function escapeConceptExtra(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function safeConceptExtraHref(uri) {
+  try {
+    const url = new URL(uri, location.origin);
+    if (url.protocol === "http:" || url.protocol === "https:") return url.href;
+  } catch (err) {
+    /* ignore */
+  }
+  return "";
+}
+
+function paintBranchTotal(count) {
+  const n = Number(count);
+  const text = (Number.isFinite(n) ? n : 0) + " concept" + ((Number.isFinite(n) && n > 1) ? "s" : "");
+  document.querySelectorAll("#previewDetailState [data-slot='branch']").forEach((slot) => {
+    slot.removeAttribute("aria-busy");
+    slot.textContent = text;
+  });
+}
+
+function paintBranchTotalFailed() {
+  document.querySelectorAll("#previewDetailState [data-slot='branch']").forEach((slot) => {
+    if (slot.getAttribute("aria-busy") !== "true") return;
+    slot.removeAttribute("aria-busy");
+    slot.classList.add("muted");
+    slot.textContent = "—";
+  });
+}
+
+function paintCorpusLinks(links) {
+  const rows = Array.isArray(links) ? links : [];
+  document.querySelectorAll("#previewDetailState [data-cv-extra='corpus']").forEach((box) => {
+    if (!rows.length) {
+      box.innerHTML = '<span class="muted" data-slot="corpus">Aucun</span>';
+      return;
+    }
+    box.innerHTML = rows.map((link) => {
+      const name = escapeConceptExtra(link && link.name);
+      const href = safeConceptExtraHref(link && link.uri);
+      let value = '<span class="muted">—</span>';
+      if (href && link.onlyUri) {
+        value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
+          + escapeConceptExtra(link.uri) + "</a>";
+      } else if (href && Number(link.count) > 0) {
+        value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
+          + escapeConceptExtra(String(link.count)) + "</a>";
+      }
+      return '<span class="cv-corpus-item">' + name + " " + value + "</span>";
+    }).join("");
+  });
+}
+
+function paintCorpusLinksFailed() {
+  document.querySelectorAll("#previewDetailState [data-slot='corpus']").forEach((slot) => {
+    if (slot.getAttribute("aria-busy") !== "true") return;
+    slot.removeAttribute("aria-busy");
+    slot.classList.add("muted");
+    slot.textContent = "—";
+  });
+}
+
+function loadConceptExtras() {
+  const state = document.getElementById("previewDetailState");
+  if (!state || !state.querySelector("[data-slot][aria-busy='true']")) return;
+  const conceptId = state.getAttribute("data-id") || "";
+  const kind = (state.getAttribute("data-kind") || "").toLowerCase();
+  if (!conceptId || (kind !== "concept" && kind !== "candidat")) return;
+  const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
+  if (!theso) return;
+  const key = theso + "\n" + conceptId;
+  if (conceptExtrasPending > 0 && conceptExtrasKey === key) return;
+  if (conceptExtrasCtrl) conceptExtrasCtrl.abort();
+  const ctrl = new AbortController();
+  conceptExtrasCtrl = ctrl;
+  conceptExtrasKey = key;
+  const token = ++conceptExtrasToken;
+  conceptExtrasPending = 2;
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const params = new URLSearchParams({ thesaurusId: theso, conceptId: conceptId });
+  const lang = typeof thesaurusLang === "function" ? thesaurusLang() : "";
+  if (lang) params.set("lang", lang);
+  const opt = { headers: { Accept: "application/json" }, signal: ctrl.signal };
+  const query = params.toString();
+  const settle = () => {
+    if (token !== conceptExtrasToken) return;
+    conceptExtrasPending = Math.max(0, conceptExtrasPending - 1);
+    if (conceptExtrasPending === 0) conceptExtrasCtrl = null;
+  };
+  fetch(ctx + "/api/concepts/branch-count?" + query, opt)
+    .then((res) => {
+      if (!res.ok) throw new Error("http");
+      return res.json();
+    })
+    .then((data) => {
+      if (!conceptExtrasCurrent(token, conceptId)) return;
+      paintBranchTotal(data && data.count);
+    })
+    .catch((err) => {
+      if (err && err.name === "AbortError") return;
+      if (!conceptExtrasCurrent(token, conceptId)) return;
+      paintBranchTotalFailed();
+    })
+    .finally(settle);
+  fetch(ctx + "/api/concepts/corpus-links?" + query, opt)
+    .then((res) => {
+      if (!res.ok) throw new Error("http");
+      return res.json();
+    })
+    .then((data) => {
+      if (!conceptExtrasCurrent(token, conceptId)) return;
+      paintCorpusLinks(data && data.links);
+    })
+    .catch((err) => {
+      if (err && err.name === "AbortError") return;
+      if (!conceptExtrasCurrent(token, conceptId)) return;
+      paintCorpusLinksFailed();
+    })
+    .finally(settle);
+}
+
 function finishLiveOpen() {
   const live = $("#viewLive");
   if (!live) return;
@@ -4080,6 +4218,7 @@ function finishLiveOpen() {
   live.removeAttribute("aria-busy");
   const bar = $("#liveProgress");
   if (bar) bar.setAttribute("aria-hidden", "true");
+  loadConceptExtras();
   requestAnimationFrame(() => {
     if (window.applyConceptCardOrder) window.applyConceptCardOrder();
     if (window.syncViewRail) window.syncViewRail();

@@ -875,4 +875,22 @@ public class ConceptReadService {
         }
         return conceptQueryRepository.countBranchConcepts(thesaurusId, conceptId);
     }
+
+    /**
+     * Contexte minimal (identifiant, ARK, libellé) pour interroger les corpus
+     * sans recharger la fiche. Inclut les candidats.
+     */
+    @Transactional(readOnly = true)
+    public Optional<CorpusSearchContext> loadCorpusSearchContext(String thesaurusId, String conceptId, String lang) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return Optional.empty();
+        }
+        String workLang = StringUtils.defaultIfBlank(lang, "fr");
+        return conceptQueryRepository.findCorpusSearchHeader(conceptId, thesaurusId, workLang)
+                .map(row -> new CorpusSearchContext(
+                        conceptId,
+                        row[1] == null ? "" : row[1].toString(),
+                        row[2] == null ? "" : row[2].toString()
+                ));
+    }
 }

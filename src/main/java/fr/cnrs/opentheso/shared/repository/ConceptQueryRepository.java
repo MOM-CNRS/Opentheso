@@ -861,6 +861,34 @@ public class ConceptQueryRepository {
         return result != null ? result.intValue() : 0;
     }
 
+    /**
+     * Identifiant, ARK et libellé préféré, y compris pour un candidat.
+     */
+    @SuppressWarnings("unchecked")
+    public Optional<Object[]> findCorpusSearchHeader(String conceptId, String thesaurusId, String lang) {
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT c.id_concept,
+                   COALESCE(c.id_ark, ''),
+                   COALESCE(t.lexical_value, '')
+            FROM concept c
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+               AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+               AND t.id_thesaurus = c.id_thesaurus
+               AND t.lang = :lang
+            WHERE c.id_concept = :conceptId
+              AND c.id_thesaurus = :thesaurusId
+            LIMIT 1
+            """)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
+
     public List<String> findBroaderConceptIds(String conceptId, String thesaurusId) {
         return em.createNativeQuery("""
             SELECT id_concept2
