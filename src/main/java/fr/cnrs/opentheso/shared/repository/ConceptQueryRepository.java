@@ -851,14 +851,15 @@ public class ConceptQueryRepository {
                 .getResultList();
     }
 
+    /**
+     * Taille de toute la branche : le concept lui-même et tous ses descendants NT,
+     * chaque concept une seule fois même en polyhiérarchie.
+     */
     public int countBranchConcepts(String thesaurusId, String conceptId) {
-        Number result = (Number) em.createNativeQuery("""
-            SELECT COUNT(*) FROM opentheso_get_narrowers_ignorefacet(:thesaurusId, :conceptId)
-            """)
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
-                .getSingleResult();
-        return result != null ? result.intValue() : 0;
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return 0;
+        }
+        return 1 + countDescendantConcepts(thesaurusId, conceptId);
     }
 
     /**
