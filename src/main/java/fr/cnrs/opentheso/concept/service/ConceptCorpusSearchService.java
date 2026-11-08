@@ -21,7 +21,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -152,7 +151,7 @@ public class ConceptCorpusSearchService {
         StringBuilder json = new StringBuilder();
         HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) URI.create(uri).toURL().openConnection();
+            conn = CorpusHttp.open(uri);
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
             conn.setRequestProperty("User-Agent", "JavaHttpClient");
@@ -211,7 +210,7 @@ public class ConceptCorpusSearchService {
             return -1;
         }
         try {
-            HttpURLConnection connection = (HttpURLConnection) URI.create(uri).toURL().openConnection();
+            HttpURLConnection connection = CorpusHttp.open(uri);
             connection.setRequestMethod("GET");
             Map<String, List<String>> headers = connection.getHeaderFields();
             Map<String, List<String>> lowerCaseHeaders = headers.entrySet().stream()
