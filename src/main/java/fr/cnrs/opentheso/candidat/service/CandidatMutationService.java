@@ -49,6 +49,10 @@ public class CandidatMutationService {
         candidatMutationPersistence.updateAlignment(element);
     }
 
+    public boolean preferredLabelExists(String thesaurusId, String preferredLabel) {
+        return candidatMutationPersistence.preferredLabelExists(thesaurusId, preferredLabel);
+    }
+
     public boolean saveNewCandidat(
             CandidatDto candidat,
             String thesaurusId,

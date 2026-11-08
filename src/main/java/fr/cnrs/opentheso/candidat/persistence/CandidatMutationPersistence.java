@@ -167,6 +167,13 @@ public class CandidatMutationPersistence {
         alignementRepository.save(entity);
     }
 
+    public boolean preferredLabelExists(String thesaurusId, String preferredLabel) {
+        if (StringUtils.isBlank(thesaurusId) || StringUtils.isBlank(preferredLabel)) {
+            return false;
+        }
+        return termRepository.existsPreferredLabel(preferredLabel.trim(), thesaurusId);
+    }
+
     public boolean saveNewCandidat(
             CandidatDto candidat,
             String thesaurusId,

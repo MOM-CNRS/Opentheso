@@ -272,7 +272,7 @@
           </div>
           </ui:fragment>
           </ui:fragment>
-          <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
+          <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing and not thesaurusViewBean.candidateSelected}">
           <div class="cv-corpus">
             <ui:fragment rendered="#{not thesaurusViewBean.corpusSearched}">
               <h:commandButton value="Afficher les corpus liés" styleClass="bo-btn primary sm"
@@ -365,6 +365,32 @@
             <div class="crow-lbl">Total de la branche</div>
             <div class="crow-val"><span>#{thesaurusViewBean.branchConceptCount} concept#{thesaurusViewBean.branchConceptCount gt 1 ? 's' : ''}</span></div>
           </div>
+          <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}">
+          <div class="cv-corpus">
+            <ui:fragment rendered="#{not thesaurusViewBean.corpusSearched}">
+              <h:commandButton value="Afficher les corpus liés" styleClass="bo-btn primary sm"
+                               action="#{thesaurusViewBean.searchCorpusLinks}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              </h:commandButton>
+            </ui:fragment>
+            <ui:fragment rendered="#{thesaurusViewBean.corpusNoResult}">
+              <div class="muted">Aucun corpus lié.</div>
+            </ui:fragment>
+            <ui:repeat value="#{thesaurusViewBean.displayedCorpusLinks}" var="corpus">
+              <div class="crow">
+                <div class="crow-lbl">#{corpus.corpusName}</div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{corpus.hasLink()}">
+                    <a class="link" href="#{corpus.uriLink}" target="_blank" rel="noopener">
+                      #{corpus.onlyUriLink ? corpus.uriLink : (corpus.noticeCount gt 0 ? corpus.noticeCount : corpus.uriLink)}
+                    </a>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not corpus.hasLink()}"><span class="muted">—</span></ui:fragment>
+                </div>
+              </div>
+            </ui:repeat>
+          </div>
+          </ui:fragment>
         </div>
       </section>
 

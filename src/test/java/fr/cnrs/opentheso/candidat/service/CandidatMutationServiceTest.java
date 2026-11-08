@@ -104,6 +104,13 @@ class CandidatMutationServiceTest {
     }
 
     @Test
+    void preferredLabelExists_delegatesToPersistence() {
+        when(candidatMutationPersistence.preferredLabelExists("TH1", "Amphore")).thenReturn(true);
+
+        assertTrue(service.preferredLabelExists("TH1", "Amphore"));
+    }
+
+    @Test
     void deleteCandidateTranslation_delegatesToPersistence() {
         service.deleteCandidateTranslation("TH1", "T1", "en");
 

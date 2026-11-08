@@ -46,6 +46,17 @@ public interface TermRepository extends JpaRepository<Term, Integer> {
     boolean existsPrefLabel(@Param("title") String title, @Param("lang") String lang, @Param("idThesaurus") String idThesaurus);
 
     @Query(value = """
+                SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+                FROM term t
+                JOIN preferred_term pt
+                  ON pt.id_term = t.id_term
+                 AND pt.id_thesaurus = t.id_thesaurus
+                WHERE t.id_thesaurus = :idThesaurus
+                  AND f_unaccent(lower(t.lexical_value)) = f_unaccent(lower(:title))
+            """, nativeQuery = true)
+    boolean existsPreferredLabel(@Param("title") String title, @Param("idThesaurus") String idThesaurus);
+
+    @Query(value = """
                 SELECT DISTINCT lang FROM term WHERE id_thesaurus = :idThesaurus
             """, nativeQuery = true)
     List<String> searchDistinctLangInThesaurus(@Param("idThesaurus") String idThesaurus);

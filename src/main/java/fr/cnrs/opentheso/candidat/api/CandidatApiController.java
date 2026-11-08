@@ -2,8 +2,10 @@ package fr.cnrs.opentheso.candidat.api;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.candidats.enumeration.VoteType;
+import fr.cnrs.opentheso.candidat.api.dto.CandidateNoteRequest;
 import fr.cnrs.opentheso.candidat.api.dto.CandidateSummaryResponse;
 import fr.cnrs.opentheso.candidat.api.dto.CreateCandidateRequest;
+import fr.cnrs.opentheso.candidat.model.CandidateNoteTypes;
 import fr.cnrs.opentheso.candidat.api.dto.ExportCandidatesRequest;
 import fr.cnrs.opentheso.candidat.api.dto.ProcessCandidateRequest;
 import fr.cnrs.opentheso.candidat.api.dto.VoteCandidateRequest;
@@ -97,7 +99,9 @@ public class CandidatApiController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Créer un candidat")
+    @Operation(summary = "Créer un candidat",
+            description = "Refuse la création si le libellé préféré existe déjà dans le thésaurus. "
+                    + "Accepte des notes typées (definition, note, scopeNote, historyNote, editorialNote, changeNote, example).")
     public CandidateSummaryResponse createCandidate(
             @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
             @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
@@ -107,6 +111,11 @@ public class CandidatApiController {
         int userId = candidatAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         candidatAuthSupport.requireContributor(userId, thesaurusId);
         String lang = resolveLang(request.lang());
+        rejectUnknownNoteTypes(request.notes());
+        if (candidatMutationService.preferredLabelExists(thesaurusId, request.preferredLabel())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A preferred label already exists in this thesaurus");
+        }
         String username = resolveUsername(userId);
 
         CandidatDto candidat = new CandidatDto();
@@ -119,6 +128,7 @@ public class CandidatApiController {
                 candidat, thesaurusId, lang, userId, username, lang, definition)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Unable to create candidate");
         }
+        saveCandidateNotes(request.notes(), candidat.getIdConcepte(), thesaurusId, lang, userId);
         candidatMutationService.saveContributorMetadata(candidat.getIdConcepte(), thesaurusId, username);
         return CandidatApiMapper.toSummary(
                 candidatReadService.findByConceptId(thesaurusId, candidat.getIdConcepte(), lang, userId)
@@ -240,6 +250,40 @@ public class CandidatApiController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"")
                 .contentType(MediaType.parseMediaType(result.contentType()))
                 .body(result.content());
+    }
+
+    private void rejectUnknownNoteTypes(List<CandidateNoteRequest> notes) {
+        if (notes == null) {
+            return;
+        }
+        for (CandidateNoteRequest note : notes) {
+            if (note == null || StringUtils.isBlank(note.value())) {
+                continue;
+            }
+            if (!CandidateNoteTypes.isSupported(note.type())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown note type: " + note.type());
+            }
+        }
+    }
+
+    private void saveCandidateNotes(List<CandidateNoteRequest> notes, String conceptId, String thesaurusId,
+                                    String lang, int userId) {
+        if (notes == null) {
+            return;
+        }
+        for (CandidateNoteRequest note : notes) {
+            if (note == null || StringUtils.isBlank(note.value()) || !CandidateNoteTypes.isSupported(note.type())) {
+                continue;
+            }
+            candidatMutationService.addOrUpdateCandidateNote(
+                    conceptId,
+                    resolveLang(StringUtils.defaultIfBlank(note.lang(), lang)),
+                    thesaurusId,
+                    note.value(),
+                    note.type(),
+                    StringUtils.defaultString(note.source()),
+                    userId);
+        }
     }
 
     private String resolveLang(String lang) {

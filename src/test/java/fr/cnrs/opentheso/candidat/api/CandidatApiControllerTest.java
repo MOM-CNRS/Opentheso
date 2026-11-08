@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.candidat.api;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
+import fr.cnrs.opentheso.candidat.api.dto.CandidateNoteRequest;
+import fr.cnrs.opentheso.candidat.api.dto.CreateCandidateRequest;
 import fr.cnrs.opentheso.candidat.api.dto.ExportCandidatesRequest;
 import fr.cnrs.opentheso.candidat.exception.CandidateNotFoundException;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Date;
 import java.util.List;
@@ -25,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -106,6 +111,55 @@ class CandidatApiControllerTest {
 
         assertThrows(CandidateNotFoundException.class,
                 () -> controller.getCandidate("api-key", null, "TH1", "missing", null));
+    }
+
+    @Test
+    void createCandidate_rejectsDuplicatePreferredLabel() {
+        when(candidatMutationService.preferredLabelExists("TH1", "Amphore")).thenReturn(true);
+
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> controller.createCandidate("api-key", null, "TH1",
+                        new CreateCandidateRequest("Amphore", null, "fr", null)));
+
+        assertEquals(409, error.getStatusCode().value());
+        verify(candidatMutationService, never()).saveNewCandidat(any(), any(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void createCandidate_rejectsUnknownNoteType() {
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> controller.createCandidate("api-key", null, "TH1",
+                        new CreateCandidateRequest("Amphore", null, "fr",
+                                List.of(new CandidateNoteRequest("custom", "texte", "fr", null)))));
+
+        assertEquals(400, error.getStatusCode().value());
+        verify(candidatMutationService, never()).saveNewCandidat(any(), any(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void createCandidate_savesTypedNotes() {
+        when(candidatMutationService.preferredLabelExists("TH1", "Amphore")).thenReturn(false);
+        when(candidatMutationService.saveNewCandidat(any(), eq("TH1"), eq("fr"), eq(4), any(), eq("fr"), eq("")))
+                .thenAnswer(invocation -> {
+                    CandidatDto created = invocation.getArgument(0);
+                    created.setIdConcepte("C9");
+                    return true;
+                });
+        CandidatDto stored = new CandidatDto();
+        stored.setIdConcepte("C9");
+        stored.setNomPref("Amphore");
+        stored.setLang("fr");
+        stored.setStatut(String.valueOf(CandidatStatusCode.PENDING));
+        when(candidatReadService.findByConceptId("TH1", "C9", "fr", 4)).thenReturn(Optional.of(stored));
+
+        var response = controller.createCandidate("api-key", null, "TH1",
+                new CreateCandidateRequest("Amphore", null, "fr", List.of(
+                        new CandidateNoteRequest("scopeNote", "Usage", "en", "BNF"),
+                        new CandidateNoteRequest("historyNote", "Historique", null, null))));
+
+        assertEquals("C9", response.conceptId());
+        verify(candidatMutationService).addOrUpdateCandidateNote("C9", "en", "TH1", "Usage", "scopeNote", "BNF", 4);
+        verify(candidatMutationService).addOrUpdateCandidateNote("C9", "fr", "TH1", "Historique", "historyNote", "", 4);
     }
 
     @Test

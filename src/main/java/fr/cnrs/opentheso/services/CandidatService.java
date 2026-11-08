@@ -35,7 +35,9 @@ import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.candidat.model.CandidateNoteTypes;
 import fr.cnrs.opentheso.ws.openapi.v1.routes.conceptpost.Candidate;
+import fr.cnrs.opentheso.ws.openapi.v1.routes.conceptpost.CandidateNote;
 import fr.cnrs.opentheso.ws.openapi.v1.routes.conceptpost.Element;
 
 import java.sql.SQLException;
@@ -402,8 +404,43 @@ public class CandidatService {
     }
 
 
+    public boolean preferredLabelExists(String thesaurusId, String preferredLabel) {
+        if (StringUtils.isBlank(thesaurusId) || StringUtils.isBlank(preferredLabel)) {
+            return false;
+        }
+        return termRepository.existsPreferredLabel(preferredLabel.trim(), thesaurusId);
+    }
+
+    public String unsupportedNoteType(Candidate candidate) {
+        if (candidate == null || CollectionUtils.isEmpty(candidate.getNotes())) {
+            return null;
+        }
+        for (CandidateNote note : candidate.getNotes()) {
+            if (note == null || StringUtils.isBlank(note.getValue())) {
+                continue;
+            }
+            if (!CandidateNoteTypes.isSupported(note.getType())) {
+                return StringUtils.defaultString(note.getType());
+            }
+        }
+        return null;
+    }
+
     //Sauvegarde un candidat en base à partir d'un JSON
     public boolean saveCandidat(Candidate candidate, int userId) {
+        if (candidate == null || unsupportedNoteType(candidate) != null) {
+            return false;
+        }
+        if (CollectionUtils.isNotEmpty(candidate.getTerme())) {
+            for (Element term : candidate.getTerme()) {
+                if (term != null && StringUtils.isNotBlank(term.getValue())
+                        && preferredLabelExists(candidate.getThesoId(), term.getValue())) {
+                    log.warn("Libellé préféré déjà présent dans le thésaurus {} : {}",
+                            candidate.getThesoId(), term.getValue());
+                    return false;
+                }
+            }
+        }
 
         var idTerm = String.valueOf(conceptRepository.getNextConceptNumericId());
         var idConcept = String.valueOf(conceptRepository.getNextConceptNumericId());
@@ -469,6 +506,20 @@ public class CandidatService {
             }
         }
 
+        if (CollectionUtils.isNotEmpty(candidate.getNotes())) {
+            for (CandidateNote note : candidate.getNotes()) {
+                if (note == null || StringUtils.isBlank(note.getValue())
+                        || !CandidateNoteTypes.isSupported(note.getType())) {
+                    continue;
+                }
+                insertNoteInCandidat(note.getType(), candidate.getThesoId(), idTerm,
+                        StringUtils.defaultIfBlank(note.getLang(), firstTermLang(candidate)),
+                        note.getValue(), userId,
+                        StringUtils.defaultIfBlank(note.getSource(), candidate.getSource()),
+                        idConcept);
+            }
+        }
+
         if (StringUtils.isNotEmpty(candidate.getComment())) {
             candidatMessageRepository.save(CandidatMessages.builder()
                     .value(candidate.getComment())
@@ -512,6 +563,17 @@ public class CandidatService {
                 .build()));
 
         return true;
+    }
+
+    private String firstTermLang(Candidate candidate) {
+        if (CollectionUtils.isNotEmpty(candidate.getTerme())) {
+            for (Element term : candidate.getTerme()) {
+                if (term != null && StringUtils.isNotBlank(term.getLang())) {
+                    return term.getLang();
+                }
+            }
+        }
+        return "fr";
     }
 
     private void insertNoteInCandidat(String type, String thesoId, String idTerm, String lang, String description,

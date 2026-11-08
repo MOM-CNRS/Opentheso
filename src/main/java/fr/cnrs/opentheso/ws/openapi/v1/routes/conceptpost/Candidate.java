@@ -27,6 +27,8 @@ public class Candidate implements Serializable {
 
     private List<Element> note;
 
+    private List<CandidateNote> notes;
+
     private String source;
 
     private List<Element> synonymes;

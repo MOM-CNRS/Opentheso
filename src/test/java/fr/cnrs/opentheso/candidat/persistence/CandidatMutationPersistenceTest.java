@@ -328,6 +328,14 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
+    void preferredLabelExists_checksThesaurusAndLabel() {
+        when(termRepository.existsPreferredLabel("Amphore", "TH1")).thenReturn(true);
+
+        assertTrue(persistence.preferredLabelExists("TH1", " Amphore "));
+        assertFalse(persistence.preferredLabelExists("TH1", " "));
+    }
+
+    @Test
     void saveNewCandidat_rejectsExistingPreferredLabel() {
         var candidat = new CandidatDto();
         candidat.setNomPref("Existing label");
