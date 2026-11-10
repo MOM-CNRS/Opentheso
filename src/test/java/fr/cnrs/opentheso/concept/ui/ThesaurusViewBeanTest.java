@@ -1,15 +1,18 @@
 package fr.cnrs.opentheso.concept.ui;
 
+import fr.cnrs.opentheso.concept.model.ConceptHierarchicalRelation;
 import fr.cnrs.opentheso.concept.model.ConceptLabel;
 import fr.cnrs.opentheso.concept.model.ConceptNote;
 import fr.cnrs.opentheso.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.concept.model.FacetDetailOverview;
 import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.concept.model.ThesaurusMetadataItem;
+import fr.cnrs.opentheso.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeWriteService;
@@ -45,6 +48,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -67,6 +72,8 @@ class ThesaurusViewBeanTest {
     private ThesaurusHomeWriteService thesaurusHomeWriteService;
     @Mock
     private ConceptReadService conceptReadService;
+    @Mock
+    private ConceptFullReadService conceptFullReadService;
     @Mock
     private UserSession userSession;
     @Mock
@@ -105,6 +112,7 @@ class ThesaurusViewBeanTest {
                 thesaurusPreferenceService,
                 thesaurusHomeWriteService,
                 conceptReadService,
+                conceptFullReadService,
                 userSession,
                 rightsService,
                 localeBean,
@@ -560,6 +568,88 @@ class ThesaurusViewBeanTest {
         verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
         verify(propositionBean).clearConsultation();
         verify(propositionBean).refreshBadgeCount();
+    }
+
+    @Test
+    void openTreeNode_revealsRelationValuesTenAtATime() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(
+                conceptDetail("c1", "Lieux", "C", relations("bt", 25, "BT"), relations("nt", 8, "NT"), relations("rt", 12, "RT"))
+        ));
+
+        bean.openTreeNode("c1", "concept");
+
+        assertEquals(10, bean.getVisibleBroaders().size());
+        assertEquals("bt 0", bean.getVisibleBroaders().get(0).getLabel());
+        assertTrue(bean.isBroaderMoreVisible());
+        assertEquals(8, bean.getVisibleNarrowers().size());
+        assertFalse(bean.isNarrowerMoreVisible());
+        assertEquals(10, bean.getVisibleRelateds().size());
+        assertTrue(bean.isRelatedMoreVisible());
+
+        assertEquals("rel-term", bean.relationTermClass("bt", 0));
+        assertEquals("", bean.relationTermDelay("bt", 9));
+        bean.showMoreBroaders();
+        assertEquals(20, bean.getVisibleBroaders().size());
+        assertEquals("rel-term", bean.relationTermClass("bt", 9));
+        assertEquals("rel-term is-new", bean.relationTermClass("bt", 10));
+        assertEquals("animation-delay:0ms", bean.relationTermDelay("bt", 10));
+        assertEquals("animation-delay:42ms", bean.relationTermDelay("bt", 11));
+        bean.showMoreBroaders();
+        assertEquals(25, bean.getVisibleBroaders().size());
+        assertFalse(bean.isBroaderMoreVisible());
+
+        bean.showMoreRelateds();
+        assertEquals(12, bean.getVisibleRelateds().size());
+        assertFalse(bean.isRelatedMoreVisible());
+        verify(conceptFullReadService, never()).loadMoreNarrowers(any(), any(), any(), anyInt(), anyBoolean());
+
+        when(conceptReadService.loadDetail("th17", "c2", "fr", true)).thenReturn(Optional.of(
+                conceptDetail("c2", "Autre", "C", relations("bt", 2, "BT"), List.of(), List.of())
+        ));
+        bean.openTreeNode("c2", "concept");
+        assertEquals(2, bean.getVisibleBroaders().size());
+        assertFalse(bean.isBroaderMoreVisible());
+        assertTrue(bean.getVisibleNarrowers().isEmpty());
+    }
+
+    @Test
+    void showMoreNarrowers_appendsTheNextBatchPastTheFirstPage() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(localeBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptFullReadService.hasMoreFromBatch(any())).thenAnswer(invocation -> {
+            Object batch = invocation.getArgument(0);
+            return batch instanceof List<?> values && values.size() > ConceptFullReadService.NARROWER_PAGE_SIZE;
+        });
+        when(conceptFullReadService.nextNarrowerOffset(anyInt())).thenAnswer(invocation ->
+                invocation.getArgument(0, Integer.class) + ConceptFullReadService.NARROWER_PAGE_SIZE + 1);
+        when(conceptFullReadService.loadMoreNarrowers("th17", "c1", "fr", 41, false)).thenReturn(List.of(
+                new ConceptHierarchicalRelation("uri-a", "n41", "Suite 41", "NT"),
+                new ConceptHierarchicalRelation("uri-b", "n42", "Suite 42", "NT")
+        ));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(
+                conceptDetail("c1", "Lieux", "C", List.of(), relations("nt", 41, "NT"), List.of())
+        ));
+
+        bean.openTreeNode("c1", "concept");
+
+        assertEquals(10, bean.getVisibleNarrowers().size());
+        assertTrue(bean.isNarrowerMoreVisible());
+        for (int step = 0; step < 3; step++) {
+            bean.showMoreNarrowers();
+        }
+        assertEquals(40, bean.getVisibleNarrowers().size());
+        verify(conceptFullReadService, never()).loadMoreNarrowers(anyString(), anyString(), anyString(), anyInt(), anyBoolean());
+
+        bean.showMoreNarrowers();
+
+        assertEquals(43, bean.getVisibleNarrowers().size());
+        assertEquals("Suite 41", bean.getVisibleNarrowers().get(41).getLabel());
+        assertFalse(bean.isNarrowerMoreVisible());
+        verify(conceptFullReadService).loadMoreNarrowers("th17", "c1", "fr", 41, false);
     }
 
     @Test
@@ -1055,12 +1145,23 @@ class ThesaurusViewBeanTest {
     }
 
     private static ConceptDetail conceptDetail(String id, String label, String status) {
+        return conceptDetail(id, label, status, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+    }
+
+    private static ConceptDetail conceptDetail(
+            String id,
+            String label,
+            String status,
+            List<ConceptRelation> broaders,
+            List<ConceptRelation> narrowers,
+            List<ConceptRelation> relateds
+    ) {
         return new ConceptDetail(
                 new ConceptSummary(id, "th17", label, "fr", status, "", "concept", "", "", "", ""),
                 Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
+                broaders,
+                narrowers,
+                relateds,
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -1071,5 +1172,13 @@ class ThesaurusViewBeanTest {
                 Collections.emptyList(),
                 Collections.emptyList()
         );
+    }
+
+    private static List<ConceptRelation> relations(String prefix, int count, String role) {
+        var values = new java.util.ArrayList<ConceptRelation>();
+        for (int index = 0; index < count; index++) {
+            values.add(new ConceptRelation(prefix + index, prefix + " " + index, "", role));
+        }
+        return values;
     }
 }

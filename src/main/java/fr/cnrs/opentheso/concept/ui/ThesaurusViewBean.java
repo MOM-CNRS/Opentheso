@@ -19,6 +19,8 @@ import fr.cnrs.opentheso.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.stats.service.ConsultationViewLogger;
+import fr.cnrs.opentheso.concept.model.ConceptHierarchicalRelation;
+import fr.cnrs.opentheso.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.concept.support.ConceptQrSvgSupport;
@@ -68,6 +70,7 @@ public class ThesaurusViewBean implements Serializable {
     private final transient ThesaurusPreferenceService thesaurusPreferenceService;
     private final transient ThesaurusHomeWriteService thesaurusHomeWriteService;
     private final transient ConceptReadService conceptReadService;
+    private final transient ConceptFullReadService conceptFullReadService;
     private final transient UserSession userSession;
     private final transient RightsService rightsService;
     private final transient LocaleBean localeBean;
@@ -124,6 +127,22 @@ public class ThesaurusViewBean implements Serializable {
     private String ficheEditCard;
     @Getter
     private ConceptDetail selectedConcept;
+    private static final int RELATION_STEP = 10;
+    private int broaderVisible = RELATION_STEP;
+    private int narrowerVisible = RELATION_STEP;
+    private int relatedVisible = RELATION_STEP;
+    private int broaderFreshFrom = RELATION_STEP;
+    private int narrowerFreshFrom = RELATION_STEP;
+    private int relatedFreshFrom = RELATION_STEP;
+    private boolean narrowerMore;
+    private int narrowerOffset;
+    private List<ConceptRelation> loadedNarrowers = List.of();
+    @Getter
+    private List<ConceptRelation> visibleBroaders = List.of();
+    @Getter
+    private List<ConceptRelation> visibleNarrowers = List.of();
+    @Getter
+    private List<ConceptRelation> visibleRelateds = List.of();
     @Getter
     private FacetDetailOverview selectedFacet;
     @Getter
@@ -649,7 +668,51 @@ public class ThesaurusViewBean implements Serializable {
             );
         }
         loadConceptMetadata(id);
+        prepareRelationWindows();
         conceptSelectionContext.update(getId(), selectedConcept);
+    }
+
+    public boolean isBroaderMoreVisible() {
+        return hasMoreRelations(selectedConcept == null ? null : selectedConcept.getBroaderTerms(), broaderVisible);
+    }
+
+    public boolean isRelatedMoreVisible() {
+        return hasMoreRelations(selectedConcept == null ? null : selectedConcept.getRelatedTerms(), relatedVisible);
+    }
+
+    public boolean isNarrowerMoreVisible() {
+        return narrowerVisible < loadedNarrowers.size() || narrowerMore;
+    }
+
+    public void showMoreBroaders() {
+        broaderFreshFrom = broaderVisible;
+        broaderVisible += RELATION_STEP;
+        refreshVisibleRelations();
+    }
+
+    public void showMoreRelateds() {
+        relatedFreshFrom = relatedVisible;
+        relatedVisible += RELATION_STEP;
+        refreshVisibleRelations();
+    }
+
+    public void showMoreNarrowers() {
+        narrowerFreshFrom = narrowerVisible;
+        narrowerVisible += RELATION_STEP;
+        fillNarrowers();
+        refreshVisibleRelations();
+    }
+
+    public String relationTermClass(String kind, int index) {
+        return index >= freshFrom(kind) ? "rel-term is-new" : "rel-term";
+    }
+
+    public String relationTermDelay(String kind, int index) {
+        int from = freshFrom(kind);
+        if (index < from) {
+            return "";
+        }
+        return "animation-delay:" + ((index - from) * 42) + "ms";
     }
 
     /**
@@ -1617,6 +1680,115 @@ public class ThesaurusViewBean implements Serializable {
         corpusSearched = false;
         displayedCorpusLinks = Collections.emptyList();
         conceptMetadata = List.of();
+        broaderVisible = RELATION_STEP;
+        narrowerVisible = RELATION_STEP;
+        relatedVisible = RELATION_STEP;
+        broaderFreshFrom = RELATION_STEP;
+        narrowerFreshFrom = RELATION_STEP;
+        relatedFreshFrom = RELATION_STEP;
+        narrowerMore = false;
+        narrowerOffset = 0;
+        loadedNarrowers = List.of();
+        visibleBroaders = List.of();
+        visibleNarrowers = List.of();
+        visibleRelateds = List.of();
+    }
+
+    private void prepareRelationWindows() {
+        broaderVisible = RELATION_STEP;
+        relatedVisible = RELATION_STEP;
+        narrowerVisible = RELATION_STEP;
+        broaderFreshFrom = RELATION_STEP;
+        relatedFreshFrom = RELATION_STEP;
+        narrowerFreshFrom = RELATION_STEP;
+        loadedNarrowers = new ArrayList<>();
+        if (selectedConcept != null && selectedConcept.getNarrowerTerms() != null) {
+            loadedNarrowers.addAll(selectedConcept.getNarrowerTerms());
+        }
+        narrowerMore = conceptFullReadService.hasMoreFromBatch(loadedNarrowers);
+        narrowerOffset = narrowerMore ? conceptFullReadService.nextNarrowerOffset(0) : 0;
+        refreshVisibleRelations();
+    }
+
+    private void refreshVisibleRelations() {
+        visibleBroaders = sliceRelations(
+                selectedConcept == null ? null : selectedConcept.getBroaderTerms(), broaderVisible);
+        visibleRelateds = sliceRelations(
+                selectedConcept == null ? null : selectedConcept.getRelatedTerms(), relatedVisible);
+        visibleNarrowers = sliceRelations(loadedNarrowers, narrowerVisible);
+    }
+
+    private void fillNarrowers() {
+        while (narrowerMore && loadedNarrowers.size() < narrowerVisible) {
+            if (selectedConcept == null || selectedConcept.getSummary() == null) {
+                narrowerMore = false;
+                return;
+            }
+            int before = loadedNarrowers.size();
+            List<ConceptHierarchicalRelation> batch = conceptFullReadService.loadMoreNarrowers(
+                    getId(),
+                    selectedConcept.getSummary().getConceptId(),
+                    getSelectedLang(),
+                    narrowerOffset,
+                    userSession.isLoggedIn()
+            );
+            if (batch == null || batch.isEmpty()) {
+                narrowerMore = false;
+                return;
+            }
+            appendNarrowers(batch);
+            narrowerMore = conceptFullReadService.hasMoreFromBatch(batch);
+            narrowerOffset = conceptFullReadService.nextNarrowerOffset(narrowerOffset);
+            if (loadedNarrowers.size() == before) {
+                narrowerMore = false;
+            }
+        }
+    }
+
+    private void appendNarrowers(List<ConceptHierarchicalRelation> batch) {
+        LinkedHashSet<String> seen = new LinkedHashSet<>();
+        for (ConceptRelation existing : loadedNarrowers) {
+            seen.add(relationKey(existing.getConceptId(), existing.getRole()));
+        }
+        for (ConceptHierarchicalRelation relation : batch) {
+            if (relation == null || StringUtils.isBlank(relation.conceptId())) {
+                continue;
+            }
+            if (!seen.add(relationKey(relation.conceptId(), relation.role()))) {
+                continue;
+            }
+            loadedNarrowers.add(new ConceptRelation(
+                    relation.conceptId(),
+                    StringUtils.defaultString(relation.label()),
+                    StringUtils.defaultString(relation.uri()),
+                    StringUtils.defaultString(relation.role())
+            ));
+        }
+    }
+
+    private static String relationKey(String conceptId, String role) {
+        return StringUtils.trimToEmpty(conceptId) + "|" + StringUtils.trimToEmpty(role);
+    }
+
+    private static List<ConceptRelation> sliceRelations(List<ConceptRelation> values, int visible) {
+        if (values == null || values.isEmpty() || visible <= 0) {
+            return List.of();
+        }
+        return List.copyOf(values.subList(0, Math.min(visible, values.size())));
+    }
+
+    private static boolean hasMoreRelations(List<ConceptRelation> values, int visible) {
+        return values != null && values.size() > visible;
+    }
+
+    private int freshFrom(String kind) {
+        if ("nt".equals(kind)) {
+            return narrowerFreshFrom;
+        }
+        if ("rt".equals(kind)) {
+            return relatedFreshFrom;
+        }
+        return broaderFreshFrom;
     }
 
     private void loadConceptMetadata(String conceptId) {

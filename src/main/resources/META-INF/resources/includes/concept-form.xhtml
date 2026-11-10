@@ -595,42 +595,60 @@
           <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editing}">
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
-            <div class="crow-val">
-              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.broaderTerms}"><span class="muted">—</span></ui:fragment>
-              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.broaderTerms}">
+            <h:panelGroup id="broaderVal" layout="block" styleClass="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.visibleBroaders}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.visibleBroaders}">
               <div class="rel-items">
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.broaderTerms}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'BT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
+                <ui:repeat value="#{thesaurusViewBean.visibleBroaders}" var="rel" varStatus="st">
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('bt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('bt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'BT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
                 </ui:repeat>
+                <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.broaderMoreVisible}"
+                               action="#{thesaurusViewBean.showMoreBroaders}"
+                               pt:aria-label="Afficher 10 de plus" pt:title="Afficher 10 de plus">
+                  <f:ajax execute="@this" render="broaderVal"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+                </h:commandLink>
               </div>
               </ui:fragment>
-            </div>
+            </h:panelGroup>
           </div>
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
-            <div class="crow-val">
-              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.narrowerTerms}"><span class="muted">—</span></ui:fragment>
-              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.narrowerTerms}">
+            <h:panelGroup id="narrowerVal" layout="block" styleClass="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.visibleNarrowers}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.visibleNarrowers}">
               <div class="rel-items">
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.narrowerTerms}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'NT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
+                <ui:repeat value="#{thesaurusViewBean.visibleNarrowers}" var="rel" varStatus="st">
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('nt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('nt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'NT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
                 </ui:repeat>
+                <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.narrowerMoreVisible}"
+                               action="#{thesaurusViewBean.showMoreNarrowers}"
+                               pt:aria-label="Afficher 10 de plus" pt:title="Afficher 10 de plus">
+                  <f:ajax execute="@this" render="narrowerVal"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+                </h:commandLink>
               </div>
               </ui:fragment>
-            </div>
+            </h:panelGroup>
           </div>
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
-            <div class="crow-val">
-              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.relatedTerms}"><span class="muted">—</span></ui:fragment>
-              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.relatedTerms}">
+            <h:panelGroup id="relatedVal" layout="block" styleClass="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.visibleRelateds}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.visibleRelateds}">
               <div class="rel-items">
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.relatedTerms}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                <ui:repeat value="#{thesaurusViewBean.visibleRelateds}" var="rel" varStatus="st">
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('rt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('rt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
+                <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.relatedMoreVisible}"
+                               action="#{thesaurusViewBean.showMoreRelateds}"
+                               pt:aria-label="Afficher 10 de plus" pt:title="Afficher 10 de plus">
+                  <f:ajax execute="@this" render="relatedVal"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+                </h:commandLink>
               </div>
               </ui:fragment>
-            </div>
+            </h:panelGroup>
           </div>
           </ui:fragment>
         </div>

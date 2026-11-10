@@ -2338,6 +2338,21 @@ body.is-gps-lightbox{overflow:hidden}
 .rel-term{font-size:13.5px;font-weight:500;color:var(--ink);background:var(--surface-2);
   border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 12px;transition:all .12s}
 .rel-term:hover{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
+.rel-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;
+  border:1px dashed var(--accent-line);border-radius:var(--r-sm);background:var(--accent-soft);color:var(--accent);
+  cursor:pointer;text-decoration:none;transition:background .15s,color .15s,border-color .15s,transform .15s}
+.rel-more:hover{background:var(--accent);color:#fff;border-style:solid;border-color:var(--accent)}
+.rel-more:active{transform:scale(.94)}
+.rel-more svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+@keyframes rel-term-in{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+.rel-term.is-new{animation:rel-term-in .42s ease both}
+@media (prefers-reduced-motion:reduce){
+  .rel-term.is-new{animation:none}
+  .rel-more{transition:none}
+}
 .cv-replace{font:inherit;font-size:14.5px;font-weight:500;color:var(--ink-3);
   text-decoration:line-through;text-decoration-thickness:1px;background:none;border:0;padding:0;cursor:pointer}
 .cv-replace:hover{color:var(--accent)}
