@@ -2725,6 +2725,7 @@ textarea.sync-comment{min-height:88px;max-width:none;resize:vertical}
 .term-tags .term-chip{padding-right:6px}
 .term-chip button{border:0;background:transparent;color:var(--ink-3);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
 .term-chip button:hover{color:var(--ink)}
+.term-tags-dup{margin:8px 0 0;color:var(--danger, #b42318);font-size:13px;line-height:1.35}
 .term-tags-add{display:flex;align-items:center;gap:8px;min-width:0}
 .term-tags-add .st-input{flex:1;min-width:0}
 .term-tags-add .bo-btn{flex:0 0 auto}

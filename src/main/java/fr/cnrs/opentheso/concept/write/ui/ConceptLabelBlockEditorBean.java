@@ -30,9 +30,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -182,7 +184,17 @@ public class ConceptLabelBlockEditorBean implements Serializable {
             errorMessage = "Le libellé est obligatoire.";
             return false;
         }
-        if (hasOverlap(orEmpty(altLabels), orEmpty(hiddenLabels))) {
+        List<String> alts = orEmpty(altLabels);
+        List<String> hidden = orEmpty(hiddenLabels);
+        if (hasFoldedDuplicate(alts) || hasFoldedDuplicate(hidden)) {
+            errorMessage = "Cette forme est déjà utilisée sur ce concept.";
+            return false;
+        }
+        if (duplicatesPreferred(preferredLabel, alts) || duplicatesPreferred(preferredLabel, hidden)) {
+            errorMessage = "Cette forme est déjà utilisée comme libellé.";
+            return false;
+        }
+        if (hasOverlap(alts, hidden)) {
             errorMessage = "Une forme ne peut pas être à la fois alternative et cachée.";
             return false;
         }
@@ -693,13 +705,39 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     }
 
     private static boolean hasOverlap(List<String> alts, List<String> hidden) {
-        Set<String> altSet = new LinkedHashSet<>(alts);
+        Set<String> altSet = foldedKeys(alts);
         for (String value : hidden) {
-            if (altSet.contains(value)) {
+            if (altSet.contains(labelKey(value))) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean duplicatesPreferred(String preferred, List<String> values) {
+        String key = labelKey(preferred);
+        return !key.isEmpty() && foldedKeys(values).contains(key);
+    }
+
+    private static boolean hasFoldedDuplicate(List<String> values) {
+        return foldedKeys(values).size() < values.size();
+    }
+
+    private static Set<String> foldedKeys(List<String> values) {
+        Set<String> keys = new LinkedHashSet<>();
+        for (String value : values) {
+            String key = labelKey(value);
+            if (!key.isEmpty()) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
+
+    private static String labelKey(String value) {
+        String folded = Normalizer.normalize(StringUtils.trimToEmpty(value), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return folded.toLowerCase(Locale.ROOT);
     }
 
     private static Set<String> union(Set<String> left, Set<String> right) {

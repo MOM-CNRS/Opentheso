@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem;
 import fr.cnrs.opentheso.concept.model.CorpusSearchContext;
 import fr.cnrs.opentheso.concept.policy.ThesaurusConsultationAccessPolicy;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
+import fr.cnrs.opentheso.concept.write.persistence.ConceptLexicalWriteRepository;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.shared.session.AuthenticatedUserSource;
@@ -29,6 +30,8 @@ class ConceptExtrasApiControllerTest {
     @Mock
     private ConceptReadService conceptReadService;
     @Mock
+    private ConceptLexicalWriteRepository conceptLexicalWriteRepository;
+    @Mock
     private ThesaurusConsultationAccessPolicy consultationAccessPolicy;
     @Mock
     private RightsService rightsService;
@@ -40,7 +43,7 @@ class ConceptExtrasApiControllerTest {
     @BeforeEach
     void setUp() {
         controller = new ConceptExtrasApiController(
-                conceptReadService, consultationAccessPolicy, rightsService, authenticatedUserSource);
+                conceptReadService, conceptLexicalWriteRepository, consultationAccessPolicy, rightsService, authenticatedUserSource);
     }
 
     @Test
@@ -103,5 +106,28 @@ class ConceptExtrasApiControllerTest {
         var response = controller.corpusLinks("th1", "missing", "fr");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void labelDuplicate_detectsExistingPreferredOrAlternativeLabel() {
+        when(consultationAccessPolicy.canConsult("th1", false)).thenReturn(true);
+        when(conceptLexicalWriteRepository.existsPrefLabel("laiton", "fr", "th1")).thenReturn(false);
+        when(conceptLexicalWriteRepository.existsAltLabel("laiton", "fr", "th1")).thenReturn(true);
+
+        var response = controller.labelDuplicate("th1", "fr", "laiton");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(true, response.getBody().duplicate());
+    }
+
+    @Test
+    void labelDuplicate_rejectsGuestOnPrivateThesaurus() {
+        when(consultationAccessPolicy.canConsult("th1", false)).thenReturn(false);
+        when(authenticatedUserSource.getUserId()).thenReturn(Optional.empty());
+
+        var response = controller.labelDuplicate("th1", "fr", "laiton");
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(conceptLexicalWriteRepository, never()).existsPrefLabel("laiton", "fr", "th1");
     }
 }

@@ -228,13 +228,83 @@ function writeTermTags(root, values) {
   }).join("");
 }
 
+function termFold(value) {
+  return String(value || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function termTagMessage(root, text) {
+  if (!root) return;
+  let note = root.querySelector(".term-tags-dup");
+  if (!text) {
+    if (note) note.remove();
+    return;
+  }
+  if (!note) {
+    note = document.createElement("p");
+    note.className = "term-tags-dup";
+    note.setAttribute("role", "status");
+    root.appendChild(note);
+  }
+  note.textContent = text;
+}
+
+function localTermDuplicate(root, value) {
+  const key = termFold(value);
+  if (!key) return false;
+  const block = root.closest("section.cblock") || root;
+  const lists = block.querySelectorAll(".term-tags");
+  for (let i = 0; i < lists.length; i++) {
+    const values = termTagValues(lists[i]);
+    for (let j = 0; j < values.length; j++) {
+      if (termFold(values[j]) === key) return true;
+    }
+  }
+  const pref = block.querySelector("[id$='labelPrefInput']");
+  return !!(pref && termFold(pref.value) === key);
+}
+
+function termTagLang(root) {
+  const lang = root && root.getAttribute("data-lang");
+  if (lang) return lang;
+  return typeof thesaurusLang === "function" ? thesaurusLang() : "fr";
+}
+
+function labelAlreadyUsed(root, value) {
+  const id = typeof thesaurusId === "function" ? thesaurusId() : "";
+  if (!id || !value) return Promise.resolve(false);
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const query = new URLSearchParams({
+    thesaurusId: id,
+    lang: termTagLang(root),
+    value: value
+  });
+  return fetch(ctx + "/api/concepts/label-duplicate?" + query.toString(), {
+    headers: { Accept: "application/json" }
+  }).then((res) => res.ok ? res.json() : { duplicate: false })
+    .then((body) => !!(body && body.duplicate))
+    .catch(() => false);
+}
+
+let termDupSerial = 0;
+
 function addTermTag(root, raw) {
   const value = String(raw || "").trim();
   if (!root || !value) return false;
+  if (localTermDuplicate(root, value)) {
+    termTagMessage(root, "Cette forme est déjà utilisée sur ce concept.");
+    return false;
+  }
   const values = termTagValues(root);
-  if (values.indexOf(value) >= 0) return false;
   values.push(value);
   writeTermTags(root, values);
+  termTagMessage(root, "");
+  const token = String(++termDupSerial);
+  root.setAttribute("data-dup-token", token);
+  labelAlreadyUsed(root, value).then((used) => {
+    if (!used || !root.isConnected || root.getAttribute("data-dup-token") !== token) return;
+    if (termTagValues(root).indexOf(value) < 0) return;
+    termTagMessage(root, "Un label identique existe déjà.");
+  });
   return true;
 }
 
@@ -254,8 +324,7 @@ function flushTermTagInputs() {
   document.querySelectorAll(".term-tags").forEach((root) => {
     const input = root.querySelector(".term-tags-add input");
     if (!input || !input.value.trim()) return;
-    addTermTag(root, input.value);
-    input.value = "";
+    if (addTermTag(root, input.value)) input.value = "";
   });
 }
 
@@ -292,12 +361,15 @@ document.addEventListener("keydown", (e) => {
     e.stopPropagation();
     const root = input.closest(".term-tags");
     if (input.value.trim()) {
-      addTermTag(root, input.value);
-      input.value = "";
+      if (addTermTag(root, input.value)) input.value = "";
       return;
     }
+    termTagMessage(root, "");
     saveEditingLabelBlock(input);
-  } else if (e.key === "Backspace" && !input.value) {
+    return;
+  }
+  termTagMessage(input.closest(".term-tags"), "");
+  if (e.key === "Backspace" && !input.value) {
     const root = input.closest(".term-tags");
     const values = termTagValues(root);
     if (!values.length) return;
@@ -8000,8 +8072,7 @@ document.addEventListener("click", (e) => {
     const root = act.closest(".term-tags");
     const input = root && root.querySelector(".term-tags-add input");
     if (input) {
-      addTermTag(root, input.value);
-      input.value = "";
+      if (addTermTag(root, input.value)) input.value = "";
       input.focus();
     }
     return;

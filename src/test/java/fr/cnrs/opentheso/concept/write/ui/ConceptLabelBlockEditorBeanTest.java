@@ -109,6 +109,47 @@ class ConceptLabelBlockEditorBeanTest {
     }
 
     @Test
+    void save_rejectsAlternativeEqualToPreferredLabel() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of(), List.of()));
+        bean.startEditing();
+        bean.setAltLabelsJson("[\"bronze\"]");
+
+        bean.save();
+
+        assertTrue(bean.isEditing());
+        assertTrue(bean.getErrorMessage().contains("libellé"));
+        verify(conceptLexicalMutationService, never()).addSynonym(any());
+    }
+
+    @Test
+    void save_rejectsSameFormInAlternativeAndHidden() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of(), List.of()));
+        bean.startEditing();
+        bean.setAltLabelsJson("[\"Cuivre\"]");
+        bean.setHiddenLabelsJson("[\"cuivre\"]");
+
+        bean.save();
+
+        assertTrue(bean.getErrorMessage().contains("alternative et cachée"));
+        verify(conceptLexicalMutationService, never()).addSynonym(any());
+    }
+
+    @Test
+    void save_warnsWhenNewAlternativeAlreadyExists() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of(), List.of()));
+        when(conceptLexicalMutationService.addSynonym(any()))
+                .thenReturn(MutationResult.duplicate("Un label identique existe déjà !"));
+        bean.startEditing();
+        bean.setAltLabelsJson("[\"laiton\"]");
+
+        bean.save();
+
+        assertTrue(bean.isEditing());
+        assertTrue(bean.isDuplicateWarning());
+        assertTrue(bean.getErrorMessage().contains("existe déjà"));
+    }
+
+    @Test
     void parseCsv_trimsSkipsBlanksAndKeepsOrder() {
         assertEquals(List.of("a", "b"), ConceptLabelBlockEditorBean.parseCsv(" a, , b ,"));
         assertEquals(List.of(), ConceptLabelBlockEditorBean.parseCsv("  "));

@@ -144,7 +144,7 @@
           <div class="crow cblock-edit-row">
             <div class="crow-lbl">Formes alternatives</div>
             <div class="crow-val">
-              <div class="term-tags" data-kind="alts">
+              <div class="term-tags" data-kind="alts" data-lang="#{thesaurusViewBean.selectedConcept.summary.lang}">
                 <div class="term-tags-chips">
                   <ui:repeat value="#{conceptLabelBlockEditorBean.altLabels}" var="label" varStatus="st">
                     <span class="term-chip">#{label}<button type="button" data-act="term-tag-remove" data-index="#{st.index}" title="Retirer" aria-label="Retirer">×</button></span>
@@ -164,7 +164,7 @@
           <div class="crow cblock-edit-row">
             <div class="crow-lbl">Formes cachées</div>
             <div class="crow-val">
-              <div class="term-tags" data-kind="hidden">
+              <div class="term-tags" data-kind="hidden" data-lang="#{thesaurusViewBean.selectedConcept.summary.lang}">
                 <div class="term-tags-chips">
                   <ui:repeat value="#{conceptLabelBlockEditorBean.hiddenLabels}" var="label" varStatus="st">
                     <span class="term-chip is-hidden">#{label}<button type="button" data-act="term-tag-remove" data-index="#{st.index}" title="Retirer" aria-label="Retirer">×</button></span>

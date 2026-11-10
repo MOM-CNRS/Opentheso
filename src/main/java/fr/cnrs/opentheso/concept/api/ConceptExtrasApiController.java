@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.concept.api;
 import fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem;
 import fr.cnrs.opentheso.concept.policy.ThesaurusConsultationAccessPolicy;
 import fr.cnrs.opentheso.concept.service.ConceptReadService;
+import fr.cnrs.opentheso.concept.write.persistence.ConceptLexicalWriteRepository;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.shared.session.AuthenticatedUserSource;
@@ -26,17 +27,20 @@ import java.util.List;
 public class ConceptExtrasApiController {
 
     private final ConceptReadService conceptReadService;
+    private final ConceptLexicalWriteRepository conceptLexicalWriteRepository;
     private final ThesaurusConsultationAccessPolicy consultationAccessPolicy;
     private final RightsService rightsService;
     private final AuthenticatedUserSource authenticatedUserSource;
 
     public ConceptExtrasApiController(
             ConceptReadService conceptReadService,
+            ConceptLexicalWriteRepository conceptLexicalWriteRepository,
             ThesaurusConsultationAccessPolicy consultationAccessPolicy,
             RightsService rightsService,
             AuthenticatedUserSource authenticatedUserSource
     ) {
         this.conceptReadService = conceptReadService;
+        this.conceptLexicalWriteRepository = conceptLexicalWriteRepository;
         this.consultationAccessPolicy = consultationAccessPolicy;
         this.rightsService = rightsService;
         this.authenticatedUserSource = authenticatedUserSource;
@@ -80,6 +84,26 @@ public class ConceptExtrasApiController {
         return ResponseEntity.ok(new CorpusLinksJson(links));
     }
 
+    @GetMapping(value = "/label-duplicate", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LabelDuplicateJson> labelDuplicate(
+            @RequestParam(required = false) String thesaurusId,
+            @RequestParam(required = false) String lang,
+            @RequestParam(required = false) String value
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang, value)) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!canRead(thesaurusId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String id = thesaurusId.trim();
+        String language = lang.trim();
+        String label = value.trim();
+        boolean duplicate = conceptLexicalWriteRepository.existsPrefLabel(label, language, id)
+                || conceptLexicalWriteRepository.existsAltLabel(label, language, id);
+        return ResponseEntity.ok(new LabelDuplicateJson(duplicate));
+    }
+
     private boolean canRead(String thesaurusId) {
         String id = thesaurusId.trim();
         if (consultationAccessPolicy.canConsult(id, false)) {
@@ -105,6 +129,9 @@ public class ConceptExtrasApiController {
     }
 
     public record BranchCountJson(int count) {
+    }
+
+    public record LabelDuplicateJson(boolean duplicate) {
     }
 
     public record CorpusLinksJson(List<CorpusLinkJson> links) {
