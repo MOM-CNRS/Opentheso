@@ -43,11 +43,11 @@ class ConceptWritePolicyTest {
     }
 
     @Test
-    void canMutateActiveConcept_deniesDeprecatedConcept() {
+    void canMutateActiveConcept_allowsDeprecatedConcept() {
         when(rightsService.can(userSession, Permission.MUTATE_CONCEPT, AuthTarget.thesaurus("TH1")))
                 .thenReturn(true);
 
-        assertFalse(policy.canMutateActiveConcept(userSession, true));
+        assertTrue(policy.canMutateActiveConcept(userSession, true));
     }
 
     @Test
@@ -67,8 +67,11 @@ class ConceptWritePolicyTest {
     }
 
     @Test
-    void canMutateHierarchicalRelations_deniesWhenDeprecated() {
-        assertFalse(policy.canMutateHierarchicalRelations(userSession, true));
+    void canMutateHierarchicalRelations_allowsDeprecatedConcept() {
+        when(rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, AuthTarget.thesaurus("TH1")))
+                .thenReturn(true);
+
+        assertTrue(policy.canMutateHierarchicalRelations(userSession, true));
     }
 
     @Test
@@ -86,6 +89,6 @@ class ConceptWritePolicyTest {
                 .thenReturn(true);
 
         assertTrue(policy.canMutateMedia(userSession, false));
-        assertFalse(policy.canMutateMedia(userSession, true));
+        assertTrue(policy.canMutateMedia(userSession, true));
     }
 }

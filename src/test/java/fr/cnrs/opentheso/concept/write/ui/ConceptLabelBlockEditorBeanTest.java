@@ -301,6 +301,31 @@ class ConceptLabelBlockEditorBeanTest {
         assertFalse(bean.isEditing());
     }
 
+    @Test
+    void startBranchEditing_updatesFacetsOnDeprecatedConceptWithoutOpeningLabel() {
+        when(thesaurusViewBean.isSelectedConceptDeprecated()).thenReturn(true);
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                "Bronze", List.of("cuivre"), List.of(),
+                List.of(new ConceptRelation("F1", "Matériaux", null))));
+        when(facetMutationService.removeMember(any())).thenReturn(MutationResult.ok("ok"));
+        when(facetMutationService.addMember(any())).thenReturn(MutationResult.ok("ok"));
+
+        bean.startBranchEditing();
+
+        assertTrue(bean.isBranchEditing());
+        assertFalse(bean.isEditing());
+        assertEquals("branche", ficheEditCard);
+        bean.setSelectedFacetsJson("[{\"id\":\"F2\",\"label\":\"Matières\"}]");
+        bean.save();
+
+        verify(conceptLifecycleMutationService, never()).renamePreferredLabel(any());
+        verify(conceptLexicalMutationService, never()).addSynonym(any());
+        verify(conceptLexicalMutationService, never()).deleteSynonym(any());
+        verify(facetMutationService).addMember(any());
+        assertFalse(bean.isBranchEditing());
+        assertEquals("Branche enregistrée", bean.getFlashMessage());
+    }
+
     private static ConceptDetail detail(String pref, List<String> alts, List<String> hidden) {
         return detail("C1", pref, alts, hidden, List.of());
     }

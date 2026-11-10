@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Façade d'écriture concept : délègue les seuils à {@link RightsService}
- * (rôle effectif sur le thésaurus courant) + règles UI (concept déprécié).
+ * (rôle effectif sur le thésaurus courant). Un concept obsolète reste modifiable.
  */
 @Component
 @RequiredArgsConstructor
@@ -25,15 +25,15 @@ public class ConceptWritePolicy {
     }
 
     public boolean canMutateActiveConcept(UserSession userSession, boolean deprecated) {
-        return canMutateConcept(userSession) && !deprecated;
+        return canMutateConcept(userSession);
     }
 
     public boolean canRenamePreferredLabel(UserSession userSession, boolean deprecated) {
-        return !deprecated && rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
+        return rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
     }
 
     public boolean canMutateHierarchicalRelations(UserSession userSession, boolean deprecated) {
-        return !deprecated && rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
+        return rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
     }
 
     public boolean canMutateLexicalContent(UserSession userSession, boolean deprecated) {

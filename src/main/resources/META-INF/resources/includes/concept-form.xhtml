@@ -275,13 +275,18 @@
         </div>
       </section>
 
-      <section class="cblock" data-card-id="branche">
+      <section class="cblock#{conceptLabelBlockEditorBean.branchEditing ? ' is-editing' : ''}" data-card-id="branche">
         <div class="cblock-head">
           <span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc">
             <svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg>
           </span>
           <span class="cblock-title">Branche</span>
           <div class="cblock-tools">
+            <h:commandButton id="branchEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}"
+                             rendered="#{conceptLabelBlockEditorBean.editable and not conceptLabelBlockEditorBean.branchEditing}"
+                             action="#{conceptLabelBlockEditorBean.startBranchEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+            </h:commandButton>
             <button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold"
                     title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true"
                     aria-label="#{localeBean.getMsg('block.collapse')}">
@@ -290,7 +295,7 @@
           </div>
         </div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{conceptLabelBlockEditorBean.editing}">
+          <ui:fragment rendered="#{conceptLabelBlockEditorBean.branchEditing}">
             <div class="crow cblock-edit-row">
               <div class="crow-lbl">Facettes</div>
               <div class="crow-val">
@@ -322,8 +327,30 @@
                 </div>
               </div>
             </div>
+            <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing and not empty conceptLabelBlockEditorBean.errorMessage}">
+              <div class="cblock-edit-warn" role="alert">
+                <p>#{conceptLabelBlockEditorBean.errorMessage}</p>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
+              <div class="cblock-edit-foot">
+                <h:commandLink id="branchEditCancel" styleClass="abt-cancel" immediate="true"
+                               action="#{conceptLabelBlockEditorBean.cancel}">
+                  <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <span>#{localeBean.getMsg('cancel')}</span>
+                </h:commandLink>
+                <h:commandLink id="branchLabelEditSave" styleClass="abt-save"
+                               action="#{conceptLabelBlockEditorBean.save}">
+                  <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span class="abt-save-label">#{localeBean.getMsg('save')}</span>
+                  <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>
+                </h:commandLink>
+              </div>
+            </ui:fragment>
           </ui:fragment>
-          <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
+          <ui:fragment rendered="#{not conceptLabelBlockEditorBean.branchEditing}">
             <div class="crow">
               <div class="crow-lbl">Facettes</div>
               <div class="crow-val">

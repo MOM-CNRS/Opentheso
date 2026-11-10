@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Édition inline du bloc Libellé (préf. + formes alternatives / cachées + facettes) sans dialogue.
+ * Édition inline du bloc Libellé et des facettes du bloc Branche, sans dialogue.
  */
 @Getter
 @Setter
@@ -57,6 +57,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     private final transient ConceptSelectionContext conceptSelectionContext;
 
     static final String FICHE_CARD = "contexte";
+    static final String BRANCH_CARD = "branche";
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -78,10 +79,22 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     }
 
     public boolean isEditing() {
-        if (editing && !matchesCurrentConcept()) {
-            resetForm(false);
-        }
+        releaseStaleEdit();
         return editing && FICHE_CARD.equals(thesaurusViewBean.getFicheEditCard());
+    }
+
+    /** Facettes du bloc Branche : ouvertes avec le libellé, ou seules depuis ce bloc. */
+    public boolean isBranchEditing() {
+        releaseStaleEdit();
+        String card = thesaurusViewBean.getFicheEditCard();
+        return editing && (FICHE_CARD.equals(card) || BRANCH_CARD.equals(card));
+    }
+
+    public void startBranchEditing() {
+        startEditing();
+        if (editing) {
+            thesaurusViewBean.setFicheEditCard(BRANCH_CARD);
+        }
     }
 
     public void startEditing() {
@@ -153,7 +166,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     }
 
     private boolean prepareLabelSave() {
-        if (!isEditable() || !isEditing()) {
+        if (!isEditable() || !isBranchEditing()) {
             return false;
         }
         if (userSession.getCurrentUserId() == null) {
@@ -438,13 +451,12 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     }
 
     private void finishSuccess() {
+        boolean branchOnly = BRANCH_CARD.equals(thesaurusViewBean.getFicheEditCard());
         editing = false;
-        if (FICHE_CARD.equals(thesaurusViewBean.getFicheEditCard())) {
-            thesaurusViewBean.setFicheEditCard(null);
-        }
+        clearOwnedEditCard();
         duplicateWarning = false;
         errorMessage = "";
-        flashMessage = "Libellé enregistré";
+        flashMessage = branchOnly ? "Branche enregistrée" : "Libellé enregistré";
         flashToken = String.valueOf(System.currentTimeMillis());
         thesaurusViewBean.reloadSelectedConcept();
         conceptSelectionContext.update(thesaurusViewBean.getId(), thesaurusViewBean.getSelectedConcept());
@@ -456,11 +468,22 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         }
     }
 
-    private void resetForm(boolean keepFlash) {
-        editing = false;
-        if (FICHE_CARD.equals(thesaurusViewBean.getFicheEditCard())) {
+    private void releaseStaleEdit() {
+        if (editing && !matchesCurrentConcept()) {
+            resetForm(false);
+        }
+    }
+
+    private void clearOwnedEditCard() {
+        String card = thesaurusViewBean.getFicheEditCard();
+        if (FICHE_CARD.equals(card) || BRANCH_CARD.equals(card)) {
             thesaurusViewBean.setFicheEditCard(null);
         }
+    }
+
+    private void resetForm(boolean keepFlash) {
+        editing = false;
+        clearOwnedEditCard();
         editingConceptId = null;
         editingLang = null;
         preferredLabel = "";
