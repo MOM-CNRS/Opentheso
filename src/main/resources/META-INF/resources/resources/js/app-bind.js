@@ -289,6 +289,7 @@ function onV2Ajax(data) {
       if (treeToggle) {
         applyStatusFilter();
         restoreSelection();
+        if (typeof syncConceptTreeCarets === "function") syncConceptTreeCarets();
         restoreTreeToggleScroll();
         return;
       }

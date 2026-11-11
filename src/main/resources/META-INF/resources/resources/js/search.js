@@ -702,7 +702,6 @@ function statusForestNodeHtml(node, path) {
   const type = node.nodeType || "concept";
   const depth = Number(node.depth || 0);
   const inactive = !!node.inactive;
-  const open = !!node.hasChildren;
   const pad = 6 + depth * 18;
   const rowCls = "tn-row"
     + (status === "candidat" ? " is-candidate" : "")
@@ -714,7 +713,7 @@ function statusForestNodeHtml(node, path) {
     ? '<span class="tn-dot" title="candidat"></span>' : "")
     + (status === "rejete" ? '<span class="tn-tag">rejeté</span>' : "")
     + (status === "deprecie" ? '<span class="tn-tag is-dep">' + escapeHtml(depLabel) + "</span>" : "");
-  return '<div class="tn' + (open ? " is-open" : "") + (inactive ? " is-status-inactive" : "") + '"'
+  return '<div class="tn' + (inactive ? " is-status-inactive" : "") + '"'
     + ' data-id="' + escapeHtml(node.id) + '"'
     + ' data-type="' + escapeHtml(type) + '"'
     + ' data-status="' + escapeHtml(status) + '"'
@@ -738,6 +737,18 @@ function statusForestNodeHtml(node, path) {
     + '<span class="tn-textwrap"><span class="tn-text">' + escapeHtml(node.label || node.id) + "</span></span>"
     + tags
     + "</button></div></div></div>";
+}
+
+function paintStatusForestVisibility(box) {
+  if (!box) return;
+  const list = Array.from(box.querySelectorAll(":scope > .tn"));
+  const openAt = [];
+  list.forEach((node) => {
+    const depth = Number(node.getAttribute("data-depth") || 0);
+    openAt.length = depth;
+    node.hidden = openAt.some((on) => !on);
+    openAt[depth] = node.classList.contains("is-open");
+  });
 }
 
 function renderStatusForest(nodes) {
@@ -772,6 +783,13 @@ function renderStatusForest(nodes) {
     stack[depth] = node.label || node.id;
     return statusForestNodeHtml(node, stack.slice(0, depth + 1).join("/"));
   }).join("");
+  const rendered = Array.from(box.querySelectorAll(":scope > .tn"));
+  rendered.forEach((tn, i) => {
+    const depth = Number(tn.getAttribute("data-depth") || 0);
+    const next = rendered[i + 1];
+    tn.classList.toggle("is-open", !!(next && Number(next.getAttribute("data-depth") || 0) > depth));
+  });
+  paintStatusForestVisibility(box);
   box.hidden = false;
 }
 

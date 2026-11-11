@@ -331,15 +331,9 @@ window.appHandleLaterAct = function (e, t, act) {
     const tn = t.closest(".tn");
     if (!tn || !tn.closest("[data-status-forest]")) return;
     tn.classList.toggle("is-open");
-    const box = tn.parentElement;
-    const list = box ? Array.from(box.querySelectorAll(":scope > .tn")) : [];
-    const openAt = [];
-    list.forEach((node) => {
-      const depth = treeDepth(node);
-      openAt.length = depth;
-      node.hidden = openAt.some((on) => !on);
-      openAt[depth] = node.classList.contains("is-open");
-    });
+    if (typeof paintStatusForestVisibility === "function") {
+      paintStatusForestVisibility(tn.parentElement);
+    }
   } else if (act === "cf-toggle") {
     const combo = t.closest(".cf-combo") || $("#cfCombo");
     if (!combo) return;

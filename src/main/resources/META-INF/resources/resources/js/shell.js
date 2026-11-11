@@ -4763,12 +4763,20 @@ function highlightConcept(id) {
         behavior: reduce ? "auto" : "smooth"
       });
     }
-    let walk = tn;
-    while (walk) {
-      walk.classList.add("is-open");
-      walk = previousTreeParent(walk);
+    if (tn.closest("#panelCollectionTree") || tn.closest("[data-status-forest]")) {
+      let walk = previousTreeParent(tn);
+      while (walk) {
+        walk.classList.add("is-open");
+        walk = previousTreeParent(walk);
+      }
+      if (tn.closest("#panelCollectionTree") && typeof paintCollectionVisibility === "function") {
+        paintCollectionVisibility();
+      } else if (typeof paintStatusForestVisibility === "function") {
+        paintStatusForestVisibility(tn.parentElement);
+      }
+    } else if (typeof syncConceptTreeCarets === "function") {
+      syncConceptTreeCarets();
     }
-    if (state.view === "collection") paintCollectionVisibility();
   }
   if (state.view === "tableau") revealTableConcept(id);
   if (state.view === "hyper") globeSelectId(id, true);

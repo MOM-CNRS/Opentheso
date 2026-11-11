@@ -68,6 +68,34 @@ function previousTreeParent(tn) {
   return null;
 }
 
+function conceptTreeBox() {
+  return document.getElementById("previewTree")
+    || document.getElementById("previewTreeForm:previewTree");
+}
+
+/** Le chevron suit les enfants réellement présents, pas la sélection. */
+function syncConceptTreeCarets() {
+  const box = conceptTreeBox();
+  if (!box) return;
+  const nodes = Array.from(box.children).filter((el) => el.classList && el.classList.contains("tn"));
+  nodes.forEach((tn, i) => {
+    if (tn.classList.contains("is-fetching")) return;
+    const depth = treeDepth(tn);
+    let expanded = false;
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (treeDepth(nodes[j]) <= depth) break;
+      expanded = true;
+      break;
+    }
+    tn.classList.toggle("is-open", expanded);
+    const caret = tn.querySelector(".tn-caret");
+    if (!caret || caret.classList.contains("is-empty")) return;
+    const label = expanded ? "Replier" : "Déplier";
+    caret.setAttribute("title", label);
+    caret.setAttribute("aria-label", label);
+  });
+}
+
 function sortTreeRange(list) {
   if (!list.length) return [];
   const depth = treeDepth(list[0]);
