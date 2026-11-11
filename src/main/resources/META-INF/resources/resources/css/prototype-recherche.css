@@ -1294,7 +1294,7 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
   #viewDraft .cv.is-draft,#viewConceptDraft .cv.is-draft,#viewFacetDraft .cv.is-draft{padding-bottom:8px}
   #viewDraft .fsave,#viewConceptDraft .fsave,#viewFacetDraft .fsave{
     left:0;right:0;
-    bottom:calc(56px + env(safe-area-inset-bottom,0px));
+    bottom:env(safe-area-inset-bottom,0px);
     z-index:50;
     display:grid;
     grid-template-columns:1fr 1fr;

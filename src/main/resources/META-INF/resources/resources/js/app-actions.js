@@ -15,7 +15,10 @@ document.addEventListener("click", (e) => {
     if (e.target.closest("[id$='relEditSave']") && typeof syncCvRelHidden === "function") {
       syncCvRelHidden();
     }
-    if ($("#navThesaurus") && !$("#navThesaurus").contains(e.target)) closeThesaurus();
+    if ($("#navThesaurus") && !$("#navThesaurus").contains(e.target)) {
+      if (typeof setThesaurusMenu === "function") setThesaurusMenu(false);
+      else closeThesaurus();
+    }
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
     if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
     if ($("#previewTermLangUi") && !$("#previewTermLangUi").contains(e.target)) closeTreeLang();
@@ -99,8 +102,16 @@ document.addEventListener("click", (e) => {
   }
   if (act === "sb-toggle") {
     e.preventDefault();
-    closeThesaurus();
+    if (typeof setThesaurusMenu === "function") setThesaurusMenu(false);
+    else closeThesaurus();
     setSidebarDrawer(!document.body.classList.contains("is-drawer"));
+    return;
+  } else if (act === "thesaurus-menu") {
+    e.preventDefault();
+    const nav = document.getElementById("navThesaurus");
+    const open = !(nav && nav.classList.contains("is-mobile-open"));
+    if (open && typeof closeSidebarDrawer === "function") closeSidebarDrawer();
+    if (typeof setThesaurusMenu === "function") setThesaurusMenu(open);
     return;
   } else if (act === "sb-dismiss") {
     e.preventDefault();
@@ -117,7 +128,8 @@ document.addEventListener("click", (e) => {
   } else if (act === "session-expire-modal") {
     return;
   } else if (act === "logout-ask") {
-    closeThesaurus();
+    if (typeof setThesaurusMenu === "function") setThesaurusMenu(false);
+    else closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
     showConfirm("#logoutConfirm");
   } else if (act === "sync-error-dismiss") {

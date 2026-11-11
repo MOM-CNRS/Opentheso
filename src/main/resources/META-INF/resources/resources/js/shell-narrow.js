@@ -53,4 +53,10 @@ function bindNarrowShell() {
   if (!mq) return;
   if (mq.addEventListener) mq.addEventListener("change", sync);
   else if (mq.addListener) mq.addListener(sync);
+  const rail = window.matchMedia("(max-width: 640px)");
+  const closeRail = () => {
+    if (!rail.matches && typeof setThesaurusMenu === "function") setThesaurusMenu(false);
+  };
+  if (rail.addEventListener) rail.addEventListener("change", closeRail);
+  else if (rail.addListener) rail.addListener(closeRail);
 }

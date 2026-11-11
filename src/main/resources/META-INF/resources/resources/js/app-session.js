@@ -58,6 +58,24 @@ function closeThesaurus() {
   closeAccountMenu();
 }
 
+function setThesaurusMenu(open) {
+  const nav = document.getElementById("navThesaurus");
+  const btn = document.getElementById("thesaurusMenuBtn");
+  const narrow = !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+  const on = !!open && narrow;
+  if (nav) nav.classList.toggle("is-mobile-open", on);
+  if (btn) {
+    btn.setAttribute("aria-expanded", on ? "true" : "false");
+    const label = btn.getAttribute(on ? "data-close" : "data-open");
+    if (label) {
+      btn.setAttribute("aria-label", label);
+      btn.setAttribute("title", label);
+    }
+  }
+  if (!on) closeThesaurus();
+}
+window.setThesaurusMenu = setThesaurusMenu;
+
 function closeTreeLang() {
   const btn = $("#treeLangBtn");
   if (!btn || !btn.classList.contains("is-open")) return false;

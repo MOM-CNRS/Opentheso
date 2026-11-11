@@ -34,6 +34,8 @@ body .ui-widget,
 #menu-login.is-open,
 #menu-account.is-open{display:block !important}
 .thesaurus-auth{display:contents}
+.thesaurus-top,.thesaurus-body{display:contents}
+.thesaurus-hamburger,.thesaurus-label{display:none}
 
 .view-pick-menu{display:none}
 .view-pick-btn.is-open + .view-pick-menu{display:block}
@@ -1640,7 +1642,7 @@ a.path-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (max-width:640px){
   #viewCollectionDraft.view-panel{padding-bottom:148px}
   #viewCollectionDraft .fsave{
-    left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:50;
+    left:0;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:50;
     display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:8px;
     padding:10px 12px 12px;background:var(--bg);border-top:1px solid var(--line);
     box-shadow:0 -8px 24px rgba(16,24,20,.08);pointer-events:auto
@@ -3037,28 +3039,51 @@ html{height:100%}
   .st-row-l{flex:none;text-align:left;padding-top:0}
 }
 
-/* MOB-3 maquette : rail vertical → barre d'application basse (≤640 px) */
+/* MOB-3 maquette : rail vertical → barre fine en haut, repliée derrière un menu (≤640 px) */
 @media (max-width:640px){
+  .app{flex-direction:column;overflow:hidden}
+  .main{min-height:0}
   .thesaurus{
-    position:fixed;left:0;right:0;top:auto;bottom:0;
-    flex-direction:row;align-items:center;justify-content:space-around;
-    gap:0;width:100%;height:auto;min-height:56px;
-    padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px));
-    border-right:0;border-top:1px solid var(--line);
-    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
-    z-index:80
+    position:relative;left:auto;right:auto;top:auto;bottom:auto;
+    flex:0 0 auto;flex-direction:column;align-items:stretch;gap:0;
+    width:100%;height:auto;min-height:0;
+    padding:0;border-right:0;border-bottom:1px solid var(--line);
+    overflow:visible;z-index:80
   }
-  .thesaurus-group{flex-direction:row;align-items:center;gap:2px;flex:0 0 auto;margin:0!important}
-  .thesaurus-item{flex:0 0 auto;margin:0!important}
-  .thesaurus-logo{margin:0!important;flex:0 0 auto;min-width:44px;min-height:44px}
+  .thesaurus-top{
+    display:flex;flex-direction:row;align-items:center;justify-content:space-between;
+    gap:4px;padding:6px 8px 6px 14px
+  }
+  .thesaurus-logo{margin:0!important;flex:0 0 auto}
+  .thesaurus-hamburger{
+    display:grid;place-items:center;flex:0 0 auto;margin-left:auto;
+    width:44px;height:44px;border:0;padding:0;cursor:pointer;
+    border-radius:var(--r);color:var(--ink-2);background:transparent
+  }
+  .thesaurus-hamburger:hover{background:var(--surface-2);color:var(--ink)}
+  .thesaurus-hamburger svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+  .thesaurus-hamburger-close{display:none}
+  .thesaurus.is-mobile-open .thesaurus-hamburger-open{display:none}
+  .thesaurus.is-mobile-open .thesaurus-hamburger-close{display:block}
+  .thesaurus-body{display:none}
+  .thesaurus.is-mobile-open .thesaurus-body{
+    display:flex;flex-direction:column;gap:2px;
+    padding:6px 10px 12px;border-top:1px solid var(--line);
+    max-height:70vh;overflow-y:auto
+  }
+  .thesaurus.is-mobile-open .thesaurus-group{flex-direction:column;align-items:stretch;gap:2px;width:100%;margin:0}
+  .thesaurus.is-mobile-open .thesaurus-spacer{display:none}
+  .thesaurus.is-mobile-open .thesaurus-item{width:100%;place-items:stretch}
+  .thesaurus.is-mobile-open .thesaurus-body .thesaurus-btn{
+    display:flex;width:100%;height:auto;min-height:44px;flex-direction:row;
+    justify-content:flex-start;align-items:center;gap:12px;padding:8px 10px
+  }
+  .thesaurus.is-mobile-open .thesaurus-label{display:inline;font-size:14px;font-weight:600;color:var(--ink)}
+  .thesaurus.is-mobile-open .thesaurus-out{margin-top:4px;padding-top:12px;border-top:1px solid var(--line);border-radius:0}
+  .thesaurus.is-mobile-open .thesaurus-ver{display:block;margin-top:10px;text-align:center}
   .thesaurus-btn{min-width:44px;min-height:44px}
-  .thesaurus-ver,.thesaurus-spacer{display:none}
-  .app{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}
-  .sb-scrim{inset:0 0 calc(56px + env(safe-area-inset-bottom,0px)) 0}
-  .sidebar{
-    left:0;right:0;width:100%;
-    bottom:calc(56px + env(safe-area-inset-bottom,0px))
-  }
+  .sb-scrim{inset:57px 0 0 0}
+  .sidebar{top:57px;left:0;right:0;bottom:0;width:100%}
   /* Popovers du rail → feuilles bas d'écran (maquette) */
   .menu-pop{
     position:fixed!important;left:0!important;right:0!important;top:auto!important;
@@ -3066,7 +3091,7 @@ html{height:100%}
     max-height:64vh;overflow-y:auto;border-radius:16px 16px 0 0;
     transform:none!important;animation:none!important;margin:0!important;
     box-shadow:0 -12px 40px rgba(16,24,20,.18);z-index:90;
-    padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))
+    padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))
   }
   .thesaurus-btn.is-on + .menu-pop{display:block}
   #menu-login:not(.is-open),
@@ -3078,9 +3103,9 @@ html{height:100%}
   .cblock{padding:4px 14px 12px}
   .search-input,.st-input,.cand-search{font-size:16px}
   .app-toast,.app-toast.is-soft:not([hidden]){
-    bottom:calc(72px + env(safe-area-inset-bottom,0px))
+    bottom:calc(16px + env(safe-area-inset-bottom,0px))
   }
-  .go-top{bottom:calc(72px + env(safe-area-inset-bottom,0px));min-width:44px}
+  .go-top{bottom:calc(16px + env(safe-area-inset-bottom,0px));min-width:44px}
   .img-lightbox{padding:12px}
   .confirm-modal{width:min(400px,calc(100vw - 16px));max-height:min(92dvh,820px);border-radius:var(--r-lg)}
   .st-leave-modal{width:min(400px,calc(100vw - 16px))}
@@ -3113,11 +3138,11 @@ html{height:100%}
   .bo-acc-h{flex-wrap:wrap;gap:8px}
   .bo-valid-sum{flex-wrap:wrap;gap:10px 16px}
   .bo-cfg{flex-direction:column}
-  .fsave{left:0;bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  .fsave{left:0;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   #viewDraft.view-panel,#viewConceptDraft.view-panel,#viewFacetDraft.view-panel{padding-bottom:148px}
   #viewDraft .fsave,#viewConceptDraft .fsave,#viewFacetDraft .fsave{
     left:0;right:0;
-    bottom:calc(56px + env(safe-area-inset-bottom,0px));
+    bottom:calc(env(safe-area-inset-bottom,0px));
     z-index:50;
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -3152,7 +3177,7 @@ html{height:100%}
     position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
     width:auto;max-width:none;max-height:64vh;overflow-y:auto;border-radius:16px 16px 0 0;
     transform:none!important;margin:0!important;z-index:90;
-    padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));
+    padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
     box-shadow:0 -12px 40px rgba(16,24,20,.18)
   }
 }
