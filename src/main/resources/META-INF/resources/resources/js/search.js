@@ -131,6 +131,8 @@ function looksLikeIdentifier(text) {
   if (/^\d+\.\d+\/\S+/.test(text)) return true;
   if (/^[A-Za-z]{1,12}[-_.][A-Za-z0-9][A-Za-z0-9._-]*$/.test(text) && /\d/.test(text)) return true;
   if (/^\d{2,}$/.test(text)) return true;
+  // Un libellé suivi de chiffres (amphore44) reste une recherche plein texte.
+  if (/^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'’-]{1,}\d+$/.test(text)) return false;
   if (/^[A-Za-z0-9][A-Za-z0-9._:/-]{7,}$/.test(text) && /\d/.test(text)) return true;
   return false;
 }
