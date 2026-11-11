@@ -73,6 +73,15 @@ window.appHandleLaterAct = function (e, t, act) {
     if (t.classList.contains("is-locked") || t.disabled) return;
     pickCreateKind(t.getAttribute("data-kind"));
     return;
+  } else if (act === "create-coll-dismiss") {
+    e.preventDefault();
+    hideCreateCollection();
+  } else if (act === "create-coll-modal") {
+    return;
+  } else if (act === "create-coll-go") {
+    e.preventDefault();
+    submitCreateCollection();
+    return;
   } else if (act === "create") {
     e.stopPropagation();
     showCreateChooser(t);

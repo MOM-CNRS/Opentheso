@@ -1612,6 +1612,41 @@ a.path-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .confirm-s{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink-3)}
 .ck{display:flex;flex-direction:column;gap:10px;margin-top:2px}
 .ck .spl-row{padding:14px 16px;animation:none;transform:none}
+.ck .spl-row[hidden]{display:none!important}
+.ck-field{display:flex;flex-direction:column;gap:6px}
+.ck-field-l{font-size:12px;font-weight:650;color:var(--ink-2)}
+.confirm-modal.is-form .st-input{width:100%;max-width:none}
+#createCollErr{margin:8px 0 0;font-size:13px;line-height:1.4;color:var(--danger)}
+#createCollErr[hidden]{display:none!important}
+#viewCollectionDraft .cv.is-draft{padding-bottom:24px}
+#viewCollectionDraft .df-head{margin-bottom:22px}
+#viewCollectionDraft .cv-pref{flex:1 1 auto;min-width:0;width:100%;margin:0;display:flex;align-items:center}
+#viewCollectionDraft .cv-draft-input{
+  font-family:var(--sans);font-size:22px;font-weight:600;letter-spacing:-.015em;line-height:1.35;
+  min-width:0;width:100%;flex:1 1 auto;padding:4px 2px 7px
+}
+#viewCollectionDraft .crow-val .st-input{width:100%;max-width:420px}
+#viewCollectionDraft .fsave{
+  position:fixed;left:calc(60px + var(--tree-w));right:0;bottom:22px;z-index:40;
+  display:flex;justify-content:center;gap:10px;pointer-events:none
+}
+#viewCollectionDraft .fsave .bo-btn{
+  pointer-events:auto;box-shadow:0 6px 18px rgba(20,40,32,.12);
+  height:auto;padding:12px 24px;font-size:14px;font-weight:600
+}
+@media (max-width:900px){
+  #viewCollectionDraft .fsave{left:60px}
+}
+@media (max-width:640px){
+  #viewCollectionDraft.view-panel{padding-bottom:148px}
+  #viewCollectionDraft .fsave{
+    left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:50;
+    display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:8px;
+    padding:10px 12px 12px;background:var(--bg);border-top:1px solid var(--line);
+    box-shadow:0 -8px 24px rgba(16,24,20,.08);pointer-events:auto
+  }
+  #viewCollectionDraft .fsave .bo-btn{width:100%;min-height:44px;box-shadow:none}
+}
 .ck .spl-row.is-locked{opacity:.55;cursor:not-allowed;background:var(--surface-2)}
 .ck .spl-row.is-locked:hover{border-color:var(--line);box-shadow:var(--shadow-sm);transform:none;background:var(--surface-2)}
 .ck .spl-row.is-locked .spl-ico{background:var(--surface);color:var(--ink-3)}

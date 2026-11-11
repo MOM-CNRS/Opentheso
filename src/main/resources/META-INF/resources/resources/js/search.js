@@ -456,6 +456,7 @@ function openSearchHit(hit, stay) {
     state.draft = false;
     state.conceptDraft = false;
     state.facetDraft = false;
+    state.collectionDraft = false;
     state.conceptId = hit.id;
     if (stay) state.view = "recherche";
     else state.view = "arbo";

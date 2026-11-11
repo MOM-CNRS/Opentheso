@@ -91,6 +91,7 @@ var state = {
   draft: false,
   conceptDraft: false,
   facetDraft: false,
+  collectionDraft: false,
   committed: "",
   selected: new Set(),
   subtreeSize: new Map(),

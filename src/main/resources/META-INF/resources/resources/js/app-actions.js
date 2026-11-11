@@ -610,6 +610,7 @@ document.addEventListener("click", (e) => {
     if (openLiveDetail(id, nodeType)) {
       state.home = false;
       state.draft = false;
+      state.collectionDraft = false;
       state.conceptId = id;
       if (stay && (state.view === "collection" || t.closest("#panelCollection") || t.closest("#collectionDetail"))) {
         state.colId = null;
@@ -631,12 +632,14 @@ document.addEventListener("click", (e) => {
     if (openLiveDetail(id, nodeType)) {
       state.home = false;
       state.draft = false;
+      state.collectionDraft = false;
       state.conceptId = id;
       highlightConcept(id);
       return;
     }
     state.home = false;
     state.draft = false;
+    state.collectionDraft = false;
     state.conceptId = id;
     highlightConcept(id);
     paint();

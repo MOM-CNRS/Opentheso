@@ -205,6 +205,7 @@ function toggleCollectionNode(tn) {
       return;
     }
     paintCollectionVisibility();
+    if (state.colId && typeof highlightConcept === "function") highlightConcept(state.colId);
   }).catch(() => {
     tn.classList.remove("is-fetching", "is-open");
     toast("Impossible de charger les éléments de la collection.");
@@ -222,11 +223,35 @@ function setCollectionSort(sort) {
   if (state.view === "collection") loadCollectionRoots();
 }
 
+function revealCreatedCollection(newId, parentId) {
+  const parent = parentId && window.CSS
+    ? document.querySelector('#panelCollectionTree .tn[data-id="' + CSS.escape(parentId) + '"]')
+    : null;
+  if (!parent) {
+    invalidateCollectionTree();
+    if (newId) openCollectionFromTree(newId);
+    else if (state.view === "collection") loadCollectionRoots();
+    return;
+  }
+  parent.setAttribute("data-has-children", "true");
+  parent.setAttribute("data-loaded", "0");
+  parent.classList.remove("is-open", "is-fetching");
+  collectionDescendants(parent).forEach((el) => el.remove());
+  const caret = parent.querySelector(".tn-caret");
+  if (caret) {
+    caret.classList.remove("is-empty");
+    if (!caret.getAttribute("data-act")) caret.setAttribute("data-act", "col-toggle");
+  }
+  if (newId) openCollectionFromTree(newId);
+  toggleCollectionNode(parent);
+}
+
 function openCollectionFromTree(id) {
   if (!id) return;
   state.view = "collection";
   state.home = false;
   state.draft = false;
+  state.collectionDraft = false;
   state.colId = id;
   state.conceptId = null;
   highlightConcept(id);

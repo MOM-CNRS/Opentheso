@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/prototype-recherche.css?v=20261110-relplus"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261110-termdup"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261111-colldraft"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-picker.css?v=20261108-tabs-accent"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-admin.css?v=20261108-move-off"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/theme.css?v=20261101-catalogue"/>
@@ -108,6 +108,7 @@
        data-can-cand="#{candidateDraftBean.canCreate ? '1' : '0'}"
        data-can-concept="#{conceptLifecycleEditorBean.writeActionsAvailable ? '1' : '0'}"
        data-can-facet="#{facetDetailEditorBean.managerActionsAvailable ? '1' : '0'}"
+       data-can-collection="#{collectionDetailEditorBean.managerActionsAvailable ? '1' : '0'}"
        data-need-parent="#{localeBean.getMsg('create.concept.needParent')}">
     <div class="confirm-modal is-create-chooser" role="dialog" aria-modal="true"
          aria-labelledby="createChooserTitle" data-act="create-modal">
@@ -115,7 +116,8 @@
         <div class="confirm-h" id="createChooserTitle">#{localeBean.getMsg('home.create')}</div>
         <p class="confirm-s" id="createChooserSub"
            data-root="#{localeBean.getMsg('create.sub.root')}"
-           data-under="#{localeBean.getMsg('create.sub.under')}"></p>
+           data-under="#{localeBean.getMsg('create.sub.under')}"
+           data-collection="#{localeBean.getMsg('create.collection.sub')}"></p>
       </div>
       <div class="spl ck">
         <button type="button" class="spl-row" data-act="create-pick" data-kind="concept">
@@ -148,19 +150,28 @@
           <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
           <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
         </button>
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="collection" hidden="hidden">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v10H4z"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{localeBean.getMsg('create.collection')}</span>
+            <span class="spl-d" data-ok="#{localeBean.getMsg('create.collection.desc')}" data-lock="#{localeBean.getMsg('create.collection.lock')}">#{localeBean.getMsg('create.collection.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
       </div>
     </div>
   </div>
 </ui:fragment>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
-<script src="#{request.contextPath}/resources/js/core.js?v=20261101-deprecie"></script>
+<script src="#{request.contextPath}/resources/js/core.js?v=20261111-colldraft"></script>
 <script src="#{request.contextPath}/resources/js/settings.js?v=20261031-arklocal"></script>
-<script src="#{request.contextPath}/resources/js/shell.js?v=20261110-termdup"></script>
-<script src="#{request.contextPath}/resources/js/search.js?v=20261101-poly2"></script>
+<script src="#{request.contextPath}/resources/js/shell.js?v=20261111-colldraft"></script>
+<script src="#{request.contextPath}/resources/js/search.js?v=20261111-colldraft"></script>
 <script src="#{request.contextPath}/resources/js/tree.js"></script>
 <script src="#{request.contextPath}/resources/js/table.js"></script>
 <script src="#{request.contextPath}/resources/js/globe-ui.js?v=20261017-pref"></script>
-<script src="#{request.contextPath}/resources/js/collections.js?v=20261106-collog"></script>
+<script src="#{request.contextPath}/resources/js/collections.js?v=20261111-colldraft"></script>
 <script src="#{request.contextPath}/resources/js/selection.js?v=20261102-movehier"></script>
 <script src="#{request.contextPath}/resources/js/export.js?v=20261018-prog"></script>
 <script src="#{request.contextPath}/resources/js/about.js"></script>
@@ -173,8 +184,8 @@
 <script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
 <script src="#{request.contextPath}/resources/js/session.js"></script>
 <script src="#{request.contextPath}/resources/js/app-session.js?v=20261108-appsplit"></script>
-<script src="#{request.contextPath}/resources/js/app-actions.js?v=20261108-appsplit"></script>
-<script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261108-appsplit"></script>
+<script src="#{request.contextPath}/resources/js/app-actions.js?v=20261111-colldraft"></script>
+<script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261111-collcreate"></script>
 <script src="#{request.contextPath}/resources/js/app-bind.js?v=20261108-appsplit"></script>
 <script src="#{request.contextPath}/resources/js/app-boot.js?v=20261108-appsplit"></script>
 </h:body>

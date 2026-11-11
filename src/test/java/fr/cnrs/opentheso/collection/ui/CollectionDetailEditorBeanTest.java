@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.collection.read.CollectionReadService;
 import fr.cnrs.opentheso.collection.write.model.command.AddMemberToCollectionCommand;
 import fr.cnrs.opentheso.collection.write.model.command.CreateCollectionCommand;
+import fr.cnrs.opentheso.collection.write.model.command.CreateSubgroupCommand;
 import fr.cnrs.opentheso.collection.write.model.command.UpdateCollectionTypeCommand;
 import fr.cnrs.opentheso.collection.write.service.CollectionMutationService;
 import fr.cnrs.opentheso.concept.model.GroupDetailOverview;
@@ -129,6 +130,57 @@ class CollectionDetailEditorBeanTest {
             verify(collectionMutationService).addMember(new AddMemberToCollectionCommand("TH1", "g1", "C1", false));
             messageUtils.verify(() -> MessageUtils.showInformationMessage("Le concept a été ajouté à la collection"));
         }
+    }
+
+    @Test
+    void submitCreateFromView_rejectsBlankName() {
+        bean.setLabel("  ");
+
+        bean.submitCreateFromView();
+
+        assertFalse(bean.isCreateOk());
+        assertEquals("Le nom de la collection est obligatoire.", bean.getCreateMessage());
+        verify(collectionMutationService, never()).createCollection(any());
+    }
+
+    @Test
+    void submitCreateFromView_createsRootCollection() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        bean.setLabel(" Animaux ");
+        bean.setNotation(" A1 ");
+        when(collectionMutationService.createCollection(any(CreateCollectionCommand.class)))
+                .thenReturn(MutationResult.ok("La collection a bien été créée", "g99"));
+
+        bean.submitCreateFromView();
+
+        assertTrue(bean.isCreateOk());
+        assertEquals("g99", bean.getCreatedGroupId());
+        verify(collectionMutationService).createCollection(new CreateCollectionCommand(
+                "TH1", "fr", "Animaux", "A1", "MT", 7
+        ));
+        verify(thesaurusBrowseBean).invalidateCollectionTree();
+        verify(thesaurusBrowseBean).focusGroup("g99");
+        verify(collectionMutationService, never()).createSubgroup(any());
+    }
+
+    @Test
+    void submitCreateFromView_createsUnderSelectedCollection() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        bean.setLabel("Félin");
+        bean.setParentCollectionId(" g1 ");
+        when(collectionMutationService.createSubgroup(any(CreateSubgroupCommand.class)))
+                .thenReturn(MutationResult.ok("La sous-collection a bien été créée", "g100"));
+
+        bean.submitCreateFromView();
+
+        assertTrue(bean.isCreateOk());
+        assertEquals("g100", bean.getCreatedGroupId());
+        assertEquals("", bean.getParentCollectionId());
+        verify(collectionMutationService).createSubgroup(new CreateSubgroupCommand(
+                "TH1", "g1", "fr", "Félin", "", "MT", 7
+        ));
+        verify(collectionMutationService, never()).createCollection(any());
+        verify(thesaurusBrowseBean).focusGroup("g100");
     }
 
     @Test

@@ -68,6 +68,10 @@ public class CollectionDetailEditorBean implements Serializable {
     private String bulkConceptIds = "";
     private String bulkMessage = "";
     private boolean bulkOk;
+    private String createMessage = "";
+    private boolean createOk;
+    private String createdGroupId = "";
+    private String parentCollectionId = "";
     private String notation;
     private String typeCode = "MT";
     private String translationLang;
@@ -422,6 +426,59 @@ public class CollectionDetailEditorBean implements Serializable {
         bulkMessage = result.message();
         bulkCollectionId = "";
         bulkConceptIds = "";
+    }
+
+    public void submitCreateFromView() {
+        createOk = false;
+        createMessage = "";
+        createdGroupId = "";
+        if (!isManagerActionsAvailable()) {
+            createMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        Integer userId = requireUserId();
+        if (userId == null) {
+            createMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        if (StringUtils.isBlank(label)) {
+            createMessage = "Le nom de la collection est obligatoire.";
+            return;
+        }
+        if (StringUtils.isBlank(typeCode)) {
+            typeCode = "MT";
+        }
+        String parentId = StringUtils.trimToEmpty(parentCollectionId);
+        MutationResult result = StringUtils.isBlank(parentId)
+                ? collectionMutationService.createCollection(new CreateCollectionCommand(
+                        thesaurusContext.resolveThesaurusId(),
+                        thesaurusContext.resolveWorkLanguage(),
+                        label.trim(),
+                        StringUtils.trimToEmpty(notation),
+                        typeCode,
+                        userId
+                ))
+                : collectionMutationService.createSubgroup(new CreateSubgroupCommand(
+                        thesaurusContext.resolveThesaurusId(),
+                        parentId,
+                        thesaurusContext.resolveWorkLanguage(),
+                        label.trim(),
+                        StringUtils.trimToEmpty(notation),
+                        typeCode,
+                        userId
+                ));
+        if (result == null || !result.success()) {
+            createMessage = result != null ? result.message() : "Erreur";
+            return;
+        }
+        thesaurusBrowseBean.invalidateCollectionTree();
+        createOk = true;
+        createMessage = StringUtils.defaultIfBlank(result.message(), "Collection créée");
+        createdGroupId = StringUtils.trimToEmpty(result.createdConceptId());
+        if (StringUtils.isNotBlank(createdGroupId)) {
+            thesaurusBrowseBean.focusGroup(createdGroupId);
+        }
+        parentCollectionId = "";
     }
 
     public void submitCreateRoot() {
