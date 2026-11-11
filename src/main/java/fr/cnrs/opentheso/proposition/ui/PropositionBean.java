@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.proposition.service.PropositionMutationService;
 import fr.cnrs.opentheso.proposition.service.PropositionReadService;
 import fr.cnrs.opentheso.proposition.policy.PropositionAccessPolicy;
+import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
@@ -59,6 +60,7 @@ public class PropositionBean implements Serializable {
     private final transient UserSession userSession;
     private final transient PropositionAccessPolicy propositionAccessPolicy;
     private final transient LocaleBean localeBean;
+    private final transient RightsService rightsService;
     private final transient ObjectProvider<ThesaurusViewBean> thesaurusViewBean;
 
     private List<PropositionSummary> propositions = Collections.emptyList();
@@ -189,11 +191,12 @@ public class PropositionBean implements Serializable {
     }
 
     /**
-     * Badge header : thésaurus ouvert + super-utilisateur, ou rôle autre que
-     * contributeur sur ce thésaurus.
+     * Bouton du rail : thésaurus ouvert, et super-administrateur ou administrateur
+     * du projet auquel ce thésaurus est rattaché.
      */
     public boolean isBoardLinkVisible() {
-        return isThesaurusSelected() && isManagerOnCurrentThesaurus();
+        String thesaurusId = StringUtils.trimToNull(thesaurusContext.resolveThesaurusId());
+        return thesaurusId != null && rightsService.isAdminOfThesaurusProject(userSession, thesaurusId);
     }
 
     public void showPropositionDrawer() {

@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.rights;
 
 import fr.cnrs.opentheso.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.shared.session.SessionUser;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,13 +26,15 @@ class DefaultRightsServiceTest {
     @Mock
     private UserRightsCache userRightsCache;
     @Mock
+    private ProjectAdminQueryRepository projectAdminQueryRepository;
+    @Mock
     private UserSession userSession;
 
     private DefaultRightsService rightsService;
 
     @BeforeEach
     void setUp() {
-        rightsService = new DefaultRightsService(userRightsCache);
+        rightsService = new DefaultRightsService(userRightsCache, projectAdminQueryRepository);
     }
 
     @Test
@@ -93,6 +99,37 @@ class DefaultRightsServiceTest {
         when(userRightsCache.getSessionUser(1))
                 .thenReturn(new SessionUser(1, "root", "r@b.c", true, true, true, true));
         assertTrue(rightsService.can(1, Permission.TOOLBOX_FLAGS));
+    }
+
+    @Test
+    void isAdminOfThesaurusProject_trueForSuperAdminWithoutProjectLookup() {
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+
+        assertTrue(rightsService.isAdminOfThesaurusProject(userSession, "TH1"));
+        verify(projectAdminQueryRepository, never()).isAdminOfThesaurusProject(anyInt(), any());
+    }
+
+    @Test
+    void isAdminOfThesaurusProject_trueWhenUserAdministersTheThesaurusProject() {
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(projectAdminQueryRepository.isAdminOfThesaurusProject(5, "TH1")).thenReturn(true);
+
+        assertTrue(rightsService.isAdminOfThesaurusProject(userSession, "TH1"));
+    }
+
+    @Test
+    void isAdminOfThesaurusProject_falseForManagerOrOtherProject() {
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(projectAdminQueryRepository.isAdminOfThesaurusProject(5, "TH1")).thenReturn(false);
+
+        assertFalse(rightsService.isAdminOfThesaurusProject(userSession, "TH1"));
+        assertFalse(rightsService.isAdminOfThesaurusProject(userSession, " "));
+        assertFalse(rightsService.isAdminOfThesaurusProject(null, "TH1"));
     }
 
     @Test

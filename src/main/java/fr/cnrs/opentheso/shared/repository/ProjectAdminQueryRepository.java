@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.shared.repository;
 
+import fr.cnrs.opentheso.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.shared.repository.projection.AssignableRoleRow;
 import fr.cnrs.opentheso.shared.repository.projection.ProjectLimitedMemberRow;
 import fr.cnrs.opentheso.shared.repository.projection.ProjectMemberRow;
@@ -7,6 +8,7 @@ import fr.cnrs.opentheso.shared.repository.projection.ProjectSummaryRow;
 import fr.cnrs.opentheso.shared.repository.projection.ProjectThesaurusRow;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashSet;
@@ -79,6 +81,31 @@ public class ProjectAdminQueryRepository {
                 .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0).intValue());
+    }
+
+    /**
+     * Administrateur (rôle projet strictement inférieur au gestionnaire) d'un projet
+     * auquel le thésaurus est rattaché.
+     */
+    public boolean isAdminOfThesaurusProject(int userId, String thesaurusId) {
+        if (userId <= 0 || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        String sql = """
+                SELECT EXISTS(
+                    SELECT 1
+                    FROM user_role_group urg
+                    JOIN user_group_thesaurus ugt ON urg.id_group = ugt.id_group
+                    WHERE urg.id_user = :userId
+                      AND LOWER(BTRIM(ugt.id_thesaurus)) = LOWER(BTRIM(:thesaurusId))
+                      AND urg.id_role < :managerRoleId
+                )
+                """;
+        return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId.trim())
+                .setParameter("managerRoleId", ProjectAccessPolicy.ROLE_MANAGER)
+                .getSingleResult());
     }
 
     @SuppressWarnings("unchecked")

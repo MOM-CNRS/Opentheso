@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.proposition.service.PropositionMutationService;
 import fr.cnrs.opentheso.proposition.service.PropositionReadService;
 import fr.cnrs.opentheso.proposition.policy.PropositionAccessPolicy;
+import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
@@ -49,6 +50,7 @@ class PropositionBeanTest {
     @Mock private UserSession userSession;
     @Mock private PropositionAccessPolicy propositionAccessPolicy;
     @Mock private LocaleBean localeBean;
+    @Mock private RightsService rightsService;
     @Mock private ObjectProvider<ThesaurusViewBean> thesaurusViewBeanProvider;
     @Mock private ThesaurusViewBean thesaurusViewBean;
 
@@ -71,7 +73,7 @@ class PropositionBeanTest {
         lenient().when(thesaurusViewBeanProvider.getIfAvailable()).thenReturn(thesaurusViewBean);
         bean = new PropositionBean(propositionReadService, propositionMutationService,
                 propositionDraftService, thesaurusContext, userSession, propositionAccessPolicy, localeBean,
-                thesaurusViewBeanProvider);
+                rightsService, thesaurusViewBeanProvider);
     }
 
     @AfterEach
@@ -358,9 +360,10 @@ class PropositionBeanTest {
     }
 
     @Test
-    void boardLinkVisible_requiresSelectedThesaurusAndBoardAccess() {
+    void boardLinkVisible_requiresSelectedThesaurusAndProjectAdmin() {
         stubManagerRights();
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(true);
 
         assertTrue(bean.isThesaurusSelected());
         assertTrue(bean.isBoardLinkVisible());
@@ -369,7 +372,7 @@ class PropositionBeanTest {
         assertFalse(bean.isBoardLinkVisible());
 
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(propositionAccessPolicy.canAccessBoard(any(UserSession.class), any())).thenReturn(false);
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(false);
         assertFalse(bean.isBoardLinkVisible());
     }
 

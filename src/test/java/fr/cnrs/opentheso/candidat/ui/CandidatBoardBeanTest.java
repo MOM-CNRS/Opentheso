@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.candidat.service.CandidatProcessService;
 import fr.cnrs.opentheso.candidat.service.CandidatReadService;
 import fr.cnrs.opentheso.candidat.service.CandidatSkosImportService;
 import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
+import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.shared.ui.UserSession;
@@ -57,6 +58,8 @@ class CandidatBoardBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private RightsService rightsService;
+    @Mock
     private LocaleBean localeBean;
 
     private CandidatBoardBean bean;
@@ -73,6 +76,7 @@ class CandidatBoardBeanTest {
                 thesaurusPreferencesProvider,
                 thesaurusContext,
                 userSession,
+                rightsService,
                 localeBean
         );
         lenient().when(thesaurusViewBean.getId()).thenReturn("TH1");
@@ -109,15 +113,18 @@ class CandidatBoardBeanTest {
     }
 
     @Test
-    void boardLinkVisible_whenTheUserCanAccessTheCurrentThesaurus() {
-        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(true);
+    void boardLinkVisible_whenTheUserAdministersTheThesaurusProject() {
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(true);
 
         assertTrue(bean.isBoardLinkVisible());
+
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(false);
+        assertFalse(bean.isBoardLinkVisible());
     }
 
     @Test
     void refreshBadgeCount_countsPendingCandidatesOnly() {
-        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(true);
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(true);
         when(candidatReadService.countByStatus("TH1", CandidatStatusCode.PENDING)).thenReturn(3);
 
         bean.refreshBadgeCount();

@@ -3,8 +3,10 @@ package fr.cnrs.opentheso.rights;
 import fr.cnrs.opentheso.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.setting.policy.ThesaurusAccessPolicy;
 import fr.cnrs.opentheso.shared.exception.ModuleAccessDeniedException;
+import fr.cnrs.opentheso.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.shared.session.SessionUser;
 import fr.cnrs.opentheso.shared.ui.UserSession;
+import org.apache.commons.lang3.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ import java.util.Optional;
 public class DefaultRightsService implements RightsService {
 
     private final UserRightsCache userRightsCache;
+    private final ProjectAdminQueryRepository projectAdminQueryRepository;
 
     @Override
     public SessionUser capabilities(int userId) {
@@ -55,6 +58,21 @@ public class DefaultRightsService implements RightsService {
             return false;
         }
         return can(userSession.getCurrentUserId(), permission, target);
+    }
+
+    @Override
+    public boolean isAdminOfThesaurusProject(UserSession userSession, String thesaurusId) {
+        if (userSession == null || !userSession.isLoggedIn() || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        if (userSession.isSuperAdmin()) {
+            return true;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null || userId <= 0) {
+            return false;
+        }
+        return projectAdminQueryRepository.isAdminOfThesaurusProject(userId, thesaurusId);
     }
 
     @Override

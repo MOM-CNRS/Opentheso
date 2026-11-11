@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.candidat.model.CandidatBoardItem;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.candidat.policy.CandidatAccessPolicy;
+import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.candidat.service.CandidatExportService;
 import fr.cnrs.opentheso.candidat.service.CandidatProcessService;
 import fr.cnrs.opentheso.candidat.service.CandidatReadService;
@@ -62,6 +63,7 @@ public class CandidatBoardBean implements Serializable {
     private final transient ThesaurusPreferencesProvider thesaurusPreferencesProvider;
     private final transient ThesaurusContext thesaurusContext;
     private final transient UserSession userSession;
+    private final transient RightsService rightsService;
     private final transient LocaleBean localeBean;
     private boolean loaded;
 
@@ -113,12 +115,13 @@ public class CandidatBoardBean implements Serializable {
     }
 
     /**
-     * Bouton du rail, à côté des propositions : thésaurus ouvert et accès au module candidats.
+     * Bouton du rail : thésaurus ouvert, et super-administrateur ou administrateur
+     * du projet auquel ce thésaurus est rattaché.
      */
     public boolean isBoardLinkVisible() {
         String thesaurusId = currentThesaurusId();
         return StringUtils.isNotBlank(thesaurusId)
-                && candidatAccessPolicy.canAccessModule(userSession, thesaurusId);
+                && rightsService.isAdminOfThesaurusProject(userSession, thesaurusId);
     }
 
     /**
@@ -130,7 +133,7 @@ public class CandidatBoardBean implements Serializable {
             return;
         }
         String thesaurusId = currentThesaurusId();
-        if (StringUtils.isBlank(thesaurusId) || !candidatAccessPolicy.canAccessModule(userSession, thesaurusId)) {
+        if (!isBoardLinkVisible()) {
             badgeCount = 0;
             return;
         }

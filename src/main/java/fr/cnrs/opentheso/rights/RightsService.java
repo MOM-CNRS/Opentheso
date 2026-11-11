@@ -26,6 +26,12 @@ public interface RightsService {
 
     boolean can(UserSession userSession, Permission permission, AuthTarget target);
 
+    /**
+     * Super-administrateur, ou administrateur du projet auquel le thésaurus est rattaché.
+     * Un gestionnaire ou un contributeur, même sur ce thésaurus, ne suffit pas.
+     */
+    boolean isAdminOfThesaurusProject(UserSession userSession, String thesaurusId);
+
     default boolean canOnThesaurus(Integer userId, Permission permission, String thesaurusId) {
         return can(userId, permission, AuthTarget.thesaurus(thesaurusId));
     }
