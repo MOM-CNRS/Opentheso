@@ -386,18 +386,44 @@
                             <div class="ia-proj-composer">
                               <label class="ia-proj-pick-wrap">
                                 <span class="ia-field-l">#{localeBean.getMsg('admin.users.create.projects.project')}</span>
-                                <h:selectOneMenu id="iaCreateDraftProject"
-                                                 value="#{instanceAdminBean.draftProjectId}"
-                                                 styleClass="st-input ia-select ia-proj-pick">
-                                  <f:selectItem itemValue="#{instanceAdminBean.unassignedProjectId}"
-                                                itemLabel="#{localeBean.getMsg('admin.users.create.projects.pickProject')}"
-                                                noSelectionOption="true"/>
-                                  <f:selectItems value="#{instanceAdminBean.availableCreateProjects}"
-                                                 var="p"
-                                                 itemValue="#{p.id}"
-                                                 itemLabel="#{p.name}"/>
-                                  <f:ajax event="valueChange" execute="@this" render="@this"/>
-                                </h:selectOneMenu>
+                                <div class="ia-proj-ac coll-pick"
+                                     data-empty="#{localeBean.getMsg('admin.users.create.projects.noMatch')}"
+                                     data-none="#{localeBean.getMsg('admin.users.create.projects.noneAvailable')}">
+                                  <div class="search-field coll-pick-field ia-proj-ac-field">
+                                    <span class="search-ico" aria-hidden="true">⌕</span>
+                                    <input type="text" class="search-input ia-proj-ac-q"
+                                           placeholder="#{localeBean.getMsg('admin.users.create.projects.search')}"
+                                           autocomplete="off" spellcheck="false"
+                                           role="combobox" aria-autocomplete="list" aria-expanded="false"
+                                           aria-label="#{localeBean.getMsg('admin.users.create.projects.project')}"/>
+                                    <button type="button" class="search-clear ia-proj-ac-clear" hidden="hidden"
+                                            title="#{localeBean.getMsg('admin.users.create.projects.clear')}"
+                                            aria-label="#{localeBean.getMsg('admin.users.create.projects.clear')}">×</button>
+                                    <button type="button" class="coll-pick-caret ia-proj-ac-caret" tabindex="-1"
+                                            title="#{localeBean.getMsg('admin.users.create.projects.pickProject')}"
+                                            aria-label="#{localeBean.getMsg('admin.users.create.projects.pickProject')}">
+                                      <span aria-hidden="true">▾</span>
+                                    </button>
+                                  </div>
+                                  <div class="ac ia-proj-ac-menu" hidden="hidden" role="listbox">
+                                    <div class="ac-empty"></div>
+                                    <div class="coll-ac-list"></div>
+                                  </div>
+                                  <h:selectOneMenu id="iaCreateDraftProject"
+                                                   value="#{instanceAdminBean.draftProjectId}"
+                                                   styleClass="ia-proj-ac-value"
+                                                   pt:tabindex="-1"
+                                                   pt:aria-hidden="true">
+                                    <f:selectItem itemValue="#{instanceAdminBean.unassignedProjectId}"
+                                                  itemLabel="#{localeBean.getMsg('admin.users.create.projects.pickProject')}"
+                                                  noSelectionOption="true"/>
+                                    <f:selectItems value="#{instanceAdminBean.availableCreateProjects}"
+                                                   var="p"
+                                                   itemValue="#{p.id}"
+                                                   itemLabel="#{p.name}"/>
+                                    <f:ajax event="valueChange" execute="@this" render="@this"/>
+                                  </h:selectOneMenu>
+                                </div>
                               </label>
                               <div class="ia-proj-role-wrap">
                                 <span class="ia-field-l">#{localeBean.getMsg('admin.users.create.projects.role')}</span>
@@ -591,18 +617,44 @@
                             <div class="ia-proj-composer">
                               <label class="ia-proj-pick-wrap">
                                 <span class="ia-field-l">#{localeBean.getMsg('admin.users.create.projects.project')}</span>
-                                <h:selectOneMenu id="iaEditDraftProject"
-                                                 value="#{instanceAdminBean.editDraftProjectId}"
-                                                 styleClass="st-input ia-select ia-proj-pick">
-                                  <f:selectItem itemValue="#{instanceAdminBean.unassignedProjectId}"
-                                                itemLabel="#{localeBean.getMsg('admin.users.create.projects.pickProject')}"
-                                                noSelectionOption="true"/>
-                                  <f:selectItems value="#{instanceAdminBean.availableEditProjects}"
-                                                 var="p"
-                                                 itemValue="#{p.id}"
-                                                 itemLabel="#{p.name}"/>
-                                  <f:ajax event="valueChange" execute="@this" render="@this"/>
-                                </h:selectOneMenu>
+                                <div class="ia-proj-ac coll-pick"
+                                     data-empty="#{localeBean.getMsg('admin.users.create.projects.noMatch')}"
+                                     data-none="#{localeBean.getMsg('admin.users.create.projects.noneAvailable')}">
+                                  <div class="search-field coll-pick-field ia-proj-ac-field">
+                                    <span class="search-ico" aria-hidden="true">⌕</span>
+                                    <input type="text" class="search-input ia-proj-ac-q"
+                                           placeholder="#{localeBean.getMsg('admin.users.create.projects.search')}"
+                                           autocomplete="off" spellcheck="false"
+                                           role="combobox" aria-autocomplete="list" aria-expanded="false"
+                                           aria-label="#{localeBean.getMsg('admin.users.create.projects.project')}"/>
+                                    <button type="button" class="search-clear ia-proj-ac-clear" hidden="hidden"
+                                            title="#{localeBean.getMsg('admin.users.create.projects.clear')}"
+                                            aria-label="#{localeBean.getMsg('admin.users.create.projects.clear')}">×</button>
+                                    <button type="button" class="coll-pick-caret ia-proj-ac-caret" tabindex="-1"
+                                            title="#{localeBean.getMsg('admin.users.create.projects.pickProject')}"
+                                            aria-label="#{localeBean.getMsg('admin.users.create.projects.pickProject')}">
+                                      <span aria-hidden="true">▾</span>
+                                    </button>
+                                  </div>
+                                  <div class="ac ia-proj-ac-menu" hidden="hidden" role="listbox">
+                                    <div class="ac-empty"></div>
+                                    <div class="coll-ac-list"></div>
+                                  </div>
+                                  <h:selectOneMenu id="iaEditDraftProject"
+                                                   value="#{instanceAdminBean.editDraftProjectId}"
+                                                   styleClass="ia-proj-ac-value"
+                                                   pt:tabindex="-1"
+                                                   pt:aria-hidden="true">
+                                    <f:selectItem itemValue="#{instanceAdminBean.unassignedProjectId}"
+                                                  itemLabel="#{localeBean.getMsg('admin.users.create.projects.pickProject')}"
+                                                  noSelectionOption="true"/>
+                                    <f:selectItems value="#{instanceAdminBean.availableEditProjects}"
+                                                   var="p"
+                                                   itemValue="#{p.id}"
+                                                   itemLabel="#{p.name}"/>
+                                    <f:ajax event="valueChange" execute="@this" render="@this"/>
+                                  </h:selectOneMenu>
+                                </div>
                               </label>
                               <div class="ia-proj-role-wrap">
                                 <span class="ia-field-l">#{localeBean.getMsg('admin.users.create.projects.role')}</span>

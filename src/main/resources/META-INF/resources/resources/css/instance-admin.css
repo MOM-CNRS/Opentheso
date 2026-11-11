@@ -254,6 +254,12 @@ body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar{
   max-width:100%;
   flex-wrap:wrap !important
 }
+body[data-page="projets"] #mpToolbar{
+  display:flex !important;
+  width:100%;
+  margin:2px 0 10px;
+  justify-content:flex-end
+}
 body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar-actions{
   display:inline-flex !important;
   flex-direction:row !important;
@@ -613,6 +619,22 @@ button.ia-member-hit{
 }
 .ia-proj-pick-wrap,.ia-proj-role-wrap{display:flex;flex-direction:column;gap:6px;min-width:0}
 .ia-proj-pick{min-width:0;position:relative;z-index:2;cursor:pointer}
+.ia-proj-ac{position:relative;z-index:2;min-width:0}
+.ia-proj-ac.is-open{z-index:6}
+.ia-proj-ac .search-field{height:38px;padding-left:10px}
+.ia-proj-ac .search-input{font-size:13.5px}
+.ia-proj-ac .search-clear,.ia-proj-ac .coll-pick-caret{border:0;background:transparent;padding:0;cursor:pointer}
+.ia-proj-ac .ac{z-index:8;max-height:min(32vh,260px);padding-bottom:6px}
+.ia-proj-ac .ac[hidden]{display:none!important}
+.ia-proj-ac .coll-ac-list{display:flex;flex-direction:column;gap:2px}
+.ia-proj-ac .ac-empty{display:none;padding:14px 12px;text-align:center;color:var(--ink-3);font-size:13px}
+.ia-proj-ac .ac.is-empty .ac-empty{display:block}
+.ia-proj-ac .ac.is-empty .coll-ac-list{display:none}
+.ia-proj-ac .ac-row.is-picked{background:var(--accent-soft);border-color:var(--accent-line)}
+.ia-proj-ac select.ia-proj-ac-value{
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0
+}
 .ia-select,.ia-create .ia-select,.ia-proj select.ia-select{
   width:100%;max-width:none;height:38px;padding:6px 12px !important;border-radius:var(--r) !important;
   -webkit-appearance:menulist;appearance:menulist;pointer-events:auto !important
@@ -1328,7 +1350,8 @@ body:is([data-page="admin-instance"],[data-page="projets"]) .bo-back.is-leaving,
   body:is([data-page="admin-instance"],[data-page="projets"]) .ia-card-h-users{
     flex-wrap:wrap !important
   }
-  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar{
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar,
+  body[data-page="projets"] #mpToolbar{
     width:100%;
     margin-left:0;
     flex:1 1 100%;

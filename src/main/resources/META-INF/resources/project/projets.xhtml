@@ -667,6 +667,30 @@
               </ui:fragment>
 
               <ui:fragment rendered="#{myProjectsBean.projectAdminScreen and myProjectsBean.activePanel eq null}">
+                <div class="ia-toolbar" id="mpToolbar">
+                  <h:commandLink id="mpRename"
+                                styleClass="bo-btn ghost sm"
+                                value="#{localeBean.getMsg('projects.rename')}"
+                                action="#{myProjectsBean.openRenamePanel}">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandLink>
+                  <h:commandLink id="mpDelete"
+                                styleClass="bo-btn ghost sm"
+                                value="#{localeBean.getMsg('projects.delete')}"
+                                action="#{myProjectsBean.openDeletePanel}">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandLink>
+                  <h:commandLink id="mpAct3" styleClass="bo-btn ghost sm"
+                                   value="#{localeBean.getMsg('projects.invite')}"
+                                   action="#{myProjectsBean.openCreateMemberPanel}">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandLink>
+                  <h:commandLink id="mpAct4" styleClass="bo-btn primary sm"
+                                   value="#{localeBean.getMsg('projects.addMember')}"
+                                   action="#{myProjectsBean.openAddExistingPanel}">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandLink>
+                </div>
                 <div class="ia-mode ia-mode-3" role="tablist">
                   <h:commandLink id="mpTabThesauri"
                                 styleClass="ia-mode-opt#{myProjectsBean.activeSectionIndex eq 0 ? ' is-on' : ''}"
@@ -689,34 +713,10 @@
                 </div>
 
                 <div class="bo-card">
-                  <div class="bo-card-h ia-card-h-users">
+                  <div class="bo-card-h">
                     <span class="bo-card-t">
                       #{myProjectsBean.activeSectionIndex eq 0 ? localeBean.getMsg('projects.tab.thesauri') : (myProjectsBean.activeSectionIndex eq 1 ? localeBean.getMsg('projects.tab.members') : localeBean.getMsg('projects.tab.limited'))}
                     </span>
-                    <div class="ia-toolbar" id="mpToolbar">
-                      <h:commandLink id="mpRename"
-                                    styleClass="bo-btn ghost sm"
-                                    value="#{localeBean.getMsg('projects.rename')}"
-                                    action="#{myProjectsBean.openRenamePanel}">
-                        <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandLink>
-                      <h:commandLink id="mpDelete"
-                                    styleClass="bo-btn ghost sm"
-                                    value="#{localeBean.getMsg('projects.delete')}"
-                                    action="#{myProjectsBean.openDeletePanel}">
-                        <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandLink>
-                      <h:commandLink id="mpAct3" styleClass="bo-btn ghost sm"
-                                       value="#{localeBean.getMsg('projects.invite')}"
-                                       action="#{myProjectsBean.openCreateMemberPanel}">
-                        <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandLink>
-                      <h:commandLink id="mpAct4" styleClass="bo-btn primary sm"
-                                       value="#{localeBean.getMsg('projects.addMember')}"
-                                       action="#{myProjectsBean.openAddExistingPanel}">
-                        <f:ajax execute="@this" render="mpShell"/>
-                      </h:commandLink>
-                    </div>
                   </div>
                   <div class="bo-card-b ia-scroll">
                 <ui:fragment rendered="#{myProjectsBean.activeSectionIndex eq 0}">

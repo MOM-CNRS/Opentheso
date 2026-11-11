@@ -55,7 +55,7 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
   datasource:
-    url: jdbc:postgresql://localhost:5432/opentheso6 #opentheso_beta big_opentheso
+    url: jdbc:postgresql://localhost:5432/opentheso_beta #opentheso_beta big_opentheso
     password: postgres
     username: postgres
   jpa:
