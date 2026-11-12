@@ -147,6 +147,22 @@ class ConceptLabelBlockEditorBeanTest {
         assertTrue(bean.isEditing());
         assertTrue(bean.isDuplicateWarning());
         assertTrue(bean.getErrorMessage().contains("existe déjà"));
+        assertFalse(bean.getAltLabels().contains("laiton"));
+    }
+
+    @Test
+    void save_dropsHiddenFormWhenLabelAlreadyExists() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("Bronze", List.of(), List.of()));
+        when(conceptLexicalMutationService.addSynonym(any()))
+                .thenReturn(MutationResult.duplicate("Un label identique existe déjà !"));
+        bean.startEditing();
+        bean.setHiddenLabelsJson("[\"laiton\"]");
+
+        bean.save();
+
+        assertTrue(bean.isEditing());
+        assertTrue(bean.isDuplicateWarning());
+        assertFalse(bean.getHiddenLabels().contains("laiton"));
     }
 
     @Test

@@ -88,7 +88,8 @@ public class ConceptExtrasApiController {
     public ResponseEntity<LabelDuplicateJson> labelDuplicate(
             @RequestParam(required = false) String thesaurusId,
             @RequestParam(required = false) String lang,
-            @RequestParam(required = false) String value
+            @RequestParam(required = false) String value,
+            @RequestParam(required = false) String kind
     ) {
         if (StringUtils.isAnyBlank(thesaurusId, lang, value)) {
             return ResponseEntity.badRequest().build();
@@ -99,9 +100,21 @@ public class ConceptExtrasApiController {
         String id = thesaurusId.trim();
         String language = lang.trim();
         String label = value.trim();
-        boolean duplicate = conceptLexicalWriteRepository.existsPrefLabel(label, language, id)
-                || conceptLexicalWriteRepository.existsAltLabel(label, language, id);
+        boolean duplicate = isConceptLabelField(kind)
+                ? conceptLexicalWriteRepository.existsConceptOrCandidateLabel(label, language, id)
+                : conceptLexicalWriteRepository.existsPrefLabel(label, language, id)
+                        || conceptLexicalWriteRepository.existsAltLabel(label, language, id);
         return ResponseEntity.ok(new LabelDuplicateJson(duplicate));
+    }
+
+    private static boolean isConceptLabelField(String kind) {
+        if (kind == null) {
+            return false;
+        }
+        String normalized = kind.trim();
+        return "alt".equalsIgnoreCase(normalized)
+                || "alts".equalsIgnoreCase(normalized)
+                || "hidden".equalsIgnoreCase(normalized);
     }
 
     private boolean canRead(String thesaurusId) {

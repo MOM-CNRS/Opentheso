@@ -276,7 +276,8 @@ function labelAlreadyUsed(root, value) {
   const query = new URLSearchParams({
     thesaurusId: id,
     lang: termTagLang(root),
-    value: value
+    value: value,
+    kind: (root && root.getAttribute("data-kind")) || ""
   });
   return fetch(ctx + "/api/concepts/label-duplicate?" + query.toString(), {
     headers: { Accept: "application/json" }
@@ -302,7 +303,11 @@ function addTermTag(root, raw) {
   root.setAttribute("data-dup-token", token);
   labelAlreadyUsed(root, value).then((used) => {
     if (!used || !root.isConnected || root.getAttribute("data-dup-token") !== token) return;
-    if (termTagValues(root).indexOf(value) < 0) return;
+    const values = termTagValues(root);
+    const at = values.indexOf(value);
+    if (at < 0) return;
+    values.splice(at, 1);
+    writeTermTags(root, values);
     termTagMessage(root, "Un label identique existe déjà.");
   });
   return true;

@@ -28,6 +28,29 @@ public class ConceptLexicalWriteRepository {
                 .findFirst();
     }
 
+    /**
+     * Libellé préféré d'un concept ou d'un candidat, dans la langue du thésaurus.
+     */
+    public boolean existsConceptOrCandidateLabel(String value, String lang, String thesaurusId) {
+        return Boolean.TRUE.equals(entityManager.createNativeQuery("""
+                        SELECT COUNT(*) > 0
+                        FROM term t
+                        JOIN preferred_term pt
+                          ON pt.id_term = t.id_term
+                         AND pt.id_thesaurus = t.id_thesaurus
+                        JOIN concept c
+                          ON c.id_concept = pt.id_concept
+                         AND c.id_thesaurus = pt.id_thesaurus
+                        WHERE t.id_thesaurus = :thesaurusId
+                          AND t.lang = :lang
+                          AND f_unaccent(lower(t.lexical_value)) = f_unaccent(lower(:value))
+                        """)
+                .setParameter(NativeQueryParams.VALUE, value)
+                .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .getSingleResult());
+    }
+
     public boolean existsPrefLabel(String value, String lang, String thesaurusId) {
         return Boolean.TRUE.equals(entityManager.createNativeQuery("""
                         SELECT COUNT(*) > 0

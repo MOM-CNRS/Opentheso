@@ -154,7 +154,7 @@
         </ui:fragment>
       </h:panelGroup>
       <h:panelGroup id="previewPropBadge">
-        <ui:fragment rendered="#{propositionBean.boardLinkVisible}">
+        <ui:fragment rendered="#{propositionBean.boardLinkVisible and page ne 'thesauri'}">
           <div class="thesaurus-item">
             <h:form id="propNavForm" prependId="false" styleClass="prop-nav-form">
               <h:commandLink id="notificationProp"
@@ -174,7 +174,7 @@
         </ui:fragment>
       </h:panelGroup>
       <h:panelGroup id="previewCandBadge">
-        <ui:fragment rendered="#{candidatBoardBean.boardLinkVisible}">
+        <ui:fragment rendered="#{candidatBoardBean.boardLinkVisible and page ne 'thesauri'}">
           <div class="thesaurus-item">
             <h:form id="candNavForm" prependId="false" styleClass="prop-nav-form">
               <h:commandLink id="notificationCand"

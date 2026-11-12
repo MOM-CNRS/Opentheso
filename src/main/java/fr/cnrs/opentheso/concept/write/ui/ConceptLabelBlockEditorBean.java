@@ -374,9 +374,17 @@ public class ConceptLabelBlockEditorBean implements Serializable {
                 ctx.thesaurusId(), ctx.conceptId(), ctx.lang(), value, hidden,
                 ctx.userId(), ctx.contributor(), ctx.forced()));
         if (!applyResult(added, dirty)) {
+            dropRejectedLabel(hidden, value);
             return DirtyUpdate.fail();
         }
         return DirtyUpdate.of(true);
+    }
+
+    private void dropRejectedLabel(boolean hidden, String value) {
+        List<String> target = hidden ? hiddenLabels : altLabels;
+        if (target != null) {
+            target.remove(value);
+        }
     }
 
     private DirtyUpdate syncFacets(ConceptDetail current, LabelWriteContext ctx, boolean dirty) {

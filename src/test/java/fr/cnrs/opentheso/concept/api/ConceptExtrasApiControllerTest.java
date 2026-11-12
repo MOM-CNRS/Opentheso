@@ -109,15 +109,27 @@ class ConceptExtrasApiControllerTest {
     }
 
     @Test
-    void labelDuplicate_detectsExistingPreferredOrAlternativeLabel() {
+    void labelDuplicate_detectsConceptOrCandidateLabelForAlternativeForm() {
         when(consultationAccessPolicy.canConsult("th1", false)).thenReturn(true);
-        when(conceptLexicalWriteRepository.existsPrefLabel("laiton", "fr", "th1")).thenReturn(false);
-        when(conceptLexicalWriteRepository.existsAltLabel("laiton", "fr", "th1")).thenReturn(true);
+        when(conceptLexicalWriteRepository.existsConceptOrCandidateLabel("laiton", "fr", "th1")).thenReturn(true);
 
-        var response = controller.labelDuplicate("th1", "fr", "laiton");
+        var response = controller.labelDuplicate("th1", "fr", "laiton", "alts");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(true, response.getBody().duplicate());
+        verify(conceptLexicalWriteRepository, never()).existsAltLabel("laiton", "fr", "th1");
+    }
+
+    @Test
+    void labelDuplicate_detectsConceptOrCandidateLabelForHiddenForm() {
+        when(consultationAccessPolicy.canConsult("th1", false)).thenReturn(true);
+        when(conceptLexicalWriteRepository.existsConceptOrCandidateLabel("laiton", "fr", "th1")).thenReturn(true);
+
+        var response = controller.labelDuplicate("th1", "fr", "laiton", "hidden");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(true, response.getBody().duplicate());
+        verify(conceptLexicalWriteRepository, never()).existsAltLabel("laiton", "fr", "th1");
     }
 
     @Test
@@ -125,7 +137,7 @@ class ConceptExtrasApiControllerTest {
         when(consultationAccessPolicy.canConsult("th1", false)).thenReturn(false);
         when(authenticatedUserSource.getUserId()).thenReturn(Optional.empty());
 
-        var response = controller.labelDuplicate("th1", "fr", "laiton");
+        var response = controller.labelDuplicate("th1", "fr", "laiton", "alts");
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         verify(conceptLexicalWriteRepository, never()).existsPrefLabel("laiton", "fr", "th1");

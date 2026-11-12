@@ -47,7 +47,7 @@ class ConceptLexicalNativeWriteServiceTest {
     @Test
     void addSynonym_detectsDuplicateLabel() {
         var command = new AddSynonymCommand("TH1", "C1", "fr", "Animal", false, 7, "admin", false);
-        when(conceptLexicalWriteRepository.existsPrefLabel("Animal", "fr", "TH1")).thenReturn(true);
+        when(conceptLexicalWriteRepository.existsConceptOrCandidateLabel("Animal", "fr", "TH1")).thenReturn(true);
 
         var result = service.addSynonym(command);
 
@@ -56,10 +56,21 @@ class ConceptLexicalNativeWriteServiceTest {
     }
 
     @Test
+    void addSynonym_rejectsHiddenFormWhenConceptOrCandidateHasLabel() {
+        var command = new AddSynonymCommand("TH1", "C1", "fr", "Animal", true, 7, "admin", false);
+        when(conceptLexicalWriteRepository.existsConceptOrCandidateLabel("Animal", "fr", "TH1")).thenReturn(true);
+
+        var result = service.addSynonym(command);
+
+        assertEquals(MutationOutcome.DUPLICATE_LABEL, result.outcome());
+        verify(conceptSynonymWriteRepository, never()).insertSynonym(
+                anyString(), anyString(), anyString(), anyString(), org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
     void addSynonym_insertsWhenValid() {
         var command = new AddSynonymCommand("TH1", "C1", "fr", "Animal", false, 7, "admin", false);
-        when(conceptLexicalWriteRepository.existsPrefLabel("Animal", "fr", "TH1")).thenReturn(false);
-        when(conceptLexicalWriteRepository.existsAltLabel("Animal", "fr", "TH1")).thenReturn(false);
+        when(conceptLexicalWriteRepository.existsConceptOrCandidateLabel("Animal", "fr", "TH1")).thenReturn(false);
         when(conceptLexicalWriteRepository.findPreferredTermId("TH1", "C1")).thenReturn(Optional.of("T1"));
 
         var result = service.addSynonym(command);
@@ -67,14 +78,14 @@ class ConceptLexicalNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptSynonymWriteRepository).insertSynonym("T1", "TH1", "fr", "Animal", false, 7);
         verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 7);
+        verify(conceptLexicalWriteRepository, never()).existsAltLabel(anyString(), anyString(), anyString());
     }
 
     @Test
     void updateSynonym_updatesValueWhenChanged() {
         var command = new UpdateSynonymCommand("TH1", "C1", "fr", "Old", "New", true, 7, "admin", false);
         when(conceptLexicalWriteRepository.findPreferredTermId("TH1", "C1")).thenReturn(Optional.of("T1"));
-        when(conceptLexicalWriteRepository.existsPrefLabel("New", "fr", "TH1")).thenReturn(false);
-        when(conceptLexicalWriteRepository.existsAltLabel("New", "fr", "TH1")).thenReturn(false);
+        when(conceptLexicalWriteRepository.existsConceptOrCandidateLabel("New", "fr", "TH1")).thenReturn(false);
         when(conceptSynonymWriteRepository.updateSynonym("T1", "TH1", "fr", "Old", "New", true, 7)).thenReturn(true);
 
         var result = service.updateSynonym(command);

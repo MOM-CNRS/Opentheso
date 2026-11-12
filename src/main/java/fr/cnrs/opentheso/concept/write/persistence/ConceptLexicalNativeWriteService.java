@@ -150,8 +150,8 @@ public class ConceptLexicalNativeWriteService {
     }
 
     private MutationResult validateSynonymDuplicate(String thesaurusId, String lang, String value) {
-        if (conceptLexicalWriteRepository.existsPrefLabel(value, lang, thesaurusId)
-                || conceptLexicalWriteRepository.existsAltLabel(value, lang, thesaurusId)) {
+        String label = StringUtils.trimToEmpty(value);
+        if (conceptLexicalWriteRepository.existsConceptOrCandidateLabel(label, lang, thesaurusId)) {
             return MutationResult.duplicate("Un label identique existe déjà !");
         }
         return null;
