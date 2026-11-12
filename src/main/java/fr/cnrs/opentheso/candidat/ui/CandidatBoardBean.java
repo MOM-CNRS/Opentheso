@@ -513,7 +513,8 @@ public class CandidatBoardBean implements Serializable {
     }
 
     private void reload(String thesaurusId, String lang) {
-        if (StringUtils.isBlank(thesaurusId)) {
+        if (StringUtils.isBlank(thesaurusId)
+                || !rightsService.isAdminOfThesaurusProject(userSession, thesaurusId)) {
             pending = Collections.emptyList();
             accepted = Collections.emptyList();
             rejected = Collections.emptyList();

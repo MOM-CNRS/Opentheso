@@ -81,6 +81,7 @@ class CandidatBoardBeanTest {
         );
         lenient().when(thesaurusViewBean.getId()).thenReturn("TH1");
         lenient().when(thesaurusViewBean.getSelectedLang()).thenReturn("fr");
+        lenient().when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(true);
     }
 
     @Test
@@ -120,6 +121,18 @@ class CandidatBoardBeanTest {
 
         when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(false);
         assertFalse(bean.isBoardLinkVisible());
+    }
+
+    @Test
+    void load_staysEmptyWhenTheUserIsNotProjectAdmin() {
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(false);
+
+        bean.load();
+
+        assertTrue(bean.getPending().isEmpty());
+        assertTrue(bean.getAccepted().isEmpty());
+        assertTrue(bean.getRejected().isEmpty());
+        verify(candidatReadService, never()).searchByStatus(any(), any(), anyInt(), any());
     }
 
     @Test

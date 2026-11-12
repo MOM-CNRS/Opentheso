@@ -13,6 +13,15 @@
   <ui:define name="sidebar"/>
   <ui:define name="detail"/>
   <ui:define name="main">
+    <h:form id="propAccessForm" prependId="false" rendered="#{not propositionBean.boardLinkVisible}">
+      <ui:include src="/includes/access-denied.xhtml">
+        <ui:param name="deniedKicker" value="#{localeBean.getMsg('proposition.board.accessDenied.kicker')}"/>
+        <ui:param name="deniedTitle" value="#{localeBean.getMsg('proposition.board.accessDenied.title')}"/>
+        <ui:param name="deniedSub" value="#{localeBean.getMsg('proposition.board.accessDenied.sub')}"/>
+        <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('proposition.board.accessDenied.back')}"/>
+      </ui:include>
+    </h:form>
+    <ui:fragment rendered="#{propositionBean.boardLinkVisible}">
 
           <div class="view-panel is-on" id="viewPropList">
             <div class="bo bo-solo prop-page">
@@ -202,6 +211,7 @@
               </ui:fragment>
             </div>
           </div>
+    </ui:fragment>
 
   </ui:define>
 </ui:composition>

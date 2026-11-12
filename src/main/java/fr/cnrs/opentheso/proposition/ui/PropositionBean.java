@@ -103,6 +103,12 @@ public class PropositionBean implements Serializable {
             id = currentThesaurusId();
         }
         loadedThesaurusId = id;
+        if (!rightsService.isAdminOfThesaurusProject(userSession, id)) {
+            propositions = Collections.emptyList();
+            pendingCount = 0;
+            totalCount = 0;
+            return;
+        }
         pendingCount = propositionReadService.countPending(id);
         totalCount = propositionReadService.countAll(id);
         loadPropositionList(id);

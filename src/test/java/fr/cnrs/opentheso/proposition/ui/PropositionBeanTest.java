@@ -377,6 +377,19 @@ class PropositionBeanTest {
     }
 
     @Test
+    void refresh_hidesTheBoardWhenTheUserIsNotProjectAdmin() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        stubManagerRights();
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(false);
+
+        bean.refresh();
+
+        assertFalse(bean.isBoardLinkVisible());
+        assertTrue(bean.getPropositions().isEmpty());
+        verify(propositionReadService, never()).listPending(any());
+    }
+
+    @Test
     void openDedicatedReview_loadsPropositionFromRequestedId() {
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
@@ -521,6 +534,7 @@ class PropositionBeanTest {
     private void stubManagerRights() {
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         lenient().when(propositionAccessPolicy.canAccessBoard(any(UserSession.class), any())).thenReturn(true);
+        lenient().when(rightsService.isAdminOfThesaurusProject(any(), any())).thenReturn(true);
         lenient().when(propositionAccessPolicy.canReview(any(UserSession.class), any(), any())).thenReturn(true);
         lenient().when(propositionAccessPolicy.canDecide(any(UserSession.class), any(), any(), any())).thenReturn(true);
         lenient().when(propositionAccessPolicy.isSameAuthor(any(), any(), any())).thenReturn(false);

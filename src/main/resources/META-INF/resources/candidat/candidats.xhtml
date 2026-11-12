@@ -14,6 +14,15 @@
   <ui:define name="sidebar"/>
   <ui:define name="detail"/>
   <ui:define name="main">
+    <h:form id="candAccessForm" prependId="false" rendered="#{not candidatBoardBean.boardLinkVisible}">
+      <ui:include src="/includes/access-denied.xhtml">
+        <ui:param name="deniedKicker" value="#{localeBean.getMsg('candidat.board.accessDenied.kicker')}"/>
+        <ui:param name="deniedTitle" value="#{localeBean.getMsg('candidat.board.accessDenied.title')}"/>
+        <ui:param name="deniedSub" value="#{localeBean.getMsg('candidat.board.accessDenied.sub')}"/>
+        <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('candidat.board.accessDenied.back')}"/>
+      </ui:include>
+    </h:form>
+    <ui:fragment rendered="#{candidatBoardBean.boardLinkVisible}">
 
           <div class="view-panel#{param['new'] eq '1' or not empty param.pref or not empty param.path ? '' : ' is-on'}" id="viewCandList">
             <span id="candBoardNotice" hidden="hidden"
@@ -311,5 +320,6 @@
           <ui:include src="/includes/candidate-draft.xhtml"/>
           <ui:include src="/includes/concept-draft.xhtml"/>
           <ui:include src="/includes/facet-draft.xhtml"/>
+    </ui:fragment>
   </ui:define>
 </ui:composition>
