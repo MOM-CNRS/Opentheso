@@ -82,6 +82,32 @@ window.appHandleLaterAct = function (e, t, act) {
     e.preventDefault();
     submitCreateCollection();
     return;
+  } else if (act === "coll-fiche-edit") {
+    e.preventDefault();
+    if (typeof startCollectionFicheEdit === "function") startCollectionFicheEdit(t.getAttribute("data-block"));
+    return;
+  } else if (act === "coll-fiche-cancel") {
+    e.preventDefault();
+    if (typeof renderCollectionDetail === "function") renderCollectionDetail(collectionFiche);
+    return;
+  } else if (act === "coll-fiche-save") {
+    e.preventDefault();
+    if (typeof saveCollectionFiche === "function") saveCollectionFiche(t.getAttribute("data-block"));
+    return;
+  } else if (act === "coll-fiche-tr-add") {
+    e.preventDefault();
+    if (typeof addCollectionFicheTranslation === "function") addCollectionFicheTranslation();
+    return;
+  } else if (act === "coll-fiche-tr-drop") {
+    e.preventDefault();
+    const row = t.closest(".coll-fiche-row");
+    if (row) row.remove();
+    return;
+  } else if (act === "coll-note-langs") {
+    e.preventDefault();
+    collectionNotesAllLangs = !collectionNotesAllLangs;
+    if (typeof renderCollectionDetail === "function") renderCollectionDetail(collectionFiche);
+    return;
   } else if (act === "create") {
     e.stopPropagation();
     showCreateChooser(t);

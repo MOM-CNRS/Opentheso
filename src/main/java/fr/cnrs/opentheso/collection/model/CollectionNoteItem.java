@@ -6,6 +6,7 @@ public record CollectionNoteItem(
         String typeCode,
         String typeLabel,
         String lang,
-        String value
+        String value,
+        String source
 ) implements Serializable {
 }

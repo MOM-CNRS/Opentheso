@@ -255,18 +255,31 @@ public class CollectionTreeQueryRepository {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Object[]> findGroupNotes(String groupId, String thesaurusId, String lang) {
+    public List<Object[]> findGroupNotes(String groupId, String thesaurusId) {
         return em.createNativeQuery("""
-            SELECT n.notetypecode, n.lang, n.lexicalvalue
+            SELECT n.notetypecode, n.lang, n.lexicalvalue, n.notesource
             FROM note n
             WHERE LOWER(n.identifier) = LOWER(:groupId)
               AND n.id_thesaurus = :thesaurusId
-              AND n.lang = :lang
-            ORDER BY n.notetypecode
+            ORDER BY n.notetypecode, n.lang
             """)
                 .setParameter(NativeQueryParams.GROUP_ID, groupId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter("lang", lang)
+                .getResultList();
+    }
+
+    /** Colonnes : id, notetypecode, lang, lexicalvalue, notesource — toutes les langues. */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findAllNotesByIdentifier(String identifier, String thesaurusId) {
+        return em.createNativeQuery("""
+            SELECT n.id, n.notetypecode, n.lang, n.lexicalvalue, n.notesource
+            FROM note n
+            WHERE LOWER(n.identifier) = LOWER(:groupId)
+              AND n.id_thesaurus = :thesaurusId
+            ORDER BY n.notetypecode, n.lang
+            """)
+                .setParameter(NativeQueryParams.GROUP_ID, identifier)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 

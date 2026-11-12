@@ -2593,6 +2593,38 @@ function restoreFicheScroll() {
 
 var cvTrState = { order: [], values: {}, alts: {}, confirm: "" };
 
+function cvTrRoot() {
+  if (cvTrState.root && cvTrState.root.isConnected) return cvTrState.root;
+  return document.getElementById("cvTrEditor");
+}
+
+function cvTrEl(name) {
+  const root = cvTrRoot();
+  if (!root) return null;
+  if (name === "editor") return root;
+  const byData = root.querySelector("[data-cv='" + name + "']");
+  if (byData) return byData;
+  const ids = {
+    list: "cvTrList",
+    empty: "cvTrEmpty",
+    seed: "cvTrSeed",
+    btn: "cvTrBtn",
+    menu: "cvTrMenu",
+    pick: "cvTrPick",
+    payload: "cvTrPayload"
+  };
+  const id = ids[name];
+  return id ? root.querySelector("#" + id) : null;
+}
+
+function focusTrEditor(node) {
+  const editor = node && node.closest && node.closest("#cvTrEditor, #collTrEditor");
+  if (!editor) return null;
+  if (cvTrState.bound !== editor) seedConceptTrFromHidden(editor);
+  else cvTrState.root = editor;
+  return editor;
+}
+
 function trTextDir(code) {
   return /^(ar|he|fa|ur)(-|$)/i.test(code || "") ? "rtl" : "ltr";
 }
@@ -2610,7 +2642,11 @@ function trLangAlready(order, code) {
 }
 
 function markUsedTrLangOpts(menuSel, order, usedTitle) {
-  const opts = $$(menuSel + " .tree-lang-opt");
+  const scoped = menuSel === "#cvNoteMenu" ? cvNoteEl("menu")
+    : menuSel === "#cvTrMenu" ? cvTrEl("menu") : null;
+  const opts = scoped
+    ? [...scoped.querySelectorAll(".tree-lang-opt")]
+    : $$(menuSel + " .tree-lang-opt");
   opts.forEach((opt) => {
     const used = trLangAlready(order, opt.getAttribute("data-lang"));
     opt.hidden = false;
@@ -2624,7 +2660,8 @@ function markUsedTrLangOpts(menuSel, order, usedTitle) {
 }
 
 function cvTrOpt(code) {
-  return $("#cvTrMenu") && $("#cvTrMenu").querySelector('.tree-lang-opt[data-lang="' + code + '"]');
+  const menu = cvTrEl("menu");
+  return menu && menu.querySelector('.tree-lang-opt[data-lang="' + code + '"]');
 }
 
 function cvTrMeta(code) {
@@ -2637,7 +2674,7 @@ function cvTrMeta(code) {
 }
 
 function closeConceptTrLang() {
-  const btn = $("#cvTrBtn");
+  const btn = cvTrEl("btn");
   if (!btn || !btn.classList.contains("is-open")) return false;
   btn.classList.remove("is-open");
   btn.setAttribute("aria-expanded", "false");
@@ -2645,14 +2682,14 @@ function closeConceptTrLang() {
 }
 
 function setConceptTrLangOpen(open) {
-  const btn = $("#cvTrBtn");
+  const btn = cvTrEl("btn");
   if (!btn) return;
   btn.classList.toggle("is-open", !!open);
   btn.setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 function syncConceptTrHidden() {
-  const el = jsField("cvTrPayload");
+  const el = cvTrEl("payload") || jsField("cvTrPayload");
   if (!el) return;
   el.value = cvTrState.order.map((code) => {
     return code + "\t"
@@ -2662,10 +2699,13 @@ function syncConceptTrHidden() {
   }).join("\n");
 }
 
-function seedConceptTrFromHidden() {
-  if (!$("#cvTrEditor")) return;
-  cvTrState = { order: [], values: {}, alts: {}, confirm: "" };
-  $$("#cvTrSeed [data-lang]").forEach((el) => {
+function seedConceptTrFromHidden(editor) {
+  editor = editor && editor.nodeType === 1 ? editor : document.getElementById("cvTrEditor");
+  if (!editor) return;
+  if (cvTrState.bound === editor) return;
+  cvTrState = { order: [], values: {}, alts: {}, confirm: "", bound: editor, root: editor };
+  const seed = cvTrEl("seed");
+  (seed ? [...seed.querySelectorAll("[data-lang]")] : []).forEach((el) => {
     const code = (el.getAttribute("data-lang") || "").trim();
     if (!code || cvTrState.order.indexOf(code) >= 0) return;
     cvTrState.order.push(code);
@@ -2673,7 +2713,8 @@ function seedConceptTrFromHidden() {
     cvTrState.alts[code] = el.getAttribute("data-alts") || "";
   });
   if (!cvTrState.order.length) {
-    String((jsField("cvTrPayload") && jsField("cvTrPayload").value) || "").split(/\r?\n/).forEach((line) => {
+    const hidden = cvTrEl("payload") || jsField("cvTrPayload");
+    String((hidden && hidden.value) || "").split(/\r?\n/).forEach((line) => {
       const parts = line.split("\t");
       const code = (parts[0] || "").trim();
       if (!code || cvTrState.order.indexOf(code) >= 0) return;
@@ -2696,7 +2737,8 @@ function addConceptTr(code) {
   syncConceptTrHidden();
   paintConceptTr();
   requestAnimationFrame(() => {
-    const input = $("#cvTrVal-" + code);
+    const root = cvTrRoot();
+    const input = root && root.querySelector('[data-cv-tr="value"][data-lang="' + code + '"]');
     if (input) input.focus();
   });
 }
@@ -2731,9 +2773,9 @@ function setConceptTrAlt(code, value) {
 }
 
 function paintConceptTr() {
-  const list = $("#cvTrList");
-  const empty = $("#cvTrEmpty");
-  const editor = $("#cvTrEditor");
+  const list = cvTrEl("list");
+  const empty = cvTrEl("empty");
+  const editor = cvTrEl("editor");
   if (!list || !editor) return;
   const ph = editor.getAttribute("data-ph") || "Nom en {0}…";
   const altPh = editor.getAttribute("data-alt") || "";
@@ -2764,16 +2806,20 @@ function paintConceptTr() {
       + '<span class="te-code">' + escapeHtml(code) + "</span>"
       + actions
       + "</div>"
-      + '<input type="text" class="st-input" id="cvTrVal-' + code + '" lang="' + code + '" dir="' + dir
-      + '" data-lang="' + code + '" value="' + escapeHtml(cvTrState.values[code] || "")
+      + '<input type="text" class="st-input"' + (editor.id === "collTrEditor" ? "" : ' id="cvTrVal-' + code + '"')
+      + ' lang="' + code + '" dir="' + dir
+      + '" data-cv-tr="value" data-lang="' + code + '" value="' + escapeHtml(cvTrState.values[code] || "")
       + '" placeholder="' + placeholder + '" autocomplete="off"/>'
-      + '<input type="text" class="st-input te-alt" lang="' + code + '" dir="' + dir + '" data-lang="' + code
-      + '" value="' + escapeHtml(cvTrState.alts[code] || "") + '" placeholder="' + escapeHtml(altPh) + '" autocomplete="off"/>'
+      + (altPh
+        ? '<input type="text" class="st-input te-alt" lang="' + code + '" dir="' + dir + '" data-cv-tr="alt" data-lang="' + code
+          + '" value="' + escapeHtml(cvTrState.alts[code] || "") + '" placeholder="' + escapeHtml(altPh) + '" autocomplete="off"/>'
+        : "")
       + "</div>";
   }).join("");
   markUsedTrLangOpts("#cvTrMenu", cvTrState.order, editor.getAttribute("data-used") || "");
-  const pick = $("#cvTrPick");
-  if (pick) pick.hidden = $$("#cvTrMenu .tree-lang-opt").length === 0;
+  const pick = cvTrEl("pick");
+  const menu = cvTrEl("menu");
+  if (pick) pick.hidden = !menu || menu.querySelectorAll(".tree-lang-opt").length === 0;
 }
 
 var fcTrState = { order: [], values: {}, confirm: "" };
@@ -3262,15 +3308,52 @@ function paintFacetCardNotes() {
 
 var cvNoteState = { notes: [], tabs: [], lang: "", compare: false, typeOpen: false };
 
+function cvNoteRoot() {
+  if (cvNoteState.root && cvNoteState.root.isConnected) return cvNoteState.root;
+  return document.getElementById("cvNoteEditor");
+}
+
+function cvNoteEl(name) {
+  const root = cvNoteRoot();
+  if (!root) return null;
+  if (name === "editor") return root;
+  const byData = root.querySelector("[data-cv='" + name + "']");
+  if (byData) return byData;
+  const ids = {
+    tabs: "cvNoteTabs",
+    btn: "cvNoteBtn",
+    menu: "cvNoteMenu",
+    cmp: "cvNoteCmp",
+    body: "cvNoteBody",
+    seed: "cvNoteSeed",
+    types: "cvNoteTypeOpts",
+    langs: "cvNoteLangOpts",
+    payload: "cvNotePayload",
+    pick: "cvNotePick"
+  };
+  const id = ids[name];
+  return id ? root.querySelector("#" + id) : null;
+}
+
+function focusNoteEditor(node) {
+  const editor = node && node.closest && node.closest("#cvNoteEditor, #collNoteEditor");
+  if (!editor) return null;
+  if (cvNoteState.bound !== editor) seedConceptNotesFromHidden(editor);
+  else cvNoteState.root = editor;
+  return editor;
+}
+
 function cvNoteTypes() {
-  return $$("#cvNoteTypeOpts [data-code]").map((el) => ({
+  const box = cvNoteEl("types");
+  return (box ? [...box.querySelectorAll("[data-code]")] : []).map((el) => ({
     code: el.getAttribute("data-code") || "",
     label: el.getAttribute("data-label") || el.getAttribute("data-code") || ""
   })).filter((item) => item.code);
 }
 
 function cvNoteLangs() {
-  return $$("#cvNoteLangOpts [data-code]").map((el) => ({
+  const box = cvNoteEl("langs");
+  return (box ? [...box.querySelectorAll("[data-code]")] : []).map((el) => ({
     code: el.getAttribute("data-code") || "",
     name: el.getAttribute("data-name") || el.getAttribute("data-code") || "",
     flag: el.getAttribute("data-flag") || ""
@@ -3278,7 +3361,7 @@ function cvNoteLangs() {
 }
 
 function cvNoteWorkLang() {
-  const editor = $("#cvNoteEditor");
+  const editor = cvNoteEl("editor");
   const langs = cvNoteLangs();
   return (editor && editor.getAttribute("data-work-lang")) || (langs[0] && langs[0].code) || "fr";
 }
@@ -3336,7 +3419,7 @@ function firstFreeConceptNoteType(lang) {
 }
 
 function closeConceptNoteLang() {
-  const btn = $("#cvNoteBtn");
+  const btn = cvNoteEl("btn");
   if (!btn || !btn.classList.contains("is-open")) return false;
   btn.classList.remove("is-open");
   btn.setAttribute("aria-expanded", "false");
@@ -3344,7 +3427,7 @@ function closeConceptNoteLang() {
 }
 
 function setConceptNoteLangOpen(open) {
-  const btn = $("#cvNoteBtn");
+  const btn = cvNoteEl("btn");
   if (!btn) return;
   btn.classList.toggle("is-open", !!open);
   btn.setAttribute("aria-expanded", open ? "true" : "false");
@@ -3353,13 +3436,14 @@ function setConceptNoteLangOpen(open) {
 function closeConceptNoteTypeMenu() {
   if (!cvNoteState.typeOpen) return false;
   cvNoteState.typeOpen = false;
-  const menu = $("#cvNoteTypeMenu");
+  const root = cvNoteRoot();
+  const menu = root && root.querySelector("#cvNoteTypeMenu");
   if (menu) menu.remove();
   return true;
 }
 
 function syncConceptNoteHidden() {
-  const el = jsField("cvNotePayload");
+  const el = cvNoteEl("payload") || jsField("cvNotePayload");
   if (!el) return;
   const lines = cvNoteState.notes.filter(cvNoteFilled).map((note) => {
     return [note.type || "", note.lang || "", encodeURIComponent(note.value || ""), encodeURIComponent(note.source || "")].join("\t");
@@ -3367,13 +3451,14 @@ function syncConceptNoteHidden() {
   el.value = lines.length ? lines.join("\n") : "\t\t\t";
 }
 
-function seedConceptNotesFromHidden() {
-  const editor = $("#cvNoteEditor");
+function seedConceptNotesFromHidden(editor) {
+  editor = editor && editor.nodeType === 1 ? editor : document.getElementById("cvNoteEditor");
   if (!editor) return;
   if (cvNoteState.bound === editor) return;
-  const work = cvNoteWorkLang();
-  cvNoteState = { notes: [], tabs: [], lang: work, compare: false, typeOpen: false, bound: editor };
-  $$("#cvNoteSeed [data-lang]").forEach((el) => {
+  const work = (editor.getAttribute("data-work-lang") || "").trim() || "fr";
+  cvNoteState = { notes: [], tabs: [], lang: work, compare: false, typeOpen: false, bound: editor, root: editor };
+  const seed = cvNoteEl("seed");
+  (seed ? [...seed.querySelectorAll("[data-lang]")] : []).forEach((el) => {
     const type = (el.getAttribute("data-type") || "").trim();
     const lang = (el.getAttribute("data-lang") || "").trim();
     if (!type || !lang) return;
@@ -3442,7 +3527,8 @@ function addConceptNoteType(type) {
   syncConceptNoteHidden();
   paintConceptNotes();
   requestAnimationFrame(() => {
-    const input = $("#cvNoteVal-" + (cvNoteState.notes.length - 1));
+    const root = cvNoteRoot();
+    const input = root && root.querySelector('[data-cv-note="value"][data-index="' + (cvNoteState.notes.length - 1) + '"]');
     if (input) input.focus();
   });
 }
@@ -3490,7 +3576,7 @@ function paintNoteGhost(typeCode) {
 }
 
 function paintConceptNoteAdd(lang) {
-  const editor = $("#cvNoteEditor");
+  const editor = cvNoteEl("editor");
   const add = (editor && editor.getAttribute("data-add")) || "";
   const free = cvNoteTypes().filter((type) => !cvNoteUsedTypes(lang, -1)[type.code]);
   if (!free.length) return "";
@@ -3507,7 +3593,7 @@ function paintConceptNoteAdd(lang) {
 }
 
 function paintConceptNoteCard(item, editable) {
-  const editor = $("#cvNoteEditor");
+  const editor = cvNoteEl("editor");
   const remove = (editor && editor.getAttribute("data-remove")) || "";
   const textPh = (editor && editor.getAttribute("data-text-ph")) || "";
   const sourcePh = (editor && editor.getAttribute("data-source-ph")) || "";
@@ -3574,7 +3660,7 @@ function paintConceptNoteCompare(leftLang, rightLang) {
     + paintNoteColHead(rightLang)
     + "</div>";
   if (!shown.length) {
-    const editor = $("#cvNoteEditor");
+    const editor = cvNoteEl("editor");
     const empty = (editor && editor.getAttribute("data-empty")) || "";
     html += '<div class="note-cmp-r">'
       + '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(empty) + "</span></div>"
@@ -3595,9 +3681,9 @@ function paintConceptNoteCompare(leftLang, rightLang) {
 }
 
 function paintConceptNotes() {
-  const tabsEl = $("#cvNoteTabs");
-  const body = $("#cvNoteBody");
-  const editor = $("#cvNoteEditor");
+  const tabsEl = cvNoteEl("tabs");
+  const body = cvNoteEl("body");
+  const editor = cvNoteEl("editor");
   if (!tabsEl || !body || !editor) return;
   const tabs = cvNoteTabs();
   if (!cvNoteState.lang && tabs[0]) cvNoteState.lang = tabs[0];
@@ -3612,7 +3698,7 @@ function paintConceptNotes() {
       + (count ? '<span class="note-ed-n">' + count + "</span>" : '<span class="note-ed-void" aria-hidden="true"></span>')
       + "</button>";
   }).join("");
-  const cmpBtn = $("#cvNoteCmp");
+  const cmpBtn = cvNoteEl("cmp");
   if (cmpBtn) {
     cmpBtn.classList.toggle("on", !!cvNoteState.compare);
     cmpBtn.hidden = tabs.length < 2;
@@ -3626,8 +3712,9 @@ function paintConceptNotes() {
     body.innerHTML = paintConceptNoteColumn(cvNoteState.lang, true);
   }
   markUsedTrLangOpts("#cvNoteMenu", tabs, editor.getAttribute("data-used") || "");
-  const pick = $("#cvNotePick");
-  if (pick) pick.hidden = $$("#cvNoteMenu .tree-lang-opt").length === 0;
+  const pick = cvNoteEl("pick");
+  const menu = cvNoteEl("menu");
+  if (pick) pick.hidden = !menu || menu.querySelectorAll(".tree-lang-opt").length === 0;
 }
 
 var cvResState = { links: [], images: [], gps: [], bound: null, painted: false };
@@ -4514,6 +4601,7 @@ function selectOpenedInTree(id) {
 
 function showLiveDetail() {
   if (state.conceptDraft || state.facetDraft || state.draft) return false;
+  if (state.view === "collection" && state.colId) return false;
   const el = liveDetailState();
   if (!el || el.getAttribute("data-requested") !== "1") return false;
   state.home = false;

@@ -117,12 +117,13 @@ public class CollectionTreeConsultationService {
                             collectionTreeQueryRepository.findGroupTranslations(groupId, thesaurusId, lang).stream()
                                     .map(row -> new CollectionTranslationItem(str(row, 0), str(row, 1)))
                                     .toList(),
-                            collectionTreeQueryRepository.findGroupNotes(groupId, thesaurusId, lang).stream()
+                            collectionTreeQueryRepository.findGroupNotes(groupId, thesaurusId).stream()
                                     .map(row -> new CollectionNoteItem(
                                             str(row, 0),
                                             noteTypeLabel(str(row, 0)),
                                             str(row, 1),
-                                            str(row, 2)
+                                            str(row, 2),
+                                            str(row, 3)
                                     ))
                                     .toList(),
                             loadDetailMembers(groupId, thesaurusId, lang)

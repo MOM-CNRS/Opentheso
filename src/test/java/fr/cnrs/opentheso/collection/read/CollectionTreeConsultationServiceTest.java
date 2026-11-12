@@ -148,8 +148,8 @@ class CollectionTreeConsultationServiceTest {
                 ));
         when(collectionTreeQueryRepository.findGroupTranslations("G1", "TH1", "fr"))
                 .thenReturn(List.<Object[]>of(new Object[]{"en", "Material"}));
-        when(collectionTreeQueryRepository.findGroupNotes("G1", "TH1", "fr"))
-                .thenReturn(List.<Object[]>of(new Object[]{"definition", "fr", "Note de définition"}));
+        when(collectionTreeQueryRepository.findGroupNotes("G1", "TH1"))
+                .thenReturn(List.<Object[]>of(new Object[]{"definition", "fr", "Note de définition", "Pactols"}));
 
         CollectionDetail detail = service.loadDetail("TH1", "G1", "fr");
 
@@ -163,6 +163,7 @@ class CollectionTreeConsultationServiceTest {
         assertEquals("2020-01-02", detail.created());
         assertEquals(1, detail.translations().size());
         assertEquals("Définition", detail.notes().get(0).typeLabel());
+        assertEquals("Pactols", detail.notes().get(0).source());
     }
 
     @Test

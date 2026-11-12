@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.collection.read;
 
 import fr.cnrs.opentheso.concept.mapper.ConceptMapper;
+import fr.cnrs.opentheso.concept.model.ConceptNote;
 import fr.cnrs.opentheso.concept.model.FacetMemberItem;
 import fr.cnrs.opentheso.concept.model.GroupDetailOverview;
 import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
@@ -53,6 +54,22 @@ public class CollectionReadService {
                             loadMembers(thesaurusId, groupId, lang)
                     );
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptNote> loadNotes(String thesaurusId, String groupId) {
+        if (StringUtils.isAnyBlank(thesaurusId, groupId)) {
+            return List.of();
+        }
+        return collectionTreeQueryRepository.findAllNotesByIdentifier(groupId, thesaurusId).stream()
+                .map(row -> new ConceptNote(
+                        ConceptMapper.stringAt(row, 0),
+                        ConceptMapper.stringAt(row, 1),
+                        ConceptMapper.stringAt(row, 2),
+                        ConceptMapper.stringAt(row, 3),
+                        ConceptMapper.stringAt(row, 4)
+                ))
+                .toList();
     }
 
     private List<FacetMemberItem> loadMembers(String thesaurusId, String groupId, String lang) {

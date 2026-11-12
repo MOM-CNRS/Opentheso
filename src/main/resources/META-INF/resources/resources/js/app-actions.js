@@ -221,15 +221,20 @@ document.addEventListener("click", (e) => {
   } else if (act === "tr-save-modal") {
     return;
   } else if (act === "cv-tr-ask") {
+    if (typeof focusTrEditor === "function") focusTrEditor(t);
     askRemoveConceptTr(t.getAttribute("data-lang"));
   } else if (act === "cv-tr-keep") {
+    if (typeof focusTrEditor === "function") focusTrEditor(t);
     keepConceptTr();
   } else if (act === "cv-tr-drop") {
+    if (typeof focusTrEditor === "function") focusTrEditor(t);
     removeConceptTr(t.getAttribute("data-lang"));
   } else if (act === "cv-tr-toggle") {
-    const btn = $("#cvTrBtn");
+    if (typeof focusTrEditor === "function") focusTrEditor(t);
+    const btn = typeof cvTrEl === "function" ? cvTrEl("btn") : $("#cvTrBtn");
     setConceptTrLangOpen(btn && !btn.classList.contains("is-open"));
   } else if (act === "cv-tr-add") {
+    if (typeof focusTrEditor === "function") focusTrEditor(t);
     if (t.disabled || t.classList.contains("is-used")) return;
     addConceptTr(t.getAttribute("data-lang"));
   } else if (act === "fc-tr-ask") {
@@ -245,20 +250,27 @@ document.addEventListener("click", (e) => {
     if (t.disabled || t.classList.contains("is-used")) return;
     addFacetCardTr(t.getAttribute("data-lang"));
   } else if (act === "cv-note-tab") {
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
     setConceptNoteLang(t.getAttribute("data-lang"));
   } else if (act === "cv-note-cmp") {
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
     toggleConceptNoteCompare();
   } else if (act === "cv-note-toggle") {
-    const btn = $("#cvNoteBtn");
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
+    const btn = typeof cvNoteEl === "function" ? cvNoteEl("btn") : $("#cvNoteBtn");
     setConceptNoteLangOpen(btn && !btn.classList.contains("is-open"));
   } else if (act === "cv-note-add-lang") {
     if (t.disabled || t.classList.contains("is-used")) return;
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
     addConceptNoteLang(t.getAttribute("data-lang"));
   } else if (act === "cv-note-add") {
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
     addConceptNote();
   } else if (act === "cv-note-add-type") {
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
     addConceptNoteType(t.getAttribute("data-type"));
   } else if (act === "cv-note-remove") {
+    if (typeof focusNoteEditor === "function") focusNoteEditor(t);
     removeConceptNote(Number(t.getAttribute("data-index")));
   } else if (act === "cv-res-add") {
     e.preventDefault();

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+  <div id="collFicheMsgs" hidden="hidden"
+       data-save="#{localeBean.getMsg('save')}"
+       data-cancel="#{localeBean.getMsg('cancel')}"
+       data-edit="#{localeBean.getMsg('edit')}"
+       data-saving="#{localeBean.getMsg('saving')}"
+       data-add="#{localeBean.getMsg('add')}"></div>
+  <div id="collNoteMeta" hidden="hidden"
+       data-none="#{localeBean.getMsg('concept.note.none')}"
+       data-empty="#{localeBean.getMsg('concept.note.emptyLang')}"
+       data-add="#{localeBean.getMsg('concept.note.add')}"
+       data-add-lang="#{localeBean.getMsg('concept.note.addLang')}"
+       data-compare="#{localeBean.getMsg('concept.note.compare')}"
+       data-remove="#{localeBean.getMsg('concept.note.remove')}"
+       data-text-ph="#{localeBean.getMsg('concept.note.textPh')}"
+       data-source-ph="#{localeBean.getMsg('concept.note.sourcePh')}"
+       data-used="#{localeBean.getMsg('concept.note.langUsed')}"
+       data-done="#{localeBean.getMsg('concept.translation.done')}"
+       data-show-other="#{localeBean.getMsg('concept.showNotesOtherLang')}"></div>
+  <div id="collNoteTypeOpts" hidden="hidden">
+    <ui:repeat value="#{collectionDetailEditorBean.ficheNoteTypes}" var="type">
+      <span data-code="#{type.code}" data-label="#{thesaurusViewBean.noteTypeLabel(type.code)}"></span>
+    </ui:repeat>
+  </div>
+  <div id="collTrMeta" hidden="hidden"
+       data-empty="#{localeBean.getMsg('candidat.draft.tr.empty')}"
+       data-add="#{localeBean.getMsg('candidat.draft.tr.add')}"
+       data-ph="#{localeBean.getMsg('candidat.draft.tr.namePh')}"
+       data-remove="#{localeBean.getMsg('candidat.draft.tr.remove')}"
+       data-drop="#{localeBean.getMsg('candidat.draft.tr.drop')}"
+       data-no="#{localeBean.getMsg('candidat.draft.tr.no')}"
+       data-yes="#{localeBean.getMsg('candidat.draft.tr.yes')}"
+       data-used="#{localeBean.getMsg('concept.translation.langUsed')}"
+       data-none="#{localeBean.getMsg('concept.translation.none')}"
+       data-todo="#{localeBean.getMsg('concept.translation.todo')}"
+       data-done="#{localeBean.getMsg('concept.translation.done')}"></div>
+  <div id="collFicheLangs" hidden="hidden">
+    <ui:repeat value="#{thesaurusViewBean.languages}" var="lang">
+      <span data-code="#{lang.code}" data-name="#{lang.value}"
+            data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"></span>
+    </ui:repeat>
+  </div>
+  <h:form id="previewCollFicheForm" prependId="false" styleClass="preview-open-form" acceptcharset="UTF-8">
+    <h:inputHidden id="previewCollFicheId" value="#{collectionDetailEditorBean.ficheGroupId}"/>
+    <h:inputHidden id="previewCollFicheMode" value="#{collectionDetailEditorBean.ficheMode}"/>
+    <h:inputHidden id="previewCollFichePayload" value="#{collectionDetailEditorBean.fichePayload}"/>
+    <h:commandButton id="previewCollFicheGo" value="#{localeBean.getMsg('save')}"
+                     styleClass="preview-open-btn"
+                     action="#{collectionDetailEditorBean.submitFiche}">
+      <f:ajax execute="@form" render="previewCollFicheStatus" onevent="onCollFicheAjax"/>
+    </h:commandButton>
+    <h:panelGroup id="previewCollFicheStatus" layout="block"
+                  styleClass="bap-coll-status#{collectionDetailEditorBean.ficheOk ? ' is-ok' : ''}">
+      <h:outputText value="#{collectionDetailEditorBean.ficheMessage}"/>
+    </h:panelGroup>
+  </h:form>
+</ui:composition>

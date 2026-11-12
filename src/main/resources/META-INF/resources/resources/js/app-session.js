@@ -759,9 +759,10 @@ document.addEventListener("input", (e) => {
   if (e.target && e.target.id === "draftTitle") syncDraftPrefMirror();
   if (e.target && e.target.id === "draftRelQ") scheduleDraftRelSearch();
   if (e.target && e.target.id === "cvRelQ" && typeof scheduleCvRelSearch === "function") scheduleCvRelSearch();
-  if (e.target && e.target.closest && e.target.closest("#cvTrEditor") && e.target.getAttribute("data-lang")) {
+  if (e.target && e.target.closest && e.target.closest("#cvTrEditor, #collTrEditor") && e.target.getAttribute("data-lang")) {
+    if (typeof focusTrEditor === "function") focusTrEditor(e.target);
     const lang = e.target.getAttribute("data-lang");
-    if (e.target.classList.contains("te-alt")) setConceptTrAlt(lang, e.target.value);
+    if (e.target.classList.contains("te-alt") || e.target.getAttribute("data-cv-tr") === "alt") setConceptTrAlt(lang, e.target.value);
     else setConceptTrValue(lang, e.target.value);
   } else if (e.target && e.target.closest && e.target.closest("#fcTrEditor") && e.target.getAttribute("data-lang")) {
     setFacetCardTrValue(e.target.getAttribute("data-lang"), e.target.value);
@@ -769,9 +770,10 @@ document.addEventListener("input", (e) => {
     const lang = e.target.getAttribute("data-lang");
     if (e.target.classList.contains("te-alt")) setFacetDraftTrAlt(lang, e.target.value);
     else setFacetDraftTrValue(lang, e.target.value);
-  } else if (e.target && e.target.closest && e.target.closest("#cvNoteEditor") && e.target.getAttribute("data-cv-note")) {
+  } else if (e.target && e.target.closest && e.target.closest("#cvNoteEditor, #collNoteEditor") && e.target.getAttribute("data-cv-note")) {
     const field = e.target.getAttribute("data-cv-note");
     if (field && field !== "type") {
+      if (typeof focusNoteEditor === "function") focusNoteEditor(e.target);
       setConceptNoteField(Number(e.target.getAttribute("data-index")), field, e.target.value);
     }
   } else if (e.target && e.target.closest && e.target.closest("#draftTrEditor") && e.target.getAttribute("data-lang")) {
@@ -826,6 +828,7 @@ document.addEventListener("change", (e) => {
     setFacetCardNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
     if (typeof paintFacetCardNotes === "function") paintFacetCardNotes();
   } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-cv-note") === "type") {
+    if (typeof focusNoteEditor === "function") focusNoteEditor(e.target);
     setConceptNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
   } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-note") === "type") {
     setDraftNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);

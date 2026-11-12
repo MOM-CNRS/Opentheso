@@ -2,15 +2,24 @@ package fr.cnrs.opentheso.collection.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.collection.read.CollectionReadService;
+import fr.cnrs.opentheso.collection.write.model.command.AddCollectionTranslationCommand;
 import fr.cnrs.opentheso.collection.write.model.command.AddMemberToCollectionCommand;
+import fr.cnrs.opentheso.collection.write.model.command.RemoveMemberFromCollectionCommand;
 import fr.cnrs.opentheso.collection.write.model.command.CreateCollectionCommand;
 import fr.cnrs.opentheso.collection.write.model.command.CreateSubgroupCommand;
+import fr.cnrs.opentheso.collection.write.model.command.RenameCollectionLabelCommand;
 import fr.cnrs.opentheso.collection.write.model.command.UpdateCollectionTypeCommand;
 import fr.cnrs.opentheso.collection.write.service.CollectionMutationService;
 import fr.cnrs.opentheso.concept.model.GroupDetailOverview;
 import fr.cnrs.opentheso.concept.ui.ThesaurusBrowseBean;
+import fr.cnrs.opentheso.concept.model.ConceptNote;
+import fr.cnrs.opentheso.concept.model.FacetMemberItem;
+import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.concept.write.model.MutationResult;
+import fr.cnrs.opentheso.concept.write.model.command.DeleteNoteCommand;
+import fr.cnrs.opentheso.concept.write.model.command.UpsertNoteCommand;
+import fr.cnrs.opentheso.concept.write.service.ConceptNoteMutationService;
 import fr.cnrs.opentheso.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.concept.write.service.ConceptWriteSearchService;
 import fr.cnrs.opentheso.repositories.ConceptGroupTypeRepository;
@@ -52,6 +61,7 @@ class CollectionDetailEditorBeanTest {
     @Mock private UserSession userSession;
     @Mock private ConceptWritePolicy conceptWritePolicy;
     @Mock private ThesaurusBrowseBean thesaurusBrowseBean;
+    @Mock private ConceptNoteMutationService conceptNoteMutationService;
 
     private CollectionDetailEditorBean bean;
 
@@ -65,7 +75,7 @@ class CollectionDetailEditorBeanTest {
                 collectionMutationService, collectionReadService, conceptWriteSearchService,
                 conceptWriteMetadataService, conceptGroupTypeRepository, thesaurusContext,
                 userSession,
-                conceptWritePolicy, thesaurusBrowseBean);
+                conceptWritePolicy, thesaurusBrowseBean, conceptNoteMutationService);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         lenient().when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(true);
@@ -301,5 +311,97 @@ class CollectionDetailEditorBeanTest {
 
             verify(collectionMutationService).updateType(new UpdateCollectionTypeCommand("TH1", "g1", "CC"));
         }
+    }
+
+    @Test
+    void submitFiche_renamesLabel() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(collectionMutationService.renamePreferredLabel(
+                new RenameCollectionLabelCommand("TH1", "g1", "fr", "Amphore", 7)))
+                .thenReturn(MutationResult.ok("La collection a bien été modifiée"));
+        bean.setFicheGroupId("g1");
+        bean.setFicheMode("label");
+        bean.setFichePayload("Amphore");
+
+        bean.submitFiche();
+
+        assertTrue(bean.isFicheOk());
+        assertEquals("La collection a bien été modifiée", bean.getFicheMessage());
+    }
+
+    @Test
+    void submitFiche_refusesWhenTheUserCannotEdit() {
+        when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(false);
+        bean.setFicheGroupId("g1");
+        bean.setFicheMode("label");
+        bean.setFichePayload("Amphore");
+
+        bean.submitFiche();
+
+        assertFalse(bean.isFicheOk());
+        verify(collectionMutationService, never()).renamePreferredLabel(any());
+    }
+
+    @Test
+    void submitFiche_addsTranslationAndDropsRemovedNote() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.getCurrentUsername()).thenReturn("admin");
+        GroupDetailOverview current = new GroupDetailOverview(
+                "g1", "Collection", "fr", "MT", "Microthesaurus", "skos:Collection", 1, "N1", "", "",
+                List.of(new GroupTranslationItem("en", "Collection")),
+                List.of(new ConceptNote("12", "definition", "fr", "Ancienne")),
+                List.of());
+        when(collectionReadService.loadDetail("TH1", "g1", "fr")).thenReturn(Optional.of(current));
+        when(collectionMutationService.updateTranslation(any()))
+                .thenReturn(MutationResult.ok("Traduction modifiée avec succès"));
+        when(collectionMutationService.addTranslation(new AddCollectionTranslationCommand("TH1", "g1", "de", "Sammlung")))
+                .thenReturn(MutationResult.ok("Traduction ajoutée avec succès"));
+        when(collectionReadService.loadNotes("TH1", "g1"))
+                .thenReturn(List.of(new ConceptNote("12", "definition", "fr", "Ancienne", "src")));
+        when(conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
+                "TH1", "g1", 12, "fr", "definition", 7, "admin")))
+                .thenReturn(MutationResult.ok("Note supprimée avec succès"));
+        when(conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
+                "TH1", "g1", "fr", "scopeNote", "Usage", "manuel", 7, "admin")))
+                .thenReturn(MutationResult.ok("Note enregistrée avec succès"));
+
+        bean.setFicheGroupId("g1");
+        bean.setFicheMode("translations");
+        bean.setFichePayload("en\tCollection\nde\tSammlung");
+        bean.submitFiche();
+        assertTrue(bean.isFicheOk());
+
+        bean.setFicheMode("notes");
+        bean.setFichePayload("scopeNote\tfr\tUsage\tmanuel");
+        bean.submitFiche();
+
+        assertTrue(bean.isFicheOk());
+        verify(conceptNoteMutationService).deleteNote(new DeleteNoteCommand(
+                "TH1", "g1", 12, "fr", "definition", 7, "admin"));
+        verify(conceptNoteMutationService).upsertNote(new UpsertNoteCommand(
+                "TH1", "g1", "fr", "scopeNote", "Usage", "manuel", 7, "admin"));
+    }
+
+    @Test
+    void submitFiche_replacesCollectionMembers() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        GroupDetailOverview current = new GroupDetailOverview(
+                "g1", "Collection", "fr", "MT", "Microthesaurus", "skos:Collection", 1, "N1", "", "",
+                List.of(), List.of(), List.of(new FacetMemberItem("c1", "Ancien")));
+        when(collectionReadService.loadDetail("TH1", "g1", "fr")).thenReturn(Optional.of(current));
+        when(collectionMutationService.removeMember(new RemoveMemberFromCollectionCommand("TH1", "g1", "c1", false)))
+                .thenReturn(MutationResult.ok("Le concept a bien été enlevé de la collection"));
+        when(collectionMutationService.addMember(new AddMemberToCollectionCommand("TH1", "g1", "c2", false)))
+                .thenReturn(MutationResult.ok("Le concept a été ajouté à la collection"));
+
+        bean.setFicheGroupId("g1");
+        bean.setFicheMode("members");
+        bean.setFichePayload("c2\tAmphore");
+        bean.submitFiche();
+
+        assertTrue(bean.isFicheOk());
+        assertEquals("Le concept a été ajouté à la collection", bean.getFicheMessage());
+        verify(collectionMutationService).removeMember(new RemoveMemberFromCollectionCommand("TH1", "g1", "c1", false));
+        verify(collectionMutationService).addMember(new AddMemberToCollectionCommand("TH1", "g1", "c2", false));
     }
 }
