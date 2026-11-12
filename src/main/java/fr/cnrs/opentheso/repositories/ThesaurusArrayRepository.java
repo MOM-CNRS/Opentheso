@@ -45,7 +45,7 @@ public interface ThesaurusArrayRepository extends JpaRepository<ThesaurusArray, 
 
     Optional<ThesaurusArray> findAllByIdThesaurusAndIdFacet(String idThesaurus, String idFacet);
 
-    @Query(value = "SELECT last_value FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'thesaurus_array_facet_id_seq'", nativeQuery = true)
+    @Query(value = "SELECT last_value FROM public.thesaurus_array_facet_id_seq", nativeQuery = true)
     Long getNextFacetSequenceId();
 
     @Query(value = """
