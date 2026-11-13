@@ -2039,3 +2039,51 @@ button.ia-dash-bar:hover{background:var(--surface-2, #f4f6f5)}
     transform:none !important
   }
 }
+
+body:is([data-page="admin-instance"]) .ia-banner .bo-card-b{padding:16px 18px 18px}
+.ia-banner .st-row-c{flex:1;min-width:0}
+@media (max-width:900px){
+  body:is([data-page="admin-instance"]) .ia-banner .st-row-l{flex:none;text-align:left;padding-top:0}
+}
+.ia-banner-kicker{
+  margin:2px 0 8px;font-size:11px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink-4)
+}
+.ia-banner-gov{
+  display:flex;align-items:center;gap:16px;margin:0 0 8px;padding:10px 16px;
+  border:1px solid color-mix(in srgb, var(--line) 85%, #000091 15%);border-radius:var(--r);
+  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.88))
+}
+.ia-banner-gov-mark{
+  display:block;width:96px;height:auto;max-width:none;max-height:none;margin:0;padding:0;
+  border:0;background:transparent;object-fit:unset
+}
+.ia-banner-gov-lk{
+  margin-left:auto;min-width:0;font-size:12px;font-weight:500;color:var(--ink-3);
+  display:inline-flex;align-items:center;gap:5px;text-decoration:none
+}
+.ia-banner-gov-lk span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ia-banner-gov .ia-banner-zoom{flex:none}
+.ia-banner-state{margin:0 0 16px;font-size:12px;color:var(--ink-3)}
+.ia-banner-state.is-hidden{display:none}
+#bannerSaveConfirm.is-wait .confirm-actions{opacity:.55;pointer-events:none}
+button.ia-banner-zoom{
+  display:inline-flex;padding:0;border:0;background:transparent;cursor:zoom-in;
+  border-radius:var(--r);line-height:0
+}
+button.ia-banner-zoom:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.ia-banner-mark{
+  display:block;width:auto;max-width:min(100%,360px);max-height:160px;height:auto;
+  object-fit:contain;object-position:left center;margin:0 0 12px;padding:10px 12px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r)
+}
+.ia-banner-pick-row{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ia-banner-pick{cursor:pointer}
+.ia-banner-fname{font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ia-banner-note{margin:8px 0 0;font-size:12px;line-height:1.4;color:var(--ink-4)}
+.ia-banner-default{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.ia-banner-actions{display:flex;justify-content:flex-end;padding-top:14px}
+.ia-banner-msg{margin:0 0 12px;font-size:13.5px}
+.ia-banner-msg.is-ok,.ia-banner-msg.is-err{padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--line)}
+.ia-banner-msg.is-ok{color:#0d6b4d;background:color-mix(in srgb,#0d6b4d 10%,var(--surface));border-color:color-mix(in srgb,#0d6b4d 35%,var(--line))}
+.ia-banner-msg.is-err{color:#9b2c2c;background:color-mix(in srgb,#9b2c2c 8%,var(--surface));border-color:color-mix(in srgb,#9b2c2c 30%,var(--line))}

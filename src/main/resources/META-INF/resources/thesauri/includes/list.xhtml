@@ -4,13 +4,13 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
-        <ui:fragment rendered="#{thesaurusPickerBean.listMode}">
+        <ui:fragment rendered="#{thesaurusPickerBean.listMode and pickerHeaderBean.visible}">
         <div class="tp-gov">
           <img class="tp-gov-mark"
-               src="#{request.contextPath}/resources/img/minist%C3%A8re%20de%20la%20culture.png"
-               alt="Ministère de la Culture"/>
-          <a class="tp-gov-lk" href="https://www.culture.gouv.fr" target="_blank" rel="noreferrer">
-            culture.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span>
+               src="#{pickerHeaderBean.markUrl}"
+               alt="#{pickerHeaderBean.linkLabel}"/>
+          <a class="tp-gov-lk" href="#{pickerHeaderBean.linkUrl}" target="_blank" rel="noreferrer">
+            #{pickerHeaderBean.linkLabel}<span class="gv-ext" aria-hidden="true">↗</span>
           </a>
         </div>
         </ui:fragment>

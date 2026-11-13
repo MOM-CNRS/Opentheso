@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="admin-instance"/>
+  <ui:define name="title">OpenTheso — #{localeBean.getMsg('admin.banner.title')}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{pickerHeaderEditorBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <ui:fragment rendered="#{not pickerHeaderEditorBean.accessAllowed}">
+      <ui:include src="/includes/access-denied.xhtml">
+        <ui:param name="deniedKicker" value="#{localeBean.getMsg('admin.accessDenied.kicker')}"/>
+        <ui:param name="deniedTitle" value="#{localeBean.getMsg('admin.accessDenied.title')}"/>
+        <ui:param name="deniedSub" value="#{localeBean.getMsg('admin.accessDenied.sub')}"/>
+        <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('admin.accessDenied.back')}"/>
+      </ui:include>
+    </ui:fragment>
+
+    <h:form id="bannerForm" prependId="false" enctype="multipart/form-data" styleClass="ia-form-root"
+            rendered="#{pickerHeaderEditorBean.accessAllowed}">
+      <div class="ia-shell">
+        <div class="bo bo-solo">
+          <nav class="bc" aria-label="Fil d'Ariane">
+            <a class="bc-lk" href="#{request.contextPath}/thesauri">Thésaurus</a>
+            <span class="bc-sep" aria-hidden="true">›</span>
+            <a class="bc-lk" href="#{request.contextPath}/admin/instance">#{localeBean.getMsg('admin.instance.title')}</a>
+            <span class="bc-sep" aria-hidden="true">›</span>
+            <span class="bc-cur" aria-current="page">#{localeBean.getMsg('admin.banner.title')}</span>
+          </nav>
+          <a class="bo-back" href="#{request.contextPath}/admin/instance" title="#{localeBean.getMsg('admin.back.admin')}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </a>
+          <div class="bo-head">
+            <div>
+              <h1 class="bo-title">#{localeBean.getMsg('admin.banner.title')}</h1>
+              <p class="bo-sub">#{localeBean.getMsg('admin.banner.sub')}</p>
+            </div>
+          </div>
+          <div class="bo-full ia-banner">
+            <div class="bo-card">
+              <div class="bo-card-b st-form">
+                <h:panelGroup id="bannerFeedback" layout="block">
+                  <h:panelGroup rendered="#{not empty pickerHeaderEditorBean.message}" layout="block"
+                                styleClass="ia-banner-msg#{pickerHeaderEditorBean.error ? ' is-err' : ' is-ok'}">
+                    #{pickerHeaderEditorBean.message}
+                  </h:panelGroup>
+                </h:panelGroup>
+                <div class="ia-banner-kicker">#{localeBean.getMsg('admin.banner.live')}</div>
+                <h:panelGroup id="bannerPreview" layout="block">
+                  <div class="ia-banner-gov">
+                    <button type="button" class="ia-banner-zoom" id="bannerImageZoom"
+                            title="#{localeBean.getMsg('admin.banner.image.zoom')}"
+                            aria-label="#{localeBean.getMsg('admin.banner.image.zoom')}"
+                            onclick="return bannerOpenImage(event)">
+                      <img class="ia-banner-gov-mark" id="bannerImagePreview"
+                           src="#{pickerHeaderEditorBean.previewUrl}"
+                           alt="#{pickerHeaderEditorBean.publishedLabel}"/>
+                    </button>
+                    <a id="bannerPreviewLink" class="ia-banner-gov-lk"
+                       href="#{pickerHeaderEditorBean.publishedUrl}" target="_blank" rel="noreferrer">
+                      <span id="bannerPreviewLabel">#{pickerHeaderEditorBean.publishedLabel}</span><span class="gv-ext" aria-hidden="true">↗</span>
+                    </a>
+                  </div>
+                  <p id="bannerPreviewState" class="ia-banner-state#{pickerHeaderEditorBean.publishedVisible ? ' is-hidden' : ''}">#{localeBean.getMsg('admin.banner.hidden')}</p>
+                </h:panelGroup>
+                <div class="st-toggle-row">
+                  <div class="st-toggle-main">
+                    <div class="st-toggle-l">#{localeBean.getMsg('admin.banner.visible')}</div>
+                    <div class="st-toggle-d">#{localeBean.getMsg('admin.banner.visible.help')}</div>
+                  </div>
+                  <label class="st-sw">
+                    <h:selectBooleanCheckbox id="bannerVisible"
+                                             styleClass="st-sw-input"
+                                             value="#{pickerHeaderEditorBean.visible}"
+                                             pt:onchange="bannerPreviewVisible(this)"/>
+                  </label>
+                </div>
+                <div class="st-row">
+                  <div class="st-row-l">#{localeBean.getMsg('admin.banner.image')}</div>
+                  <div class="st-row-c">
+                    <div class="ia-banner-pick-row">
+                      <h:inputFile id="bannerImage"
+                                   styleClass="bo-file-input"
+                                   value="#{pickerHeaderEditorBean.imageUpload}"
+                                   accept="image/png,image/jpeg,image/gif,image/webp"
+                                   pt:onchange="bannerShowPickedImage(this)"/>
+                      <label class="bo-btn ghost ia-banner-pick" for="bannerImage">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                        <span>#{localeBean.getMsg('admin.banner.image.choose')}</span>
+                      </label>
+                      <span class="ia-banner-fname" id="bannerImageName" hidden="hidden"></span>
+                    </div>
+                    <p class="ia-banner-note">#{localeBean.getMsg('admin.banner.image.help')}</p>
+                    <h:panelGroup id="bannerRestore" layout="block">
+                      <ui:fragment rendered="#{pickerHeaderEditorBean.customImage}">
+                        <label class="ia-banner-default">
+                          <h:selectBooleanCheckbox value="#{pickerHeaderEditorBean.useDefaultImage}"
+                                                   pt:onchange="bannerToggleDefault(this)"/>
+                          <span>#{localeBean.getMsg('admin.banner.image.default')}</span>
+                        </label>
+                      </ui:fragment>
+                    </h:panelGroup>
+                  </div>
+                </div>
+                <div class="st-row">
+                  <div class="st-row-l">#{localeBean.getMsg('admin.banner.label')}</div>
+                  <div class="st-row-c">
+                    <h:inputText id="bannerLabel" styleClass="st-input" value="#{pickerHeaderEditorBean.label}"
+                                 pt:oninput="bannerPreviewLabel(this)"/>
+                  </div>
+                </div>
+                <div class="st-row">
+                  <div class="st-row-l">#{localeBean.getMsg('admin.banner.url')}</div>
+                  <div class="st-row-c">
+                    <h:inputText id="bannerUrl" styleClass="st-input" value="#{pickerHeaderEditorBean.url}"
+                                 pt:oninput="bannerPreviewUrl(this)"/>
+                  </div>
+                </div>
+                <div class="ia-banner-actions">
+                  <button type="button" class="bo-btn primary" onclick="bannerAskSave()">
+                    #{localeBean.getMsg('admin.banner.save')}
+                  </button>
+                </div>
+                <script>
+                //<![CDATA[
+                function bannerOpenImage(event) {
+                  if (event) event.preventDefault();
+                  var mark = document.getElementById("bannerImagePreview");
+                  var box = document.getElementById("bannerImageLightbox");
+                  var big = document.getElementById("bannerImageLightboxImg");
+                  if (!mark || !box || !big || !mark.getAttribute("src")) return false;
+                  big.src = mark.currentSrc || mark.src;
+                  var name = document.getElementById("bannerImageName");
+                  var cap = document.getElementById("bannerImageLightboxCap");
+                  if (cap) cap.textContent = name && !name.hidden && name.textContent ? name.textContent : "";
+                  box.hidden = false;
+                  document.body.classList.add("is-img-lightbox");
+                  var close = box.querySelector(".img-lightbox-close");
+                  if (close) close.focus();
+                  return false;
+                }
+                function bannerCloseImage(event) {
+                  if (event && event.target && event.target.closest && event.target.closest(".img-lightbox-frame")) return;
+                  var box = document.getElementById("bannerImageLightbox");
+                  if (box) box.hidden = true;
+                  document.body.classList.remove("is-img-lightbox");
+                }
+                document.addEventListener("keydown", function (event) {
+                  if (event.key !== "Escape") return;
+                  var ask = document.getElementById("bannerSaveConfirm");
+                  if (ask && !ask.hidden) { bannerDismissSave(); return; }
+                  bannerCloseImage();
+                });
+                function bannerAskSave() {
+                  var box = document.getElementById("bannerSaveConfirm");
+                  if (box) box.hidden = false;
+                }
+                function bannerDismissSave() {
+                  var box = document.getElementById("bannerSaveConfirm");
+                  if (box) {
+                    box.hidden = true;
+                    box.classList.remove("is-wait");
+                  }
+                }
+                function bannerSaveAjax(data) {
+                  var btn = document.getElementById("bannerSaveGo");
+                  var box = document.getElementById("bannerSaveConfirm");
+                  if (data.status === "begin") {
+                    if (btn) btn.disabled = true;
+                    if (box) box.classList.add("is-wait");
+                    return;
+                  }
+                  if (data.status === "complete") {
+                    if (btn) btn.disabled = false;
+                    if (box) box.classList.remove("is-wait");
+                  }
+                  if (data.status !== "success") return;
+                  bannerDismissSave();
+                  var msg = document.querySelector("#bannerFeedback .ia-banner-msg");
+                  if (msg && msg.classList.contains("is-ok")) {
+                    var input = document.getElementById("bannerImage");
+                    if (input) input.value = "";
+                    var name = document.getElementById("bannerImageName");
+                    if (name) { name.hidden = true; name.textContent = ""; }
+                    bannerRememberSaved();
+                    return;
+                  }
+                  var label = document.getElementById("bannerLabel");
+                  if (label) bannerPreviewLabel(label);
+                  bannerPreviewUrl(document.getElementById("bannerUrl"));
+                  bannerPreviewVisible(document.getElementById("bannerVisible"));
+                  bannerShowPickedImage(document.getElementById("bannerImage"));
+                }
+                var bannerSavedSrc = "";
+                var bannerImageGen = 0;
+                function bannerRememberSaved() {
+                  var mark = document.getElementById("bannerImagePreview");
+                  bannerSavedSrc = mark ? (mark.getAttribute("src") || "") : "";
+                }
+                function bannerPreviewLabel(input) {
+                  var label = document.getElementById("bannerPreviewLabel");
+                  if (label) label.textContent = input ? input.value : "";
+                }
+                function bannerPreviewUrl(input) {
+                  var link = document.getElementById("bannerPreviewLink");
+                  if (!link || !input) return;
+                  var value = (input.value || "").trim();
+                  if (/^https?:\/\//i.test(value)) link.href = value;
+                }
+                function bannerPreviewVisible(input) {
+                  var state = document.getElementById("bannerPreviewState");
+                  if (!state) return;
+                  state.classList.toggle("is-hidden", !!(input && input.checked));
+                }
+                function bannerPaintImage(src) {
+                  var mark = document.getElementById("bannerImagePreview");
+                  if (mark && src) mark.src = src;
+                }
+                function bannerUseDefault() {
+                  var box = document.querySelector("#bannerRestore input");
+                  return !!(box && box.checked);
+                }
+                function bannerToggleDefault(box) {
+                  bannerImageGen++;
+                  if (box && box.checked) {
+                    bannerPaintImage(bannerSavedSrc);
+                    return;
+                  }
+                  bannerShowPickedImage(document.getElementById("bannerImage"));
+                }
+                function bannerShowPickedImage(input) {
+                  var gen = ++bannerImageGen;
+                  var file = input && input.files && input.files[0];
+                  var name = document.getElementById("bannerImageName");
+                  if (!file) {
+                    if (name) { name.hidden = true; name.textContent = ""; }
+                    bannerPaintImage(bannerSavedSrc);
+                    return;
+                  }
+                  if (name) {
+                    name.hidden = false;
+                    name.textContent = file.name;
+                  }
+                  if (bannerUseDefault()) {
+                    bannerPaintImage(bannerSavedSrc);
+                    return;
+                  }
+                  var reader = new FileReader();
+                  reader.onload = function () {
+                    if (gen !== bannerImageGen || bannerUseDefault()) return;
+                    bannerPaintImage(reader.result);
+                  };
+                  reader.readAsDataURL(file);
+                }
+                bannerRememberSaved();
+                //]]>
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="block-overlay confirm-overlay" id="bannerSaveConfirm" hidden="hidden"
+           onclick="if (event.target === this) bannerDismissSave()">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="bannerSaveConfirmTitle">
+          <div class="confirm-h" id="bannerSaveConfirmTitle">#{localeBean.getMsg('admin.banner.confirm.title')}</div>
+          <p class="confirm-p">#{localeBean.getMsg('admin.banner.confirm')}</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost" onclick="bannerDismissSave()">#{localeBean.getMsg('cancel')}</button>
+            <h:commandButton id="bannerSaveGo" styleClass="bo-btn primary"
+                             value="#{localeBean.getMsg('admin.banner.confirm.ok')}"
+                             action="#{pickerHeaderEditorBean.save}">
+              <f:ajax execute="@form" render="bannerFeedback bannerPreview bannerRestore" onevent="bannerSaveAjax"/>
+            </h:commandButton>
+          </div>
+        </div>
+      </div>
+      <div class="img-lightbox is-single" id="bannerImageLightbox" hidden="hidden"
+           onclick="bannerCloseImage(event)">
+        <div class="img-lightbox-frame" role="dialog" aria-modal="true"
+             aria-labelledby="bannerImageLightboxCap" onclick="event.stopPropagation()">
+          <div class="img-lightbox-stage">
+            <img id="bannerImageLightboxImg" alt=""/>
+          </div>
+          <div class="img-lightbox-bar">
+            <div class="img-lightbox-cap" id="bannerImageLightboxCap"></div>
+            <button type="button" class="img-lightbox-close" onclick="bannerCloseImage()"
+                    title="#{localeBean.getMsg('cancel')}"
+                    aria-label="#{localeBean.getMsg('cancel')}">×</button>
+          </div>
+        </div>
+      </div>
+    </h:form>
+  </ui:define>
+</ui:composition>
