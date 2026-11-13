@@ -675,27 +675,6 @@ button.tp-tab{appearance:none;-webkit-appearance:none;margin:0;line-height:1.2}
 .tp-th:hover:not(.tp-th--edit){color:var(--ink)}
 .tp-th.is-sorted{color:var(--accent)}
 .tp-th-s{margin-left:5px;font-size:8px}
-.tp-table thead tr:first-child > th + th::before{
-  content:"";position:absolute;inset-inline-start:0;top:22%;bottom:22%;width:1px;
-  background:color-mix(in srgb, var(--ink-4) 55%, transparent);pointer-events:none
-}
-.tp-col-resize{
-  position:absolute;top:0;bottom:0;inset-inline-end:0;width:10px;margin-inline-end:-5px;
-  cursor:col-resize;touch-action:none;z-index:3
-}
-.tp-col-resize::after{
-  content:"";position:absolute;top:16%;bottom:16%;left:50%;width:2px;transform:translateX(-50%);
-  border-radius:2px;background:var(--accent);opacity:0;transition:opacity .12s
-}
-.tp-th:hover .tp-col-resize::after,
-.tp-col-resize:hover::after,
-.tp-col-resize:focus-visible::after,
-body.is-col-resize .tp-col-resize.is-active::after{opacity:.7}
-.tp-col-resize:focus-visible{outline:none}
-body.is-col-resize,body.is-col-resize *{cursor:col-resize!important;user-select:none!important}
-@media (max-width:900px){
-  .tp-col-resize{display:none}
-}
 .tp-filters th{padding:7px 10px;background:var(--surface);border-bottom:1px solid var(--line);text-transform:none;letter-spacing:normal;font-weight:400;cursor:default}
 .tp-filters th[data-col="lang"]{min-width:8.5rem;overflow:visible}
 .tp-fi{
@@ -817,10 +796,10 @@ button.tp-act{font:inherit;padding:0;appearance:none;-webkit-appearance:none}
 .tp-table td[data-col="domain"],
 .tp-table td[data-col="projects"],
 .tp-table td[data-col="org"],
-.tp-table td[data-col="chrono"]{white-space:normal}
+.tp-table td[data-col="chrono"]{white-space:normal;max-width:22rem}
 .tp-clip{
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;white-space:normal;line-height:1.35;max-width:100%
+  overflow:hidden;white-space:normal;line-height:1.35;max-width:22rem
 }
 .tp-c-name-in{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;max-width:none;min-width:0;width:100%}
 .tp-table tbody tr:last-child td{border-bottom:0}
