@@ -622,9 +622,18 @@
           if (!raw) return null;
           var parsed = JSON.parse(raw);
           if (!parsed || typeof parsed !== 'object') return null;
+          var widths = {};
+          if (parsed.widths && typeof parsed.widths === 'object') {
+            Object.keys(parsed.widths).forEach(function (key) {
+              if (!window.tpColumnWidthKey(key)) return;
+              var n = window.tpClampColumnWidth(key, parsed.widths[key]);
+              if (n) widths[key] = n;
+            });
+          }
           return {
             order: Array.isArray(parsed.order) ? parsed.order : [],
-            on: parsed.on && typeof parsed.on === 'object' ? parsed.on : {}
+            on: parsed.on && typeof parsed.on === 'object' ? parsed.on : {},
+            widths: widths
           };
         } catch (err) {
           return null;
@@ -653,7 +662,8 @@
             on[key] = !th.classList.contains('is-col-off');
           });
         }
-        return { order: order, on: on };
+        var prev = window.tpReadColumnPrefs();
+        return { order: order, on: on, widths: prev && prev.widths ? prev.widths : {} };
       };
       window.tpApplyColumnVisibility = function (prefs) {
         if (!prefs || !prefs.on) return;
@@ -714,15 +724,48 @@
           if (lang) tr.insertBefore(lang, edit || null);
         });
       };
+      window.tpColumnWidthKey = function (key) {
+        return key === 'name' || key === 'terms' || key === 'created' || key === 'access' || key === 'role'
+          || key === 'domain' || key === 'projects' || key === 'org' || key === 'chrono' || key === 'lang';
+      };
+      window.tpClampColumnWidth = function (key, px) {
+        var n = Number(px);
+        if (!isFinite(n)) return null;
+        var min = key === 'name' ? 140 : (key === 'lang' ? 120 : 72);
+        return Math.round(Math.max(min, Math.min(720, n)));
+      };
+      window.tpApplyColumnWidth = function (table, key, px, flex) {
+        if (!table || !key) return;
+        var value = Math.round(px) + 'px';
+        table.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+          el.style.width = value;
+          el.style.minWidth = flex ? '' : value;
+          el.style.maxWidth = flex ? '' : value;
+        });
+      };
+      window.tpRememberColumnWidth = function (key, px) {
+        if (!window.tpColumnWidthKey(key)) return;
+        var prefs = window.tpReadColumnPrefs() || { order: [], on: {}, widths: {} };
+        var widths = {};
+        Object.keys(prefs.widths || {}).forEach(function (k) { widths[k] = prefs.widths[k]; });
+        if (px == null) delete widths[key];
+        else widths[key] = window.tpClampColumnWidth(key, px);
+        prefs.widths = widths;
+        window.tpWriteColumnPrefs(prefs);
+      };
       window.tpFitColumns = function () {
+        if (window._tpColDrag) return;
         var wrap = document.querySelector('.tp-body > .tp-table-wrap');
         var table = wrap && wrap.querySelector('table.tp-table');
         if (!table) return;
-        var nameCells = table.querySelectorAll('[data-col="name"]');
         var clear = function () {
           table.style.width = '';
           wrap.classList.remove('is-wide');
-          nameCells.forEach(function (el) { el.style.width = ''; });
+          table.querySelectorAll('[data-col]').forEach(function (el) {
+            el.style.width = '';
+            el.style.minWidth = '';
+            el.style.maxWidth = '';
+          });
         };
         if (window.matchMedia('(max-width: 900px)').matches) {
           clear();
@@ -735,63 +778,47 @@
           return;
         }
         var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        var widthOf = {
-          access: 9.5 * rem,
-          role: 9.5 * rem,
+        var defaults = {
           terms: 6.5 * rem,
           created: 8.5 * rem,
+          access: 9.5 * rem,
+          role: 9.5 * rem,
           domain: 14 * rem,
           projects: 14 * rem,
           org: 14 * rem,
           chrono: 14 * rem,
           lang: 14 * rem
         };
+        var saved = (window.tpReadColumnPrefs() || {}).widths || {};
         var cfg = 0;
         var edit = 0;
-        var lang = 0;
-        var middle = [];
+        var fixed = 0;
         Array.prototype.forEach.call(head.children, function (th) {
           if (th.classList.contains('is-col-off')) return;
-          if (th.classList.contains('tp-th--cfg')) { cfg = 46; return; }
-          if (th.classList.contains('tp-th--edit')) { edit = 148; return; }
+          if (th.classList.contains('tp-th--cfg')) { cfg = th.getBoundingClientRect().width || 46; return; }
+          if (th.classList.contains('tp-th--edit')) { edit = th.getBoundingClientRect().width || 148; return; }
           var col = th.getAttribute('data-col');
           if (!col || col === 'name') return;
-          if (col === 'lang') { lang = widthOf.lang; return; }
-          if (widthOf[col]) middle.push(widthOf[col]);
+          var w = saved[col] || defaults[col] || (10 * rem);
+          window.tpApplyColumnWidth(table, col, w, false);
+          fixed += w;
         });
-        var fixed = cfg + edit + lang + middle.reduce(function (sum, w) { return sum + w; }, 0);
-        var apply = function (avail) {
-          var room = avail - fixed;
-          var nameW;
-          var tableW;
-          if (room >= 10 * rem) {
-            nameW = room;
-            tableW = avail;
-          } else {
-            var budget = avail - cfg - edit - lang;
-            var nameMin = 14 * rem;
-            var used = 0;
-            if (budget > nameMin) {
-              middle.forEach(function (w) {
-                if (budget - (used + w) >= nameMin) used += w;
-              });
-              nameW = budget - used;
-            } else {
-              nameW = Math.max(8 * rem, budget);
-            }
-            tableW = fixed + nameW;
-          }
-          var tablePx = Math.ceil(tableW) + 'px';
-          var px = Math.max(0, Math.floor(nameW)) + 'px';
-          if (table.style.width !== tablePx) table.style.width = tablePx;
-          nameCells.forEach(function (el) {
-            if (el.style.width !== px) el.style.width = px;
-          });
-          return tableW > avail + 1;
-        };
         var avail = wrap.clientWidth;
         if (avail < 40) return;
-        if (apply(avail) && wrap.clientWidth < avail - 1) apply(wrap.clientWidth);
+        var nameMin = 14 * rem;
+        var nameW;
+        var tableW;
+        if (saved.name) {
+          nameW = saved.name;
+          window.tpApplyColumnWidth(table, 'name', nameW, false);
+          tableW = cfg + edit + fixed + nameW;
+        } else {
+          var room = avail - cfg - edit - fixed;
+          nameW = Math.max(nameMin, room);
+          window.tpApplyColumnWidth(table, 'name', nameW, true);
+          tableW = cfg + edit + fixed + nameW;
+        }
+        table.style.width = Math.ceil(tableW) + 'px';
         wrap.classList.toggle('is-wide', table.scrollWidth > wrap.clientWidth + 1);
       };
       window.tpLoadColumnPrefs = function () {
@@ -1897,6 +1924,26 @@
         }, 220);
         return false;
       };
+      function tpLangPaint(btn, expanded) {
+        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        btn.setAttribute('title', expanded ? 'Réduire la liste des langues' : 'Afficher toutes les langues');
+        btn.textContent = expanded ? '−' : (btn.getAttribute('data-more') || '+');
+      }
+      function tpLangFinish(wrap, expanded) {
+        if (wrap._tpLangTimer) {
+          window.clearTimeout(wrap._tpLangTimer);
+          wrap._tpLangTimer = 0;
+        }
+        if (wrap._tpLangEnd) {
+          wrap.removeEventListener('transitionend', wrap._tpLangEnd);
+          wrap._tpLangEnd = null;
+        }
+        wrap.style.transition = '';
+        wrap.style.height = '';
+        wrap.style.overflow = '';
+        wrap.classList.remove('is-anim', 'is-folding');
+        wrap.classList.toggle('is-expanded', !!expanded);
+      }
       window.tpToggleLangs = function (btn, evt) {
         if (evt) {
           evt.preventDefault();
@@ -1905,10 +1952,48 @@
         if (!btn) return false;
         var wrap = btn.closest('.tp-langs-in');
         if (!wrap) return false;
-        var expanded = wrap.classList.toggle('is-expanded');
-        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        btn.setAttribute('title', expanded ? 'Réduire la liste des langues' : 'Afficher toutes les langues');
-        btn.textContent = expanded ? '−' : (btn.getAttribute('data-more') || '+');
+        var opening = !wrap.classList.contains('is-expanded') || wrap.classList.contains('is-folding');
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) {
+          tpLangFinish(wrap, opening);
+          tpLangPaint(btn, opening);
+          return false;
+        }
+        if (wrap._tpLangEnd) {
+          wrap.removeEventListener('transitionend', wrap._tpLangEnd);
+          wrap._tpLangEnd = null;
+        }
+        if (wrap._tpLangTimer) {
+          window.clearTimeout(wrap._tpLangTimer);
+          wrap._tpLangTimer = 0;
+        }
+        var from = wrap.getBoundingClientRect().height;
+        wrap._tpLangGen = (wrap._tpLangGen || 0) + 1;
+        var gen = wrap._tpLangGen;
+        wrap.style.transition = 'none';
+        wrap.style.height = 'auto';
+        wrap.classList.remove('is-folding');
+        wrap.classList.toggle('is-expanded', opening);
+        var to = wrap.offsetHeight;
+        if (!opening) wrap.classList.add('is-expanded', 'is-folding');
+        wrap.style.height = from + 'px';
+        wrap.style.overflow = 'hidden';
+        wrap.classList.add('is-anim');
+        tpLangPaint(btn, opening);
+        void wrap.offsetHeight;
+        function settle(ev) {
+          if (wrap._tpLangGen !== gen) return;
+          if (ev && ev.propertyName && ev.propertyName !== 'height') return;
+          tpLangFinish(wrap, opening);
+        }
+        wrap._tpLangEnd = settle;
+        wrap.addEventListener('transitionend', settle);
+        wrap._tpLangTimer = window.setTimeout(function () { settle({propertyName: 'height'}); }, 420);
+        window.requestAnimationFrame(function () {
+          if (wrap._tpLangGen !== gen) return;
+          wrap.style.transition = 'height .24s cubic-bezier(.22,1,.36,1)';
+          wrap.style.height = to + 'px';
+        });
         return false;
       };
       document.addEventListener('click', function (e) {
@@ -2035,6 +2120,99 @@
       window.addEventListener('resize', function () {
         window.tpLangfReposition && window.tpLangfReposition();
         window.tpFitColumns && window.tpFitColumns();
+      });
+      function tpResizeColumnBy(key, next) {
+        var width = window.tpClampColumnWidth(key, next);
+        if (!width) return;
+        window.tpRememberColumnWidth(key, width);
+        window.tpFitColumns && window.tpFitColumns();
+      }
+      document.addEventListener('pointerdown', function (e) {
+        var handle = e.target.closest && e.target.closest('.tp-col-resize');
+        if (!handle || e.button !== 0) return;
+        var th = handle.closest('th[data-col]');
+        var key = th && th.getAttribute('data-col');
+        var wrap = document.querySelector('.tp-body > .tp-table-wrap');
+        var table = wrap && wrap.querySelector('table.tp-table');
+        if (!key || !table || !window.tpColumnWidthKey(key)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var startX = e.clientX;
+        var startW = th.getBoundingClientRect().width;
+        var pointer = e.pointerId;
+        var moved = false;
+        var rtl = document.documentElement.getAttribute('dir') === 'rtl';
+        var saved = window.tpReadColumnPrefs();
+        var nameLocked = !!(saved && saved.widths && saved.widths.name);
+        var nameTh = table.querySelector('thead th[data-col="name"]');
+        var startName = nameTh && !nameTh.classList.contains('is-col-off') ? nameTh.getBoundingClientRect().width : 0;
+        window._tpColDrag = true;
+        handle.classList.add('is-active');
+        document.body.classList.add('is-col-resize');
+        var onMove = function (ev) {
+          if (ev.pointerId !== pointer) return;
+          var dx = ev.clientX - startX;
+          if (rtl) dx = -dx;
+          if (Math.abs(dx) > 2) moved = true;
+          var width = window.tpClampColumnWidth(key, startW + dx);
+          window.tpApplyColumnWidth(table, key, width, false);
+          if (key !== 'name' && !nameLocked && startName) {
+            window.tpApplyColumnWidth(table, 'name', Math.max(140, startName - (width - startW)), true);
+          }
+          var sum = 0;
+          Array.prototype.forEach.call(table.querySelector('thead tr').children, function (cell) {
+            if (cell.classList.contains('is-col-off')) return;
+            sum += cell.getBoundingClientRect().width;
+          });
+          table.style.width = Math.ceil(sum) + 'px';
+          wrap.classList.toggle('is-wide', table.scrollWidth > wrap.clientWidth + 1);
+        };
+        var onUp = function (ev) {
+          if (ev.pointerId !== pointer) return;
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          document.removeEventListener('pointercancel', onUp);
+          handle.classList.remove('is-active');
+          document.body.classList.remove('is-col-resize');
+          window._tpColDrag = false;
+          if (moved) {
+            window._tpColSuppressClick = true;
+            window.tpRememberColumnWidth(key, th.getBoundingClientRect().width);
+          }
+          window.tpFitColumns && window.tpFitColumns();
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      });
+      document.addEventListener('click', function (e) {
+        if (!window._tpColSuppressClick) return;
+        window._tpColSuppressClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+      document.addEventListener('dblclick', function (e) {
+        var handle = e.target.closest && e.target.closest('.tp-col-resize');
+        if (!handle) return;
+        var th = handle.closest('th[data-col]');
+        var key = th && th.getAttribute('data-col');
+        if (!key) return;
+        e.preventDefault();
+        e.stopPropagation();
+        window.tpRememberColumnWidth(key, null);
+        window.tpFitColumns && window.tpFitColumns();
+      });
+      document.addEventListener('keydown', function (e) {
+        var handle = e.target.closest && e.target.closest('.tp-col-resize');
+        if (!handle) return;
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        var th = handle.closest('th[data-col]');
+        var key = th && th.getAttribute('data-col');
+        if (!key) return;
+        e.preventDefault();
+        var dir = e.key === 'ArrowRight' ? 1 : -1;
+        if (document.documentElement.getAttribute('dir') === 'rtl') dir = -dir;
+        tpResizeColumnBy(key, th.getBoundingClientRect().width + dir * (e.shiftKey ? 32 : 16));
       });
       document.addEventListener('DOMContentLoaded', function () {
         window.tpCleanupUiLocks && window.tpCleanupUiLocks();
