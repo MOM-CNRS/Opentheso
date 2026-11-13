@@ -206,7 +206,8 @@ class MaintenanceBeanTest {
 
     @Test
     void reorganizeHierarchy_toastsWhenAccessDenied() {
-        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(false);
+        when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession, "TH1")).thenReturn(false);
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             bean.reorganizeHierarchy();
@@ -219,16 +220,14 @@ class MaintenanceBeanTest {
 
     @Test
     void screenUnavailableWithoutThesaurus() {
-        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(true);
-        when(toolboxAccessPolicy.hasSelectedThesaurus("")).thenReturn(false);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("");
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession, "")).thenReturn(false);
 
         assertFalse(bean.isScreenAvailable());
     }
 
     private void stubAccess() {
-        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(true);
-        when(toolboxAccessPolicy.hasSelectedThesaurus("TH1")).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession, "TH1")).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
     }
 }

@@ -246,8 +246,8 @@ public class ConceptCorpusSearchService {
             resolved.active = corpus.active();
             resolved.onlyUriLink = corpus.onlyUriLink();
             resolved.omekaS = corpus.omekaS();
-            resolved.uriLink = corpus.uriLink();
-            resolved.uriCount = corpus.uriCount();
+            resolved.uriLink = StringUtils.trim(corpus.uriLink());
+            resolved.uriCount = StringUtils.trim(corpus.uriCount());
             return resolved;
         }
     }

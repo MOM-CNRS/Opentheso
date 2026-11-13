@@ -25,6 +25,13 @@ class CorpusHttpTest {
     }
 
     @Test
+    void toUri_trimsALeadingSpaceBeforeTheScheme() {
+        String raw = " https://ccj-corea.cnrs.fr/api/items?property%5B0%5D%5Btype%5D=ew&per_page=1";
+
+        assertEquals(raw.trim(), CorpusHttp.toUri(raw).toString());
+    }
+
+    @Test
     void toUri_keepsAnAlreadyValidUrl() {
         String raw = "https://sculpturo.huma-num.fr/base/pactols-search/notices/total/354434";
 

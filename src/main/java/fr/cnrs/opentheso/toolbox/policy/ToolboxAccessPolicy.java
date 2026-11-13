@@ -32,8 +32,12 @@ public class ToolboxAccessPolicy {
         return rightsService.can(userSession, Permission.ACCESS_WORKSHOP);
     }
 
-    public boolean canAccessMaintenance(UserSession userSession) {
-        return rightsService.can(userSession, Permission.TOOLBOX_MAINTENANCE);
+    /**
+     * Maintenance du thésaurus courant : utilisateur connecté, super-administrateur
+     * ou administrateur du projet auquel ce thésaurus est rattaché.
+     */
+    public boolean canAccessMaintenance(UserSession userSession, String thesaurusId) {
+        return rightsService.isAdminOfThesaurusProject(userSession, thesaurusId);
     }
 
     public boolean canViewStatistics(UserSession userSession) {

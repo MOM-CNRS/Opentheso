@@ -39,10 +39,11 @@ final class CorpusHttp {
     }
 
     static URI toUri(String raw) {
+        String value = raw == null ? null : raw.trim();
         try {
-            return URI.create(raw);
+            return URI.create(value);
         } catch (IllegalArgumentException ex) {
-            return URI.create(encodeQuery(raw));
+            return URI.create(encodeQuery(value));
         }
     }
 

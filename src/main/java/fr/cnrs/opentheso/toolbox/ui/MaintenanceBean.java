@@ -55,8 +55,7 @@ public class MaintenanceBean implements Serializable {
     }
 
     public boolean isScreenAvailable() {
-        return toolboxAccessPolicy.canAccessMaintenance(userSession)
-                && toolboxAccessPolicy.hasSelectedThesaurus(thesaurusContext.getCurrentThesaurusId());
+        return toolboxAccessPolicy.canAccessMaintenance(userSession, thesaurusContext.getCurrentThesaurusId());
     }
 
     public boolean isSuperAdmin() {

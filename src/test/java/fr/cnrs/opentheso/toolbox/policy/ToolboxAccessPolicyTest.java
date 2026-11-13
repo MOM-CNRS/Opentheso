@@ -59,6 +59,16 @@ class ToolboxAccessPolicyTest {
     }
 
     @Test
+    void canAccessMaintenance_requiresAdminOfThisThesaurus() {
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(true);
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH2")).thenReturn(false);
+
+        assertTrue(policy.canAccessMaintenance(userSession, "TH1"));
+        assertFalse(policy.canAccessMaintenance(userSession, "TH2"));
+        verify(rightsService).isAdminOfThesaurusProject(userSession, "TH1");
+    }
+
+    @Test
     void hasSelectedThesaurus_checksBlankValue() {
         assertFalse(policy.hasSelectedThesaurus(null));
         assertFalse(policy.hasSelectedThesaurus(" "));

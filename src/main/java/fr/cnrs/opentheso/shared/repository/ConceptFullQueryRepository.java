@@ -190,20 +190,32 @@ public class ConceptFullQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = pt.id_thesaurus
                 AND t.lang = :lang
-            LEFT JOIN concept_group_concept cgc
-                ON cgc.idconcept = hr.id_concept2
-                AND cgc.idthesaurus = hr.id_thesaurus
-            LEFT JOIN concept_group cg
-                ON cg.idgroup = cgc.idgroup
-                AND cg.idthesaurus = cgc.idthesaurus
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :conceptId
               AND c.status != 'CA'
               AND hr.role LIKE 'BT%'
               AND (
                   :includePrivateGroups = true
-                  OR cg.private = false
-                  OR cg.private IS NULL
+                  OR NOT EXISTS (
+                      SELECT 1
+                      FROM concept_group_concept cgc
+                      JOIN concept_group cg
+                          ON cg.idgroup = cgc.idgroup
+                          AND cg.idthesaurus = cgc.idthesaurus
+                          AND cg.private = true
+                      WHERE cgc.idconcept = hr.id_concept2
+                        AND cgc.idthesaurus = hr.id_thesaurus
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM concept_group_concept cgc
+                      JOIN concept_group cg
+                          ON cg.idgroup = cgc.idgroup
+                          AND cg.idthesaurus = cgc.idthesaurus
+                      WHERE cgc.idconcept = hr.id_concept2
+                        AND cgc.idthesaurus = hr.id_thesaurus
+                        AND COALESCE(cg.private, false) = false
+                  )
               )
             ORDER BY sort_key, COALESCE(t.lexical_value, hr.id_concept2)
             """)
@@ -262,20 +274,32 @@ public class ConceptFullQueryRepository {
             JOIN term t
                 ON t.id_term = pt.id_term
                 AND t.lang = :lang
-            LEFT JOIN concept_group_concept cgc
-                ON cgc.idconcept = c.id_concept
-                AND cgc.idthesaurus = c.id_thesaurus
-            LEFT JOIN concept_group cg
-                ON cg.idgroup = cgc.idgroup
-                AND cg.idthesaurus = cgc.idthesaurus
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :conceptId
               AND c.status != 'CA'
               AND hr.role LIKE 'NT%'
               AND (
                   :includePrivateGroups = true
-                  OR cg.private IS NULL
-                  OR cg.private = false
+                  OR NOT EXISTS (
+                      SELECT 1
+                      FROM concept_group_concept cgc
+                      JOIN concept_group cg
+                          ON cg.idgroup = cgc.idgroup
+                          AND cg.idthesaurus = cgc.idthesaurus
+                          AND cg.private = true
+                      WHERE cgc.idconcept = c.id_concept
+                        AND cgc.idthesaurus = c.id_thesaurus
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM concept_group_concept cgc
+                      JOIN concept_group cg
+                          ON cg.idgroup = cgc.idgroup
+                          AND cg.idthesaurus = cgc.idthesaurus
+                      WHERE cgc.idconcept = c.id_concept
+                        AND cgc.idthesaurus = c.id_thesaurus
+                        AND COALESCE(cg.private, false) = false
+                  )
               )
             ORDER BY sort_key, t.lexical_value ASC
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY

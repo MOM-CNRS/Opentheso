@@ -567,7 +567,7 @@ class ThesaurusViewBeanTest {
         verify(conceptReadService, never()).countBranchConcepts(any(), any());
         verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
         verify(propositionBean).clearConsultation();
-        verify(propositionBean).refreshBadgeCount();
+        verify(propositionBean, never()).refreshBadgeCount();
     }
 
     @Test
@@ -1006,7 +1006,7 @@ class ThesaurusViewBeanTest {
     void workshopAndMaintenanceAreHiddenWithoutRights() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(false);
-        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(false);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession, "th17")).thenReturn(false);
         when(toolboxAccessPolicy.canViewStatistics(userSession)).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(null);
         when(userSession.isLoggedIn()).thenReturn(false);
@@ -1032,7 +1032,7 @@ class ThesaurusViewBeanTest {
     void workshopAndMaintenanceAreVisibleWithRights() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(true);
-        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession, "th17")).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(9);
         when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
 

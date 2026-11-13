@@ -288,8 +288,7 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public boolean isMaintenanceVisible() {
-        return toolboxAccessPolicy.canAccessMaintenance(userSession)
-                && StringUtils.isNotBlank(getId());
+        return toolboxAccessPolicy.canAccessMaintenance(userSession, getId());
     }
 
     public boolean isStatisticsDetailVisible() {
@@ -609,7 +608,6 @@ public class ThesaurusViewBean implements Serializable {
     public void openTreeNode(String id, String nodeType) {
         if (propositionBean != null) {
             propositionBean.clearConsultation();
-            propositionBean.refreshBadgeCount();
         }
         detailRequested = true;
         selectedId = StringUtils.trimToEmpty(id);
