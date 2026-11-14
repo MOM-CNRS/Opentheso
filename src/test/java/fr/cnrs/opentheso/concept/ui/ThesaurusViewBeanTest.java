@@ -636,11 +636,9 @@ class ThesaurusViewBeanTest {
 
         bean.openTreeNode("c1", "concept");
 
-        assertEquals(10, bean.getVisibleNarrowers().size());
+        assertEquals(20, bean.getVisibleNarrowers().size());
         assertTrue(bean.isNarrowerMoreVisible());
-        for (int step = 0; step < 3; step++) {
-            bean.showMoreNarrowers();
-        }
+        bean.showMoreNarrowers();
         assertEquals(40, bean.getVisibleNarrowers().size());
         verify(conceptFullReadService, never()).loadMoreNarrowers(anyString(), anyString(), anyString(), anyInt(), anyBoolean());
 

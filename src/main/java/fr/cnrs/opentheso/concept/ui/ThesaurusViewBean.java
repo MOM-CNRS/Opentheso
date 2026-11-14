@@ -128,11 +128,12 @@ public class ThesaurusViewBean implements Serializable {
     @Getter
     private ConceptDetail selectedConcept;
     private static final int RELATION_STEP = 10;
+    private static final int NARROWER_STEP = 20;
     private int broaderVisible = RELATION_STEP;
-    private int narrowerVisible = RELATION_STEP;
+    private int narrowerVisible = NARROWER_STEP;
     private int relatedVisible = RELATION_STEP;
     private int broaderFreshFrom = RELATION_STEP;
-    private int narrowerFreshFrom = RELATION_STEP;
+    private int narrowerFreshFrom = NARROWER_STEP;
     private int relatedFreshFrom = RELATION_STEP;
     private boolean narrowerMore;
     private int narrowerOffset;
@@ -696,7 +697,7 @@ public class ThesaurusViewBean implements Serializable {
 
     public void showMoreNarrowers() {
         narrowerFreshFrom = narrowerVisible;
-        narrowerVisible += RELATION_STEP;
+        narrowerVisible += NARROWER_STEP;
         fillNarrowers();
         refreshVisibleRelations();
     }
@@ -1679,10 +1680,10 @@ public class ThesaurusViewBean implements Serializable {
         displayedCorpusLinks = Collections.emptyList();
         conceptMetadata = List.of();
         broaderVisible = RELATION_STEP;
-        narrowerVisible = RELATION_STEP;
+        narrowerVisible = NARROWER_STEP;
         relatedVisible = RELATION_STEP;
         broaderFreshFrom = RELATION_STEP;
-        narrowerFreshFrom = RELATION_STEP;
+        narrowerFreshFrom = NARROWER_STEP;
         relatedFreshFrom = RELATION_STEP;
         narrowerMore = false;
         narrowerOffset = 0;
@@ -1695,10 +1696,10 @@ public class ThesaurusViewBean implements Serializable {
     private void prepareRelationWindows() {
         broaderVisible = RELATION_STEP;
         relatedVisible = RELATION_STEP;
-        narrowerVisible = RELATION_STEP;
+        narrowerVisible = NARROWER_STEP;
         broaderFreshFrom = RELATION_STEP;
         relatedFreshFrom = RELATION_STEP;
-        narrowerFreshFrom = RELATION_STEP;
+        narrowerFreshFrom = NARROWER_STEP;
         loadedNarrowers = new ArrayList<>();
         if (selectedConcept != null && selectedConcept.getNarrowerTerms() != null) {
             loadedNarrowers.addAll(selectedConcept.getNarrowerTerms());

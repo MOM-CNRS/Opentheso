@@ -498,30 +498,33 @@ public class ThesaurusPickerBean implements Serializable {
         return languageFlag(code) + " " + languageLabel(code);
     }
 
+    /** Langues tenues sur une seule ligne avant le bouton +N. */
+    private static final int LANG_ONE_LINE = 3;
+
     /** Premières langues affichées en chips (le reste passe dans +N). */
     public List<String> visibleLanguages(List<String> languages) {
         if (languages == null || languages.isEmpty()) {
             return List.of();
         }
-        if (languages.size() <= 5) {
+        if (languages.size() <= LANG_ONE_LINE + 1) {
             return languages;
         }
-        return languages.subList(0, 4);
+        return languages.subList(0, LANG_ONE_LINE);
     }
 
     /** Langue masquée tant que le +N n'a pas été déplié. */
     public boolean isCollapsedLanguage(List<String> languages, int index) {
-        if (languages == null || languages.size() <= 5) {
+        if (languages == null || languages.size() <= LANG_ONE_LINE + 1) {
             return false;
         }
-        return index >= 4;
+        return index >= LANG_ONE_LINE;
     }
 
     public int hiddenLanguageCount(List<String> languages) {
-        if (languages == null || languages.size() <= 5) {
+        if (languages == null || languages.size() <= LANG_ONE_LINE + 1) {
             return 0;
         }
-        return languages.size() - 4;
+        return languages.size() - LANG_ONE_LINE;
     }
 
     public String languagesTitle(List<String> languages) {

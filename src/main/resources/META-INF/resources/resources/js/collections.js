@@ -120,14 +120,15 @@ function renderCollectionRoots(nodes) {
     box.innerHTML = '<div class="tree-empty">Aucune collection dans ce thésaurus.</div>';
     return;
   }
-  box.innerHTML = nodes.map(node => collectionNodeHtml(node, 0)).join("");
+  box.innerHTML = nodes.map(node => collectionNodeHtml(node, 0, "")).join("");
   paintCollectionVisibility();
   if (state.colId) highlightConcept(state.colId);
   else if (state.conceptId) highlightConcept(state.conceptId);
 }
 
-function collectionNodeHtml(node, depth) {
+function collectionNodeHtml(node, depth, parentKey) {
   const id = node && node.id != null ? String(node.id) : "";
+  const key = (parentKey ? parentKey + "/" : "") + id;
   const type = (node && node.nodeType) || "file";
   const isGroup = type === "group" || type === "subGroup";
   const isMore = type === "more";
@@ -149,6 +150,7 @@ function collectionNodeHtml(node, depth) {
   const openAct = isMore ? "" : ' data-act="open"';
   return '<div class="tn"'
     + ' data-id="' + escapeHtml(id) + '"'
+    + ' data-key="' + escapeHtml(key) + '"'
     + ' data-type="' + escapeHtml(type) + '"'
     + ' data-has-children="' + (hasChildren ? "true" : "false") + '"'
     + ' data-loaded="0"'
@@ -182,9 +184,10 @@ function appendCollectionChildPage(parent) {
   const page = collectionTreePages.get(parent);
   if (!page) return;
   const depth = Number(parent.getAttribute("data-depth") || 0) + 1;
+  const parentKey = parent.getAttribute("data-key") || parent.getAttribute("data-id") || "";
   const start = page.shown;
   const end = Math.min(page.nodes.length, start + COLL_TREE_PAGE);
-  const html = page.nodes.slice(start, end).map((node) => collectionNodeHtml(node, depth)).join("");
+  const html = page.nodes.slice(start, end).map((node) => collectionNodeHtml(node, depth, parentKey)).join("");
   page.shown = end;
   const left = page.nodes.length - end;
   const more = left > 0 ? collectionTreeMoreHtml(depth, Math.min(COLL_TREE_PAGE, left)) : "";
