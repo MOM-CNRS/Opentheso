@@ -331,6 +331,7 @@ document.addEventListener("click", (e) => {
     showConfirm("#stSaveConfirm");
   } else if (act === "st-save-go") {
     e.preventDefault();
+    if (typeof snapshotPreferenceFlags === "function") snapshotPreferenceFlags();
     clickPreviewJsf("previewPrefSaveGo");
   } else if (act === "account-save") {
     e.preventDefault();

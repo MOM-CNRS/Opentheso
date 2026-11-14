@@ -4,6 +4,7 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:comp="http://xmlns.jcp.org/jsf/composite/ui"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/includes/layout.xhtml">
   <ui:param name="page" value="preference"/>
   <ui:define name="title">OpenTheso — Préférences</ui:define>
@@ -99,6 +100,7 @@
                           onevent="onPreviewPrefSave"/>
                 </h:commandButton>
                 <h:panelGroup id="previewSettingsBody" layout="block">
+                <h:inputHidden id="previewPrefFlags" value="#{thesaurusPreferenceBean.preferenceFlags}"/>
                 <div class="st-group-head" id="stPrefs">Préférences du thésaurus</div>
                 <div class="bo-card is-closed">
                   <div class="bo-card-h">
@@ -171,6 +173,7 @@
                         <label class="st-sw">
                           <h:selectBooleanCheckbox id="previewPrefIdentifierType"
                                                    styleClass="st-sw-input"
+                                                   pt:data-flag="numericIdentifier"
                                                    value="#{thesaurusPreferenceBean.preference.numericIdentifier}"
                                                    title="Type d'identifiant"/>
                         </label>
@@ -204,6 +207,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="autoExpandTree"
                                                  value="#{thesaurusPreferenceBean.preference.autoExpandTree}"
                                                  title="Déploiement automatique de l'arbre"/>
                       </label>
@@ -215,6 +219,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="treeCache"
                                                  value="#{thesaurusPreferenceBean.preference.treeCache}"
                                                  title="Cache de l'arbre"/>
                       </label>
@@ -226,6 +231,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox id="previewPrefSortByNotation" styleClass="st-sw-input"
+                                                 pt:data-flag="sortByNotation"
                                                  value="#{thesaurusPreferenceBean.preference.sortByNotation}"
                                                  title="Tri par défaut sur la notation"/>
                       </label>
@@ -237,6 +243,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="breadcrumb"
                                                  value="#{thesaurusPreferenceBean.preference.breadcrumb}"
                                                  title="Fil d'Ariane"/>
                       </label>
@@ -248,6 +255,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="useConceptTree"
                                                  value="#{thesaurusPreferenceBean.preference.useConceptTree}"
                                                  title="Arbre de collections / concepts"/>
                       </label>
@@ -269,6 +277,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="displayUserName"
                                                  value="#{thesaurusPreferenceBean.preference.displayUserName}"
                                                  title="Afficher le nom des contributeurs"/>
                       </label>
@@ -280,6 +289,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="suggestion"
                                                  value="#{thesaurusPreferenceBean.preference.suggestion}"
                                                  title="Propositions de modification"/>
                       </label>
@@ -291,6 +301,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="useCustomRelation"
                                                  value="#{thesaurusPreferenceBean.preference.useCustomRelation}"
                                                  title="Relations personnalisées"/>
                       </label>
@@ -302,6 +313,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="synchronisation"
                                                  value="#{thesaurusPreferenceBean.preference.synchronisation}"
                                                  title="#{localeBean.getMsg('home.workshop.sync')}"/>
                       </label>
@@ -313,6 +325,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="portail"
                                                  value="#{thesaurusPreferenceBean.preference.portail}"
                                                  title="#{localeBean.getMsg('home.workshop.portal')}"/>
                       </label>
@@ -334,6 +347,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="showCandidatesToGuests"
                                                  value="#{thesaurusPreferenceBean.preference.showCandidatesToGuests}"
                                                  title="#{localeBean.getMsg('candidat.pref.showToGuests')}"/>
                       </label>
@@ -345,6 +359,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="showHistoryNote"
                                                  value="#{thesaurusPreferenceBean.preference.showHistoryNote}"
                                                  title="Afficher la note historique"/>
                       </label>
@@ -356,6 +371,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="showEditorialNote"
                                                  value="#{thesaurusPreferenceBean.preference.showEditorialNote}"
                                                  title="Afficher la note éditoriale"/>
                       </label>
@@ -378,6 +394,7 @@
                         </div>
                         <label class="st-sw">
                           <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                   pt:data-flag="webservices"
                                                    value="#{thesaurusPreferenceBean.preference.webservices}"
                                                    title="Service Web (API REST)"/>
                       </label>
@@ -391,6 +408,7 @@
                         </div>
                         <label class="st-sw">
                           <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                   pt:data-flag="kohaLink"
                                                    value="#{thesaurusPreferenceBean.preference.kohaLink}"
                                                    title="Lien vers Koha Pro"/>
                       </label>
@@ -404,6 +422,7 @@
                         </div>
                         <label class="st-sw">
                           <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                   pt:data-flag="useDeeplTranslation"
                                                    value="#{thesaurusPreferenceBean.preference.useDeeplTranslation}"
                                                    title="Module de traduction DeepL"/>
                       </label>
@@ -423,7 +442,7 @@
                 </div>
                 <div class="st-group-head" id="stServers">Identifiants des serveurs</div>
                 <h:panelGroup id="previewPrefServers" layout="block">
-                <div class="bo-card is-closed st-server#{thesaurusIdentifierBean.preference.useArk ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server st-ark-remote#{thesaurusIdentifierBean.preference.useArk ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
                     <button type="button" class="st-card-tog" aria-expanded="false">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
@@ -431,6 +450,7 @@
                     </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseArk" styleClass="st-sw-input"
+                                               pt:data-flag="useArk"
                                                value="#{thesaurusIdentifierBean.preference.useArk}"
                                                title="Activer le serveur Ark">
                         <f:ajax execute="previewPrefServers" listener="#{thesaurusIdentifierBean.selectIdentifierServer}"
@@ -477,10 +497,13 @@
                     <div class="st-row">
                       <div class="st-row-l">Mot de passe Ark</div>
                       <div class="st-row-c">
-                        <h:inputSecret styleClass="st-input"
+                        <h:inputSecret id="previewPassArk" styleClass="st-input"
                                        value="#{thesaurusIdentifierBean.preference.newPassArk}"
-                                       redisplay="false"
-                                       disabled="#{not thesaurusIdentifierBean.preference.useArk}"/>
+                                       redisplay="true"/>
+                        <h:panelGroup layout="block" styleClass="st-note"
+                                      rendered="#{thesaurusIdentifierBean.preference.passArkPresent}">
+                          Un mot de passe est déjà enregistré. Laissez ce champ vide pour le conserver.
+                        </h:panelGroup>
                       </div>
                     </div>
                   </div>
@@ -493,6 +516,7 @@
                     </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseArkLocal" styleClass="st-sw-input"
+                                               pt:data-flag="useArkLocal"
                                                value="#{thesaurusIdentifierBean.preference.useArkLocal}"
                                                title="Activer le serveur Ark local">
                         <f:ajax execute="previewPrefServers" listener="#{thesaurusIdentifierBean.selectIdentifierServer}"
@@ -507,6 +531,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox id="previewUppercaseForArk" styleClass="st-sw-input"
+                                                 pt:data-flag="uppercaseForArk"
                                                  value="#{thesaurusIdentifierBean.preference.uppercaseForArk}"
                                                  title="Générer l'identifiant Ark en majuscules"/>
                       </label>
@@ -543,6 +568,7 @@
                     </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseHandle" styleClass="st-sw-input"
+                                               pt:data-flag="useHandle"
                                                value="#{thesaurusIdentifierBean.preference.useHandle}"
                                                title="Activer le serveur Handle">
                         <f:ajax execute="previewPrefServers" listener="#{thesaurusIdentifierBean.selectIdentifierServer}"
@@ -557,6 +583,7 @@
                       </div>
                       <label class="st-sw">
                         <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 pt:data-flag="useHandleWithCertificat"
                                                  value="#{thesaurusIdentifierBean.preference.useHandleWithCertificat}"
                                                  title="Utiliser le serveur Handle avec certificat"
                                                  disabled="#{not thesaurusIdentifierBean.preference.useHandle}"/>
@@ -634,6 +661,7 @@
                     </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseOpenArk" styleClass="st-sw-input"
+                                               pt:data-flag="useOpenArk"
                                                value="#{thesaurusIdentifierBean.preference.useOpenArk}"
                                                title="Activer le serveur OpenArk">
                         <f:ajax execute="previewPrefServers" listener="#{thesaurusIdentifierBean.selectIdentifierServer}"

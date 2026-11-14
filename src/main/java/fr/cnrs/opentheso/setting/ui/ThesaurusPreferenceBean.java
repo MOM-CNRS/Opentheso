@@ -12,6 +12,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -38,6 +39,9 @@ public class ThesaurusPreferenceBean implements Serializable {
     private String preferenceSaveMessage;
     @Getter
     private boolean preferenceSaveError;
+    @Getter
+    @Setter
+    private String preferenceFlags;
 
     public void loadPage() {
         if (!settingsAccess.isLoggedIn()) {
@@ -119,6 +123,8 @@ public class ThesaurusPreferenceBean implements Serializable {
             preferenceSaveMessage = "Aucune préférence à enregistrer.";
             return;
         }
+        PreferenceFlagSnapshot.apply(editor, preferenceFlags);
+        preferenceFlags = null;
         String thesaurusId = settingsAccess.getThesaurusId();
         if (thesaurusPreferenceService.isPreferredNameExist(thesaurusId, editor.getPreferredName())) {
             preferenceSaveError = true;

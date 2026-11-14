@@ -39,6 +39,20 @@ function markSettingsDraft() {
   settingsDraftDirty = true;
 }
 
+function snapshotPreferenceFlags() {
+  if (typeof captureSettingsFieldDrafts === "function") captureSettingsFieldDrafts();
+  const box = document.getElementById("previewPrefFlags");
+  const root = document.getElementById("previewSettingsBody");
+  if (!box || !root) return;
+  const lines = [];
+  root.querySelectorAll("input[data-flag]").forEach((el) => {
+    if (!el || el.type !== "checkbox") return;
+    lines.push(el.getAttribute("data-flag") + "=" + (el.checked ? "true" : "false"));
+  });
+  box.value = lines.join("\n");
+}
+window.snapshotPreferenceFlags = snapshotPreferenceFlags;
+
 function rememberSettingsBaseline() {
   settingsDraftDirty = false;
   settingsBaseline = serializeSettingsForm();
@@ -111,14 +125,20 @@ function bindPrefSwitches() {
 }
 
 const settingsOpenCards = new Set();
-const arkLocalFieldIds = ["previewNaanArkLocal", "previewPrefixArkLocal", "previewSizeIdArkLocal", "previewServerOpenArk", "previewNaanOpenArk", "previewPrefixOpenArk", "previewApiKeyOpenArk"];
+const arkLocalFieldIds = ["previewNaanArkLocal", "previewPrefixArkLocal", "previewSizeIdArkLocal", "previewServerOpenArk", "previewNaanOpenArk", "previewPrefixOpenArk", "previewApiKeyOpenArk", "previewPassArk"];
 const arkLocalDraft = {};
 
-document.addEventListener("input", (e) => {
-  const el = e.target;
+function rememberSettingsFieldDraft(el) {
   if (!el || arkLocalFieldIds.indexOf(el.id) < 0) return;
   arkLocalDraft[el.id] = el.value;
-});
+}
+
+document.addEventListener("input", (e) => rememberSettingsFieldDraft(e.target));
+document.addEventListener("change", (e) => rememberSettingsFieldDraft(e.target));
+
+function captureSettingsFieldDrafts() {
+  arkLocalFieldIds.forEach((id) => rememberSettingsFieldDraft(document.getElementById(id)));
+}
 
 function restoreArkLocalDraft() {
   arkLocalFieldIds.forEach((id) => {

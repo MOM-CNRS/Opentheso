@@ -40,6 +40,7 @@ public class PreferenceEditor implements Serializable {
     private String prefixArk;
     private String userArk;
     private String passArk;
+    private boolean passArkPresent;
     private boolean generateHandle;
 
     private boolean useArkLocal;
@@ -115,6 +116,8 @@ public class PreferenceEditor implements Serializable {
         editor.setServerArk(preferences.serverArk());
         editor.setPrefixArk(preferences.prefixArk());
         editor.setUserArk(preferences.userArk());
+        String storedPassArk = preferences.passArk();
+        editor.setPassArkPresent(storedPassArk != null && !storedPassArk.isBlank());
         editor.setPassArk("");
         editor.setGenerateHandle(preferences.generateHandle());
         editor.setUseArkLocal(preferences.useArkLocal());

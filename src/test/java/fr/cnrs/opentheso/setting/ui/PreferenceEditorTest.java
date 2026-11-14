@@ -21,6 +21,7 @@ class PreferenceEditorTest {
         assertEquals("https://site/", editor.getCheminSite());
         assertEquals("", editor.getPassHandle());
         assertEquals("", editor.getPassArk());
+        assertTrue(editor.isPassArkPresent());
         assertEquals("", editor.getDeeplApiKey());
         assertEquals("", editor.getApiKeyOpenArk());
         assertFalse(editor.isApiKeyOpenArkPresent());
