@@ -491,13 +491,13 @@
           <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg>
         </span>
         <div class="th-create-txt">
-          <div class="confirm-h" id="cvDlgDeleteTitle">#{localeBean.getMsg('rightbody.concept.delete_concept')}</div>
+          <div class="confirm-h" id="cvDlgDeleteTitle">#{thesaurusViewBean.candidateSelected ? localeBean.getMsg('candidat.menu.delete') : localeBean.getMsg('rightbody.concept.delete_concept')}</div>
           <p class="th-create-hint">#{localeBean.getMsg('concept.delHint')}</p>
         </div>
       </div>
       <div class="cv-dlg-body">
         <div class="cv-dlg-card">
-          <div class="cv-dlg-card-h">#{localeBean.getMsg('concept.delScope')}</div>
+            <div class="cv-dlg-card-h">#{thesaurusViewBean.candidateSelected ? localeBean.getMsg('candidat.menu.deleteScope') : localeBean.getMsg('concept.delScope')}</div>
           <div class="cv-dlg-branch">
             <strong>#{conceptLifecycleEditorBean.currentPreferredLabel}</strong>
             <span class="cv-dlg-meta-v is-mono">#{conceptLifecycleEditorBean.deleteConceptId}</span>
@@ -536,7 +536,7 @@
                   #{localeBean.getMsg('concept.delActionBranch')}
                 </ui:fragment>
                 <ui:fragment rendered="#{not conceptLifecycleEditorBean.branchDelete}">
-                  #{localeBean.getMsg('concept.delAction')}
+                  #{thesaurusViewBean.candidateSelected ? localeBean.getMsg('candidat.menu.deleteAction') : localeBean.getMsg('concept.delAction')}
                 </ui:fragment>
                 <span class="cv-ark-wait">#{localeBean.getMsg('concept.delForever')}</span>
               </div>

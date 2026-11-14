@@ -90,6 +90,17 @@
             and not propositionSubmitBean.composing}">
           <ui:include src="/includes/concept-actions-menu.xhtml"/>
         </ui:fragment>
+        <ui:fragment rendered="#{thesaurusViewBean.candidateSelected
+            and (conceptTreeDragDropBean.cutActionsAvailable
+              or conceptTreeDragDropBean.pasteUnderAvailable
+              or conceptTreeDragDropBean.pasteAtRootAvailable
+              or conceptTreeDragDropBean.cutOn
+              or conceptLifecycleEditorBean.writeActionsAvailable
+              or conceptTransferEditorBean.transferActionsAvailable)
+            and not propositionBean.consultation
+            and not propositionSubmitBean.composing}">
+          <ui:include src="/includes/candidate-actions-menu.xhtml"/>
+        </ui:fragment>
       </h1>
       </div>
       <p class="cv-head-uri">

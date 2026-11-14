@@ -31,6 +31,7 @@ public class ConceptDeletionWriteRepository {
 
     @Transactional
     public void deleteConcept(String thesaurusId, String conceptId) {
+        deleteCandidateRows(thesaurusId, conceptId);
         findPreferredTermId(thesaurusId, conceptId).ifPresent(idTerm -> deleteTerm(thesaurusId, idTerm));
         deleteAllRelations(thesaurusId, conceptId);
         deleteNotes(thesaurusId, conceptId);
@@ -46,6 +47,44 @@ public class ConceptDeletionWriteRepository {
         deleteReplacedByLinks(thesaurusId, conceptId);
         deleteConceptDcTerms(thesaurusId, conceptId);
         deleteConceptRow(thesaurusId, conceptId);
+    }
+
+    private void deleteCandidateRows(String thesaurusId, String conceptId) {
+        entityManager.createNativeQuery("""
+                        DELETE FROM candidat_vote
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .executeUpdate();
+        entityManager.createNativeQuery("""
+                        DELETE FROM candidat_messages
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .executeUpdate();
+        entityManager.createNativeQuery("""
+                        DELETE FROM candidat_status
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .executeUpdate();
+        entityManager.createNativeQuery("""
+                        DELETE FROM concept_term_candidat
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .executeUpdate();
+        entityManager.createNativeQuery("""
+                        DELETE FROM concept_candidat
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .executeUpdate();
     }
 
     private void deleteTerm(String thesaurusId, String idTerm) {
