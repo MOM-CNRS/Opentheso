@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+  <div class="bo-panel #{actionsLotRelationBean.importPanel.cssClasses}"
+       data-obj="relations" data-op="import" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <a class="bo-btn ghost sm" href="#{request.contextPath}/api/toolbox/relations/template" download="modele-relations.csv">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              Modèle
+            </a>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead>
+                <tr>
+                  <th>localId</th>
+                  <th>localId cible</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>26678</td>
+                  <td>300</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne = une association (skos:related) entre deux concepts. La 1ʳᵉ ligne (en-têtes) est obligatoire.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = une association · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li class="warn">Si un identifiant n'existe pas dans le thésaurus, la ligne est <b>rejetée</b>.</li>
+              <li class="warn">Si la relation existe déjà, la ligne est <b>rejetée</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Importer le fichier</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{actionsLotRelationBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="relImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b bo-live #{actionsLotRelationBean.importPanel.cssClasses}">
+          <ui:include src="/toolbox/includes/lot-query.xhtml"><ui:param name="lotObj" value="relations"/></ui:include>
+          <span class="bo-state" hidden="hidden"
+                data-obj="relations" data-op="import"
+                data-cls="#{actionsLotRelationBean.importPanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty actionsLotRelationBean.importPanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{actionsLotRelationBean.importPanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">L'identifiant est de type</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{actionsLotRelationBean.importPanel.identifierType}">
+                <f:selectItem itemLabel="identifier (id interne)" itemValue="identifier"/>
+                <f:selectItem itemLabel="ark" itemValue="ark"/>
+                <f:selectItem itemLabel="handle" itemValue="handle"/>
+              </h:selectOneMenu>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{actionsLotRelationBean.importPanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="relImportFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="relImportFile" styleClass="bo-file-input" value="#{actionsLotRelationBean.importUpload}">
+            <f:ajax event="valueChange" listener="#{actionsLotRelationBean.onImportFileSelected}"
+                    execute="@form" render="@form" onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{actionsLotRelationBean.importPanel.fileName}</div>
+              <div class="bo-file-m">#{actionsLotRelationBean.importPanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="relImportClearFile" styleClass="bo-btn-hit-in"
+                               action="#{actionsLotRelationBean.clearImport}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="relImportValidate" styleClass="bo-btn-hit-in"
+                               action="#{actionsLotRelationBean.validateImport}"
+                               value="Valider le fichier"
+                               disabled="#{!actionsLotRelationBean.importPanel.hasFile or actionsLotRelationBean.importPanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{actionsLotRelationBean.importPanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{actionsLotRelationBean.importPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{actionsLotRelationBean.importPanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{actionsLotRelationBean.importPanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{actionsLotRelationBean.importPanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez n'appliquer que les #{actionsLotRelationBean.importPanel.validCount} associations valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{actionsLotRelationBean.importPanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="relImportFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="relImportPartial" styleClass="bo-btn-hit-in"
+                                   action="#{actionsLotRelationBean.applyImport}"
+                                   value="Importer les #{actionsLotRelationBean.importPanel.validCount} associations valides"
+                                   disabled="#{actionsLotRelationBean.importPanel.validCount eq 0}">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Importer les #{actionsLotRelationBean.importPanel.validCount} associations valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="relImportCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{actionsLotRelationBean.clearImport}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — #{actionsLotRelationBean.importPanel.validCount} association(s) prête(s).</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="relImportApply" styleClass="bo-btn-hit-in"
+                                   action="#{actionsLotRelationBean.applyImport}"
+                                   value="Confirmer — Importer les #{actionsLotRelationBean.importPanel.validCount} associations">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Importer les #{actionsLotRelationBean.importPanel.validCount} associations
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="relImportCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{actionsLotRelationBean.clearImport}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Importer terminé</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{actionsLotRelationBean.importPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{actionsLotRelationBean.importPanel.appliedCount}</b><span>appliquées</span></div>
+              <div class="bo-stat rej"><b>#{actionsLotRelationBean.importPanel.rejectedCount}</b><span>déjà présentes / rejetées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+</ui:composition>
