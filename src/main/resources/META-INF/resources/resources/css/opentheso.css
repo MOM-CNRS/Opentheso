@@ -1308,6 +1308,11 @@ button.coll-item{
 #viewLive.is-loading #previewDetailState > .empty{
   opacity:1;pointer-events:none;transition:none
 }
+#viewLive.is-optimistic.is-loading .cv-blocks,
+#viewLive.is-optimistic.is-loading .cv-path,
+#viewLive.is-optimistic.is-loading .cv-head-uri,
+#viewLive.is-optimistic.is-loading .cv-msgs,
+#viewLive.is-optimistic.is-loading .cv-cut-bar{visibility:hidden}
 #viewLive.is-loading .confirm-overlay:not([hidden]){pointer-events:auto}
 #viewLive.is-ready.is-opening .cv{animation:none}
 .cv-progress{display:none;position:sticky;top:0;z-index:8;height:4px;margin:0;

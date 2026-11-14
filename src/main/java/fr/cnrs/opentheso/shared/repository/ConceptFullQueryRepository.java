@@ -19,6 +19,9 @@ public class ConceptFullQueryRepository {
     @PersistenceContext
     private EntityManager em;
 
+    /** {@code null} tant que le sondage des notes en URI n'a pas été fait. */
+    private volatile Boolean uriShapedNotes;
+
     public Optional<Object[]> findConceptCore(String conceptId, String thesaurusId) {
         return findConceptCore(conceptId, thesaurusId, false);
     }
@@ -127,46 +130,89 @@ public class ConceptFullQueryRepository {
     }
 
     public List<Object[]> findAllConceptNotes(String conceptId, String thesaurusId) {
-        return em.createNativeQuery("""
+        String sql = """
+            SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
+            FROM note n
+            WHERE n.id_thesaurus = :thesaurusId AND n.id_concept = :conceptId
+            UNION
+            SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
+            FROM note n
+            WHERE n.id_thesaurus = :thesaurusId AND n.identifier = :conceptId
+            UNION
+            SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
+            FROM note n
+            WHERE n.id_thesaurus = :thesaurusId AND n.id_term = :conceptId
+            UNION
             SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
             FROM note n
             WHERE n.id_thesaurus = :thesaurusId
-              AND (
-                n.identifier = :conceptId
-                OR n.id_concept = :conceptId
-                OR n.id_term = :conceptId
-                OR n.identifier LIKE '%/' || :conceptId
-                OR n.id_concept LIKE '%/' || :conceptId
-                OR n.id_term LIKE '%/' || :conceptId
-                OR n.identifier LIKE '%idc=' || :conceptId || '&%'
-                OR n.identifier LIKE '%idf=' || :conceptId || '&%'
-                OR n.id_concept LIKE '%idc=' || :conceptId || '&%'
-                OR n.id_concept LIKE '%idf=' || :conceptId || '&%'
-                OR n.id_term LIKE '%idc=' || :conceptId || '&%'
-                OR n.id_term LIKE '%idf=' || :conceptId || '&%'
-                OR n.identifier LIKE '%idc=' || :conceptId
-                OR n.identifier LIKE '%idf=' || :conceptId
-                OR n.id_concept LIKE '%idc=' || :conceptId
-                OR n.id_concept LIKE '%idf=' || :conceptId
-                OR n.id_term LIKE '%idc=' || :conceptId
-                OR n.id_term LIKE '%idf=' || :conceptId
-                OR n.id_term IN (
-                    SELECT pt.id_term FROM preferred_term pt
-                    WHERE pt.id_concept = :conceptId AND pt.id_thesaurus = :thesaurusId
-                )
-                OR n.identifier IN (
-                    SELECT c.id_ark FROM concept c
-                    WHERE c.id_concept = :conceptId
-                      AND c.id_thesaurus = :thesaurusId
-                      AND c.id_ark IS NOT NULL
-                      AND btrim(c.id_ark) <> ''
-                )
+              AND n.id_term IN (
+                  SELECT pt.id_term FROM preferred_term pt
+                  WHERE pt.id_concept = :conceptId AND pt.id_thesaurus = :thesaurusId
               )
-            ORDER BY n.notetypecode, n.lang
-            """)
+            UNION
+            SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
+            FROM note n
+            WHERE n.id_thesaurus = :thesaurusId
+              AND n.identifier IN (
+                  SELECT c.id_ark FROM concept c
+                  WHERE c.id_concept = :conceptId
+                    AND c.id_thesaurus = :thesaurusId
+                    AND c.id_ark IS NOT NULL
+                    AND btrim(c.id_ark) <> ''
+              )
+            """;
+        if (uriShapedNotesPresent()) {
+            sql += """
+                UNION
+                SELECT n.id, n.notetypecode, n.lexicalvalue, n.lang, COALESCE(n.notesource, '')
+                FROM note n
+                WHERE n.id_thesaurus = :thesaurusId
+                  AND (
+                    n.identifier LIKE '%/' || :conceptId
+                    OR n.id_concept LIKE '%/' || :conceptId
+                    OR n.id_term LIKE '%/' || :conceptId
+                    OR n.identifier LIKE '%idc=' || :conceptId || '&%'
+                    OR n.identifier LIKE '%idf=' || :conceptId || '&%'
+                    OR n.id_concept LIKE '%idc=' || :conceptId || '&%'
+                    OR n.id_concept LIKE '%idf=' || :conceptId || '&%'
+                    OR n.id_term LIKE '%idc=' || :conceptId || '&%'
+                    OR n.id_term LIKE '%idf=' || :conceptId || '&%'
+                    OR n.identifier LIKE '%idc=' || :conceptId
+                    OR n.identifier LIKE '%idf=' || :conceptId
+                    OR n.id_concept LIKE '%idc=' || :conceptId
+                    OR n.id_concept LIKE '%idf=' || :conceptId
+                    OR n.id_term LIKE '%idc=' || :conceptId
+                    OR n.id_term LIKE '%idf=' || :conceptId
+                  )
+                """;
+        }
+        sql += " ORDER BY 2, 4";
+        return em.createNativeQuery(sql)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
+    }
+
+    /**
+     * Les notes importées avec une URI ne se trouvent que par un filtre {@code LIKE}.
+     * Ce filtre empêche l'usage des index : on ne l'ajoute que si la base en contient.
+     */
+    private boolean uriShapedNotesPresent() {
+        Boolean cached = uriShapedNotes;
+        if (cached != null) {
+            return cached;
+        }
+        boolean present = !em.createNativeQuery("""
+                SELECT 1
+                FROM note
+                WHERE identifier LIKE '%/%' OR identifier LIKE '%idc=%' OR identifier LIKE '%idf=%'
+                   OR id_concept LIKE '%/%' OR id_concept LIKE '%idc=%' OR id_concept LIKE '%idf=%'
+                   OR id_term LIKE '%/%' OR id_term LIKE '%idc=%' OR id_term LIKE '%idf=%'
+                LIMIT 1
+                """).getResultList().isEmpty();
+        uriShapedNotes = present;
+        return present;
     }
 
     public List<Object[]> findBroaderRelations(
@@ -273,6 +319,7 @@ public class ConceptFullQueryRepository {
                 AND pt.id_thesaurus = c.id_thesaurus
             JOIN term t
                 ON t.id_term = pt.id_term
+                AND t.id_thesaurus = pt.id_thesaurus
                 AND t.lang = :lang
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :conceptId

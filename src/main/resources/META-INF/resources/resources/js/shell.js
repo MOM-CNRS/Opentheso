@@ -40,6 +40,31 @@ function resolveNodeType(el) {
   return type || "concept";
 }
 
+function openLabelFrom(el) {
+  if (!el) return "";
+  const text = el.querySelector(".tn-text");
+  if (text && text.textContent.trim()) return text.textContent.trim();
+  return (el.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function optimisticOpenLabel(id, label) {
+  const given = (label || "").replace(/\s+/g, " ").trim();
+  if (given) return given;
+  if (!id || typeof CSS === "undefined" || !CSS.escape) return "";
+  const text = document.querySelector('#panelTree .tn[data-id="' + CSS.escape(id) + '"] .tn-text');
+  return text ? text.textContent.replace(/\s+/g, " ").trim() : "";
+}
+
+function paintOptimisticFiche(id, label) {
+  const live = $("#viewLive");
+  const title = optimisticOpenLabel(id, label);
+  if (!live || !title) return;
+  const heading = live.querySelector(".cv-pref > span:not(.cv-lang):not(.cv-status):not(.cv-dot)");
+  if (!heading) return;
+  heading.textContent = title;
+  live.classList.add("is-optimistic");
+}
+
 function beginLiveOpen() {
   const live = $("#viewLive");
   if (!live) return;
@@ -4377,7 +4402,7 @@ function loadConceptExtras() {
 function finishLiveOpen() {
   const live = $("#viewLive");
   if (!live) return;
-  live.classList.remove("is-loading", "is-opening");
+  live.classList.remove("is-loading", "is-opening", "is-optimistic");
   live.classList.add("is-ready");
   live.removeAttribute("aria-busy");
   const bar = $("#liveProgress");
@@ -4531,7 +4556,7 @@ function sanitizeFacesFormAction(form) {
   }
 }
 
-function openLiveDetail(id, nodeType) {
+function openLiveDetail(id, nodeType, label) {
   const idEl = document.getElementById("previewOpenForm:openId");
   const typeEl = document.getElementById("previewOpenForm:openType");
   const btn = document.getElementById("previewOpenForm:openBtn");
@@ -4539,7 +4564,10 @@ function openLiveDetail(id, nodeType) {
   idEl.value = id;
   if (typeEl) typeEl.value = nodeType || "";
   sanitizeFacesFormAction(btn.form);
-  if (!(state.view === "hyper" && state.graphFront)) beginLiveOpen();
+  if (!(state.view === "hyper" && state.graphFront)) {
+    paintOptimisticFiche(id, label);
+    beginLiveOpen();
+  }
   markCandRowOpen(id);
   btn.click();
   return true;

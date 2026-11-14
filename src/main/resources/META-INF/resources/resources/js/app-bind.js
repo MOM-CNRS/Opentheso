@@ -231,7 +231,7 @@ function onV2Ajax(data) {
   if (data.status === "error" && srcIdBegin.indexOf("openBtn") >= 0) {
     const live = $("#viewLive");
     if (live) {
-      live.classList.remove("is-loading");
+      live.classList.remove("is-loading", "is-optimistic");
       live.removeAttribute("aria-busy");
     }
     const bar = $("#liveProgress");

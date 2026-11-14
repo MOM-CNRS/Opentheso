@@ -632,7 +632,7 @@ document.addEventListener("click", (e) => {
     const stay = !!(t.closest("#panelTable") || t.closest("#panelResults") || t.closest("#resultsList")
       || t.closest("#panelCollection") || t.closest("#collectionDetail") || state.view === "collection");
     if (typeof rememberTreeFocus === "function") rememberTreeFocus(t.closest(".tn"), id);
-    if (openLiveDetail(id, nodeType)) {
+    if (openLiveDetail(id, nodeType, openLabelFrom(t))) {
       state.home = false;
       state.draft = false;
       state.collectionDraft = false;
