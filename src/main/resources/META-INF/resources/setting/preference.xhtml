@@ -626,7 +626,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card is-closed st-server#{thesaurusIdentifierBean.preference.useOpenArk ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server st-open-ark#{thesaurusIdentifierBean.preference.useOpenArk ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
                     <button type="button" class="st-card-tog" aria-expanded="false">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
@@ -645,31 +645,34 @@
                     <div class="st-row">
                       <div class="st-row-l">Serveur Ark</div>
                       <div class="st-row-c">
-                        <h:inputText styleClass="st-input" value="#{thesaurusIdentifierBean.preference.serverOpenArk}"
-                                     disabled="#{not thesaurusIdentifierBean.preference.useOpenArk}"/>
+                        <h:inputText id="previewServerOpenArk" styleClass="st-input"
+                                     value="#{thesaurusIdentifierBean.preference.serverOpenArk}"/>
                       </div>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Votre Naan</div>
                       <div class="st-row-c">
-                        <h:inputText styleClass="st-input" value="#{thesaurusIdentifierBean.preference.naanOpenArk}"
-                                     disabled="#{not thesaurusIdentifierBean.preference.useOpenArk}"/>
+                        <h:inputText id="previewNaanOpenArk" styleClass="st-input"
+                                     value="#{thesaurusIdentifierBean.preference.naanOpenArk}"/>
                       </div>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Préfixe Ark</div>
                       <div class="st-row-c">
-                        <h:inputText styleClass="st-input" value="#{thesaurusIdentifierBean.preference.prefixOpenArk}"
-                                     disabled="#{not thesaurusIdentifierBean.preference.useOpenArk}"/>
+                        <h:inputText id="previewPrefixOpenArk" styleClass="st-input"
+                                     value="#{thesaurusIdentifierBean.preference.prefixOpenArk}"/>
                       </div>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Clé d'API</div>
                       <div class="st-row-c">
-                        <h:inputSecret styleClass="st-input"
+                        <h:inputSecret id="previewApiKeyOpenArk" styleClass="st-input"
                                        value="#{thesaurusIdentifierBean.preference.newApiKeyOpenArk}"
-                                       redisplay="false"
-                                       disabled="#{not thesaurusIdentifierBean.preference.useOpenArk}"/>
+                                       redisplay="true"/>
+                        <h:panelGroup layout="block" styleClass="st-note"
+                                      rendered="#{thesaurusIdentifierBean.preference.apiKeyOpenArkPresent}">
+                          Une clé est déjà enregistrée. Laissez ce champ vide pour la conserver.
+                        </h:panelGroup>
                       </div>
                     </div>
                   </div>

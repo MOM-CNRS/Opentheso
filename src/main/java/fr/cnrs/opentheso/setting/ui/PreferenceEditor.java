@@ -53,6 +53,7 @@ public class PreferenceEditor implements Serializable {
     private String naanOpenArk;
     private String prefixOpenArk;
     private String apiKeyOpenArk;
+    private boolean apiKeyOpenArkPresent;
 
     private boolean autoExpandTree;
     private boolean sortByNotation;
@@ -125,6 +126,8 @@ public class PreferenceEditor implements Serializable {
         editor.setServerOpenArk(preferences.serverOpenArk());
         editor.setNaanOpenArk(preferences.naanOpenArk());
         editor.setPrefixOpenArk(preferences.prefixOpenArk());
+        String storedOpenArkKey = preferences.apiKeyOpenArk();
+        editor.setApiKeyOpenArkPresent(storedOpenArkKey != null && !storedOpenArkKey.isBlank());
         editor.setApiKeyOpenArk("");
         editor.setAutoExpandTree(preferences.autoExpandTree());
         editor.setSortByNotation(preferences.sortByNotation());

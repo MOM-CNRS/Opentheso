@@ -457,7 +457,8 @@ window.onPreviewPrefSave = function (data) {
     return;
   }
   if (msg.getAttribute("data-ok") === "true") {
-    requestAnimationFrame(rememberSettingsBaseline);
+    if (typeof restoreArkLocalDraft === "function") restoreArkLocalDraft();
+    if (typeof rememberSettingsBaseline === "function") rememberSettingsBaseline();
     const el = $("#stSaveToast");
     if (!el) return;
     el.hidden = false;

@@ -23,6 +23,7 @@ class PreferenceEditorTest {
         assertEquals("", editor.getPassArk());
         assertEquals("", editor.getDeeplApiKey());
         assertEquals("", editor.getApiKeyOpenArk());
+        assertFalse(editor.isApiKeyOpenArkPresent());
         assertEquals(1, editor.getLanguages().size());
     }
 

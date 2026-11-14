@@ -339,6 +339,7 @@ window.appHandleLaterAct = function (e, t, act) {
     clearSelection();
   } else if (act === "st-group") {
     e.preventDefault();
+    if (document.body.getAttribute("data-logged-in") !== "1") return;
     const key = t.getAttribute("data-group");
     const list = GROUPS[key] || [];
     const allOn = list.every(s => state.statusSet.has(s));
@@ -347,6 +348,7 @@ window.appHandleLaterAct = function (e, t, act) {
     persistTreeStatus();
   } else if (act === "st-item") {
     e.preventDefault();
+    if (document.body.getAttribute("data-logged-in") !== "1") return;
     const s = t.getAttribute("data-status");
     if (state.statusSet.has(s)) state.statusSet.delete(s);
     else state.statusSet.add(s);

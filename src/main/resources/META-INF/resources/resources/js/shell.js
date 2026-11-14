@@ -4753,7 +4753,7 @@ function paintViewPick() {
     tbl.hidden = state.view !== "tableau";
     if (state.view === "tableau") applyTableCols();
   }
-  const stk = $(".vo-pop-stk");
+  const stk = $("#voStatusOpts");
   if (stk) stk.hidden = !(state.view === "arbo" || state.view === "tableau" || state.view === "hyper");
   $("#thIdBtn") && $("#thIdBtn").classList.toggle("is-active", SCREEN === "accueil");
   paintBadges();

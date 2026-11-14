@@ -111,7 +111,7 @@ function bindPrefSwitches() {
 }
 
 const settingsOpenCards = new Set();
-const arkLocalFieldIds = ["previewNaanArkLocal", "previewPrefixArkLocal", "previewSizeIdArkLocal"];
+const arkLocalFieldIds = ["previewNaanArkLocal", "previewPrefixArkLocal", "previewSizeIdArkLocal", "previewServerOpenArk", "previewNaanOpenArk", "previewPrefixOpenArk", "previewApiKeyOpenArk"];
 const arkLocalDraft = {};
 
 document.addEventListener("input", (e) => {
