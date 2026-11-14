@@ -7657,6 +7657,11 @@ function boSyncPanel(obj, op, cssClasses) {
   panel.setAttribute("data-live", "1");
   panel.setAttribute("data-obj", obj);
   panel.setAttribute("data-op", op);
+  const form = panel.querySelector("form.bo-live");
+  if (form) {
+    const extra = (cssClasses || "").split(/\s+/).filter(Boolean);
+    form.className = ["bo-card-b", "bo-live"].concat(extra).join(" ");
+  }
   if (panel.classList.contains("has-errors")) {
     panel.classList.add("bo-shake");
     setTimeout(() => panel.classList.remove("bo-shake"), 420);

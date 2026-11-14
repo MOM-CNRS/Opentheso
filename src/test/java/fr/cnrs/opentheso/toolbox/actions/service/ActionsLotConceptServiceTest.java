@@ -64,7 +64,7 @@ class ActionsLotConceptServiceTest {
         assertEquals(1, result.linesRead());
         assertEquals(0, result.validCount());
         assertEquals(1, result.errorCount());
-        assertEquals("URI", result.errors().get(0).column());
+        assertEquals("Id", result.errors().get(0).column());
     }
 
     @Test
@@ -82,6 +82,23 @@ class ActionsLotConceptServiceTest {
         assertTrue(result.success());
         assertEquals(1, result.validCount());
         assertEquals(0, result.errorCount());
+        assertEquals("21", result.validCandidates().get(0).identifier());
+    }
+
+    @Test
+    void validateAdd_acceptsAnIdColumn() {
+        String csv = """
+                Id,skos:prefLabel@fr
+                21,Lyon
+                """;
+        ActionsLotTestIds.existing(persistence);
+
+        ActionsLotImportValidationResult<ActionsLotConceptCandidate> result = service.validateAdd(
+                csv.getBytes(StandardCharsets.UTF_8), 0, "identifier", "TH1"
+        );
+
+        assertTrue(result.success());
+        assertEquals(1, result.validCount());
         assertEquals("21", result.validCandidates().get(0).identifier());
     }
 
@@ -180,7 +197,7 @@ class ActionsLotConceptServiceTest {
         assertTrue(result.success());
         assertEquals(0, result.validCount());
         assertEquals(1, result.errorCount());
-        assertEquals("deprecated", result.errors().get(0).column());
+        assertEquals("Id", result.errors().get(0).column());
     }
 
     @Test
@@ -199,6 +216,24 @@ class ActionsLotConceptServiceTest {
         assertEquals(0, result.validCount());
         assertEquals(1, result.errorCount());
         assertEquals("isReplacedBy", result.errors().get(0).column());
+    }
+
+    @Test
+    void validateDeprecate_acceptsAnIdColumn() {
+        String csv = """
+                Id,isReplacedBy,skos:note@fr
+                c1,c2,note
+                """;
+        ActionsLotTestIds.existing(persistence, "c1", "c2");
+
+        ActionsLotImportValidationResult<ActionsLotDeprecateCandidate> result = service.validateDeprecate(
+                csv.getBytes(StandardCharsets.UTF_8), 0, "identifier", "TH1"
+        );
+
+        assertTrue(result.success());
+        assertEquals(1, result.validCount());
+        assertEquals("c1", result.validCandidates().get(0).localId());
+        assertEquals("c2", result.validCandidates().get(0).replacedByLocalId());
     }
 
     @Test

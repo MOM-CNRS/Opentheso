@@ -41,7 +41,7 @@ import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptObject;
 public class ActionsLotConceptService {
 
     public static final String ADD_TEMPLATE = """
-            URI,skos:prefLabel@fr,skos:prefLabel@en,skos:definition@fr,skos:broader
+            Id,skos:prefLabel@fr,skos:prefLabel@en,skos:definition@fr,skos:broader
             20,France,France_en,Pays de la liberté##fait partie de l'Europe,19
             21,Lyon,Lyon_en,Ville de la gastronomie,20
             """;
@@ -52,8 +52,8 @@ public class ActionsLotConceptService {
             """;
 
     public static final String DEPRECATE_TEMPLATE = """
-            deprecated,isReplacedBy,skos:note@fr
-            https://ark.frantiq.fr/ark:/26678/crtcg26jeN4R9,https://ark.frantiq.fr/ark:/26678/pcrtbpkL4pLqjd,La bonne localité est « Las Médulas » (31076)
+            Id,isReplacedBy,skos:note@fr
+            26678,300,La bonne localité est « Las Médulas » (31076)
             """;
 
     public static final String COMPARE_TEMPLATE = """
@@ -117,20 +117,20 @@ public class ActionsLotConceptService {
         }
         String identifier = StringUtils.trimToEmpty(row.getIdConcept());
         if (StringUtils.isBlank(identifier)) {
-            errors.add(new ActionsLotLineError(line, ActionsLotMessages.EMPTY_PLACEHOLDER, "URI", ActionsLotMessages.IDENTIFIER_REQUIRED));
+            errors.add(new ActionsLotLineError(line, ActionsLotMessages.EMPTY_PLACEHOLDER, "Id", ActionsLotMessages.IDENTIFIER_REQUIRED));
             return;
         }
         String type = StringUtils.defaultIfBlank(row.getType(), ActionsLotMessages.SKOS_CONCEPT).toLowerCase();
         if (ActionsLotMessages.SKOS_COLLECTION.equals(type)) {
             if (existingGroups.contains(identifier)) {
                 errors.add(new ActionsLotLineError(
-                        line, identifier, "URI", "Collection déjà présente dans le thésaurus"
+                        line, identifier, "Id", "Collection déjà présente dans le thésaurus"
                 ));
                 return;
             }
         } else if (existingConcepts.containsKey(identifier)) {
             errors.add(new ActionsLotLineError(
-                    line, identifier, "URI", "Identifiant déjà présent dans le thésaurus"
+                    line, identifier, "Id", "Identifiant déjà présent dans le thésaurus"
             ));
             return;
         } else if (row.getPrefLabels() == null || row.getPrefLabels().isEmpty()) {
@@ -356,7 +356,7 @@ public class ActionsLotConceptService {
             try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 if (!reader.readFileCsvDeprecateConcepts(bodyReader)) {
                     return ActionsLotImportValidationResult.failure(
-                            "Lecture CSV impossible. Vérifiez le séparateur et les en-têtes (deprecated, isReplacedBy)."
+                            "Lecture CSV impossible. Vérifiez le séparateur et les en-têtes (Id, isReplacedBy)."
                     );
                 }
             }
@@ -366,7 +366,7 @@ public class ActionsLotConceptService {
         }
         if (rows == null || rows.isEmpty()) {
             return ActionsLotImportValidationResult.failure(
-                    "Aucune ligne lue. Vérifiez le séparateur et les en-têtes (deprecated, isReplacedBy)."
+                    "Aucune ligne lue. Vérifiez le séparateur et les en-têtes (Id, isReplacedBy)."
             );
         }
 
@@ -407,13 +407,13 @@ public class ActionsLotConceptService {
         }
         String localId = StringUtils.trimToEmpty(row.getDeprecatedId());
         if (StringUtils.isBlank(localId)) {
-            errors.add(new ActionsLotLineError(line, ActionsLotMessages.EMPTY_PLACEHOLDER, "deprecated", ActionsLotMessages.IDENTIFIER_REQUIRED));
+            errors.add(new ActionsLotLineError(line, ActionsLotMessages.EMPTY_PLACEHOLDER, "Id", ActionsLotMessages.IDENTIFIER_REQUIRED));
             return;
         }
         String conceptId = resolved.get(localId);
         if (StringUtils.isBlank(conceptId)) {
             errors.add(new ActionsLotLineError(
-                    line, localId, "deprecated", "Identifiant introuvable dans le thésaurus"
+                    line, localId, "Id", "Identifiant introuvable dans le thésaurus"
             ));
             return;
         }

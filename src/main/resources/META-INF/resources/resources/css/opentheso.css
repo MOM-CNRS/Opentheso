@@ -846,6 +846,9 @@ button.bap-chip-more:hover{color:var(--accent);border-color:var(--accent)}
 .bo-valid{display:none}
 .bo-panel.is-checked:not(.is-done) .bo-valid,
 .bo-live.is-checked:not(.is-done) .bo-valid{display:block}
+.bo-panel.is-checked:not(.is-done) .bo-live.is-done .bo-valid,
+.bo-panel.is-done .bo-valid,
+.bo-live.is-done .bo-valid{display:none}
 .bo-valid-ok{display:none}
 .bo-stat-zero{display:none}
 .bo-panel.is-corrected.is-checked .bo-valid-errors,

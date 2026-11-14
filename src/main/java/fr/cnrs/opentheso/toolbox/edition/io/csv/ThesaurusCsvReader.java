@@ -293,6 +293,9 @@ public class ThesaurusCsvReader {
                 NodeDeprecated nodeDeprecated = new NodeDeprecated();
                 value = optionalColumn(csvRecord, "deprecated");
                 if (value == null) {
+                    value = optionalColumn(csvRecord, "Id");
+                }
+                if (value == null) {
                     continue;
                 }
                 nodeDeprecated.setDeprecatedId(value);
@@ -1198,11 +1201,15 @@ public class ThesaurusCsvReader {
 
     private void addThesaurusRecord(CSVRecord csvRecord, boolean readEmptyData, StringBuilder missingIds) {
         ThesaurusCsvConceptObject conceptObject = new ThesaurusCsvConceptObject();
-        String uri1 = optionalColumn(csvRecord, "URI");
-        conceptObject.setUri(uri1);
+        String fromId = optionalColumn(csvRecord, "Id");
+        String fromUri = optionalColumn(csvRecord, "URI");
+        String uri1 = StringUtils.isNotBlank(fromId) ? fromId : fromUri;
+        conceptObject.setUri(StringUtils.isNotBlank(fromUri) ? fromUri : fromId);
 
         if (csvRecord.isMapped(COL_IDENTIFIER)) {
             assignIdFromIdentifierColumn(conceptObject, csvRecord, uri1);
+        } else if (StringUtils.isNotBlank(uri1)) {
+            conceptObject.setIdConcept(getId(uri1));
         } else {
             assignIdFromUriColumn(conceptObject, csvRecord);
         }
