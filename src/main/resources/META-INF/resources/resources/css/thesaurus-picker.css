@@ -1756,9 +1756,10 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
   .tp-table tbody tr.tp-row::after{
     content:"";order:3;flex:1 0 100%;width:0;height:0;margin:0;padding:0;border:0;overflow:hidden
   }
-  .tp-table tbody tr.tp-empty-row{
+  .tp-table tbody tr.tp-empty-row:not([hidden]){
     display:block;border:0;padding:0;margin:0;background:transparent;box-shadow:none
   }
+  .tp-table tbody tr.tp-empty-row[hidden]{display:none!important}
   .tp-table tbody tr.tp-empty-row::after{content:none}
   .tp-table tbody tr.tp-empty-row td{
     display:block;padding:0;border:0
