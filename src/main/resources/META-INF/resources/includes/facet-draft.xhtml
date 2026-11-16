@@ -213,7 +213,7 @@
             <h:commandButton id="fctCreate" styleClass="preview-open-btn" style="display:none"
                              value="#{localeBean.getMsg('facet.draft.create')}"
                              action="#{facetDetailEditorBean.createFacetDraft}">
-              <f:ajax execute="@form" render="@form" onevent="onFacetDraftAjax"/>
+              <f:ajax execute="@form" render="@form :previewTree" onevent="onFacetDraftAjax"/>
             </h:commandButton>
           </ui:fragment>
           <h:commandButton id="fctCancel" styleClass="preview-open-btn" style="display:none"

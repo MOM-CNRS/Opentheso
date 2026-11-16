@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.ui.ThesaurusBrowseBean;
+import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.concept.write.model.ConceptWriteCollection;
 import fr.cnrs.opentheso.concept.write.model.ConceptWriteLanguage;
@@ -67,6 +68,7 @@ public class FacetDetailEditorBean implements Serializable {
     private final transient UserSession userSession;
     private final transient ConceptWritePolicy conceptWritePolicy;
     private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ThesaurusViewBean thesaurusViewBean;
 
     private String label;
     private String definition;
@@ -371,6 +373,10 @@ public class FacetDetailEditorBean implements Serializable {
             return;
         }
         thesaurusBrowseBean.invalidateConceptTree();
+        thesaurusViewBean.reloadTree();
+        if (StringUtils.isNotBlank(createdFacetId)) {
+            thesaurusViewBean.revealFacet(parentId, createdFacetId);
+        }
         if (!chain) {
             return;
         }

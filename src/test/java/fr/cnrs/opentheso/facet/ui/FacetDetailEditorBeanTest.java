@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.facet.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.concept.model.FacetDetailOverview;
 import fr.cnrs.opentheso.concept.ui.ThesaurusBrowseBean;
+import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.concept.write.service.ConceptLifecycleMutationService;
@@ -53,6 +54,7 @@ class FacetDetailEditorBeanTest {
     @Mock private UserSession userSession;
     @Mock private ConceptWritePolicy conceptWritePolicy;
     @Mock private ThesaurusBrowseBean thesaurusBrowseBean;
+    @Mock private ThesaurusViewBean thesaurusViewBean;
 
     private FacetDetailEditorBean bean;
 
@@ -64,7 +66,7 @@ class FacetDetailEditorBeanTest {
         bean = new FacetDetailEditorBean(
                 facetMutationService, facetReadService, conceptWriteSearchService,
                 conceptWriteMetadataService, conceptLifecycleMutationService, conceptNoteMutationService,
-                thesaurusContext, userSession, conceptWritePolicy, thesaurusBrowseBean);
+                thesaurusContext, userSession, conceptWritePolicy, thesaurusBrowseBean, thesaurusViewBean);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         lenient().when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(true);
@@ -175,6 +177,8 @@ class FacetDetailEditorBeanTest {
         assertFalse(bean.isChainNext());
         assertEquals("F12", bean.getCreatedFacetId());
         verify(thesaurusBrowseBean).invalidateConceptTree();
+        verify(thesaurusViewBean).reloadTree();
+        verify(thesaurusViewBean).revealFacet("C9", "F12");
     }
 
     @Test

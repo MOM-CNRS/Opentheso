@@ -546,6 +546,31 @@ public class ThesaurusViewBean implements Serializable {
         }
     }
 
+    /**
+     * Une facette n'a pas de fil d'Ariane concept : on déplie le concept parent,
+     * puis la facette parmi ses fils.
+     */
+    public void revealFacet(String parentConceptId, String facetId) {
+        String facet = StringUtils.trimToEmpty(facetId);
+        String parent = StringUtils.trimToEmpty(parentConceptId);
+        revealId = facet;
+        revealedConceptId = facet;
+        if (StringUtils.isBlank(facet)) {
+            return;
+        }
+        ensureTreeLoaded();
+        if (StringUtils.isNotBlank(parent)) {
+            for (List<BreadcrumbStep> path : breadcrumbPathsForReveal(parent)) {
+                List<String> ids = new ArrayList<>(idsOfPath(path, parent));
+                ids.add(facet);
+                if (expandTreePath(ids)) {
+                    return;
+                }
+            }
+        }
+        revealInTree();
+    }
+
     private List<List<BreadcrumbStep>> breadcrumbPathsForReveal(String id) {
         List<List<BreadcrumbStep>> paths = conceptReadService.loadBreadcrumbPaths(
                 getId(),

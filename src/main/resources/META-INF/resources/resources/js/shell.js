@@ -7585,6 +7585,9 @@ function onFacetDraftAjax(data) {
   const msg = root && root.getAttribute("data-created-msg");
   if (msg && typeof toast === "function") toast(msg, { soft: true });
   const createdId = result && result.getAttribute("data-id");
+  if (createdId && typeof selectOpenedInTree === "function") {
+    selectOpenedInTree(createdId);
+  }
   resolveFacetDraftUi("créé");
   if (createdId && typeof openLiveDetail === "function") {
     openLiveDetail(createdId, "facet");
