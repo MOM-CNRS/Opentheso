@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.concept.model.ConceptExternalResourceItem;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.concept.model.ConceptGpsPoint;
 import fr.cnrs.opentheso.concept.model.ConceptHierarchicalRelation;
+import fr.cnrs.opentheso.concept.model.ConceptLabelSort;
 import fr.cnrs.opentheso.concept.model.ConceptImageItem;
 import fr.cnrs.opentheso.concept.model.ConceptResourceStatus;
 import fr.cnrs.opentheso.concept.model.ConceptSnapshotNote;
@@ -74,20 +75,8 @@ public class ConceptFullAssembler {
         if (paging == null || StringUtils.isAnyBlank(thesaurusId, conceptId, lang) || paging.narrowerLimit() <= 0) {
             return Collections.emptyList();
         }
-        List<ConceptHierarchicalRelation> relations = mapNarrowerRelations(
-                conceptFullQueryRepository.findNarrowerRelations(
-                        conceptId,
-                        thesaurusId,
-                        lang,
-                        paging.includePrivateGroups(),
-                        paging.narrowerOffset(),
-                        paging.narrowerLimit()
-                ),
-                thesaurusId,
-                preferences,
-                applicationBaseUrl
-        );
-        return relations != null ? relations : Collections.emptyList();
+        return loadAlignedNarrowers(
+                thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl);
     }
 
     private ConceptFullSnapshot buildNode(
@@ -142,19 +131,8 @@ public class ConceptFullAssembler {
                 preferences,
                 applicationBaseUrl
         ));
-        concept.setNarrowers(mapNarrowerRelations(
-                conceptFullQueryRepository.findNarrowerRelations(
-                        conceptId,
-                        thesaurusId,
-                        lang,
-                        paging.includePrivateGroups(),
-                        paging.narrowerOffset(),
-                        paging.narrowerLimit()
-                ),
-                thesaurusId,
-                preferences,
-                applicationBaseUrl
-        ));
+        concept.setNarrowers(loadAlignedNarrowers(
+                thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl));
 
         mapAlignments(concept, conceptId, thesaurusId);
         concept.setGps(mapGps(conceptId, thesaurusId));
@@ -272,19 +250,61 @@ public class ConceptFullAssembler {
         );
     }
 
+    private List<ConceptHierarchicalRelation> loadAlignedNarrowers(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            ConceptAssemblePaging paging,
+            ThesaurusPreferences preferences,
+            String applicationBaseUrl
+    ) {
+        boolean includeCandidates = paging.includePrivateGroups()
+                || (preferences != null && preferences.showCandidatesToGuests());
+        List<Object[]> rows = new ArrayList<>(conceptFullQueryRepository.findNarrowerRelations(
+                conceptId, thesaurusId, lang, includeCandidates));
+        boolean sortByNotation = preferences != null && preferences.sortByNotation();
+        rows.sort((left, right) -> compareTreeChildren(left, right, sortByNotation));
+        int from = Math.min(Math.max(paging.narrowerOffset(), 0), rows.size());
+        int to = Math.min(from + paging.narrowerLimit(), rows.size());
+        return mapNarrowerRelations(
+                rows.subList(from, to), thesaurusId, preferences, applicationBaseUrl, true);
+    }
+
+    private static int compareTreeChildren(Object[] left, Object[] right, boolean sortByNotation) {
+        if (sortByNotation) {
+            int byNotation = StringUtils.defaultString(stringAt(left, 6))
+                    .compareToIgnoreCase(StringUtils.defaultString(stringAt(right, 6)));
+            if (byNotation != 0) {
+                return byNotation;
+            }
+        }
+        return ConceptLabelSort.compareLabels(stringAt(left, 0), stringAt(right, 0));
+    }
+
     private List<ConceptHierarchicalRelation> mapNarrowerRelations(
             List<Object[]> rows,
             String thesaurusId,
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
+        return mapNarrowerRelations(rows, thesaurusId, preferences, applicationBaseUrl, false);
+    }
+
+    private List<ConceptHierarchicalRelation> mapNarrowerRelations(
+            List<Object[]> rows,
+            String thesaurusId,
+            ThesaurusPreferences preferences,
+            String applicationBaseUrl,
+            boolean preserveOrder
+    ) {
         if (rows.isEmpty()) {
             return List.of();
         }
+        List<ConceptHierarchicalRelation> ordered = new ArrayList<>();
         Set<ConceptHierarchicalRelation> relations = new LinkedHashSet<>();
         for (Object[] row : rows) {
             String relatedConceptId = stringAt(row, 1);
-            relations.add(new ConceptHierarchicalRelation(
+            ConceptHierarchicalRelation relation = new ConceptHierarchicalRelation(
                     ConceptUriBuilder.buildConceptUri(
                             preferences,
                             applicationBaseUrl,
@@ -297,7 +317,15 @@ public class ConceptFullAssembler {
                     relatedConceptId,
                     stringAt(row, 0),
                     stringAt(row, 2)
-            ));
+            );
+            if (preserveOrder) {
+                ordered.add(relation);
+            } else {
+                relations.add(relation);
+            }
+        }
+        if (preserveOrder) {
+            return List.copyOf(ordered);
         }
         List<ConceptHierarchicalRelation> sorted = new ArrayList<>(relations);
         Collections.sort(sorted);

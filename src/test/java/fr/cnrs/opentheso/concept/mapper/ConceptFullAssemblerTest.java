@@ -3,7 +3,10 @@ package fr.cnrs.opentheso.concept.mapper;
 import fr.cnrs.opentheso.entites.ExternalResource;
 import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
+import fr.cnrs.opentheso.concept.model.ConceptHierarchicalRelation;
 import fr.cnrs.opentheso.concept.model.ConceptResourceStatus;
+import fr.cnrs.opentheso.setting.fixtures.SettingTestFixtures;
+import fr.cnrs.opentheso.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.shared.repository.ConceptFullQueryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +23,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -114,7 +116,7 @@ class ConceptFullAssemblerTest {
         when(conceptFullQueryRepository.findRelatedRelations("C1", "TH1", "fr"))
                 .thenReturn(rows(new Object[]{"Cousin", "R1", "RT", "", "", ""}));
         when(conceptFullQueryRepository.findNarrowerRelations(
-                eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyInt(), anyInt()
+                eq("C1"), eq("TH1"), eq("fr"), anyBoolean()
         )).thenReturn(rows(new Object[]{"Enfant", "N1", "NT", "arkN", "", ""}));
         when(conceptFullQueryRepository.findAlignments("C1", "TH1")).thenReturn(rows(
                 new Object[]{"Q1", "http://ex/1", "1", "exact"},
@@ -165,9 +167,43 @@ class ConceptFullAssemblerTest {
     }
 
     @Test
+    void assembleNarrowerRelations_sortsLikeTheTreeThenSlices() {
+        when(conceptFullQueryRepository.findNarrowerRelations(
+                eq("C1"), eq("TH1"), eq("fr"), eq(false)
+        )).thenReturn(rows(
+                new Object[]{"b", "B", "NT", "", "", "", ""},
+                new Object[]{"a10", "A10", "NT", "", "", "", ""},
+                new Object[]{"a2", "A2", "NT", "", "", "", ""}
+        ));
+
+        var first = assembler.assembleNarrowerRelations(
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 2, false), null, "http://x");
+        var rest = assembler.assembleNarrowerRelations(
+                "TH1", "C1", "fr", new ConceptAssemblePaging(2, 2, false), null, "http://x");
+
+        assertEquals(List.of("A2", "A10"), first.stream().map(ConceptHierarchicalRelation::conceptId).toList());
+        assertEquals(List.of("B"), rest.stream().map(ConceptHierarchicalRelation::conceptId).toList());
+    }
+
+    @Test
+    void assembleNarrowerRelations_sortsByNotationLikeTheTree() {
+        when(conceptFullQueryRepository.findNarrowerRelations(
+                eq("C1"), eq("TH1"), eq("fr"), eq(true)
+        )).thenReturn(rows(
+                new Object[]{"a", "B", "NT", "", "", "", "b"},
+                new Object[]{"z", "A", "NT", "", "", "", "a"}
+        ));
+
+        var relations = assembler.assembleNarrowerRelations(
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 10, true), notationPreferences(), "http://x");
+
+        assertEquals(List.of("A", "B"), relations.stream().map(ConceptHierarchicalRelation::conceptId).toList());
+    }
+
+    @Test
     void assembleNarrowerRelations_mapsRows() {
         when(conceptFullQueryRepository.findNarrowerRelations(
-                eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyInt(), anyInt()
+                eq("C1"), eq("TH1"), eq("fr"), anyBoolean()
         )).thenReturn(rows(new Object[]{"Enfant", "N1", "NT", "", "", ""}));
 
         var relations = assembler.assembleNarrowerRelations(
@@ -175,6 +211,67 @@ class ConceptFullAssemblerTest {
 
         assertEquals(1, relations.size());
         assertEquals("N1", relations.get(0).conceptId());
+    }
+
+    private static ThesaurusPreferences notationPreferences() {
+        ThesaurusPreferences base = SettingTestFixtures.samplePreferences();
+        return new ThesaurusPreferences(
+                base.thesaurusId(),
+                base.sourceLang(),
+                base.identifierType(),
+                base.cheminSite(),
+                base.idNaan(),
+                base.preferredName(),
+                base.originalUri(),
+                base.exportUriType(),
+                base.identifierServerType(),
+                base.useHandle(),
+                base.userHandle(),
+                base.passHandle(),
+                base.pathKeyHandle(),
+                base.pathCertHandle(),
+                base.urlApiHandle(),
+                base.prefixIdHandle(),
+                base.privatePrefixHandle(),
+                base.uriArk(),
+                base.useArk(),
+                base.serverArk(),
+                base.prefixArk(),
+                base.userArk(),
+                base.passArk(),
+                base.generateHandle(),
+                base.autoExpandTree(),
+                true,
+                base.treeCache(),
+                base.useArkLocal(),
+                base.naanArkLocal(),
+                base.prefixArkLocal(),
+                base.sizeIdArkLocal(),
+                base.breadcrumb(),
+                base.useConceptTree(),
+                base.displayUserName(),
+                base.suggestion(),
+                base.useCustomRelation(),
+                base.uppercaseForArk(),
+                base.showHistoryNote(),
+                base.showEditorialNote(),
+                base.useHandleWithCertificat(),
+                base.adminHandle(),
+                base.indexHandle(),
+                base.useDeeplTranslation(),
+                base.deeplApiKey(),
+                base.webservices(),
+                base.kohaLink(),
+                base.useOpenArk(),
+                base.serverOpenArk(),
+                base.naanOpenArk(),
+                base.prefixOpenArk(),
+                base.apiKeyOpenArk(),
+                base.showCandidatesToGuests(),
+                base.synchronisation(),
+                base.portail(),
+                base.languages()
+        );
     }
 
     private void stubMinimalConceptQueries() {
@@ -198,7 +295,7 @@ class ConceptFullAssemblerTest {
         when(conceptFullQueryRepository.findRelatedRelations(anyString(), anyString(), anyString()))
                 .thenReturn(Collections.emptyList());
         org.mockito.Mockito.lenient().when(conceptFullQueryRepository.findNarrowerRelations(
-                eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyInt(), anyInt()
+                eq("C1"), eq("TH1"), eq("fr"), anyBoolean()
         )).thenReturn(Collections.emptyList());
         when(conceptFullQueryRepository.findAlignments(anyString(), anyString())).thenReturn(Collections.emptyList());
         when(conceptFullQueryRepository.findGpsPoints(anyString(), anyString())).thenReturn(Collections.emptyList());

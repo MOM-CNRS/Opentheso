@@ -299,65 +299,57 @@ public class ConceptFullQueryRepository {
                 .getResultList();
     }
 
+    /**
+     * Fils directs affichés dans l'arbre : mêmes filtres que {@code findTreeChildConcepts}
+     * (candidats selon le visiteur, concepts sans libellé conservés, membres de facette exclus).
+     * Le plafond de 4000 est celui de l'arbre. Le tri final est fait ensuite comme l'arbre.
+     */
     public List<Object[]> findNarrowerRelations(
             String conceptId,
             String thesaurusId,
             String lang,
-            boolean includePrivateGroups,
-            int offset,
-            int limit
+            boolean includeCandidates
     ) {
-        var query = em.createNativeQuery("""
-            SELECT DISTINCT t.lexical_value, hr.id_concept2, hr.role, c.id_ark, c.id_handle, c.id_doi,
-                   CASE WHEN t.lexical_value ~ '^[0-9]+$' THEN t.lexical_value::int ELSE NULL END AS sort_key
+        return em.createNativeQuery("""
+            SELECT COALESCE(t.lexical_value, c.id_concept) AS label,
+                   c.id_concept,
+                   hr.role,
+                   c.id_ark, c.id_handle, c.id_doi,
+                   COALESCE(c.notation, '') AS notation
             FROM hierarchical_relationship hr
             JOIN concept c
-                ON hr.id_concept2 = c.id_concept
-                AND hr.id_thesaurus = c.id_thesaurus
-            JOIN preferred_term pt
+                ON c.id_concept = hr.id_concept2
+                AND c.id_thesaurus = hr.id_thesaurus
+            LEFT JOIN preferred_term pt
                 ON pt.id_concept = c.id_concept
                 AND pt.id_thesaurus = c.id_thesaurus
-            JOIN term t
+            LEFT JOIN term t
                 ON t.id_term = pt.id_term
-                AND t.id_thesaurus = pt.id_thesaurus
+                AND t.id_thesaurus = c.id_thesaurus
                 AND t.lang = :lang
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :conceptId
-              AND c.status != 'CA'
               AND hr.role LIKE 'NT%'
-              AND (
-                  :includePrivateGroups = true
-                  OR NOT EXISTS (
-                      SELECT 1
-                      FROM concept_group_concept cgc
-                      JOIN concept_group cg
-                          ON cg.idgroup = cgc.idgroup
-                          AND cg.idthesaurus = cgc.idthesaurus
-                          AND cg.private = true
-                      WHERE cgc.idconcept = c.id_concept
-                        AND cgc.idthesaurus = c.id_thesaurus
-                  )
-                  OR EXISTS (
-                      SELECT 1
-                      FROM concept_group_concept cgc
-                      JOIN concept_group cg
-                          ON cg.idgroup = cgc.idgroup
-                          AND cg.idthesaurus = cgc.idthesaurus
-                      WHERE cgc.idconcept = c.id_concept
-                        AND cgc.idthesaurus = c.id_thesaurus
-                        AND COALESCE(cg.private, false) = false
-                  )
+              AND (:includeCandidates = true OR UPPER(TRIM(c.status)) <> 'CA')
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM concept_facet cf
+                  JOIN thesaurus_array ta
+                      ON cf.id_facet = ta.id_facet
+                      AND cf.id_thesaurus = ta.id_thesaurus
+                  WHERE cf.id_concept = c.id_concept
+                    AND cf.id_thesaurus = c.id_thesaurus
+                    AND ta.id_concept_parent = :conceptId
+                    AND ta.id_thesaurus = :thesaurusId
               )
-            ORDER BY sort_key, t.lexical_value ASC
-            OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+            ORDER BY c.notation, label
+            LIMIT 4000
             """)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("includePrivateGroups", includePrivateGroups)
-                .setParameter("offset", offset)
-                .setParameter(NativeQueryParams.LIMIT, limit);
-        return query.getResultList();
+                .setParameter("includeCandidates", includeCandidates)
+                .getResultList();
     }
 
     public List<Object[]> findAlignments(String conceptId, String thesaurusId) {

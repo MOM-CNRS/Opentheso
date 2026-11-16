@@ -1,4 +1,4 @@
-FROM bitnamilegacy/java:17.0.12-10
+FROM bitnamilegacy/java:21.0.7-9
 
 WORKDIR /app
 COPY ./opentheso.jar .
