@@ -59,9 +59,19 @@ function paintOptimisticFiche(id, label) {
   const live = $("#viewLive");
   const title = optimisticOpenLabel(id, label);
   if (!live || !title) return;
-  const heading = live.querySelector(".cv-pref > span:not(.cv-lang):not(.cv-status):not(.cv-dot)");
+  const heading = live.querySelector(".cv-pref .cv-pref-label")
+    || live.querySelector(".cv-pref > span:not(.cv-lang):not(.cv-status):not(.cv-dot):not(.tn-lang)");
   if (!heading) return;
   heading.textContent = title;
+  const nodeText = id && window.CSS && CSS.escape
+    ? document.querySelector('#panelTree .tn[data-id="' + CSS.escape(id) + '"] .tn-text')
+    : null;
+  const fromSource = !!(nodeText && nodeText.classList.contains("is-source"));
+  heading.classList.toggle("cv-source", fromSource);
+  const lang = fromSource && nodeText.parentElement
+    ? ((nodeText.parentElement.querySelector(".tn-lang") || {}).textContent || "").trim()
+    : "";
+  syncSourceLangBadge(heading, fromSource, lang);
   live.classList.add("is-optimistic");
 }
 
@@ -2401,6 +2411,28 @@ function paintCutNode() {
   document.querySelectorAll('#panelTree .tn[data-id="' + escaped + '"]').forEach((el) => el.classList.add("is-cut"));
 }
 
+function syncSourceLangBadge(textEl, fromSource, code) {
+  const line = textEl.closest(".tn-line") || textEl.parentElement;
+  if (!line) return;
+  let badge = null;
+  for (const child of line.children) {
+    if (child.classList && child.classList.contains("tn-lang")) {
+      badge = child;
+      break;
+    }
+  }
+  if (!fromSource || !code) {
+    if (badge) badge.remove();
+    return;
+  }
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className = "tn-lang";
+    textEl.insertAdjacentElement("afterend", badge);
+  }
+  badge.textContent = code;
+}
+
 function applyConceptLabelUi(source) {
   applyDndFlash();
   paintCutNode();
@@ -2441,9 +2473,11 @@ function applyConceptLabelUi(source) {
   if (id && pref && pref !== "(" + id + ")") {
     const escaped = window.CSS && CSS.escape ? CSS.escape(id) : id.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     const fromSource = cv.getAttribute("data-pref-source") === "1";
+    const lang = (cv.getAttribute("data-pref-lang") || "").trim();
     document.querySelectorAll('.tn-label[data-id="' + escaped + '"] .tn-text').forEach((el) => {
       el.textContent = pref;
       el.classList.toggle("is-source", fromSource);
+      syncSourceLangBadge(el, fromSource, lang);
     });
   }
   try { bindImgGallery(); } catch (err) { /* gallery DOM already swapped by ajax */ }

@@ -2387,7 +2387,17 @@ body.is-gps-lightbox{overflow:hidden}
 .copy-btn{margin-left:8px;color:var(--ink-4);font-size:13px;width:24px;height:22px;border-radius:var(--r-sm)}
 .copy-btn:hover{background:var(--surface-2);color:var(--accent)}
 .cv-def{font-size:14.5px;line-height:1.6;color:var(--ink);max-width:62ch;text-wrap:pretty;margin:0}
-.tn-text.is-source,.cv-source{font-style:italic;color:var(--amber-ink)}
+.cv-source{font-style:italic;color:var(--amber-ink)}
+.cv-pref-line{display:inline-flex;align-items:center;gap:8px;min-width:0;max-width:100%}
+.cv-pref .cv-source{font-style:italic;font-weight:400;color:var(--ink-3)}
+.cv-pref .tn-lang{font-size:12px;padding:1px 7px}
+.tn-line{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.tn-line>.tn-text{flex:0 1 auto;min-width:0}
+.tn-text.is-source{font-style:italic;font-weight:400;color:var(--ink-3)}
+.tn-row.is-active .tn-text.is-source,.tn-label:hover .tn-text.is-source{color:var(--ink-3);font-weight:400}
+.tn-lang{flex:0 0 auto;font-style:normal;font-weight:600;font-size:10px;line-height:1.35;
+  letter-spacing:.02em;color:var(--ink-3);background:var(--surface);border:1px solid var(--line);
+  border-radius:4px;padding:0 5px}
 .cv-html :is(p, ul, ol){margin:.35em 0}
 .cv-html :is(p, ul, ol):first-child{margin-top:0}
 .cv-html :is(p, ul, ol):last-child{margin-bottom:0}

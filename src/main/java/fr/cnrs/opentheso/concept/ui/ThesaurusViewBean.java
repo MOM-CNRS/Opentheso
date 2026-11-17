@@ -1270,6 +1270,8 @@ public class ThesaurusViewBean implements Serializable {
     private boolean labelFromSource;
     private String labelSourceName = "";
     private String labelSourceCode = "";
+    private String treeSourceLangId = "";
+    private String treeSourceLang = "";
 
     public String getDisplayedPreferredLabel() {
         refreshLabelDisplay();
@@ -1289,6 +1291,15 @@ public class ThesaurusViewBean implements Serializable {
     public String getSourceLanguageCode() {
         refreshLabelDisplay();
         return labelSourceCode;
+    }
+
+    public String getTreeSourceLanguageCode() {
+        String thesaurusId = StringUtils.defaultString(getId());
+        if (!thesaurusId.equals(treeSourceLangId)) {
+            treeSourceLangId = thesaurusId;
+            treeSourceLang = readSourceLanguageCode();
+        }
+        return treeSourceLang;
     }
 
     private void refreshLabelDisplay() {

@@ -8,6 +8,7 @@
        data-id="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
        data-pref="#{thesaurusViewBean.displayedPreferredLabel}"
        data-pref-source="#{thesaurusViewBean.preferredLabelFromSource ? '1' : '0'}"
+       data-pref-lang="#{thesaurusViewBean.preferredLabelFromSource ? thesaurusViewBean.sourceLanguageCode : ''}"
        data-status="#{thesaurusViewBean.conceptDisplayStatus}"
        data-flash="#{conceptLabelBlockEditorBean.flashMessage}"
        data-flash-token="#{conceptLabelBlockEditorBean.flashToken}"
@@ -70,8 +71,13 @@
       <div class="cv-head-bar">
       <h1 class="cv-pref">
         <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-dot" aria-hidden="true"></span></ui:fragment>
-        <span class="#{thesaurusViewBean.preferredLabelFromSource ? 'cv-source' : ''}"
-              title="#{thesaurusViewBean.preferredLabelFromSource ? localeBean.getMsg('concept.label.source').concat(' · ').concat(thesaurusViewBean.sourceLanguageName) : ''}">#{thesaurusViewBean.dash(thesaurusViewBean.displayedPreferredLabel)}<ui:fragment rendered="#{thesaurusViewBean.preferredLabelFromSource}"> (#{thesaurusViewBean.sourceLanguageCode})</ui:fragment></span>
+        <span class="cv-pref-line">
+          <span class="cv-pref-label#{thesaurusViewBean.preferredLabelFromSource ? ' cv-source' : ''}"
+                title="#{thesaurusViewBean.preferredLabelFromSource ? localeBean.getMsg('concept.label.source').concat(' · ').concat(thesaurusViewBean.sourceLanguageName) : ''}">#{thesaurusViewBean.dash(thesaurusViewBean.displayedPreferredLabel)}</span>
+          <ui:fragment rendered="#{thesaurusViewBean.preferredLabelFromSource and not empty thesaurusViewBean.sourceLanguageCode}">
+            <span class="tn-lang" title="#{localeBean.getMsg('concept.label.source').concat(' · ').concat(thesaurusViewBean.sourceLanguageName)}">#{thesaurusViewBean.sourceLanguageCode}</span>
+          </ui:fragment>
+        </span>
         <ui:fragment rendered="#{not empty thesaurusViewBean.displayedPreferredLabel}">
           <button type="button" class="copy-btn"
                   title="#{localeBean.getMsg('concept.headTitle.copy')}"
