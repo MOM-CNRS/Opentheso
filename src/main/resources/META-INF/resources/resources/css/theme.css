@@ -308,6 +308,7 @@ body[data-page="thesauri"] .tp-head{align-items:flex-start;margin-bottom:26px}
 body[data-page="thesauri"] .tp-bar{align-items:center}
 body[data-page="thesauri"] .tp-search{
   min-height:0;height:auto;gap:9px;padding:0 14px;
+  margin-bottom: 10px;
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:none
 }
 body[data-page="thesauri"] .tp-search:hover{border-color:var(--line)}
