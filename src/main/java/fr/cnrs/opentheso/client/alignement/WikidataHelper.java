@@ -171,7 +171,7 @@ public class WikidataHelper {
                         na.setDef_target("");
                     }
                 } catch (Exception e) {
-                    continue;
+                    na.setDef_target("");
                 }                
 
                 na.setThesaurus_target(source);
