@@ -765,7 +765,7 @@
                     <f:ajax execute="@this"
                             render=":previewDetailForm:previewDetail :previewThTitle :previewTreeMetaBox :previewTermLangUi :termLang"
                             onevent="onPreviewTermLang"/>
-                    #{tr.value}
+                    <h:outputText value="#{htmlText.formatInline(tr.value)}" escape="false"/>
                   </h:commandLink>
                   <span class="tr-lang">#{thesaurusViewBean.languageLabel(tr.lang)}</span>
                   <ui:fragment rendered="#{tr.todo}">
@@ -775,7 +775,7 @@
                 <ui:fragment rendered="#{not empty tr.alts}">
                   <div class="tr-alts">
                     <span class="tr-alts-lbl">#{localeBean.getMsg('concept.translation.alts')}</span>
-                    <span lang="#{tr.lang}" dir="#{thesaurusViewBean.textDirection(tr.lang)}">#{tr.alts}</span>
+                    <span class="cv-html" lang="#{tr.lang}" dir="#{thesaurusViewBean.textDirection(tr.lang)}"><h:outputText value="#{htmlText.format(tr.alts)}" escape="false"/></span>
                   </div>
                 </ui:fragment>
               </div>
@@ -892,8 +892,8 @@
                     <span class="tr-code">#{note.lang}</span>
                   </ui:fragment>
                   <div class="note-line-b">
-                    <p class="cv-def" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}">#{note.value}
-                      <span class="note-lang">(#{note.lang})</span></p>
+                    <div class="cv-def cv-html" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}"><h:outputText value="#{htmlText.format(note.value)}" escape="false"/>
+                      <span class="note-lang">(#{note.lang})</span></div>
                     <ui:fragment rendered="#{not empty note.source}">
                       <span class="note-src">#{note.source}</span>
                     </ui:fragment>
