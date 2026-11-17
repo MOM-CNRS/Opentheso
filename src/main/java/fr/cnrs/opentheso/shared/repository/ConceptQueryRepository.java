@@ -1316,6 +1316,36 @@ public class ConceptQueryRepository {
         return toConceptTreeRows(rows);
     }
 
+    public Map<String, String> findPreferredLabels(String thesaurusId, String lang, List<String> conceptIds) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang) || conceptIds == null || conceptIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT pt.id_concept, t.lexical_value
+            FROM preferred_term pt
+            JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = pt.id_thesaurus
+                AND t.lang = :lang
+            WHERE pt.id_thesaurus = :thesaurusId
+              AND pt.id_concept IN (:conceptIds)
+              AND t.lexical_value IS NOT NULL
+              AND BTRIM(t.lexical_value) <> ''
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
+                .getResultList();
+        Map<String, String> labels = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            labels.put(String.valueOf(row[0]), String.valueOf(row[1]).trim());
+        }
+        return labels;
+    }
+
     public List<Object[]> findCandidateMeta(String thesaurusId, List<String> conceptIds) {
         if (conceptIds == null || conceptIds.isEmpty()) {
             return List.of();

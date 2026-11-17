@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.concept.model.ConceptCustomRelationItem;
 import fr.cnrs.opentheso.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.concept.model.ConceptIdentifiers;
 import fr.cnrs.opentheso.concept.model.ConceptSummary;
+import fr.cnrs.opentheso.concept.model.SourceLabelFallback;
 import fr.cnrs.opentheso.concept.model.ConceptPrefLabel;
 import fr.cnrs.opentheso.concept.model.ConceptSubtreeMember;
 import fr.cnrs.opentheso.concept.model.ConceptTreeNodeData;
@@ -94,12 +95,12 @@ public class ConceptReadService {
     }
 
     private List<ConceptTreeNodeData> loadRootConceptNodes(String thesaurusId, String lang, boolean sortByNotation) {
-        return conceptTreeConsultationService.loadTopConcepts(
+        return withSourceLabels(thesaurusId, lang, conceptTreeConsultationService.loadTopConcepts(
                 thesaurusId,
                 lang,
                 sortByNotation,
                 shouldIncludeCandidates(thesaurusId)
-        );
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -185,7 +186,7 @@ public class ConceptReadService {
         for (var row : conceptQueryRepository.findTreeRootConcepts(thesaurusId, lang, includeCandidates)) {
             nodes.add(toThesaurusTreeNode(row));
         }
-        return conceptTreeConsultationService.sortNodes(nodes, sortByNotation);
+        return withSourceLabels(thesaurusId, lang, conceptTreeConsultationService.sortNodes(nodes, sortByNotation));
     }
 
     @Transactional(readOnly = true)
@@ -224,7 +225,7 @@ public class ConceptReadService {
             for (var row : conceptQueryRepository.findFacetMembersForTree(thesaurusId, parentId, lang)) {
                 members.add(toThesaurusTreeNode(row));
             }
-            return conceptTreeConsultationService.sortNodes(members, sortByNotation);
+            return withSourceLabels(thesaurusId, lang, conceptTreeConsultationService.sortNodes(members, sortByNotation));
         }
         boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
         var nodes = new ArrayList<ConceptTreeNodeData>();
@@ -240,7 +241,46 @@ public class ConceptReadService {
                     facet.hasMembers()
             ));
         }
-        return conceptTreeConsultationService.sortNodes(nodes, sortByNotation);
+        return withSourceLabels(thesaurusId, lang, conceptTreeConsultationService.sortNodes(nodes, sortByNotation));
+    }
+
+    @Transactional(readOnly = true)
+    public String sourcePreferredLabel(String thesaurusId, String conceptId, String viewLang) {
+        String sourceLang = sourceLanguage(thesaurusId);
+        if (StringUtils.isAnyBlank(sourceLang, conceptId) || sourceLang.equalsIgnoreCase(StringUtils.trimToEmpty(viewLang))) {
+            return "";
+        }
+        return conceptQueryRepository.findPreferredLabels(thesaurusId, sourceLang, List.of(conceptId))
+                .getOrDefault(conceptId, "");
+    }
+
+    private List<ConceptTreeNodeData> withSourceLabels(String thesaurusId, String lang, List<ConceptTreeNodeData> nodes) {
+        if (nodes == null || nodes.isEmpty()) {
+            return nodes == null ? List.of() : nodes;
+        }
+        String sourceLang = sourceLanguage(thesaurusId);
+        if (StringUtils.isBlank(sourceLang) || sourceLang.equalsIgnoreCase(StringUtils.trimToEmpty(lang))) {
+            return nodes;
+        }
+        List<String> missing = new ArrayList<>();
+        for (ConceptTreeNodeData node : nodes) {
+            if (node != null && SourceLabelFallback.missing(node.label(), node.nodeId())) {
+                missing.add(node.nodeId());
+            }
+        }
+        if (missing.isEmpty()) {
+            return nodes;
+        }
+        return SourceLabelFallback.apply(nodes, conceptQueryRepository.findPreferredLabels(thesaurusId, sourceLang, missing));
+    }
+
+    private String sourceLanguage(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return "";
+        }
+        return preferencesRepository.findByIdThesaurus(thesaurusId)
+                .map(Preferences::getSourceLang)
+                .orElse("");
     }
 
     @Transactional(readOnly = true)

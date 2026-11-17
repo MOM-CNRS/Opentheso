@@ -2438,10 +2438,12 @@ function applyConceptLabelUi(source) {
   });
   const id = cv.getAttribute("data-id");
   const pref = cv.getAttribute("data-pref");
-  if (id && pref) {
+  if (id && pref && pref !== "(" + id + ")") {
     const escaped = window.CSS && CSS.escape ? CSS.escape(id) : id.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const fromSource = cv.getAttribute("data-pref-source") === "1";
     document.querySelectorAll('.tn-label[data-id="' + escaped + '"] .tn-text').forEach((el) => {
       el.textContent = pref;
+      el.classList.toggle("is-source", fromSource);
     });
   }
   try { bindImgGallery(); } catch (err) { /* gallery DOM already swapped by ajax */ }

@@ -22,6 +22,7 @@ public class ThesaurusTreeNode implements Serializable {
     private String path;
     private int depth;
     private boolean hasChildren;
+    private boolean sourceLabel;
     private boolean expanded;
     private boolean childrenLoaded;
     private List<ThesaurusTreeNode> children = new ArrayList<>();
