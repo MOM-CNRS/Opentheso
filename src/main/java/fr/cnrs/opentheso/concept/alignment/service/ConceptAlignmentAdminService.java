@@ -793,7 +793,7 @@ public class ConceptAlignmentAdminService {
 
     private boolean isPingOk(String baseUri) {
         try {
-            URL url = URI.create(baseUri + "/api/ping").toURL();
+            URL url = URI.create(baseUri + "/openapi/v1/ping").toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);

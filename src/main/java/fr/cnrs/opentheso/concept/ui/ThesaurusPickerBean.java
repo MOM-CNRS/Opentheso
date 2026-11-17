@@ -174,6 +174,10 @@ public class ThesaurusPickerBean implements Serializable {
                 .toList();
     }
 
+    public boolean isCatalogEmpty() {
+        return rows == null || rows.isEmpty();
+    }
+
     /** Texte indexé pour le filtre de recherche client (liste des thésaurus). */
     public String searchText(ThesaurusPickerRow row) {
         if (row == null) {

@@ -17,13 +17,6 @@
 
         <ui:fragment rendered="#{thesaurusPickerBean.listMode}">
         <div class="tp-hero">
-          <div class="tp-head">
-            <div class="tp-head-copy">
-              <h1 class="tp-title">OpenTheso</h1>
-              <p class="tp-sub">#{localeBean.getMsg('picker.subtitle')}</p>
-            </div>
-          </div>
-
           <div class="tp-bar">
           <div class="tp-search#{not empty thesaurusPickerBean.query ? ' has-query' : ''}"
                id="tpSearch"
@@ -414,7 +407,7 @@
                 </tr>
               </thead>
               <tbody>
-                <ui:fragment rendered="#{empty thesaurusPickerBean.catalogRows}">
+                <ui:fragment rendered="#{thesaurusPickerBean.catalogEmpty}">
                   <tr class="tp-empty-row tp-empty-row--catalog">
                     <td colspan="#{thesaurusPickerBean.emptyColspan}">
                       <div class="tp-empty">

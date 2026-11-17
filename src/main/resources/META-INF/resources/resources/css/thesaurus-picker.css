@@ -1198,7 +1198,7 @@ body[data-page="thesauri"] .tp--create .bo-back.is-leaving{
   animation:tp-fade-in .3s ease-out;overflow:visible}
 .tp-gov-mark{display:block;line-height:normal;flex:0 0 auto;overflow:visible}
 .tp-gov-mark img,
-img.tp-gov-mark{display:block;width:96px;height:auto;max-width:none;max-height:none;object-fit:unset}
+img.tp-gov-mark{display:block;width:auto;height:40px;max-width:none;max-height:none;object-fit:unset}
 .tp-gov-lk{margin-left:auto;font-size:12px;font-weight:500;color:var(--ink-3);display:inline-flex;align-items:center;gap:5px}
 .tp-gov-lk:hover{color:var(--accent)}
 .gv-slot{width:60px;height:44px;border:1px dashed var(--line-2);border-radius:var(--r-sm);display:grid;place-items:center;text-align:center;
