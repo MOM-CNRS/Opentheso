@@ -173,6 +173,29 @@ class ConceptLabelBlockEditorBeanTest {
     }
 
     @Test
+    void startEditing_leavesTheLabelEmptyWhenTheLanguageHasNoTranslation() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("(C1)", List.of(), List.of()));
+
+        bean.startEditing();
+
+        assertEquals("", bean.getPreferredLabel());
+    }
+
+    @Test
+    void save_writesTheTypedLabelWhenTheLanguageHadNoTranslation() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail("(C1)", List.of(), List.of()));
+        when(conceptLifecycleMutationService.renamePreferredLabel(any())).thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setPreferredLabel("Amphore");
+
+        bean.save();
+
+        ArgumentCaptor<RenamePreferredLabelCommand> captor = ArgumentCaptor.forClass(RenamePreferredLabelCommand.class);
+        verify(conceptLifecycleMutationService).renamePreferredLabel(captor.capture());
+        assertEquals("Amphore", captor.getValue().label());
+    }
+
+    @Test
     void startEditing_fillsFieldsFromSelectedConcept() {
         when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
                 "Bronze", List.of("cuivre"), List.of("bronz"),
