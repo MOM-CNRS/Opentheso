@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.concept.model.ConceptLabel;
 import fr.cnrs.opentheso.concept.model.ConceptNote;
 import fr.cnrs.opentheso.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.concept.model.ConceptTreeNodeData;
+import fr.cnrs.opentheso.concept.model.SourceLabelFallback;
 import fr.cnrs.opentheso.concept.model.FacetDetailOverview;
 import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.model.ConceptLinkItem;
@@ -1264,6 +1265,75 @@ public class ThesaurusViewBean implements Serializable {
         return StringUtils.isBlank(value) ? "—" : value;
     }
 
+    private String labelDisplayKey = "";
+    private String labelDisplay = "";
+    private boolean labelFromSource;
+    private String labelSourceName = "";
+    private String labelSourceCode = "";
+
+    public String getDisplayedPreferredLabel() {
+        refreshLabelDisplay();
+        return labelDisplay;
+    }
+
+    public boolean isPreferredLabelFromSource() {
+        refreshLabelDisplay();
+        return labelFromSource;
+    }
+
+    public String getSourceLanguageName() {
+        refreshLabelDisplay();
+        return labelSourceName;
+    }
+
+    public String getSourceLanguageCode() {
+        refreshLabelDisplay();
+        return labelSourceCode;
+    }
+
+    private void refreshLabelDisplay() {
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            labelDisplayKey = "";
+            labelDisplay = "";
+            labelFromSource = false;
+            labelSourceName = "";
+            labelSourceCode = "";
+            return;
+        }
+        String conceptId = selectedConcept.getSummary().getConceptId();
+        String preferred = selectedConcept.getSummary().getPreferredLabel();
+        String key = StringUtils.defaultString(getId()) + "|" + conceptId + "|" + getSelectedLang() + "|" + preferred;
+        if (key.equals(labelDisplayKey)) {
+            return;
+        }
+        labelDisplayKey = key;
+        if (!SourceLabelFallback.missing(preferred, conceptId)) {
+            labelDisplay = preferred;
+            labelFromSource = false;
+            labelSourceName = "";
+            labelSourceCode = "";
+            return;
+        }
+        String sourceLang = readSourceLanguageCode();
+        String source = conceptReadService.sourcePreferredLabel(getId(), conceptId, getSelectedLang());
+        if (StringUtils.isNotBlank(source)) {
+            labelDisplay = source;
+            labelFromSource = true;
+            labelSourceCode = sourceLang;
+            labelSourceName = languageLabel(sourceLang);
+            return;
+        }
+        labelDisplay = StringUtils.defaultIfBlank(conceptId, preferred);
+        labelFromSource = false;
+        labelSourceName = "";
+        labelSourceCode = "";
+    }
+
+    private String readSourceLanguageCode() {
+        ThesaurusPreferences preferences = loadThesaurusPreferences();
+        return preferences == null ? "" : StringUtils.defaultString(preferences.sourceLang());
+    }
+
     public String getCandidateTitle() {
         return selectedConcept == null ? "" : StringUtils.defaultString(selectedConcept.getSummary().getPreferredLabel());
     }
@@ -1524,6 +1594,7 @@ public class ThesaurusViewBean implements Serializable {
         ThesaurusTreeNode node = new ThesaurusTreeNode();
         node.setId(data.getNodeId());
         node.setLabel(data.getLabel());
+        node.setSourceLabel(data.isSourceLabel());
         node.setNotation(data.getNotation());
         node.setNodeType(data.getNodeType());
         node.setHasChildren(data.isHasChildren());

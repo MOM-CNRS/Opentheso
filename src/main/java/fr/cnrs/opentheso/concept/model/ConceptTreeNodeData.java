@@ -7,10 +7,15 @@ public record ConceptTreeNodeData(
         String label,
         String notation,
         String nodeType,
-        boolean hasChildren
+        boolean hasChildren,
+        boolean sourceLabel
 ) implements Serializable {
 
     private static final String DUMMY_PLACEHOLDER = "DUMMY";
+
+    public ConceptTreeNodeData(String nodeId, String label, String notation, String nodeType, boolean hasChildren) {
+        this(nodeId, label, notation, nodeType, hasChildren, false);
+    }
 
     public static ConceptTreeNodeData dummy() {
         return new ConceptTreeNodeData(DUMMY_PLACEHOLDER, DUMMY_PLACEHOLDER, "", "dummy", false);
@@ -43,5 +48,9 @@ public record ConceptTreeNodeData(
 
     public boolean isHasChildren() {
         return hasChildren;
+    }
+
+    public boolean isSourceLabel() {
+        return sourceLabel;
     }
 }

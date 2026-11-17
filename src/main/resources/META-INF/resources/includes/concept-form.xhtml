@@ -6,7 +6,8 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
   <div class="cv is-on"
        data-id="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
-       data-pref="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}"
+       data-pref="#{thesaurusViewBean.displayedPreferredLabel}"
+       data-pref-source="#{thesaurusViewBean.preferredLabelFromSource ? '1' : '0'}"
        data-status="#{thesaurusViewBean.conceptDisplayStatus}"
        data-flash="#{conceptLabelBlockEditorBean.flashMessage}"
        data-flash-token="#{conceptLabelBlockEditorBean.flashToken}"
@@ -69,13 +70,14 @@
       <div class="cv-head-bar">
       <h1 class="cv-pref">
         <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-dot" aria-hidden="true"></span></ui:fragment>
-        <span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
-        <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.preferredLabel}">
+        <span class="#{thesaurusViewBean.preferredLabelFromSource ? 'cv-source' : ''}"
+              title="#{thesaurusViewBean.preferredLabelFromSource ? localeBean.getMsg('concept.label.source').concat(' · ').concat(thesaurusViewBean.sourceLanguageName) : ''}">#{thesaurusViewBean.dash(thesaurusViewBean.displayedPreferredLabel)}<ui:fragment rendered="#{thesaurusViewBean.preferredLabelFromSource}"> (#{thesaurusViewBean.sourceLanguageCode})</ui:fragment></span>
+        <ui:fragment rendered="#{not empty thesaurusViewBean.displayedPreferredLabel}">
           <button type="button" class="copy-btn"
                   title="#{localeBean.getMsg('concept.headTitle.copy')}"
                   aria-label="#{localeBean.getMsg('concept.headTitle.copy')}"
                   data-act="copy"
-                  data-copy="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}"
+                  data-copy="#{thesaurusViewBean.displayedPreferredLabel}"
                   data-msg="#{localeBean.getMsg('concept.headTitle.copied')}">⧉</button>
         </ui:fragment>
         <span class="cv-lang">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.lang)}</span>
@@ -225,11 +227,12 @@
           <div class="crow">
             <div class="crow-lbl">Libellé</div>
             <div class="crow-val">
-              <span class="val-strong">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
-              <span class="val-lang">(#{thesaurusViewBean.selectedConcept.summary.lang})</span>
+              <span class="val-strong#{thesaurusViewBean.preferredLabelFromSource ? ' cv-source' : ''}"
+                    title="#{thesaurusViewBean.preferredLabelFromSource ? localeBean.getMsg('concept.label.source').concat(' · ').concat(thesaurusViewBean.sourceLanguageName) : ''}">#{thesaurusViewBean.dash(thesaurusViewBean.displayedPreferredLabel)}</span>
+              <span class="val-lang#{thesaurusViewBean.preferredLabelFromSource ? ' cv-source' : ''}">(#{thesaurusViewBean.preferredLabelFromSource ? thesaurusViewBean.sourceLanguageCode : thesaurusViewBean.selectedConcept.summary.lang})</span>
               <button type="button" class="copy-btn" title="Copier"
                       data-act="copy"
-                      data-copy="#{thesaurusViewBean.selectedConcept.summary.preferredLabel}">⧉</button>
+                      data-copy="#{thesaurusViewBean.displayedPreferredLabel}">⧉</button>
             </div>
           </div>
           <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replaces}">
@@ -765,7 +768,7 @@
                     <f:ajax execute="@this"
                             render=":previewDetailForm:previewDetail :previewThTitle :previewTreeMetaBox :previewTermLangUi :termLang"
                             onevent="onPreviewTermLang"/>
-                    #{tr.value}
+                    <h:outputText value="#{htmlText.formatInline(tr.value)}" escape="false"/>
                   </h:commandLink>
                   <span class="tr-lang">#{thesaurusViewBean.languageLabel(tr.lang)}</span>
                   <ui:fragment rendered="#{tr.todo}">
@@ -775,7 +778,7 @@
                 <ui:fragment rendered="#{not empty tr.alts}">
                   <div class="tr-alts">
                     <span class="tr-alts-lbl">#{localeBean.getMsg('concept.translation.alts')}</span>
-                    <span lang="#{tr.lang}" dir="#{thesaurusViewBean.textDirection(tr.lang)}">#{tr.alts}</span>
+                    <span class="cv-html" lang="#{tr.lang}" dir="#{thesaurusViewBean.textDirection(tr.lang)}"><h:outputText value="#{htmlText.format(tr.alts)}" escape="false"/></span>
                   </div>
                 </ui:fragment>
               </div>
@@ -892,8 +895,8 @@
                     <span class="tr-code">#{note.lang}</span>
                   </ui:fragment>
                   <div class="note-line-b">
-                    <p class="cv-def" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}">#{note.value}
-                      <span class="note-lang">(#{note.lang})</span></p>
+                    <div class="cv-def cv-html" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}"><h:outputText value="#{htmlText.format(note.value)}" escape="false"/>
+                      <span class="note-lang">(#{note.lang})</span></div>
                     <ui:fragment rendered="#{not empty note.source}">
                       <span class="note-src">#{note.source}</span>
                     </ui:fragment>

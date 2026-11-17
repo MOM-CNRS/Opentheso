@@ -109,7 +109,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         }
         editingConceptId = detail.getSummary().getConceptId();
         editingLang = resolveLang(detail);
-        preferredLabel = StringUtils.defaultString(detail.getSummary().getPreferredLabel());
+        preferredLabel = editablePreferredLabel(detail);
         altLabels = copyLabels(detail.getSynonyms());
         hiddenLabels = copyLabels(detail.getHiddenSynonyms());
         selectedFacets = copyFacets(detail.getFacets());
@@ -486,6 +486,15 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         if (dirty) {
             thesaurusViewBean.reloadSelectedConcept();
         }
+    }
+
+    private static String editablePreferredLabel(ConceptDetail detail) {
+        String label = StringUtils.defaultString(detail.getSummary().getPreferredLabel()).trim();
+        String conceptId = StringUtils.defaultString(detail.getSummary().getConceptId()).trim();
+        if (StringUtils.isNotBlank(conceptId) && label.equals("(" + conceptId + ")")) {
+            return "";
+        }
+        return label;
     }
 
     private void releaseStaleEdit() {

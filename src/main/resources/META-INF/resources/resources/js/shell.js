@@ -2438,10 +2438,12 @@ function applyConceptLabelUi(source) {
   });
   const id = cv.getAttribute("data-id");
   const pref = cv.getAttribute("data-pref");
-  if (id && pref) {
+  if (id && pref && pref !== "(" + id + ")") {
     const escaped = window.CSS && CSS.escape ? CSS.escape(id) : id.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const fromSource = cv.getAttribute("data-pref-source") === "1";
     document.querySelectorAll('.tn-label[data-id="' + escaped + '"] .tn-text').forEach((el) => {
       el.textContent = pref;
+      el.classList.toggle("is-source", fromSource);
     });
   }
   try { bindImgGallery(); } catch (err) { /* gallery DOM already swapped by ajax */ }
@@ -3617,6 +3619,71 @@ function paintConceptNoteAdd(lang) {
     + "</div>";
 }
 
+var RICH_TAGS = { A: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, STRIKE: 1, SUP: 1, SUB: 1, BR: 1, P: 1, SPAN: 1, DIV: 1, UL: 1, OL: 1, LI: 1, SMALL: 1 };
+var RICH_STYLE = { color: 1, "background-color": 1, "font-weight": 1, "font-style": 1, "font-size": 1, "text-decoration": 1, "text-align": 1 };
+
+function formatRichHtml(value) {
+  let source = String(value == null ? "" : value);
+  if (!source.trim()) return "";
+  if (source.indexOf("<") < 0 && source.indexOf("&lt;") >= 0) {
+    source = source.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+  }
+  if (source.indexOf("<") < 0) source = source.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+  const doc = new DOMParser().parseFromString(source, "text/html");
+  ["script", "style", "iframe", "object", "embed", "link", "meta"].forEach((tag) => {
+    doc.querySelectorAll(tag).forEach((node) => node.remove());
+  });
+  sanitizeRichNode(doc.body);
+  return doc.body.innerHTML;
+}
+
+function sanitizeRichNode(node) {
+  let child = node.firstChild;
+  while (child) {
+    const next = child.nextSibling;
+    if (child.nodeType !== 1) {
+      if (child.nodeType !== 3) child.remove();
+      child = next;
+      continue;
+    }
+    if (!RICH_TAGS[child.tagName]) {
+      const first = child.firstChild;
+      while (child.firstChild) node.insertBefore(child.firstChild, child);
+      child.remove();
+      child = first || next;
+      continue;
+    }
+    Array.from(child.attributes).forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      if (child.tagName === "A" && (name === "href" || name === "title")) return;
+      if (name === "style" && (child.tagName === "SPAN" || child.tagName === "P" || child.tagName === "DIV")) return;
+      child.removeAttribute(attr.name);
+    });
+    if (child.tagName === "A") {
+      const href = child.getAttribute("href") || "";
+      if (!/^(https?:|mailto:)/i.test(href) || /\s/.test(href)) child.removeAttribute("href");
+      else {
+        child.setAttribute("rel", "noopener noreferrer");
+        child.setAttribute("target", "_blank");
+      }
+    }
+    if (child.hasAttribute("style")) {
+      const safe = String(child.getAttribute("style") || "").split(";").map((part) => {
+        const bits = part.split(":");
+        if (bits.length < 2) return "";
+        const prop = bits.shift().trim().toLowerCase();
+        const cssValue = bits.join(":").trim();
+        if (!RICH_STYLE[prop] || /url|expression|javascript|@|!|\\|<|>/i.test(cssValue)) return "";
+        return prop + ": " + cssValue;
+      }).filter(Boolean).join("; ");
+      if (safe) child.setAttribute("style", safe);
+      else child.removeAttribute("style");
+    }
+    sanitizeRichNode(child);
+    child = next;
+  }
+}
+
 function paintConceptNoteCard(item, editable) {
   const editor = cvNoteEl("editor");
   const remove = (editor && editor.getAttribute("data-remove")) || "";
@@ -3636,7 +3703,7 @@ function paintConceptNoteCard(item, editable) {
       + '<div class="note-c-h"><span class="note-c-type-lbl">' + escapeHtml(typeLabel) + "</span></div>"
       + (empty
         ? ""
-        : '<p class="cv-def" lang="' + escapeHtml(note.lang) + '" dir="' + dir + '">' + escapeHtml(note.value) + "</p>"
+        : '<div class="cv-def cv-html" lang="' + escapeHtml(note.lang) + '" dir="' + dir + '">' + formatRichHtml(note.value) + "</div>"
           + (note.source ? '<span class="note-src">' + escapeHtml(note.source) + "</span>" : ""))
       + "</div>";
   }

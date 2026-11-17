@@ -37,7 +37,8 @@
             <ui:fragment rendered="#{thesaurusViewBean.sortByNotation and not empty node.notation}">
               <span class="tn-nota">#{node.notation}</span>
             </ui:fragment>
-            <span class="tn-textwrap"><span class="tn-text">#{node.label}</span></span>
+            <span class="tn-textwrap"><span class="tn-text#{node.sourceLabel ? ' is-source' : ''}"
+                  title="#{node.sourceLabel ? localeBean.getMsg('concept.label.source') : ''}">#{node.label}</span></span>
             <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="#{localeBean.getMsg('concept.badge.candidate')}"></span></ui:fragment>
             <ui:fragment rendered="#{node.rejected}"><span class="tn-tag">#{localeBean.getMsg('concept.badge.rejected')}</span></ui:fragment>
             <ui:fragment rendered="#{node.deprecated}"><span class="tn-tag is-dep">#{localeBean.getMsg('concept.badge.deprecated')}</span></ui:fragment>
