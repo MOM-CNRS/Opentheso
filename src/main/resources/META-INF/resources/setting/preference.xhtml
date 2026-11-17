@@ -1029,91 +1029,109 @@
                       data-ok="#{not thesaurusAlignmentBean.alignmentError}">#{thesaurusAlignmentBean.alignmentMessage}</span>
                 <h:panelGroup id="previewAlignOverlay" layout="block"
                               styleClass="block-overlay confirm-overlay st-corpus-overlay#{thesaurusAlignmentBean.alignmentFormDialog ? '' : ' is-off'}">
-                  <div class="confirm-modal st-corpus-modal" role="dialog" aria-modal="true"
+                  <div class="confirm-modal st-corpus-modal st-align-modal" role="dialog" aria-modal="true"
                        aria-labelledby="previewAlignDlgTitle">
                     <h:panelGroup id="previewAlignFields" layout="block"
-                                  styleClass="#{thesaurusAlignmentBean.alignmentFormDialog ? '' : 'is-off'}">
-                      <div class="confirm-h" id="previewAlignDlgTitle">
-                        <h:outputText value="Nouvelle source"
-                                      rendered="#{thesaurusAlignmentBean.alignmentCreateDialog}"/>
-                        <h:outputText value="Modifier la source"
-                                      rendered="#{thesaurusAlignmentBean.alignmentEditDialog}"/>
+                                  styleClass="st-align-form#{thesaurusAlignmentBean.alignmentFormDialog ? '' : ' is-off'}">
+                      <div class="cv-dlg-head">
+                        <span class="th-create-ico" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        </span>
+                        <div class="th-create-txt">
+                          <div class="confirm-h" id="previewAlignDlgTitle">
+                            <h:outputText value="Nouvelle source"
+                                          rendered="#{thesaurusAlignmentBean.alignmentCreateDialog}"/>
+                            <h:outputText value="Modifier la source"
+                                          rendered="#{thesaurusAlignmentBean.alignmentEditDialog}"/>
+                          </div>
+                          <p class="th-create-hint">
+                            <h:outputText value="Référentiel interrogé depuis la fiche d'un concept."
+                                          rendered="#{thesaurusAlignmentBean.alignmentCreateDialog}"/>
+                            <h:outputText value="La modification ne sera conservée qu'après Enregistrer."
+                                          rendered="#{thesaurusAlignmentBean.alignmentEditDialog}"/>
+                          </p>
+                        </div>
                       </div>
-                      <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                      <h:panelGroup layout="block" styleClass="st-align-error"
                                     rendered="#{thesaurusAlignmentBean.alignmentError and not empty thesaurusAlignmentBean.alignmentMessage}">
                         #{thesaurusAlignmentBean.alignmentMessage}
                       </h:panelGroup>
-                      <div class="st-row">
-                        <div class="st-row-l">Source <span class="st-req">*</span></div>
-                        <div class="st-row-c">
+                      <div class="st-align-body">
+                        <label class="cv-dlg-field">
+                          <span>Source <em class="st-req">*</em></span>
                           <h:inputText id="previewAlignSourceName" styleClass="st-input"
-                                       value="#{thesaurusAlignmentBean.newAlignmentSourceName}"/>
-                        </div>
-                      </div>
-                      <div class="st-row">
-                        <div class="st-row-l">Type</div>
-                        <div class="st-row-c">
+                                       value="#{thesaurusAlignmentBean.newAlignmentSourceName}"
+                                       pt:autocomplete="off" pt:placeholder="Nom affiché dans la liste"/>
+                        </label>
+                        <label class="cv-dlg-field">
+                          <span>Type</span>
                           <h:inputText id="previewAlignSourceType" styleClass="st-input"
-                                       value="#{thesaurusAlignmentBean.newAlignmentSourceType}">
+                                       value="#{thesaurusAlignmentBean.newAlignmentSourceType}"
+                                       pt:autocomplete="off" pt:placeholder="Opentheso">
                             <f:ajax event="blur" execute="@this" render="previewAlignFields"/>
                           </h:inputText>
-                        </div>
-                      </div>
-                      <div class="st-row">
-                        <div class="st-row-l">URL de base <span class="st-req">*</span></div>
-                        <div class="st-row-c">
-                          <h:inputText id="previewAlignSourceUri" styleClass="st-input"
-                                       value="#{thesaurusAlignmentBean.newAlignmentSourceUri}"/>
-                        </div>
-                      </div>
-                      <h:panelGroup layout="block"
-                                    styleClass="#{thesaurusAlignmentBean.alignmentRemoteThesaurusVisible ? '' : 'is-off'}">
-                        <p class="st-corpus-ex">exemple : https://opentheso2.mom.fr/opentheso2</p>
-                        <p class="st-corpus-hint">Le serveur distant est vérifié via /api/ping. L'URL de recherche sera affichée dans le tableau.</p>
-                        <div class="st-row">
-                          <div class="st-row-l">Id. du thésaurus <span class="st-req">*</span></div>
-                          <div class="st-row-c">
-                            <h:inputText id="previewAlignSourceThesoId" styleClass="st-input"
-                                         value="#{thesaurusAlignmentBean.newAlignmentSourceThesaurusId}"/>
-                          </div>
-                        </div>
-                      </h:panelGroup>
-                      <div class="st-toggle-row">
-                        <div class="st-toggle-main">
-                          <div class="st-toggle-l">État</div>
-                        </div>
-                        <label class="st-sw">
-                          <h:selectBooleanCheckbox id="previewAlignSourceSelected" styleClass="st-sw-input"
-                                                   value="#{thesaurusAlignmentBean.newAlignmentSourceSelected}"
-                                                   title="Activer pour ce thésaurus"/>
+                          <p class="st-align-hint">Opentheso pour un autre thésaurus. Un autre type enregistre l'URL telle quelle.</p>
                         </label>
-                      </div>
-                      <div class="st-row">
-                        <div class="st-row-l">Description</div>
-                        <div class="st-row-c">
+                        <label class="cv-dlg-field">
+                          <span>URL de base <em class="st-req">*</em></span>
+                          <h:inputText id="previewAlignSourceUri" styleClass="st-input st-align-uri"
+                                       value="#{thesaurusAlignmentBean.newAlignmentSourceUri}"
+                                       pt:autocomplete="off" pt:placeholder="https://"/>
+                          <p class="st-align-ex">https://opentheso.example.org/opentheso</p>
+                        </label>
+                        <h:panelGroup layout="block"
+                                      styleClass="st-align-remote#{thesaurusAlignmentBean.alignmentRemoteThesaurusVisible ? '' : ' is-off'}">
+                          <p class="st-align-note">Le serveur est vérifié via /api/ping. L'adresse de recherche s'affiche ensuite dans le tableau.</p>
+                          <label class="cv-dlg-field">
+                            <span>Id. du thésaurus <em class="st-req">*</em></span>
+                            <h:inputText id="previewAlignSourceThesoId" styleClass="st-input"
+                                         value="#{thesaurusAlignmentBean.newAlignmentSourceThesaurusId}"
+                                         pt:autocomplete="off" pt:placeholder="Identifiant du thésaurus distant"/>
+                          </label>
+                        </h:panelGroup>
+                        <label class="cv-dlg-field">
+                          <span>Description</span>
                           <h:inputText id="previewAlignSourceDescription" styleClass="st-input"
-                                       value="#{thesaurusAlignmentBean.newAlignmentSourceDescription}"/>
+                                       value="#{thesaurusAlignmentBean.newAlignmentSourceDescription}"
+                                       pt:autocomplete="off" pt:placeholder="Précision facultative"/>
+                        </label>
+                        <div class="st-toggle-row">
+                          <div class="st-toggle-main">
+                            <div class="st-toggle-l">Activée pour ce thésaurus</div>
+                            <div class="st-toggle-d">Proposée dans l'alignement automatique.</div>
+                          </div>
+                          <label class="st-sw">
+                            <h:selectBooleanCheckbox id="previewAlignSourceSelected" styleClass="st-sw-input"
+                                                     value="#{thesaurusAlignmentBean.newAlignmentSourceSelected}"
+                                                     title="Activer pour ce thésaurus"/>
+                          </label>
                         </div>
                       </div>
-                      <div class="confirm-actions">
-                        <h:commandButton id="previewAlignCancel" value="Annuler" immediate="true"
-                                         styleClass="st-corpus-btn st-corpus-cancel"
-                                         action="#{thesaurusAlignmentBean.cancelAlignmentSourceDialog}">
+                      <div class="confirm-actions st-align-actions">
+                        <h:commandLink id="previewAlignCancel" immediate="true"
+                                       styleClass="st-align-btn st-align-cancel"
+                                       action="#{thesaurusAlignmentBean.cancelAlignmentSourceDialog}">
                           <f:ajax execute="@this" render="previewAlignBox"
                                   onevent="onPreviewAlignDialog"/>
-                        </h:commandButton>
-                        <h:commandButton id="previewAlignCreate" value="Ajouter"
-                                         styleClass="st-corpus-btn st-corpus-add#{thesaurusAlignmentBean.alignmentCreateDialog ? '' : ' is-off'}"
-                                         action="#{thesaurusAlignmentBean.createAlignmentSource}">
+                          <span>Annuler</span>
+                        </h:commandLink>
+                        <h:commandLink id="previewAlignCreate"
+                                       styleClass="st-align-btn st-align-go#{thesaurusAlignmentBean.alignmentCreateDialog ? '' : ' is-off'}"
+                                       action="#{thesaurusAlignmentBean.createAlignmentSource}">
                           <f:ajax execute="previewAlignFields" render="previewAlignBox"
                                   onevent="onPreviewAlignDialog"/>
-                        </h:commandButton>
-                        <h:commandButton id="previewAlignApply" value="Appliquer"
-                                         styleClass="st-corpus-btn st-corpus-add#{thesaurusAlignmentBean.alignmentEditDialog ? '' : ' is-off'}"
-                                         action="#{thesaurusAlignmentBean.updateAlignmentSource}">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                          <span class="st-align-go-label">Ajouter</span>
+                          <span class="st-align-go-wait">Ajout…</span>
+                        </h:commandLink>
+                        <h:commandLink id="previewAlignApply"
+                                       styleClass="st-align-btn st-align-go#{thesaurusAlignmentBean.alignmentEditDialog ? '' : ' is-off'}"
+                                       action="#{thesaurusAlignmentBean.updateAlignmentSource}">
                           <f:ajax execute="previewAlignFields" render="previewAlignBox"
                                   onevent="onPreviewAlignDialog"/>
-                        </h:commandButton>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                          <span>Appliquer</span>
+                        </h:commandLink>
                       </div>
                     </h:panelGroup>
                   </div>

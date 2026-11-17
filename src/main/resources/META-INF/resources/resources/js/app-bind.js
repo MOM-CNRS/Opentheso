@@ -458,6 +458,7 @@ restoreThDcPanel();
 function scrollToPrefHash() {
   const id = (location.hash || "").replace(/^#/, "");
   if (!id || SCREEN !== "preference") return false;
+  if (typeof applySettingsSectionFromHash === "function") applySettingsSectionFromHash();
   const el = document.getElementById(id);
   const view = $("#previewView") || document.querySelector("main.content .view");
   if (!el || !view) return false;

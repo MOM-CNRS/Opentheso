@@ -171,6 +171,39 @@ function toggleSettingsCard(tog) {
   else settingsOpenCards.delete(title);
 }
 
+function settingsSectionCards(head) {
+  const cards = [];
+  let node = head.nextElementSibling;
+  while (node && !(node.classList && node.classList.contains("st-group-head"))) {
+    if (node.classList && node.classList.contains("bo-card")) cards.push(node);
+    if (node.querySelectorAll) {
+      node.querySelectorAll(".bo-card").forEach((card) => {
+        if (cards.indexOf(card) < 0) cards.push(card);
+      });
+    }
+    node = node.nextElementSibling;
+  }
+  return cards;
+}
+
+function applySettingsSectionFromHash() {
+  if (SCREEN !== "preference") return false;
+  const id = (location.hash || "").replace(/^#/, "");
+  const head = id && document.getElementById(id);
+  if (!head || !head.classList.contains("st-group-head")) return false;
+  const openCards = settingsSectionCards(head);
+  $$(".st-scope .bo-card").forEach((card) => {
+    const open = openCards.indexOf(card) >= 0;
+    applySettingsCardOpen(card, open);
+    const title = settingsCardTitle(card);
+    if (!title) return;
+    if (open) settingsOpenCards.add(title);
+    else settingsOpenCards.delete(title);
+  });
+  return true;
+}
+window.applySettingsSectionFromHash = applySettingsSectionFromHash;
+
 function restoreSettingsCards() {
   if (SCREEN !== "preference") return;
   $$(".st-scope .bo-card .st-card-tog").forEach((tog) => {
@@ -179,6 +212,10 @@ function restoreSettingsCards() {
   });
   restoreArkLocalDraft();
 }
+
+window.addEventListener("hashchange", () => {
+  if (typeof scrollToPrefHash === "function") scrollToPrefHash();
+});
 
 function bindSettingsCards() {
   if (SCREEN !== "preference") return;

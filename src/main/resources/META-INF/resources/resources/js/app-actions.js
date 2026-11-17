@@ -475,7 +475,8 @@ document.addEventListener("click", (e) => {
     const pages = {
       prefs: "setting/preference.xhtml#stPrefs",
       servers: "setting/preference.xhtml#stServers",
-      corpus: "setting/preference.xhtml#stCorpus"
+      corpus: "setting/preference.xhtml#stCorpus",
+      align: "setting/preference.xhtml#stAlign"
     };
     go(pages[t.getAttribute("data-section")] || "setting/preference.xhtml");
   }
