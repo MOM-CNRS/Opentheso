@@ -1010,6 +1010,8 @@
         });
         var allCount = document.querySelector('.tp-tab[data-tp-tab="all"] .tp-tab-n');
         if (allCount) allCount.textContent = String(queryMatches);
+        var guestCount = document.getElementById('tpGuestCountN');
+        if (guestCount) guestCount.textContent = String(visible);
         var tabEmpty = document.getElementById('tpTabEmpty');
         var catalogEmpty = document.querySelector('.tp-empty-row--catalog');
         if (tabEmpty) {

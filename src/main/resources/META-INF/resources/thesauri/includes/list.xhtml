@@ -139,6 +139,13 @@
               <span class="tp-tab-n">#{thesaurusPickerBean.publicCount}</span>
             </button>
           </ui:fragment>
+          <ui:fragment rendered="#{not thesaurusPickerBean.loggedIn}">
+            <span class="tp-tab is-on" id="tpGuestCount">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+              <h:outputText value="#{localeBean.getMsg('picker.guest.count')}"/>
+              <span class="tp-tab-n" id="tpGuestCountN">#{thesaurusPickerBean.publicCount}</span>
+            </span>
+          </ui:fragment>
         </h:panelGroup>
         </div>
 

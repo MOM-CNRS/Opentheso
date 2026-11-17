@@ -391,7 +391,8 @@ a.tp-add-opt:hover .tp-add-opt-go{opacity:1;transform:translateX(0);color:var(--
 .tp-tabs{display:flex;gap:6px;margin:0;flex-wrap:wrap;flex:0 0 auto;padding:4px;width:fit-content;max-width:100%;
   border-radius:var(--r-lg);background:rgba(255,255,255,.55);border:1px solid var(--line);box-shadow:var(--shadow-sm);
   position:relative;isolation:isolate}
-.tp-tabs.is-guest{display:none}
+.tp-tabs.is-guest .tp-tab{cursor:default}
+.tp-tabs.is-guest .tp-tab:hover{color:#fff;background:var(--accent)}
 .tp-tabs-glider{
   position:absolute;top:0;left:0;z-index:0;height:0;width:0;
   border-radius:var(--r);background:var(--accent);
