@@ -97,6 +97,18 @@ class ConceptBlockLayoutServiceTest {
         assertEquals(Set.of("notes"), layout.collapsed());
     }
 
+    @Test
+    void normalize_keepsBrancheAndMetadonneesWhereTheUserPlacedThem() {
+        ConceptBlockLayout layout = service.normalize(
+                List.of("notes", "branche", "metadonnees", "contexte"),
+                List.of("branche")
+        );
+
+        assertEquals(List.of("notes", "branche", "metadonnees", "contexte"), layout.order().subList(0, 4));
+        assertTrue(layout.collapsed().contains("branche"));
+        assertEquals(ConceptBlockIds.DEFAULT_ORDER.size() + 2, layout.order().size());
+    }
+
     private static UserConceptBlockPrefEntity row(String id, int position, boolean collapsed) {
         return UserConceptBlockPrefEntity.builder()
                 .userId(7)

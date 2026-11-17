@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.user.model;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -21,8 +22,24 @@ public final class ConceptBlockIds {
             "temporel"
     );
 
-    public static final Set<String> ALL = Set.copyOf(DEFAULT_ORDER);
+    /**
+     * Blocs réordonnables en plus de l'ordre historique.
+     * Ils ne sont pas ajoutés d'office : absents, l'écran les place
+     * (Branche juste après Contexte). Une fois enregistrés, ils gardent leur place.
+     */
+    private static final List<String> OPTIONAL_ORDER = List.of(
+            "branche",
+            "metadonnees"
+    );
+
+    public static final Set<String> ALL = allIds();
 
     private ConceptBlockIds() {
+    }
+
+    private static Set<String> allIds() {
+        LinkedHashSet<String> ids = new LinkedHashSet<>(DEFAULT_ORDER);
+        ids.addAll(OPTIONAL_ORDER);
+        return Set.copyOf(ids);
     }
 }

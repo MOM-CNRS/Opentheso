@@ -701,7 +701,6 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
-      || hideConfirm("#prefSaveConfirm")
       || hideConfirm("#previewMetadataConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
