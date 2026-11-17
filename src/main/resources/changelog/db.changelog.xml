@@ -377,4 +377,9 @@
         <sqlFile path="v26/26-11_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.06" author="Firas">
+        <comment>Configurable thesaurus-list footer logo and public links</comment>
+        <sqlFile path="v26/26-11_06.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

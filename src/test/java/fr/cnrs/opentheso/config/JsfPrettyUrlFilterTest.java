@@ -38,6 +38,7 @@ class JsfPrettyUrlFilterTest {
         assertEquals("/admin/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/admin/thesauri"));
         assertEquals("/admin/utilisateurs.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/admin/utilisateurs"));
         assertEquals("/admin/bandeau.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/admin/bandeau"));
+        assertEquals("/admin/pied.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/admin/pied"));
         assertEquals("/setting/preference.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/setting/preference"));
         assertEquals("/setting/identifiants.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/setting/identifiants"));
         assertEquals("/setting/corpus.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/setting/corpus"));

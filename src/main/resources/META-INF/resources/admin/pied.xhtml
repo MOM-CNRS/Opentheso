@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/includes/layout.xhtml">
+  <ui:param name="page" value="admin-instance"/>
+  <ui:define name="title">OpenTheso — #{localeBean.getMsg('admin.footer.title')}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{pickerFooterEditorBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <ui:fragment rendered="#{not pickerFooterEditorBean.accessAllowed}">
+      <ui:include src="/includes/access-denied.xhtml">
+        <ui:param name="deniedKicker" value="#{localeBean.getMsg('admin.accessDenied.kicker')}"/>
+        <ui:param name="deniedTitle" value="#{localeBean.getMsg('admin.accessDenied.title')}"/>
+        <ui:param name="deniedSub" value="#{localeBean.getMsg('admin.accessDenied.sub')}"/>
+        <ui:param name="deniedBackLabel" value="#{localeBean.getMsg('admin.accessDenied.back')}"/>
+      </ui:include>
+    </ui:fragment>
+
+    <h:form id="footerForm" prependId="false" enctype="multipart/form-data" styleClass="ia-form-root"
+            rendered="#{pickerFooterEditorBean.accessAllowed}">
+      <div class="ia-shell">
+        <div class="bo bo-solo">
+          <nav class="bc" aria-label="Fil d'Ariane">
+            <a class="bc-lk" href="#{request.contextPath}/thesauri">Thésaurus</a>
+            <span class="bc-sep" aria-hidden="true">›</span>
+            <a class="bc-lk" href="#{request.contextPath}/admin/instance">#{localeBean.getMsg('admin.instance.title')}</a>
+            <span class="bc-sep" aria-hidden="true">›</span>
+            <span class="bc-cur" aria-current="page">#{localeBean.getMsg('admin.footer.title')}</span>
+          </nav>
+          <a class="bo-back" href="#{request.contextPath}/admin/instance" title="#{localeBean.getMsg('admin.back.admin')}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </a>
+          <div class="bo-head">
+            <div>
+              <h1 class="bo-title">#{localeBean.getMsg('admin.footer.title')}</h1>
+              <p class="bo-sub">#{localeBean.getMsg('admin.footer.sub')}</p>
+            </div>
+          </div>
+          <div class="bo-full ia-banner ia-footer">
+            <div class="bo-card">
+              <div class="bo-card-b st-form">
+                <h:panelGroup id="footerFeedback" layout="block">
+                  <h:panelGroup rendered="#{not empty pickerFooterEditorBean.message}" layout="block"
+                                styleClass="ia-banner-msg#{pickerFooterEditorBean.error ? ' is-err' : ' is-ok'}">
+                    #{pickerFooterEditorBean.message}
+                  </h:panelGroup>
+                </h:panelGroup>
+                <div class="ia-banner-kicker">#{localeBean.getMsg('admin.footer.live')}</div>
+                <h:panelGroup id="footerPreview" layout="block">
+                  <footer class="gv ia-foot-live">
+                    <button type="button" class="ia-banner-zoom" id="footerImageZoom"
+                            title="#{localeBean.getMsg('admin.footer.logo.zoom')}"
+                            aria-label="#{localeBean.getMsg('admin.footer.logo.zoom')}"
+                            onclick="return footerOpenImage(event)">
+                      <img class="gv-mark" id="footerImagePreview"
+                           src="#{pickerFooterEditorBean.previewUrl}"
+                           alt="#{pickerFooterEditorBean.brandLabel}"/>
+                    </button>
+                    <nav class="gv-mentions" aria-label="#{localeBean.getMsg('legal.nav')}">
+                      <a href="info/page.xhtml?code=mentions">#{legalPageBean.mentionsTitle}</a>
+                      <a href="info/page.xhtml?code=donnees">#{legalPageBean.privacyTitle}</a>
+                      <a href="info/page.xhtml?code=accessibilite">#{legalPageBean.accessibilityTitle}</a>
+                      <span class="gv-lic">Code sous licence CeCILL</span>
+                    </nav>
+                    <nav class="gv-links" id="footerPreviewLinks" aria-label="Sites publics">
+                      <ui:repeat value="#{pickerFooterEditorBean.links}" var="link">
+                        <a href="#{link.url}" target="_blank" rel="noreferrer">#{link.label}<span class="gv-ext" aria-hidden="true">↗</span></a>
+                      </ui:repeat>
+                    </nav>
+                  </footer>
+                </h:panelGroup>
+
+                <div class="st-row">
+                  <div class="st-row-l">#{localeBean.getMsg('admin.footer.logo')}</div>
+                  <div class="st-row-c">
+                    <div class="ia-banner-pick-row">
+                      <h:inputFile id="footerImage"
+                                   styleClass="bo-file-input"
+                                   value="#{pickerFooterEditorBean.imageUpload}"
+                                   accept="image/png,image/jpeg,image/gif,image/webp"
+                                   pt:onchange="footerShowPickedImage(this)"/>
+                      <label class="bo-btn ghost ia-banner-pick" for="footerImage">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                        <span>#{localeBean.getMsg('admin.footer.logo.choose')}</span>
+                      </label>
+                      <span class="ia-banner-fname" id="footerImageName" hidden="hidden"></span>
+                    </div>
+                    <p class="ia-banner-note">#{localeBean.getMsg('admin.footer.logo.help')}</p>
+                    <h:panelGroup id="footerRestore" layout="block">
+                      <ui:fragment rendered="#{pickerFooterEditorBean.customImage}">
+                        <label class="ia-banner-default">
+                          <h:selectBooleanCheckbox value="#{pickerFooterEditorBean.useDefaultImage}"
+                                                   pt:onchange="footerToggleDefault(this)"/>
+                          <span>#{localeBean.getMsg('admin.footer.logo.default')}</span>
+                        </label>
+                      </ui:fragment>
+                    </h:panelGroup>
+                  </div>
+                </div>
+                <div class="st-row">
+                  <div class="st-row-l">#{localeBean.getMsg('admin.footer.logo.name')}</div>
+                  <div class="st-row-c">
+                    <h:inputText id="footerBrandName" styleClass="st-input"
+                                 value="#{pickerFooterEditorBean.brandLabel}"
+                                 pt:oninput="footerSync()"/>
+                  </div>
+                </div>
+                <div class="st-row">
+                  <div class="st-row-l">#{localeBean.getMsg('admin.footer.logo.url')}</div>
+                  <div class="st-row-c">
+                    <h:inputText id="footerBrandUrl" styleClass="st-input"
+                                 value="#{pickerFooterEditorBean.brandUrl}"
+                                 pt:oninput="footerSync()"/>
+                  </div>
+                </div>
+
+                <div class="st-sep">#{localeBean.getMsg('admin.footer.links')}</div>
+                <p class="ia-banner-note">#{localeBean.getMsg('admin.footer.links.help')}</p>
+                <h:panelGroup id="footerRows" layout="block" styleClass="ia-foot-rows">
+                  <ui:repeat value="#{pickerFooterEditorBean.links}" var="link">
+                    <div class="ia-foot-row">
+                      <input class="st-input" data-foot-label="1" value="#{link.label}"
+                             placeholder="#{localeBean.getMsg('admin.footer.links.title')}"
+                             oninput="footerSync()"/>
+                      <input class="st-input" data-foot-url="1" value="#{link.url}"
+                             placeholder="https://"
+                             oninput="footerSync()"/>
+                      <span class="ia-foot-ops">
+                        <button type="button" class="st-icon" data-foot-up="1"
+                                title="#{localeBean.getMsg('admin.footer.links.up')}"
+                                onclick="footerMove(this, -1)">↑</button>
+                        <button type="button" class="st-icon" data-foot-down="1"
+                                title="#{localeBean.getMsg('admin.footer.links.down')}"
+                                onclick="footerMove(this, 1)">↓</button>
+                        <button type="button" class="st-icon del"
+                                title="#{localeBean.getMsg('admin.footer.links.remove')}"
+                                onclick="footerRemove(this)">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                      </span>
+                    </div>
+                  </ui:repeat>
+                  <ui:fragment rendered="#{empty pickerFooterEditorBean.links}">
+                    <p class="ia-foot-empty" id="footerEmpty">#{localeBean.getMsg('admin.footer.links.empty')}</p>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not empty pickerFooterEditorBean.links}">
+                    <p class="ia-foot-empty" id="footerEmpty" hidden="hidden">#{localeBean.getMsg('admin.footer.links.empty')}</p>
+                  </ui:fragment>
+                  <h:inputTextarea id="footerLinks" styleClass="ia-foot-payload" rows="1"
+                                   tabindex="-1" value="#{pickerFooterEditorBean.linksPayload}"/>
+                </h:panelGroup>
+                <button type="button" class="bo-btn ghost sm ia-foot-add" onclick="footerAdd()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  #{localeBean.getMsg('admin.footer.links.add')}
+                </button>
+
+                <div class="ia-banner-actions">
+                  <button type="button" class="bo-btn primary" onclick="footerAskSave()">
+                    #{localeBean.getMsg('admin.footer.save')}
+                  </button>
+                </div>
+                <template id="footerRowTpl">
+                  <div class="ia-foot-row">
+                    <input class="st-input" data-foot-label="1" value=""
+                           placeholder="#{localeBean.getMsg('admin.footer.links.title')}"
+                           oninput="footerSync()"/>
+                    <input class="st-input" data-foot-url="1" value=""
+                           placeholder="https://"
+                           oninput="footerSync()"/>
+                    <span class="ia-foot-ops">
+                      <button type="button" class="st-icon" data-foot-up="1"
+                              title="#{localeBean.getMsg('admin.footer.links.up')}"
+                              onclick="footerMove(this, -1)">↑</button>
+                      <button type="button" class="st-icon" data-foot-down="1"
+                              title="#{localeBean.getMsg('admin.footer.links.down')}"
+                              onclick="footerMove(this, 1)">↓</button>
+                      <button type="button" class="st-icon del"
+                              title="#{localeBean.getMsg('admin.footer.links.remove')}"
+                              onclick="footerRemove(this)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                      </button>
+                    </span>
+                  </div>
+                </template>
+                <script>
+                //<![CDATA[
+                function footerOpenImage(event) {
+                  if (event) event.preventDefault();
+                  var mark = document.getElementById("footerImagePreview");
+                  var box = document.getElementById("footerImageLightbox");
+                  var big = document.getElementById("footerImageLightboxImg");
+                  if (!mark || !box || !big || !mark.getAttribute("src")) return false;
+                  big.src = mark.currentSrc || mark.src;
+                  var name = document.getElementById("footerImageName");
+                  var cap = document.getElementById("footerImageLightboxCap");
+                  if (cap) cap.textContent = name && !name.hidden && name.textContent ? name.textContent : "";
+                  box.hidden = false;
+                  document.body.classList.add("is-img-lightbox");
+                  var close = box.querySelector(".img-lightbox-close");
+                  if (close) close.focus();
+                  return false;
+                }
+                function footerCloseImage(event) {
+                  if (event && event.target && event.target.closest && event.target.closest(".img-lightbox-frame")) return;
+                  var box = document.getElementById("footerImageLightbox");
+                  if (box) box.hidden = true;
+                  document.body.classList.remove("is-img-lightbox");
+                }
+                document.addEventListener("keydown", function (event) {
+                  if (event.key !== "Escape") return;
+                  var ask = document.getElementById("footerSaveConfirm");
+                  if (ask && !ask.hidden) { footerDismissSave(); return; }
+                  footerCloseImage();
+                });
+                function footerAskSave() {
+                  footerWritePayload();
+                  var box = document.getElementById("footerSaveConfirm");
+                  if (box) box.hidden = false;
+                }
+                function footerDismissSave() {
+                  var box = document.getElementById("footerSaveConfirm");
+                  if (box) {
+                    box.hidden = true;
+                    box.classList.remove("is-wait");
+                  }
+                }
+                function footerSaveAjax(data) {
+                  var btn = document.getElementById("footerSaveGo");
+                  var box = document.getElementById("footerSaveConfirm");
+                  if (data.status === "begin") {
+                    footerWritePayload();
+                    if (btn) btn.disabled = true;
+                    if (box) box.classList.add("is-wait");
+                    return;
+                  }
+                  if (data.status === "complete") {
+                    if (btn) btn.disabled = false;
+                    if (box) box.classList.remove("is-wait");
+                  }
+                  if (data.status !== "success") return;
+                  footerDismissSave();
+                  footerSync();
+                  var msg = document.querySelector("#footerFeedback .ia-banner-msg");
+                  if (msg && msg.classList.contains("is-ok")) {
+                    var input = document.getElementById("footerImage");
+                    if (input) input.value = "";
+                    var name = document.getElementById("footerImageName");
+                    if (name) { name.hidden = true; name.textContent = ""; }
+                    footerRememberSaved();
+                    return;
+                  }
+                  footerShowPickedImage(document.getElementById("footerImage"));
+                }
+                var footerSavedSrc = "";
+                var footerImageGen = 0;
+                function footerRememberSaved() {
+                  var mark = document.getElementById("footerImagePreview");
+                  footerSavedSrc = mark ? (mark.getAttribute("src") || "") : "";
+                }
+                function footerPaintImage(src) {
+                  var mark = document.getElementById("footerImagePreview");
+                  if (mark && src) mark.src = src;
+                }
+                function footerUseDefault() {
+                  var box = document.querySelector("#footerRestore input");
+                  return !!(box && box.checked);
+                }
+                function footerToggleDefault(box) {
+                  footerImageGen++;
+                  if (box && box.checked) {
+                    footerPaintImage(footerSavedSrc);
+                    return;
+                  }
+                  footerShowPickedImage(document.getElementById("footerImage"));
+                }
+                function footerShowPickedImage(input) {
+                  var gen = ++footerImageGen;
+                  var file = input && input.files && input.files[0];
+                  var name = document.getElementById("footerImageName");
+                  if (!file) {
+                    if (name) { name.hidden = true; name.textContent = ""; }
+                    footerPaintImage(footerSavedSrc);
+                    return;
+                  }
+                  if (name) {
+                    name.hidden = false;
+                    name.textContent = file.name;
+                  }
+                  if (footerUseDefault()) {
+                    footerPaintImage(footerSavedSrc);
+                    return;
+                  }
+                  var reader = new FileReader();
+                  reader.onload = function () {
+                    if (gen !== footerImageGen || footerUseDefault()) return;
+                    footerPaintImage(reader.result);
+                  };
+                  reader.readAsDataURL(file);
+                }
+                function footerRows() {
+                  return Array.prototype.slice.call(document.querySelectorAll("#footerRows .ia-foot-row"));
+                }
+                function footerAdd() {
+                  var tpl = document.getElementById("footerRowTpl");
+                  var host = document.getElementById("footerRows");
+                  var empty = document.getElementById("footerEmpty");
+                  if (!tpl || !host) return;
+                  var row = tpl.content.firstElementChild.cloneNode(true);
+                  if (empty) host.insertBefore(row, empty);
+                  else host.appendChild(row);
+                  var field = row.querySelector("[data-foot-label]");
+                  if (field) field.focus();
+                  footerSync();
+                }
+                function footerRemove(btn) {
+                  var row = btn && btn.closest ? btn.closest(".ia-foot-row") : null;
+                  if (row) row.remove();
+                  footerSync();
+                }
+                function footerMove(btn, dir) {
+                  var row = btn && btn.closest ? btn.closest(".ia-foot-row") : null;
+                  if (!row) return;
+                  var sibling = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+                  if (!sibling || !sibling.classList.contains("ia-foot-row")) return;
+                  if (dir < 0) row.parentNode.insertBefore(row, sibling);
+                  else row.parentNode.insertBefore(sibling, row);
+                  footerSync();
+                }
+                function footerWritePayload() {
+                  var box = document.getElementById("footerLinks");
+                  if (!box) return;
+                  var lines = footerRows().map(function (row) {
+                    var label = row.querySelector("[data-foot-label]");
+                    var url = row.querySelector("[data-foot-url]");
+                    var labelValue = label ? label.value : "";
+                    var urlValue = url ? url.value : "";
+                    if (!labelValue.trim() && !urlValue.trim()) return "";
+                    return encodeURIComponent(labelValue) + "\t" + encodeURIComponent(urlValue);
+                  }).filter(function (line) { return line !== ""; });
+                  box.value = lines.join("\u001e");
+                }
+                function footerSync() {
+                  var rows = footerRows();
+                  rows.forEach(function (row, index) {
+                    var up = row.querySelector("[data-foot-up]");
+                    var down = row.querySelector("[data-foot-down]");
+                    if (up) up.disabled = index === 0;
+                    if (down) down.disabled = index === rows.length - 1;
+                  });
+                  var empty = document.getElementById("footerEmpty");
+                  if (empty) empty.hidden = rows.length > 0;
+                  var nav = document.getElementById("footerPreviewLinks");
+                  if (nav) {
+                    nav.replaceChildren();
+                    rows.forEach(function (row) {
+                      var label = (row.querySelector("[data-foot-label]").value || "").trim();
+                      var url = (row.querySelector("[data-foot-url]").value || "").trim();
+                      if (!label && !url) return;
+                      var link = document.createElement("a");
+                      link.target = "_blank";
+                      link.rel = "noreferrer";
+                      link.href = /^https?:\/\//i.test(url) ? url : "#";
+                      link.appendChild(document.createTextNode(label || url));
+                      var ext = document.createElement("span");
+                      ext.className = "gv-ext";
+                      ext.setAttribute("aria-hidden", "true");
+                      ext.textContent = "↗";
+                      link.appendChild(ext);
+                      nav.appendChild(link);
+                    });
+                    nav.hidden = nav.childElementCount === 0;
+                  }
+                  var name = document.getElementById("footerBrandName");
+                  var mark = document.getElementById("footerImagePreview");
+                  if (mark && name) mark.alt = name.value;
+                }
+                footerRememberSaved();
+                footerSync();
+                //]]>
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="block-overlay confirm-overlay" id="footerSaveConfirm" hidden="hidden"
+           onclick="if (event.target === this) footerDismissSave()">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="footerSaveConfirmTitle">
+          <div class="confirm-h" id="footerSaveConfirmTitle">#{localeBean.getMsg('admin.footer.confirm.title')}</div>
+          <p class="confirm-p">#{localeBean.getMsg('admin.footer.confirm')}</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost" onclick="footerDismissSave()">#{localeBean.getMsg('cancel')}</button>
+            <h:commandButton id="footerSaveGo" styleClass="bo-btn primary"
+                             value="#{localeBean.getMsg('admin.footer.confirm.ok')}"
+                             action="#{pickerFooterEditorBean.save}"
+                             onclick="footerWritePayload()">
+              <f:ajax execute="@form" render="footerFeedback footerPreview footerRows footerRestore"
+                      onevent="footerSaveAjax"/>
+            </h:commandButton>
+          </div>
+        </div>
+      </div>
+      <div class="img-lightbox is-single" id="footerImageLightbox" hidden="hidden"
+           onclick="footerCloseImage(event)">
+        <div class="img-lightbox-frame" role="dialog" aria-modal="true"
+             aria-labelledby="footerImageLightboxCap" onclick="event.stopPropagation()">
+          <div class="img-lightbox-stage">
+            <img id="footerImageLightboxImg" alt=""/>
+          </div>
+          <div class="img-lightbox-bar">
+            <div class="img-lightbox-cap" id="footerImageLightboxCap"></div>
+            <button type="button" class="img-lightbox-close" onclick="footerCloseImage()"
+                    title="#{localeBean.getMsg('cancel')}"
+                    aria-label="#{localeBean.getMsg('cancel')}">×</button>
+          </div>
+        </div>
+      </div>
+    </h:form>
+  </ui:define>
+</ui:composition>
