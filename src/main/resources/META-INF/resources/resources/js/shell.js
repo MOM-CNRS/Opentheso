@@ -4366,6 +4366,8 @@ let conceptExtrasCtrl = null;
 let conceptExtrasToken = 0;
 let conceptExtrasKey = "";
 let conceptExtrasPending = 0;
+let corpusLinksCtrl = null;
+let corpusLinksToken = 0;
 
 function conceptExtrasCurrent(token, conceptId) {
   if (token !== conceptExtrasToken) return false;
@@ -4409,26 +4411,28 @@ function paintBranchTotalFailed() {
   });
 }
 
-function paintCorpusLinks(links) {
+function corpusLinksHtml(links) {
   const rows = Array.isArray(links) ? links : [];
-  document.querySelectorAll("#previewDetailState [data-cv-extra='corpus']").forEach((box) => {
-    if (!rows.length) {
-      box.innerHTML = '<span class="muted" data-slot="corpus">Aucun</span>';
-      return;
+  if (!rows.length) return '<span class="muted">Aucun</span>';
+  return rows.map((link) => {
+    const name = escapeConceptExtra(link && link.name);
+    const href = safeConceptExtraHref(link && link.uri);
+    let value = '<span class="muted">—</span>';
+    if (href && link.onlyUri) {
+      value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
+        + escapeConceptExtra(link.uri) + "</a>";
+    } else if (href && Number(link.count) > 0) {
+      value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
+        + escapeConceptExtra(String(link.count)) + "</a>";
     }
-    box.innerHTML = rows.map((link) => {
-      const name = escapeConceptExtra(link && link.name);
-      const href = safeConceptExtraHref(link && link.uri);
-      let value = '<span class="muted">—</span>';
-      if (href && link.onlyUri) {
-        value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
-          + escapeConceptExtra(link.uri) + "</a>";
-      } else if (href && Number(link.count) > 0) {
-        value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
-          + escapeConceptExtra(String(link.count)) + "</a>";
-      }
-      return '<span class="cv-corpus-item">' + name + " " + value + "</span>";
-    }).join("");
+    return '<span class="cv-corpus-item">' + name + " " + value + "</span>";
+  }).join("");
+}
+
+function paintCorpusLinks(links) {
+  const html = corpusLinksHtml(links);
+  document.querySelectorAll("#previewDetailState [data-cv-extra='corpus']").forEach((box) => {
+    box.innerHTML = html;
   });
 }
 
@@ -4439,11 +4443,86 @@ function paintCorpusLinksFailed() {
     slot.classList.add("muted");
     slot.textContent = "—";
   });
+  document.querySelectorAll("#previewDetailState [data-act='corpus-calc']").forEach((button) => {
+    button.disabled = false;
+  });
+}
+
+function corpusLinksQuery(conceptId) {
+  const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
+  if (!theso || !conceptId) return "";
+  const params = new URLSearchParams({ thesaurusId: theso, conceptId: conceptId });
+  const lang = typeof thesaurusLang === "function" ? thesaurusLang() : "";
+  if (lang) params.set("lang", lang);
+  return params.toString();
+}
+
+function abortCorpusLinks() {
+  if (corpusLinksCtrl) corpusLinksCtrl.abort();
+  corpusLinksCtrl = null;
+}
+
+function corpusLinksCurrent(token, conceptId) {
+  if (token !== corpusLinksToken) return false;
+  const state = document.getElementById("previewDetailState");
+  return !!(state && state.getAttribute("data-id") === conceptId);
+}
+
+function loadCorpusLinks() {
+  const state = document.getElementById("previewDetailState");
+  if (!state) return;
+  const conceptId = state.getAttribute("data-id") || "";
+  const kind = (state.getAttribute("data-kind") || "").toLowerCase();
+  if (!conceptId || (kind !== "concept" && kind !== "candidat")) return;
+  const query = corpusLinksQuery(conceptId);
+  if (!query) return;
+  const box = state.querySelector("[data-cv-extra='corpus']");
+  const button = box && box.querySelector("[data-act='corpus-calc']");
+  if (button) {
+    button.disabled = true;
+    let slot = box.querySelector("[data-slot='corpus']");
+    if (!slot) {
+      slot = document.createElement("span");
+      slot.className = "cv-async";
+      slot.setAttribute("data-slot", "corpus");
+      button.insertAdjacentElement("afterend", slot);
+    }
+    slot.className = "cv-async";
+    slot.textContent = "";
+    slot.setAttribute("aria-busy", "true");
+    slot.setAttribute("aria-label", "Calcul des corpus liés");
+  }
+  abortCorpusLinks();
+  const ctrl = new AbortController();
+  corpusLinksCtrl = ctrl;
+  const token = ++corpusLinksToken;
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  fetch(ctx + "/api/concepts/corpus-links?" + query, {
+    headers: { Accept: "application/json" },
+    signal: ctrl.signal
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("http");
+      return res.json();
+    })
+    .then((data) => {
+      if (!corpusLinksCurrent(token, conceptId)) return;
+      paintCorpusLinks(data && data.links);
+    })
+    .catch((err) => {
+      if (err && err.name === "AbortError") return;
+      if (!corpusLinksCurrent(token, conceptId)) return;
+      paintCorpusLinksFailed();
+    })
+    .finally(() => {
+      if (token !== corpusLinksToken) return;
+      corpusLinksCtrl = null;
+    });
 }
 
 function loadConceptExtras() {
   const state = document.getElementById("previewDetailState");
-  if (!state || !state.querySelector("[data-slot][aria-busy='true']")) return;
+  if (!state || !state.querySelector("[data-slot='branch'][aria-busy='true']")) return;
   const conceptId = state.getAttribute("data-id") || "";
   const kind = (state.getAttribute("data-kind") || "").toLowerCase();
   if (!conceptId || (kind !== "concept" && kind !== "candidat")) return;
@@ -4452,23 +4531,18 @@ function loadConceptExtras() {
   const key = theso + "\n" + conceptId;
   if (conceptExtrasPending > 0 && conceptExtrasKey === key) return;
   if (conceptExtrasCtrl) conceptExtrasCtrl.abort();
+  abortCorpusLinks();
   const ctrl = new AbortController();
   conceptExtrasCtrl = ctrl;
   conceptExtrasKey = key;
   const token = ++conceptExtrasToken;
-  conceptExtrasPending = 2;
+  conceptExtrasPending = 1;
   const ctx = document.body.getAttribute("data-ctx") || "";
-  const params = new URLSearchParams({ thesaurusId: theso, conceptId: conceptId });
-  const lang = typeof thesaurusLang === "function" ? thesaurusLang() : "";
-  if (lang) params.set("lang", lang);
-  const opt = { headers: { Accept: "application/json" }, signal: ctrl.signal };
-  const query = params.toString();
-  const settle = () => {
-    if (token !== conceptExtrasToken) return;
-    conceptExtrasPending = Math.max(0, conceptExtrasPending - 1);
-    if (conceptExtrasPending === 0) conceptExtrasCtrl = null;
-  };
-  fetch(ctx + "/api/concepts/branch-count?" + query, opt)
+  const query = corpusLinksQuery(conceptId);
+  fetch(ctx + "/api/concepts/branch-count?" + query, {
+    headers: { Accept: "application/json" },
+    signal: ctrl.signal
+  })
     .then((res) => {
       if (!res.ok) throw new Error("http");
       return res.json();
@@ -4482,23 +4556,14 @@ function loadConceptExtras() {
       if (!conceptExtrasCurrent(token, conceptId)) return;
       paintBranchTotalFailed();
     })
-    .finally(settle);
-  fetch(ctx + "/api/concepts/corpus-links?" + query, opt)
-    .then((res) => {
-      if (!res.ok) throw new Error("http");
-      return res.json();
-    })
-    .then((data) => {
-      if (!conceptExtrasCurrent(token, conceptId)) return;
-      paintCorpusLinks(data && data.links);
-    })
-    .catch((err) => {
-      if (err && err.name === "AbortError") return;
-      if (!conceptExtrasCurrent(token, conceptId)) return;
-      paintCorpusLinksFailed();
-    })
-    .finally(settle);
+    .finally(() => {
+      if (token !== conceptExtrasToken) return;
+      conceptExtrasPending = 0;
+      conceptExtrasCtrl = null;
+    });
 }
+
+window.loadCorpusLinks = loadCorpusLinks;
 
 function finishLiveOpen() {
   const live = $("#viewLive");

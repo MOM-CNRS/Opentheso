@@ -4,7 +4,10 @@
 "use strict";
 
 window.appHandleLaterAct = function (e, t, act) {
-  if (act === "legal-save") {
+  if (act === "corpus-calc") {
+    e.preventDefault();
+    if (typeof window.loadCorpusLinks === "function") window.loadCorpusLinks();
+  } else if (act === "legal-save") {
     e.preventDefault();
     if (typeof syncAboutEditor === "function") syncAboutEditor();
     const btn = document.getElementById("legalPageForm:legalSave");

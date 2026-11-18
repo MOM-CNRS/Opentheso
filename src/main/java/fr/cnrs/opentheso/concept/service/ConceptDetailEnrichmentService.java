@@ -113,7 +113,6 @@ public class ConceptDetailEnrichmentService {
         return conceptCorpusSearchService.hasActiveCorpus(thesaurusId);
     }
 
-    @Transactional(readOnly = true)
     public List<fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem> loadCorpusLinks(
             String thesaurusId,
             CorpusSearchContext context

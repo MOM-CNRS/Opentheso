@@ -605,7 +605,6 @@ public class ConceptReadService {
         return conceptDetailEnrichmentService.hasActiveCorpus(thesaurusId);
     }
 
-    @Transactional(readOnly = true)
     public List<ConceptCorpusLinkItem> loadCorpusLinks(String thesaurusId, CorpusSearchContext context) {
         return conceptDetailEnrichmentService.loadCorpusLinks(thesaurusId, context);
     }

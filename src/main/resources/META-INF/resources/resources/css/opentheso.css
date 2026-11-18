@@ -1320,6 +1320,9 @@ button.coll-item{
 #viewLive.is-loading .cv-progress{display:block}
 .cv-progress::after{content:"";display:block;height:100%;width:42%;
   background:var(--accent);animation:cv-indet 1.05s ease-in-out infinite}
+.cv-corpus-val{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.cv-corpus-calc{flex:0 0 auto;height:30px;padding:0 12px}
+.cv-corpus-result{min-width:0}
 .cv-corpus-item{display:block}
 .cv-corpus-item + .cv-corpus-item{margin-top:4px}
 .cv-async[aria-busy="true"]{display:inline-block;width:.72em;height:.72em;border-radius:50%;

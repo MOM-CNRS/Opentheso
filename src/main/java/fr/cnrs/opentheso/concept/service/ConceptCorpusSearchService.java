@@ -47,7 +47,10 @@ public class ConceptCorpusSearchService {
         return thesaurusCorpusService.hasActiveCorpus(thesaurusId);
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Les définitions sont lues en base, puis les compteurs sont demandés aux corpus
+     * distants hors transaction pour ne pas retenir une connexion JDBC pendant l'HTTP.
+     */
     public List<ConceptCorpusLinkItem> loadCorpusLinks(String thesaurusId, CorpusSearchContext context) {
         if (context == null || StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
