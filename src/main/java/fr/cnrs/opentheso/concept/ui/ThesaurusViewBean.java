@@ -684,10 +684,19 @@ public class ThesaurusViewBean implements Serializable {
                 || ConceptTreeNodeKinds.REJETE.equalsIgnoreCase(nodeType)
                 || "CA".equalsIgnoreCase(selectedConcept.getSummary().getStatus());
         selectedKind = candidate ? ConceptTreeNodeKinds.CANDIDAT : ConceptTreeNodeKinds.CONCEPT;
+        var summary = selectedConcept.getSummary();
         if (candidate) {
             applySelectedCandidateMeta(id);
-            var summary = selectedConcept.getSummary();
             consultationViewLogger.logCandidate(
+                    summary.getPreferredLabel(),
+                    summary.getLang(),
+                    summary.getConceptId(),
+                    getTitle(),
+                    getId(),
+                    getSelectedLang()
+            );
+        } else {
+            consultationViewLogger.logConcept(
                     summary.getPreferredLabel(),
                     summary.getLang(),
                     summary.getConceptId(),
