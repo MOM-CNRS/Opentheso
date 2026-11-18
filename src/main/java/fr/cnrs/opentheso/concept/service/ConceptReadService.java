@@ -553,7 +553,15 @@ public class ConceptReadService {
         List<BreadcrumbStep> breadcrumb = List.of();
         List<List<BreadcrumbStep>> paths = List.of();
         if (preferences != null && preferences.breadcrumb()) {
-            paths = conceptBreadcrumbReadService.loadBreadcrumbPaths(thesaurusId, conceptId, lang);
+            if (fullConcept.getBreadcrumbAncestors() != null) {
+                String leaf = fullConcept.getPrefLabel() == null
+                        ? ""
+                        : StringUtils.defaultString(fullConcept.getPrefLabel().getLabel());
+                paths = conceptBreadcrumbReadService.pathsFromAncestorRows(
+                        fullConcept.getBreadcrumbAncestors(), conceptId, leaf);
+            } else {
+                paths = conceptBreadcrumbReadService.loadBreadcrumbPaths(thesaurusId, conceptId, lang);
+            }
             breadcrumb = paths.isEmpty() ? List.of() : List.copyOf(paths.get(0));
         }
         List<BreadcrumbStep> flatBreadcrumb = breadcrumb;

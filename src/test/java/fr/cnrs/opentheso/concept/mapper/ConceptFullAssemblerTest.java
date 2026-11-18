@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.concept.mapper;
 
-import fr.cnrs.opentheso.entites.ExternalResource;
-import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
+import fr.cnrs.opentheso.concept.model.ConceptFicheRows;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.concept.model.ConceptHierarchicalRelation;
 import fr.cnrs.opentheso.concept.model.ConceptResourceStatus;
@@ -16,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Date;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,17 +31,13 @@ class ConceptFullAssemblerTest {
     @Mock
     private ConceptFullQueryRepository conceptFullQueryRepository;
 
-    @Mock
-    private ExternalResourcesRepository externalResourcesRepository;
-
     @InjectMocks
     private ConceptFullAssembler assembler;
 
     @Test
     void assemble_buildsConceptFromNativeQueries() {
-        stubMinimalConceptQueries();
-        when(externalResourcesRepository.findAllByIdConceptAndIdThesaurus("C1", "TH1"))
-                .thenReturn(Collections.emptyList());
+        when(conceptFullQueryRepository.loadFiche(eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyBoolean(), anyBoolean()))
+                .thenReturn(Optional.of(minimalRows()));
 
         Optional<ConceptFullSnapshot> loaded = assembler.assemble(
                 "TH1", "C1", "fr", new ConceptAssemblePaging(0, 41, true), null, "http://localhost/"
@@ -59,14 +53,10 @@ class ConceptFullAssemblerTest {
 
     @Test
     void assemble_mapsExternalResourcesFromRepository() {
-        stubMinimalConceptQueries();
-        when(externalResourcesRepository.findAllByIdConceptAndIdThesaurus("C1", "TH1"))
-                .thenReturn(List.of(ExternalResource.builder()
-                        .idConcept("C1")
-                        .idThesaurus("TH1")
-                        .externalUri("https://example.org/doc")
-                        .description("Doc")
-                        .build()));
+        ConceptFicheRows rows = minimalRows();
+        rows = withExternal(rows, new Object[]{"https://example.org/doc", "Doc"});
+        when(conceptFullQueryRepository.loadFiche(eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyBoolean(), anyBoolean()))
+                .thenReturn(Optional.of(rows));
 
         Optional<ConceptFullSnapshot> loaded = assembler.assemble(
                 "TH1", "C1", "fr", new ConceptAssemblePaging(0, 41, true), null, "http://localhost/"
@@ -88,58 +78,48 @@ class ConceptFullAssemblerTest {
 
     @Test
     void assemble_mapsNotesAlignmentsGpsImagesFacetsAndRelations() {
-        stubMinimalConceptQueries();
-        when(conceptFullQueryRepository.findCreator("C1", "TH1")).thenReturn(Optional.of("alice"));
-        when(conceptFullQueryRepository.findContributors("C1", "TH1")).thenReturn(List.of("bob"));
-        when(conceptFullQueryRepository.findAltLabels("C1", "TH1", "fr", false))
-                .thenReturn(rows(new Object[]{"Alt", "T2", "3"}));
-        when(conceptFullQueryRepository.findAltLabels("C1", "TH1", "fr", true))
-                .thenReturn(rows(new Object[]{"Hidden", "T3", "4"}));
-        when(conceptFullQueryRepository.findPrefLabelTranslations("C1", "TH1", "fr"))
-                .thenReturn(rows(new Object[]{"T1", "Label EN", "en", "9", "gb"}));
-        when(conceptFullQueryRepository.findAltLabelTranslations("C1", "TH1", "fr", false))
-                .thenReturn(rows(new Object[]{"T2", "Alt EN", "en", "8"}));
-        when(conceptFullQueryRepository.findAltLabelTranslations("C1", "TH1", "fr", true))
-                .thenReturn(rows(new Object[]{"T3", "Hid EN", "en", "7"}));
-        when(conceptFullQueryRepository.findAllConceptNotes("C1", "TH1")).thenReturn(rows(
-                new Object[]{"1", "note", "une note", "fr", "src"},
-                new Object[]{"2", "definition", "def", "fr", "src"},
-                new Object[]{"3", "example", "ex", "fr", "src"},
-                new Object[]{"4", "editorialNote", "ed", "fr", "src"},
-                new Object[]{"5", "changeNote", "ch", "fr", "src"},
-                new Object[]{"6", "scopeNote", "sc", "fr", "src"},
-                new Object[]{"7", "historyNote", "hi", "fr", "src"},
-                new Object[]{"8", "other", "x", "fr", "src"}
-        ));
-        when(conceptFullQueryRepository.findBroaderRelations("C1", "TH1", "fr", true))
-                .thenReturn(rows(new Object[]{"Parent", "P1", "BT", "arkP", "", ""}));
-        when(conceptFullQueryRepository.findRelatedRelations("C1", "TH1", "fr"))
-                .thenReturn(rows(new Object[]{"Cousin", "R1", "RT", "", "", ""}));
-        when(conceptFullQueryRepository.findNarrowerRelations(
-                eq("C1"), eq("TH1"), eq("fr"), anyBoolean()
-        )).thenReturn(rows(new Object[]{"Enfant", "N1", "NT", "arkN", "", ""}));
-        when(conceptFullQueryRepository.findAlignments("C1", "TH1")).thenReturn(rows(
-                new Object[]{"Q1", "http://ex/1", "1", "exact"},
-                new Object[]{"Q2", "http://ex/2", "2", "close"},
-                new Object[]{"Q3", "http://ex/3", "3", "broad"},
-                new Object[]{"Q4", "http://ex/4", "4", "related"},
-                new Object[]{"Q5", "http://ex/5", "5", "narrow"},
-                new Object[]{"Q6", "http://ex/6", "9", "other"}
-        ));
-        when(conceptFullQueryRepository.findGpsPoints("C1", "TH1"))
-                .thenReturn(rows(new Object[]{48.8, 2.3, "1"}));
-        when(conceptFullQueryRepository.findGroupMemberships("C1", "TH1", "fr"))
-                .thenReturn(rows(new Object[]{"G1", "arkG", "", "", "Groupe"}));
-        when(conceptFullQueryRepository.findImages("C1", "TH1"))
-                .thenReturn(rows(new Object[]{"11", "null", "copy", "http://img", "alice"}));
-        when(conceptFullQueryRepository.findReplaces("C1", "TH1", "fr"))
-                .thenReturn(rows(new Object[]{"OLD", "arkO", "", "", "Ancien"}));
-        when(conceptFullQueryRepository.findReplacedBy("C1", "TH1", "fr"))
-                .thenReturn(rows(new Object[]{"NEW", "arkN", "", "", "Nouveau"}));
-        when(conceptFullQueryRepository.findFacets("C1", "TH1", "fr"))
-                .thenReturn(rows(new Object[]{"F1", "Facet A"}, new Object[]{"", "ignored"}));
-        when(externalResourcesRepository.findAllByIdConceptAndIdThesaurus("C1", "TH1"))
-                .thenReturn(Collections.emptyList());
+        ConceptFicheRows loadedRows = new ConceptFicheRows(
+                minimalCore(),
+                "alice",
+                List.of("bob"),
+                new Object[]{"Libellé", "T1", 12},
+                rows(new Object[]{"Alt", "T2", "3"}),
+                rows(new Object[]{"Hidden", "T3", "4"}),
+                rows(new Object[]{"T1", "Label EN", "en", "9", "gb"}),
+                rows(new Object[]{"T2", "Alt EN", "en", "8"}),
+                rows(new Object[]{"T3", "Hid EN", "en", "7"}),
+                rows(
+                        new Object[]{"1", "note", "une note", "fr", "src"},
+                        new Object[]{"2", "definition", "def", "fr", "src"},
+                        new Object[]{"3", "example", "ex", "fr", "src"},
+                        new Object[]{"4", "editorialNote", "ed", "fr", "src"},
+                        new Object[]{"5", "changeNote", "ch", "fr", "src"},
+                        new Object[]{"6", "scopeNote", "sc", "fr", "src"},
+                        new Object[]{"7", "historyNote", "hi", "fr", "src"},
+                        new Object[]{"8", "other", "x", "fr", "src"}
+                ),
+                rows(new Object[]{"Parent", "P1", "BT", "arkP", "", ""}),
+                rows(new Object[]{"Cousin", "R1", "RT", "", "", ""}),
+                rows(new Object[]{"Enfant", "N1", "NT", "arkN", "", ""}),
+                rows(
+                        new Object[]{"Q1", "http://ex/1", "1", "exact"},
+                        new Object[]{"Q2", "http://ex/2", "2", "close"},
+                        new Object[]{"Q3", "http://ex/3", "3", "broad"},
+                        new Object[]{"Q4", "http://ex/4", "4", "related"},
+                        new Object[]{"Q5", "http://ex/5", "5", "narrow"},
+                        new Object[]{"Q6", "http://ex/6", "9", "other"}
+                ),
+                rows(new Object[]{48.8, 2.3, "1"}),
+                rows(new Object[]{"G1", "arkG", "", "", "Groupe"}),
+                rows(new Object[]{"11", "null", "copy", "http://img", "alice"}),
+                rows(new Object[]{"OLD", "arkO", "", "", "Ancien"}),
+                rows(new Object[]{"NEW", "arkN", "", "", "Nouveau"}),
+                rows(new Object[]{"F1", "Facet A"}, new Object[]{"", "ignored"}),
+                List.of(),
+                List.of()
+        );
+        when(conceptFullQueryRepository.loadFiche(eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyBoolean(), anyBoolean()))
+                .thenReturn(Optional.of(loadedRows));
 
         Optional<ConceptFullSnapshot> loaded = assembler.assemble(
                 "TH1", "C1", "fr", new ConceptAssemblePaging(0, 41, true), null, "http://localhost/"
@@ -274,40 +254,32 @@ class ConceptFullAssemblerTest {
         );
     }
 
-    private void stubMinimalConceptQueries() {
-        Object[] core = new Object[]{
+    private static ConceptFicheRows minimalRows() {
+        return new ConceptFicheRows(
+                minimalCore(), "", List.of(), new Object[]{"Libellé", "T1", 12},
+                List.of(), List.of(), List.of(), List.of(), List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of(),
+                List.of(), List.of(), List.of()
+        );
+    }
+
+    private static ConceptFicheRows withExternal(ConceptFicheRows rows, Object[] external) {
+        return new ConceptFicheRows(
+                rows.core(), rows.creator(), rows.contributors(), rows.preferred(),
+                rows.altLabels(), rows.hiddenLabels(), rows.prefTranslations(),
+                rows.altTranslations(), rows.hiddenTranslations(), rows.notes(),
+                rows.broaders(), rows.relateds(), rows.narrowers(), rows.alignments(),
+                rows.gps(), rows.groups(), rows.images(), rows.replaces(), rows.replacedBy(),
+                rows.facets(), rows(external), rows.ancestors()
+        );
+    }
+
+    private static Object[] minimalCore() {
+        return new Object[]{
                 "C1", "C", "ark1", "", "", "N1",
                 Date.valueOf("2024-01-01"), Date.valueOf("2024-02-01"), "subject"
         };
-        when(conceptFullQueryRepository.findConceptCore(eq("C1"), eq("TH1"), anyBoolean()))
-                .thenReturn(Optional.of(core));
-        when(conceptFullQueryRepository.findPreferredLabel("C1", "TH1", "fr"))
-                .thenReturn(Optional.of(new Object[]{"Libellé", "T1", 12}));
-        when(conceptFullQueryRepository.findAltLabels(anyString(), anyString(), anyString(), anyBoolean()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findPrefLabelTranslations(anyString(), anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findAltLabelTranslations(anyString(), anyString(), anyString(), anyBoolean()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findAllConceptNotes(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findBroaderRelations(anyString(), anyString(), anyString(), anyBoolean()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findRelatedRelations(anyString(), anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
-        org.mockito.Mockito.lenient().when(conceptFullQueryRepository.findNarrowerRelations(
-                eq("C1"), eq("TH1"), eq("fr"), anyBoolean()
-        )).thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findAlignments(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findGpsPoints(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findGroupMemberships(anyString(), anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findImages(anyString(), anyString())).thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findReplaces(anyString(), anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findReplacedBy(anyString(), anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
-        when(conceptFullQueryRepository.findFacets(anyString(), anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
     }
 
     private static List<Object[]> rows(Object[]... values) {
