@@ -29,6 +29,7 @@ import fr.cnrs.opentheso.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.setting.service.ThesaurusPreferenceService;
@@ -164,6 +165,8 @@ public class ThesaurusViewBean implements Serializable {
     private boolean corpusSearched;
     @Getter
     private List<ConceptCorpusLinkItem> displayedCorpusLinks = Collections.emptyList();
+    private String corpusSourceStateFor;
+    private CorpusSourceState corpusSourceState = CorpusSourceState.NONE;
 
     public void ensureSessionThesaurus() {
         sessionReady = true;
@@ -782,6 +785,27 @@ public class ThesaurusViewBean implements Serializable {
 
     public boolean isCorpusNoResult() {
         return corpusSearched && displayedCorpusLinks.isEmpty();
+    }
+
+    public boolean isCorpusSourceMissing() {
+        return currentCorpusSourceState() == CorpusSourceState.NONE;
+    }
+
+    public boolean isCorpusSourceInactive() {
+        return currentCorpusSourceState() == CorpusSourceState.INACTIVE;
+    }
+
+    public boolean isCorpusSourceActive() {
+        return currentCorpusSourceState() == CorpusSourceState.ACTIVE;
+    }
+
+    private CorpusSourceState currentCorpusSourceState() {
+        String thesaurusId = StringUtils.defaultString(getId());
+        if (!thesaurusId.equals(corpusSourceStateFor)) {
+            corpusSourceStateFor = thesaurusId;
+            corpusSourceState = conceptReadService.corpusSourceState(thesaurusId);
+        }
+        return corpusSourceState;
     }
 
     public boolean isShowQrCode() {

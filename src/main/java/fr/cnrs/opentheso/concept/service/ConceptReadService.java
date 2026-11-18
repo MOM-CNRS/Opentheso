@@ -23,6 +23,7 @@ import fr.cnrs.opentheso.concept.model.FacetMemberItem;
 import fr.cnrs.opentheso.concept.model.GroupDetailOverview;
 import fr.cnrs.opentheso.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.concept.model.LeftTreeMode;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ExportUriType;
 import fr.cnrs.opentheso.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.setting.service.ThesaurusPreferenceService;
@@ -611,6 +612,11 @@ public class ConceptReadService {
     @Transactional(readOnly = true)
     public boolean hasActiveCorpus(String thesaurusId) {
         return conceptDetailEnrichmentService.hasActiveCorpus(thesaurusId);
+    }
+
+    @Transactional(readOnly = true)
+    public CorpusSourceState corpusSourceState(String thesaurusId) {
+        return conceptDetailEnrichmentService.corpusSourceState(thesaurusId);
     }
 
     public List<ConceptCorpusLinkItem> loadCorpusLinks(String thesaurusId, CorpusSearchContext context) {

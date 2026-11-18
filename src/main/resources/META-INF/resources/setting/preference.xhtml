@@ -1153,27 +1153,10 @@
                 </div>
                 </h:panelGroup>
                 <div class="fsave">
-                  <button type="button" class="fsave-btn" data-act="st-save-ask">
+                  <button type="button" class="fsave-btn" data-act="st-save-go">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                     Enregistrer
                   </button>
-                </div>
-                <div class="block-overlay confirm-overlay" id="stSaveConfirm" hidden="hidden"
-                     data-act="st-save-dismiss" role="presentation">
-                  <div class="confirm-modal" role="dialog" aria-modal="true"
-                       aria-labelledby="stSaveConfirmTitle" data-act="st-save-modal">
-                    <div class="confirm-h" id="stSaveConfirmTitle">Enregistrer les paramètres</div>
-                    <p class="confirm-p">Enregistrer les modifications des paramètres de
-                      <span class="cv-lang">#{thesaurusViewBean.title}</span> ?
-                      Préférences, corpus et sources d'alignement seront enregistrés. Sans Enregistrer, tout est perdu en quittant la page.</p>
-                    <div class="confirm-actions">
-                      <button type="button" class="bo-btn ghost confirm-cancel" data-act="st-save-dismiss">Annuler</button>
-                      <button type="button" class="bo-btn primary" data-act="st-save-go">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                        Enregistrer
-                      </button>
-                    </div>
-                  </div>
                 </div>
                 <div class="bo-toast above" id="stSaveToast" hidden="hidden">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>

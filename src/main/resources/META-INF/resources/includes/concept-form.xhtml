@@ -389,7 +389,15 @@
           <div class="crow">
             <div class="crow-lbl">Nombre des corpus liés</div>
             <div class="crow-val cv-corpus-val" data-cv-extra="corpus">
-              <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>
+              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceMissing}">
+                <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.none')}</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceInactive}">
+                <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.inactive')}</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceActive}">
+                <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>
+              </ui:fragment>
             </div>
           </div>
         </div>

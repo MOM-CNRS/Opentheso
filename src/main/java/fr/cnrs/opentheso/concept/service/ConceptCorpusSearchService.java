@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.concept.service;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.concept.model.CorpusSearchContext;
 import fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.setting.service.ThesaurusCorpusService;
 import jakarta.json.Json;
@@ -45,6 +46,11 @@ public class ConceptCorpusSearchService {
     @Transactional(readOnly = true)
     public boolean hasActiveCorpus(String thesaurusId) {
         return thesaurusCorpusService.hasActiveCorpus(thesaurusId);
+    }
+
+    @Transactional(readOnly = true)
+    public CorpusSourceState corpusSourceState(String thesaurusId) {
+        return thesaurusCorpusService.corpusSourceState(thesaurusId);
     }
 
     /**
