@@ -25,21 +25,30 @@ public class CandidatReadService {
 
     @Transactional(readOnly = true)
     public List<CandidatDto> loadByStatus(String thesaurusId, String lang, int statusId) {
-        return doSearchByStatus(thesaurusId, lang, statusId, null);
+        return doSearchByStatus(thesaurusId, lang, statusId, null, CandidatQueryRepository.BOARD_LIST_CAP);
     }
 
     @Transactional(readOnly = true)
     public List<CandidatDto> searchByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
-        return doSearchByStatus(thesaurusId, lang, statusId, searchTerm);
+        return doSearchByStatus(thesaurusId, lang, statusId, searchTerm, CandidatQueryRepository.BOARD_LIST_CAP);
     }
 
-    private List<CandidatDto> doSearchByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
+    /**
+     * Liste complète d’un statut, sans le plafond de 400 utilisé par l’API.
+     * Le tableau de bord pagine ensuite en mémoire.
+     */
+    @Transactional(readOnly = true)
+    public List<CandidatDto> searchAllByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
+        return doSearchByStatus(thesaurusId, lang, statusId, searchTerm, 0);
+    }
+
+    private List<CandidatDto> doSearchByStatus(
+            String thesaurusId, String lang, int statusId, String searchTerm, int maxResults) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
-        var rows = StringUtils.isBlank(searchTerm)
-                ? candidatQueryRepository.findCandidatesByStatus(thesaurusId, lang, statusId)
-                : candidatQueryRepository.findCandidatesByStatus(thesaurusId, lang, statusId, searchTerm);
+        var rows = candidatQueryRepository.findCandidatesByStatus(
+                thesaurusId, lang, statusId, searchTerm, maxResults);
         return CandidatMapper.toCandidatDtos(rows, thesaurusId, statusId);
     }
 

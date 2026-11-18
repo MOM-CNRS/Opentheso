@@ -86,11 +86,11 @@ class CandidatBoardBeanTest {
 
     @Test
     void load_mapsPendingAcceptedAndRejected() {
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.PENDING), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.PENDING), isNull()))
                 .thenReturn(List.of(candidat("c1", "Fibule", "Ada", 2, 4)));
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
                 .thenReturn(List.of(candidat("c2", "Patère", "Luc", 7, 3)));
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.REJECTED), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.REJECTED), isNull()))
                 .thenReturn(List.of());
         when(candidatReadService.countByStatus("TH1", CandidatStatusCode.PENDING)).thenReturn(8);
         when(candidatReadService.countByStatus("TH1", CandidatStatusCode.ACCEPTED)).thenReturn(13);
@@ -105,9 +105,11 @@ class CandidatBoardBeanTest {
         assertEquals("candidat", bean.getPending().get(0).openType());
         assertEquals("concept", bean.getAccepted().get(0).openType());
         assertTrue(bean.getRejected().isEmpty());
-        assertEquals(8, bean.getPendingCount());
-        assertEquals(13, bean.getAcceptedCount());
+        assertEquals(1, bean.getPendingCount());
+        assertEquals(1, bean.getAcceptedCount());
         assertEquals(0, bean.getRejectedCount());
+        assertEquals(8, bean.getPendingTotal());
+        assertEquals(13, bean.getAcceptedTotal());
         assertTrue(bean.isCapped("attente"));
         assertFalse(bean.isCapped("rejete"));
         verify(thesaurusViewBean).getId();
@@ -132,7 +134,7 @@ class CandidatBoardBeanTest {
         assertTrue(bean.getPending().isEmpty());
         assertTrue(bean.getAccepted().isEmpty());
         assertTrue(bean.getRejected().isEmpty());
-        verify(candidatReadService, never()).searchByStatus(any(), any(), anyInt(), any());
+        verify(candidatReadService, never()).searchAllByStatus(any(), any(), anyInt(), any());
     }
 
     @Test
@@ -143,16 +145,16 @@ class CandidatBoardBeanTest {
         bean.refreshBadgeCount();
 
         assertEquals(3, bean.getBadgeCount());
-        verify(candidatReadService, never()).searchByStatus(any(), any(), anyInt(), any());
+        verify(candidatReadService, never()).searchAllByStatus(any(), any(), anyInt(), any());
     }
 
     @Test
     void exportEnabled_followsTheVisibleList() {
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.PENDING), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.PENDING), isNull()))
                 .thenReturn(List.of());
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
                 .thenReturn(List.of(candidat("c2", "Patère", "Luc", 7, 3)));
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.REJECTED), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.REJECTED), isNull()))
                 .thenReturn(List.of());
         when(candidatReadService.countByStatus(eq("TH1"), anyInt())).thenReturn(0);
 
@@ -169,7 +171,7 @@ class CandidatBoardBeanTest {
     void exportCandidates_exportsTheVisibleListAsCsv() {
         when(candidatAccessPolicy.canExport(userSession, "TH1")).thenReturn(true);
         CandidatDto inserted = candidat("c2", "Patère", "Luc", 7, 3);
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
                 .thenReturn(List.of(inserted));
         when(candidatProcessService.exportProcessedCandidatesCsv(any())).thenReturn("Id;Candidat\n".getBytes());
         bean.setActiveTab("insere");
@@ -229,7 +231,7 @@ class CandidatBoardBeanTest {
     void toggleMine_keepsOnlyCurrentUserRows() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(4);
-        when(candidatReadService.searchByStatus(eq("TH1"), eq("fr"), anyInt(), any()))
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), anyInt(), any()))
                 .thenReturn(List.of(
                         candidat("c1", "Mien", "moi", 1, 4),
                         candidat("c2", "Autre", "lui", 0, 9)
@@ -241,6 +243,58 @@ class CandidatBoardBeanTest {
         assertEquals(1, bean.getPending().size());
         assertEquals("Mien", bean.getPending().get(0).title());
         assertEquals(1, bean.getPendingCount());
+    }
+
+    @Test
+    void pagesEachListWithTheChosenSize() {
+        var pending = new java.util.ArrayList<CandidatDto>();
+        for (int i = 0; i < 25; i++) {
+            pending.add(candidat("p" + i, "P" + i, "Ada", 0, 4));
+        }
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.PENDING), isNull()))
+                .thenReturn(pending);
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.ACCEPTED), isNull()))
+                .thenReturn(List.of());
+        when(candidatReadService.searchAllByStatus(eq("TH1"), eq("fr"), eq(CandidatStatusCode.REJECTED), isNull()))
+                .thenReturn(List.of());
+
+        bean.setPageSize(10);
+        bean.setPageSize(7);
+        assertEquals(10, bean.getPageSize());
+        bean.load();
+
+        assertEquals(25, bean.getPendingCount());
+        assertEquals(10, bean.getPendingPage().size());
+        assertEquals("P0", bean.getPendingPage().get(0).title());
+        assertEquals(1, bean.pageFrom("attente"));
+        assertEquals(10, bean.pageTo("attente"));
+        assertEquals(3, bean.pageCount("attente"));
+        assertEquals(25, bean.itemsCount("attente"));
+        assertTrue(bean.hasNext("attente"));
+        assertFalse(bean.hasPrevious("attente"));
+
+        bean.showNext("attente");
+        assertEquals("P10", bean.getPendingPage().get(0).title());
+        assertEquals(11, bean.pageFrom("attente"));
+        assertTrue(bean.hasPrevious("attente"));
+
+        bean.showNext("attente");
+        assertEquals(5, bean.getPendingPage().size());
+        assertEquals(21, bean.pageFrom("attente"));
+        assertEquals(25, bean.pageTo("attente"));
+        assertFalse(bean.hasNext("attente"));
+
+        bean.showNext("attente");
+        assertEquals(3, bean.pageNumber("attente"));
+        bean.showNext("insere");
+        assertEquals(3, bean.pageNumber("attente"));
+        assertEquals(0, bean.pageFrom("insere"));
+
+        bean.setPageSize(50);
+        bean.onPageSizeChange();
+        assertEquals(25, bean.getPendingPage().size());
+        assertEquals(1, bean.pageCount("attente"));
+        assertEquals(1, bean.pageFrom("attente"));
     }
 
     private static CandidatDto candidat(String id, String label, String author, int votes, int userId) {

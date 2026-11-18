@@ -38,8 +38,16 @@ public class CandidatQueryRepository {
         return findCandidatesByStatus(thesaurusId, lang, statusId, null);
     }
 
-    @SuppressWarnings("unchecked")
     public List<CandidatListRow> findCandidatesByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
+        return findCandidatesByStatus(thesaurusId, lang, statusId, searchTerm, BOARD_LIST_CAP);
+    }
+
+    /**
+     * @param maxResults plafond de lignes ; {@code 0} ou moins charge toute la liste
+     */
+    @SuppressWarnings("unchecked")
+    public List<CandidatListRow> findCandidatesByStatus(
+            String thesaurusId, String lang, int statusId, String searchTerm, int maxResults) {
         String language = StringUtils.isBlank(lang) ? "fr" : lang;
         int searchFlag = StringUtils.isNotBlank(searchTerm) ? 1 : 0;
         String sql = """
@@ -115,15 +123,17 @@ public class CandidatQueryRepository {
                   )
                 ORDER BY c.created DESC
                 """;
-        List<Object[]> rows = entityManager.createNativeQuery(sql)
+        var query = entityManager.createNativeQuery(sql)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("statusId", statusId)
                 .setParameter("lang", language)
                 .setParameter("unknownUser", UNKNOWN_USER)
                 .setParameter("searchFlag", searchFlag)
-                .setParameter("searchTerm", searchFlag == 1 ? searchTerm.trim() : "")
-                .setMaxResults(BOARD_LIST_CAP)
-                .getResultList();
+                .setParameter("searchTerm", searchFlag == 1 ? searchTerm.trim() : "");
+        if (maxResults > 0) {
+            query.setMaxResults(maxResults);
+        }
+        List<Object[]> rows = query.getResultList();
         return rows.stream().map(this::toCandidatListRow).toList();
     }
 
@@ -134,6 +144,9 @@ public class CandidatQueryRepository {
         Number result = (Number) entityManager.createNativeQuery("""
                 SELECT COUNT(*)
                 FROM candidat_status cs
+                JOIN concept c
+                    ON c.id_concept = cs.id_concept
+                    AND c.id_thesaurus = cs.id_thesaurus
                 WHERE cs.id_thesaurus = :thesaurusId
                   AND cs.id_status = :statusId
                 """)

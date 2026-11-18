@@ -99,6 +99,14 @@ public class CandidatBoardBean implements Serializable {
     private int pendingCount;
     private int acceptedCount;
     private int rejectedCount;
+    private int pendingTotal;
+    private int acceptedTotal;
+    private int rejectedTotal;
+    private static final List<Integer> PAGE_SIZE_OPTIONS = List.of(10, 20, 50, 100);
+    private int pageSize = 20;
+    private int pendingPage;
+    private int acceptedPage;
+    private int rejectedPage;
     @Getter
     private int badgeCount;
     @Getter
@@ -111,7 +119,7 @@ public class CandidatBoardBean implements Serializable {
     public void load() {
         loaded = false;
         ensureLoaded();
-        badgeCount = pendingCount;
+        badgeCount = pendingTotal;
     }
 
     /**
@@ -129,7 +137,7 @@ public class CandidatBoardBean implements Serializable {
      */
     public void refreshBadgeCount() {
         if (loaded) {
-            badgeCount = pendingCount;
+            badgeCount = pendingTotal;
             return;
         }
         String thesaurusId = currentThesaurusId();
@@ -214,7 +222,7 @@ public class CandidatBoardBean implements Serializable {
         loaded = false;
         reload(thesaurusId, thesaurusViewBean.getSelectedLang());
         loaded = true;
-        badgeCount = pendingCount;
+        badgeCount = pendingTotal;
         consumeBoardNotice();
     }
 
@@ -480,6 +488,21 @@ public class CandidatBoardBean implements Serializable {
         return rejectedCount;
     }
 
+    public int getPendingTotal() {
+        ensureLoaded();
+        return pendingTotal;
+    }
+
+    public int getAcceptedTotal() {
+        ensureLoaded();
+        return acceptedTotal;
+    }
+
+    public int getRejectedTotal() {
+        ensureLoaded();
+        return rejectedTotal;
+    }
+
     public boolean isLoggedIn() {
         return userSession != null && userSession.isLoggedIn();
     }
@@ -513,6 +536,9 @@ public class CandidatBoardBean implements Serializable {
     }
 
     private void reload(String thesaurusId, String lang) {
+        pendingPage = 0;
+        acceptedPage = 0;
+        rejectedPage = 0;
         if (StringUtils.isBlank(thesaurusId)
                 || !rightsService.isAdminOfThesaurusProject(userSession, thesaurusId)) {
             pending = Collections.emptyList();
@@ -521,6 +547,9 @@ public class CandidatBoardBean implements Serializable {
             pendingCount = 0;
             acceptedCount = 0;
             rejectedCount = 0;
+            pendingTotal = 0;
+            acceptedTotal = 0;
+            rejectedTotal = 0;
             return;
         }
         lang = StringUtils.defaultIfBlank(lang, "fr");
@@ -528,30 +557,33 @@ public class CandidatBoardBean implements Serializable {
 
         Integer userId = mineOnly && isLoggedIn() ? userSession.getCurrentUserId() : null;
         pending = mapList(
-                candidatReadService.searchByStatus(thesaurusId, lang, CandidatStatusCode.PENDING, query),
+                candidatReadService.searchAllByStatus(thesaurusId, lang, CandidatStatusCode.PENDING, query),
                 "candidat",
                 userId
         );
         accepted = mapList(
-                candidatReadService.searchByStatus(thesaurusId, lang, CandidatStatusCode.ACCEPTED, query),
+                candidatReadService.searchAllByStatus(thesaurusId, lang, CandidatStatusCode.ACCEPTED, query),
                 "concept",
                 userId
         );
         rejected = mapList(
-                candidatReadService.searchByStatus(thesaurusId, lang, CandidatStatusCode.REJECTED, query),
+                candidatReadService.searchAllByStatus(thesaurusId, lang, CandidatStatusCode.REJECTED, query),
                 "candidat",
                 userId
         );
 
+        pendingCount = pending.size();
+        acceptedCount = accepted.size();
+        rejectedCount = rejected.size();
         if (StringUtils.isNotBlank(query) || mineOnly) {
-            pendingCount = pending.size();
-            acceptedCount = accepted.size();
-            rejectedCount = rejected.size();
+            pendingTotal = pendingCount;
+            acceptedTotal = acceptedCount;
+            rejectedTotal = rejectedCount;
             return;
         }
-        pendingCount = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.PENDING);
-        acceptedCount = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.ACCEPTED);
-        rejectedCount = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.REJECTED);
+        pendingTotal = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.PENDING);
+        acceptedTotal = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.ACCEPTED);
+        rejectedTotal = candidatReadService.countByStatus(thesaurusId, CandidatStatusCode.REJECTED);
     }
 
     private List<CandidatBoardItem> mapList(List<CandidatDto> source, String openType, Integer userId) {
@@ -589,7 +621,7 @@ public class CandidatBoardBean implements Serializable {
             case TAB_REJECTED -> CandidatStatusCode.REJECTED;
             default -> CandidatStatusCode.PENDING;
         };
-        List<CandidatDto> source = candidatReadService.searchByStatus(
+        List<CandidatDto> source = candidatReadService.searchAllByStatus(
                 thesaurusId, lang, status, StringUtils.trimToNull(searchTerm));
         if (source == null || source.isEmpty()) {
             return List.of();
@@ -705,6 +737,125 @@ public class CandidatBoardBean implements Serializable {
         return DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault()).format(instant);
     }
 
+    public List<Integer> getPageSizeOptions() {
+        return PAGE_SIZE_OPTIONS;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        if (PAGE_SIZE_OPTIONS.contains(pageSize)) {
+            this.pageSize = pageSize;
+        }
+    }
+
+    public void onPageSizeChange() {
+        pendingPage = 0;
+        acceptedPage = 0;
+        rejectedPage = 0;
+    }
+
+    public void showPrevious(String tab) {
+        setPage(tab, pageIndex(tab) - 1);
+    }
+
+    public void showNext(String tab) {
+        setPage(tab, pageIndex(tab) + 1);
+    }
+
+    public List<CandidatBoardItem> getPendingPage() {
+        ensureLoaded();
+        return slice(pending, pageIndex(TAB_PENDING));
+    }
+
+    public List<CandidatBoardItem> getAcceptedPage() {
+        ensureLoaded();
+        return slice(accepted, pageIndex(TAB_ACCEPTED));
+    }
+
+    public List<CandidatBoardItem> getRejectedPage() {
+        ensureLoaded();
+        return slice(rejected, pageIndex(TAB_REJECTED));
+    }
+
+    public int pageFrom(String tab) {
+        ensureLoaded();
+        int size = itemsFor(tab).size();
+        if (size == 0) {
+            return 0;
+        }
+        return pageIndex(tab) * pageSize + 1;
+    }
+
+    public int pageTo(String tab) {
+        ensureLoaded();
+        return Math.min(itemsFor(tab).size(), (pageIndex(tab) + 1) * pageSize);
+    }
+
+    public int pageNumber(String tab) {
+        ensureLoaded();
+        return pageIndex(tab) + 1;
+    }
+
+    public int pageCount(String tab) {
+        ensureLoaded();
+        return rawPageCount(itemsFor(tab).size());
+    }
+
+    public int itemsCount(String tab) {
+        ensureLoaded();
+        return itemsFor(tab).size();
+    }
+
+    public boolean hasPrevious(String tab) {
+        ensureLoaded();
+        return pageIndex(tab) > 0;
+    }
+
+    public boolean hasNext(String tab) {
+        ensureLoaded();
+        return pageIndex(tab) + 1 < rawPageCount(itemsFor(tab).size());
+    }
+
+    private List<CandidatBoardItem> slice(List<CandidatBoardItem> items, int page) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        int from = Math.max(0, page) * pageSize;
+        if (from >= items.size()) {
+            return List.of();
+        }
+        return List.copyOf(items.subList(from, Math.min(from + pageSize, items.size())));
+    }
+
+    private int pageIndex(String tab) {
+        int stored = switch (StringUtils.defaultString(tab)) {
+            case TAB_ACCEPTED -> acceptedPage;
+            case TAB_REJECTED -> rejectedPage;
+            default -> pendingPage;
+        };
+        int last = rawPageCount(itemsFor(tab).size()) - 1;
+        return Math.max(0, Math.min(stored, last));
+    }
+
+    private void setPage(String tab, int page) {
+        int next = Math.max(0, Math.min(page, rawPageCount(itemsFor(tab).size()) - 1));
+        switch (StringUtils.defaultString(tab)) {
+            case TAB_ACCEPTED -> acceptedPage = next;
+            case TAB_REJECTED -> rejectedPage = next;
+            default -> pendingPage = next;
+        }
+    }
+
+    private int rawPageCount(int size) {
+        if (size <= 0 || pageSize <= 0) {
+            return 1;
+        }
+        return (size + pageSize - 1) / pageSize;
+    }
+
     private List<CandidatBoardItem> itemsFor(String tab) {
         return switch (StringUtils.defaultString(tab)) {
             case TAB_ACCEPTED -> accepted;
@@ -715,9 +866,9 @@ public class CandidatBoardBean implements Serializable {
 
     private int countFor(String tab) {
         return switch (StringUtils.defaultString(tab)) {
-            case TAB_ACCEPTED -> acceptedCount;
-            case TAB_REJECTED -> rejectedCount;
-            default -> pendingCount;
+            case TAB_ACCEPTED -> acceptedTotal;
+            case TAB_REJECTED -> rejectedTotal;
+            default -> pendingTotal;
         };
     }
 }

@@ -49,7 +49,8 @@ class CandidatReadServiceTest {
 
     @Test
     void searchByStatus_usesRepositorySearchWhenTermProvided() {
-        when(candidatQueryRepository.findCandidatesByStatus("TH1", "fr", 1, "chien"))
+        when(candidatQueryRepository.findCandidatesByStatus(
+                "TH1", "fr", 1, "chien", CandidatQueryRepository.BOARD_LIST_CAP))
                 .thenReturn(List.of(new CandidatListRow(
                         "C1", null, null, 4, null, "", "chien", "user", "Utilisateur inconnu",
                         0, 0, 0, 0, 0
@@ -59,7 +60,8 @@ class CandidatReadServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("chien", result.get(0).getNomPref());
-        verify(candidatQueryRepository).findCandidatesByStatus("TH1", "fr", 1, "chien");
+        verify(candidatQueryRepository).findCandidatesByStatus(
+                "TH1", "fr", 1, "chien", CandidatQueryRepository.BOARD_LIST_CAP);
     }
 
     @Test

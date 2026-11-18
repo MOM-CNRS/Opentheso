@@ -184,7 +184,7 @@
                   </ui:fragment>
                   <ui:fragment rendered="#{not empty candidatBoardBean.pending}">
                     <div class="prop-list">
-                      <ui:repeat value="#{candidatBoardBean.pending}" var="item">
+                      <ui:repeat value="#{candidatBoardBean.pendingPage}" var="item">
                         <ui:include src="/includes/candidate-board-row.xhtml">
                           <ui:param name="item" value="#{item}"/>
                           <ui:param name="tone" value="new"/>
@@ -193,11 +193,51 @@
                         </ui:include>
                       </ui:repeat>
                     </div>
+                    <div class="ia-pager cand-pager">
+                      <div class="ia-pager-meta">
+                        <span class="ia-pager-info">
+                          #{candidatBoardBean.pageFrom('attente')}–#{candidatBoardBean.pageTo('attente')}
+                          #{localeBean.getMsg('admin.users.pager.of')}
+                          #{candidatBoardBean.itemsCount('attente')}
+                          #{localeBean.getMsg('admin.users.pager.results')}
+                        </span>
+                        <label class="ia-pager-size">
+                          <span>#{localeBean.getMsg('admin.users.pager.size')}</span>
+                          <h:selectOneMenu id="candPageSizeAttente" value="#{candidatBoardBean.pageSize}"
+                                           styleClass="st-input ia-select ia-pager-size-select">
+                            <f:selectItems value="#{candidatBoardBean.pageSizeOptions}"/>
+                            <f:ajax event="change" execute="@this"
+                                    listener="#{candidatBoardBean.onPageSizeChange}"
+                                    render="candPanes"/>
+                          </h:selectOneMenu>
+                        </label>
+                      </div>
+                      <div class="ia-pager-nav">
+                        <h:commandButton id="candPrevAttente"
+                                         value="#{localeBean.getMsg('admin.users.pager.prev')}"
+                                         styleClass="bo-btn ghost sm"
+                                         disabled="#{not candidatBoardBean.hasPrevious('attente')}"
+                                         action="#{candidatBoardBean.showPrevious('attente')}">
+                          <f:ajax execute="@this" render="candPanes"/>
+                        </h:commandButton>
+                        <span class="ia-pager-info">
+                          #{localeBean.getMsg('admin.users.pager.page')}
+                          #{candidatBoardBean.pageNumber('attente')} / #{candidatBoardBean.pageCount('attente')}
+                        </span>
+                        <h:commandButton id="candNextAttente"
+                                         value="#{localeBean.getMsg('admin.users.pager.next')}"
+                                         styleClass="bo-btn ghost sm"
+                                         disabled="#{not candidatBoardBean.hasNext('attente')}"
+                                         action="#{candidatBoardBean.showNext('attente')}">
+                          <f:ajax execute="@this" render="candPanes"/>
+                        </h:commandButton>
+                      </div>
+                    </div>
                   </ui:fragment>
                   <ui:fragment rendered="#{candidatBoardBean.isCapped('attente')}">
                     <div class="cand-cap">
                       <h:outputFormat value="#{localeBean.getMsg('candidat.board.capped')}">
-                        <f:param value="#{candidatBoardBean.pendingCount}"/>
+                        <f:param value="#{candidatBoardBean.pendingTotal}"/>
                       </h:outputFormat>
                     </div>
                   </ui:fragment>
@@ -214,7 +254,7 @@
                   </ui:fragment>
                   <ui:fragment rendered="#{not empty candidatBoardBean.accepted}">
                     <div class="prop-list">
-                      <ui:repeat value="#{candidatBoardBean.accepted}" var="item">
+                      <ui:repeat value="#{candidatBoardBean.acceptedPage}" var="item">
                         <ui:include src="/includes/candidate-board-row.xhtml">
                           <ui:param name="item" value="#{item}"/>
                           <ui:param name="tone" value="approved"/>
@@ -223,11 +263,51 @@
                         </ui:include>
                       </ui:repeat>
                     </div>
+                    <div class="ia-pager cand-pager">
+                      <div class="ia-pager-meta">
+                        <span class="ia-pager-info">
+                          #{candidatBoardBean.pageFrom('insere')}–#{candidatBoardBean.pageTo('insere')}
+                          #{localeBean.getMsg('admin.users.pager.of')}
+                          #{candidatBoardBean.itemsCount('insere')}
+                          #{localeBean.getMsg('admin.users.pager.results')}
+                        </span>
+                        <label class="ia-pager-size">
+                          <span>#{localeBean.getMsg('admin.users.pager.size')}</span>
+                          <h:selectOneMenu id="candPageSizeInsere" value="#{candidatBoardBean.pageSize}"
+                                           styleClass="st-input ia-select ia-pager-size-select">
+                            <f:selectItems value="#{candidatBoardBean.pageSizeOptions}"/>
+                            <f:ajax event="change" execute="@this"
+                                    listener="#{candidatBoardBean.onPageSizeChange}"
+                                    render="candPanes"/>
+                          </h:selectOneMenu>
+                        </label>
+                      </div>
+                      <div class="ia-pager-nav">
+                        <h:commandButton id="candPrevInsere"
+                                         value="#{localeBean.getMsg('admin.users.pager.prev')}"
+                                         styleClass="bo-btn ghost sm"
+                                         disabled="#{not candidatBoardBean.hasPrevious('insere')}"
+                                         action="#{candidatBoardBean.showPrevious('insere')}">
+                          <f:ajax execute="@this" render="candPanes"/>
+                        </h:commandButton>
+                        <span class="ia-pager-info">
+                          #{localeBean.getMsg('admin.users.pager.page')}
+                          #{candidatBoardBean.pageNumber('insere')} / #{candidatBoardBean.pageCount('insere')}
+                        </span>
+                        <h:commandButton id="candNextInsere"
+                                         value="#{localeBean.getMsg('admin.users.pager.next')}"
+                                         styleClass="bo-btn ghost sm"
+                                         disabled="#{not candidatBoardBean.hasNext('insere')}"
+                                         action="#{candidatBoardBean.showNext('insere')}">
+                          <f:ajax execute="@this" render="candPanes"/>
+                        </h:commandButton>
+                      </div>
+                    </div>
                   </ui:fragment>
                   <ui:fragment rendered="#{candidatBoardBean.isCapped('insere')}">
                     <div class="cand-cap">
                       <h:outputFormat value="#{localeBean.getMsg('candidat.board.capped')}">
-                        <f:param value="#{candidatBoardBean.acceptedCount}"/>
+                        <f:param value="#{candidatBoardBean.acceptedTotal}"/>
                       </h:outputFormat>
                     </div>
                   </ui:fragment>
@@ -244,7 +324,7 @@
                   </ui:fragment>
                   <ui:fragment rendered="#{not empty candidatBoardBean.rejected}">
                     <div class="prop-list">
-                      <ui:repeat value="#{candidatBoardBean.rejected}" var="item">
+                      <ui:repeat value="#{candidatBoardBean.rejectedPage}" var="item">
                         <ui:include src="/includes/candidate-board-row.xhtml">
                           <ui:param name="item" value="#{item}"/>
                           <ui:param name="tone" value="refused"/>
@@ -253,11 +333,51 @@
                         </ui:include>
                       </ui:repeat>
                     </div>
+                    <div class="ia-pager cand-pager">
+                      <div class="ia-pager-meta">
+                        <span class="ia-pager-info">
+                          #{candidatBoardBean.pageFrom('rejete')}–#{candidatBoardBean.pageTo('rejete')}
+                          #{localeBean.getMsg('admin.users.pager.of')}
+                          #{candidatBoardBean.itemsCount('rejete')}
+                          #{localeBean.getMsg('admin.users.pager.results')}
+                        </span>
+                        <label class="ia-pager-size">
+                          <span>#{localeBean.getMsg('admin.users.pager.size')}</span>
+                          <h:selectOneMenu id="candPageSizeRejete" value="#{candidatBoardBean.pageSize}"
+                                           styleClass="st-input ia-select ia-pager-size-select">
+                            <f:selectItems value="#{candidatBoardBean.pageSizeOptions}"/>
+                            <f:ajax event="change" execute="@this"
+                                    listener="#{candidatBoardBean.onPageSizeChange}"
+                                    render="candPanes"/>
+                          </h:selectOneMenu>
+                        </label>
+                      </div>
+                      <div class="ia-pager-nav">
+                        <h:commandButton id="candPrevRejete"
+                                         value="#{localeBean.getMsg('admin.users.pager.prev')}"
+                                         styleClass="bo-btn ghost sm"
+                                         disabled="#{not candidatBoardBean.hasPrevious('rejete')}"
+                                         action="#{candidatBoardBean.showPrevious('rejete')}">
+                          <f:ajax execute="@this" render="candPanes"/>
+                        </h:commandButton>
+                        <span class="ia-pager-info">
+                          #{localeBean.getMsg('admin.users.pager.page')}
+                          #{candidatBoardBean.pageNumber('rejete')} / #{candidatBoardBean.pageCount('rejete')}
+                        </span>
+                        <h:commandButton id="candNextRejete"
+                                         value="#{localeBean.getMsg('admin.users.pager.next')}"
+                                         styleClass="bo-btn ghost sm"
+                                         disabled="#{not candidatBoardBean.hasNext('rejete')}"
+                                         action="#{candidatBoardBean.showNext('rejete')}">
+                          <f:ajax execute="@this" render="candPanes"/>
+                        </h:commandButton>
+                      </div>
+                    </div>
                   </ui:fragment>
                   <ui:fragment rendered="#{candidatBoardBean.isCapped('rejete')}">
                     <div class="cand-cap">
                       <h:outputFormat value="#{localeBean.getMsg('candidat.board.capped')}">
-                        <f:param value="#{candidatBoardBean.rejectedCount}"/>
+                        <f:param value="#{candidatBoardBean.rejectedTotal}"/>
                       </h:outputFormat>
                     </div>
                   </ui:fragment>
