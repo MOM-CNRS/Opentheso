@@ -138,6 +138,55 @@
 .cblock-edit-warn p{margin:0 0 10px}
 .cblock-edit-warn p:last-child{margin-bottom:0}
 .cblock-edit-warn .bo-btn,.cblock-edit-warn .abt-save{margin-top:2px}
+#viewLive [data-card-id="exportSkos"] .cblock-body{padding:12px 0 6px}
+#viewLive [data-card-id="identifiants"] .crow-val{display:flex;align-items:flex-start;gap:8px}
+#viewLive [data-card-id="identifiants"] .cv-id-lbl{flex-direction:column;align-items:flex-start;gap:4px}
+#viewLive [data-card-id="identifiants"] .cv-id-tag{
+  font-size:10px;font-weight:700;letter-spacing:.06em;line-height:1.35;color:var(--ink-3);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:1px 6px
+}
+#viewLive [data-card-id="identifiants"] .cv-id-tag.is-amber{
+  background:#fde4c2;color:#8a4e16;border-color:#f0c98a
+}
+#viewLive [data-card-id="identifiants"] .cv-id-tag.is-green{
+  background:#d9f0e4;color:#145c40;border-color:#b7dcc9
+}
+#viewLive [data-card-id="identifiants"] .cv-id-copy{
+  display:grid;place-items:center;width:26px;height:26px;margin:0;padding:0;flex:0 0 auto;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-3);border-radius:4px;cursor:pointer
+}
+#viewLive [data-card-id="identifiants"] .cv-id-copy svg{
+  width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round
+}
+#viewLive [data-card-id="identifiants"] .cv-id-copy:hover,
+#viewLive [data-card-id="identifiants"] .cv-id-copy.is-copied{
+  color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)
+}
+#viewLive [data-card-id="identifiants"] .cv-id-val{min-width:0;overflow-wrap:anywhere;padding-top:3px}
+#viewLive .cv-id-help{
+  margin-top:14px;padding:12px 14px;border-radius:4px;
+  background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--ink-2);font-size:13px;line-height:1.5
+}
+#viewLive .cv-id-help-title{
+  display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:13px;font-weight:700;color:var(--ink)
+}
+#viewLive .cv-id-help-title svg{
+  width:16px;height:16px;flex:0 0 auto;stroke:var(--accent);fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+#viewLive .cv-id-help ul{margin:0;padding-left:1.15em}
+#viewLive .cv-id-help li + li{margin-top:6px}
+#viewLive .cv-id-help b{color:var(--ink);font-weight:700}
+#viewLive [data-card-id="temporel"] .cv-time{
+  display:grid;grid-template-columns:max-content minmax(0,1fr) max-content minmax(0,1fr);
+  column-gap:18px;align-items:baseline;padding:7px 0
+}
+#viewLive [data-card-id="temporel"] .cv-time .crow{display:contents}
+#viewLive [data-card-id="temporel"] .cv-time .crow + .crow .crow-lbl{padding-left:28px}
+@media (max-width:900px){
+  #viewLive [data-card-id="temporel"] .cv-time{grid-template-columns:max-content minmax(0,1fr);row-gap:10px}
+  #viewLive [data-card-id="temporel"] .cv-time .crow + .crow .crow-lbl{padding-left:0}
+}
 #viewLive .cblock.is-editing .cblock-edit-row .crow-val{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #viewLive .cblock.is-editing .cblock-edit-row .crow-val:has(.coll-pick){display:block}
 #viewLive .cblock.is-editing .cblock-edit-row .crow-val:has(textarea){display:block;align-items:stretch}

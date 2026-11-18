@@ -1,5 +1,5 @@
 /** Fiche — ordre des blocs et libellés. */
-const CARD_IDS = ["contexte", "branche", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "metadonnees", "temporel"];
+const CARD_IDS = ["contexte", "branche", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "exportSkos", "metadonnees", "temporel"];
 /** Blocs gouvernance candidat : toujours juste après la bannière (hors réordonnancement fiche). */
 const GOVERNANCE_CARD_ORDER = { candVotes: -2, candDiscussion: -1 };
 
@@ -22,6 +22,9 @@ function parseCardLayout() {
         if (id === "branche") {
           const at = next.indexOf("contexte");
           next.splice(at < 0 ? 0 : at + 1, 0, id);
+        } else if (id === "exportSkos") {
+          const at = next.indexOf("identifiants");
+          next.splice(at < 0 ? next.length : at + 1, 0, id);
         } else {
           next.push(id);
         }
