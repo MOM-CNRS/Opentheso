@@ -25,18 +25,30 @@ public class ConceptBreadcrumbReadService {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Collections.emptyList();
         }
-
-        // One CTE query fetches the full ancestor graph (edges + labels)
         List<Object[]> ancestorRows = conceptQueryRepository.findAncestorsWithLabels(conceptId, thesaurusId, lang);
+        return pathsFromAncestorRows(
+                ancestorRows,
+                conceptId,
+                conceptQueryRepository.findConceptLabel(conceptId, thesaurusId, lang)
+        );
+    }
 
-        if (ancestorRows.isEmpty()) {
-            // Concept is already a top-level — single-node path
-            String label = conceptQueryRepository.findConceptLabel(conceptId, thesaurusId, lang);
-            BreadcrumbStep step = new BreadcrumbStep(conceptId, label, 0, true);
+    /**
+     * Même construction que {@link #loadBreadcrumbPaths}, à partir des arêtes déjà lues avec la fiche.
+     */
+    public List<List<BreadcrumbStep>> pathsFromAncestorRows(
+            List<Object[]> ancestorRows,
+            String conceptId,
+            String leafLabel
+    ) {
+        if (StringUtils.isBlank(conceptId)) {
+            return Collections.emptyList();
+        }
+        if (ancestorRows == null || ancestorRows.isEmpty()) {
+            BreadcrumbStep step = new BreadcrumbStep(conceptId, displayedLeaf(conceptId, leafLabel), 0, true);
             return List.of(List.of(step));
         }
 
-        // Build adjacency: child → list of parents, and label map for parent nodes
         Map<String, List<String>> childToParents = new LinkedHashMap<>();
         Map<String, String> labelByConceptId = new HashMap<>();
 
@@ -48,11 +60,8 @@ public class ConceptBreadcrumbReadService {
             labelByConceptId.put(parent, StringUtils.defaultIfBlank(label, "(" + parent + ")"));
         }
 
-        // Label of the leaf concept (the original requested concept)
-        String leafLabel = conceptQueryRepository.findConceptLabel(conceptId, thesaurusId, lang);
-        labelByConceptId.put(conceptId, leafLabel);
+        labelByConceptId.put(conceptId, displayedLeaf(conceptId, leafLabel));
 
-        // Find root nodes (parents that never appear as children)
         List<String> roots = new ArrayList<>();
         for (Object[] row : ancestorRows) {
             String parent = str(row[1]);
@@ -61,7 +70,6 @@ public class ConceptBreadcrumbReadService {
             }
         }
 
-        // Build all root-to-leaf paths by DFS from each root
         List<List<String>> allPaths = new ArrayList<>();
         for (String root : roots) {
             List<String> path = new ArrayList<>();
@@ -73,10 +81,13 @@ public class ConceptBreadcrumbReadService {
             allPaths.add(List.of(conceptId));
         }
 
-        // Convert String id paths → labeled BreadcrumbStep paths
         return allPaths.stream()
                 .map(path -> labelPath(path, labelByConceptId))
                 .toList();
+    }
+
+    private static String displayedLeaf(String conceptId, String leafLabel) {
+        return StringUtils.defaultIfBlank(leafLabel, "(" + conceptId + ")");
     }
 
     private void buildPathsDown(

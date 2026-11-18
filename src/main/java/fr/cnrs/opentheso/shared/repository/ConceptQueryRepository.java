@@ -509,7 +509,8 @@ public class ConceptQueryRepository {
     public int countDescendantConcepts(String thesaurusId, String conceptId) {
         Number count = (Number) em.createNativeQuery("""
             WITH RECURSIVE descendants AS (
-                SELECT hr.id_concept2 AS concept_id
+                SELECT hr.id_concept2 AS concept_id,
+                       ARRAY[hr.id_concept1, hr.id_concept2]::varchar[] AS path
                 FROM hierarchical_relationship hr
                 JOIN concept c
                     ON c.id_concept = hr.id_concept2
@@ -524,8 +525,9 @@ public class ConceptQueryRepository {
                         AND cs.id_thesaurus = c.id_thesaurus
                         AND cs.id_status = :rejected
                   )
-                UNION
-                SELECT hr2.id_concept2
+                UNION ALL
+                SELECT hr2.id_concept2,
+                       d.path || hr2.id_concept2
                 FROM hierarchical_relationship hr2
                 JOIN descendants d ON d.concept_id = hr2.id_concept1
                 JOIN concept c2
@@ -533,6 +535,7 @@ public class ConceptQueryRepository {
                     AND c2.id_thesaurus = hr2.id_thesaurus
                 WHERE hr2.id_thesaurus = :thesaurusId
                   AND hr2.role LIKE 'NT%'
+                  AND NOT (hr2.id_concept2 = ANY (d.path))
                   AND NOT EXISTS (
                       SELECT 1
                       FROM candidat_status cs
@@ -541,7 +544,7 @@ public class ConceptQueryRepository {
                         AND cs.id_status = :rejected
                   )
             )
-            SELECT COUNT(*) FROM descendants
+            SELECT COUNT(DISTINCT concept_id) FROM descendants
             """)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)

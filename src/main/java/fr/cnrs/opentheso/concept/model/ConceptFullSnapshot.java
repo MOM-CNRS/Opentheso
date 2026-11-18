@@ -51,6 +51,11 @@ public class ConceptFullSnapshot implements Serializable {
     private List<ConceptUriLabel> replaces;
     private List<ConceptUriLabel> facets;
 
+    /**
+     * Arêtes du fil d'Ariane déjà lues avec la fiche. {@code null} si elles n'ont pas été chargées.
+     */
+    private transient List<Object[]> breadcrumbAncestors;
+
     public boolean isDeprecated() {
         return resourceStatus == ConceptResourceStatus.DEPRECATED;
     }

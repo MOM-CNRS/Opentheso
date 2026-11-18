@@ -1,8 +1,7 @@
 package fr.cnrs.opentheso.concept.mapper;
 
-import fr.cnrs.opentheso.entites.ExternalResource;
-import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
 import fr.cnrs.opentheso.concept.model.ConceptExternalResourceItem;
+import fr.cnrs.opentheso.concept.model.ConceptFicheRows;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.concept.model.ConceptGpsPoint;
 import fr.cnrs.opentheso.concept.model.ConceptHierarchicalRelation;
@@ -16,7 +15,6 @@ import fr.cnrs.opentheso.concept.policy.ConceptUriBuilder;
 import fr.cnrs.opentheso.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.shared.repository.ConceptFullQueryRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +33,6 @@ import java.util.Set;
 public class ConceptFullAssembler {
 
     private final ConceptFullQueryRepository conceptFullQueryRepository;
-    private final ExternalResourcesRepository externalResourcesRepository;
 
     public Optional<ConceptFullSnapshot> assemble(
             String thesaurusId,
@@ -60,8 +57,17 @@ public class ConceptFullAssembler {
         if (paging == null || StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
-        return conceptFullQueryRepository.findConceptCore(conceptId, thesaurusId, includeCandidates)
-                .map(core -> buildNode(core, thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl));
+        boolean includeNarrowerCandidates = paging.includePrivateGroups()
+                || (preferences != null && preferences.showCandidatesToGuests());
+        return conceptFullQueryRepository.loadFiche(
+                        conceptId,
+                        thesaurusId,
+                        lang,
+                        paging.includePrivateGroups(),
+                        includeCandidates,
+                        includeNarrowerCandidates)
+                .map(rows -> buildNode(
+                        rows, thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl));
     }
 
     public List<ConceptHierarchicalRelation> assembleNarrowerRelations(
@@ -80,7 +86,7 @@ public class ConceptFullAssembler {
     }
 
     private ConceptFullSnapshot buildNode(
-            Object[] core,
+            ConceptFicheRows rows,
             String thesaurusId,
             String conceptId,
             String lang,
@@ -88,6 +94,7 @@ public class ConceptFullAssembler {
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
+        Object[] core = rows.core();
         String status = stringAt(core, 1);
         String arkId = stringAt(core, 2);
         String handleId = stringAt(core, 3);
@@ -105,70 +112,53 @@ public class ConceptFullAssembler {
         concept.setNotation(stringAt(core, 5));
         concept.setCreated(formatDate(core[6]));
         concept.setModified(formatDate(core[7]));
-        // Comme legacy (ResourceService / SQL opentheso_get_concept) : toujours charger
-        // creator/contributors depuis concept_dcterms ; l'affichage est filtré côté UI.
-        concept.setCreatorName(conceptFullQueryRepository.findCreator(conceptId, thesaurusId).orElse(null));
-        concept.setContributorName(emptyIfNull(conceptFullQueryRepository.findContributors(conceptId, thesaurusId)));
+        concept.setCreatorName(StringUtils.isBlank(rows.creator()) ? null : rows.creator());
+        concept.setContributorName(emptyIfNull(rows.contributors()));
 
-        concept.setPrefLabel(mapPreferredLabel(conceptId, thesaurusId, lang));
-        concept.setAltLabels(mapAltLabels(conceptId, thesaurusId, lang, false));
-        concept.setHiddenLabels(mapAltLabels(conceptId, thesaurusId, lang, true));
-        concept.setPrefLabelsTraduction(mapPrefTranslations(conceptId, thesaurusId, lang));
-        concept.setAltLabelTraduction(mapAltTranslations(conceptId, thesaurusId, lang, false));
-        concept.setHiddenLabelTraduction(mapAltTranslations(conceptId, thesaurusId, lang, true));
+        concept.setPrefLabel(mapPreferredLabel(lang, rows.preferred()));
+        concept.setAltLabels(mapAltLabels(lang, rows.altLabels()));
+        concept.setHiddenLabels(mapAltLabels(lang, rows.hiddenLabels()));
+        concept.setPrefLabelsTraduction(mapPrefTranslations(rows.prefTranslations()));
+        concept.setAltLabelTraduction(mapAltTranslations(rows.altTranslations()));
+        concept.setHiddenLabelTraduction(mapAltTranslations(rows.hiddenTranslations()));
 
-        mapNotes(concept, conceptId, thesaurusId);
+        mapNotes(concept, rows.notes());
         concept.setBroaders(mapNarrowerRelations(
-                conceptFullQueryRepository.findBroaderRelations(
-                        conceptId, thesaurusId, lang, paging.includePrivateGroups()),
-                thesaurusId,
-                preferences,
-                applicationBaseUrl
-        ));
+                rows.broaders(), thesaurusId, preferences, applicationBaseUrl));
         concept.setRelateds(mapNarrowerRelations(
-                conceptFullQueryRepository.findRelatedRelations(conceptId, thesaurusId, lang),
-                thesaurusId,
-                preferences,
-                applicationBaseUrl
-        ));
-        concept.setNarrowers(loadAlignedNarrowers(
-                thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl));
+                rows.relateds(), thesaurusId, preferences, applicationBaseUrl));
+        concept.setNarrowers(sliceNarrowers(
+                rows.narrowers(), thesaurusId, paging, preferences, applicationBaseUrl));
 
-        mapAlignments(concept, conceptId, thesaurusId);
-        concept.setGps(mapGps(conceptId, thesaurusId));
-        concept.setMembres(mapGroupMemberships(conceptId, thesaurusId, lang, preferences, applicationBaseUrl));
-        concept.setImages(mapImages(conceptId, thesaurusId));
+        mapAlignments(concept, rows.alignments());
+        concept.setGps(mapGps(rows.gps()));
+        concept.setMembres(mapGroupMemberships(rows.groups(), thesaurusId, preferences, applicationBaseUrl));
+        concept.setImages(mapImages(rows.images()));
         concept.setReplaces(mapReplacementRelations(
-                conceptFullQueryRepository.findReplaces(conceptId, thesaurusId, lang),
-                thesaurusId,
-                preferences,
-                applicationBaseUrl
-        ));
+                rows.replaces(), thesaurusId, preferences, applicationBaseUrl));
         concept.setReplacedBy(mapReplacementRelations(
-                conceptFullQueryRepository.findReplacedBy(conceptId, thesaurusId, lang),
-                thesaurusId,
-                preferences,
-                applicationBaseUrl
-        ));
-        concept.setFacets(mapFacets(conceptId, thesaurusId, lang));
-        concept.setExternalResources(mapExternalResources(conceptId, thesaurusId));
+                rows.replacedBy(), thesaurusId, preferences, applicationBaseUrl));
+        concept.setFacets(mapFacets(rows.facets()));
+        concept.setExternalResources(mapExternalResources(rows.externalResources()));
+        concept.setBreadcrumbAncestors(rows.ancestors());
         return concept;
     }
 
-    private ConceptTermLabel mapPreferredLabel(String conceptId, String thesaurusId, String lang) {
-        return conceptFullQueryRepository.findPreferredLabel(conceptId, thesaurusId, lang)
-                .map(row -> new ConceptTermLabel(
-                        lang,
-                        stringAt(row, 0),
-                        stringAt(row, 1),
-                        parseInt(stringAt(row, 2))
-                ))
-                .orElse(null);
+    private ConceptTermLabel mapPreferredLabel(String lang, Object[] row) {
+        if (row == null) {
+            return null;
+        }
+        return new ConceptTermLabel(
+                lang,
+                stringAt(row, 0),
+                stringAt(row, 1),
+                parseInt(stringAt(row, 2))
+        );
     }
 
-    private List<ConceptTermLabel> mapAltLabels(String conceptId, String thesaurusId, String lang, boolean hidden) {
+    private List<ConceptTermLabel> mapAltLabels(String lang, List<Object[]> source) {
         List<ConceptTermLabel> labels = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findAltLabels(conceptId, thesaurusId, lang, hidden)) {
+        for (Object[] row : source) {
             labels.add(new ConceptTermLabel(
                     lang,
                     stringAt(row, 0),
@@ -180,9 +170,9 @@ public class ConceptFullAssembler {
         return labels;
     }
 
-    private List<ConceptTermLabel> mapPrefTranslations(String conceptId, String thesaurusId, String lang) {
+    private List<ConceptTermLabel> mapPrefTranslations(List<Object[]> source) {
         List<ConceptTermLabel> labels = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findPrefLabelTranslations(conceptId, thesaurusId, lang)) {
+        for (Object[] row : source) {
             labels.add(new ConceptTermLabel(
                     parseInt(stringAt(row, 3)),
                     stringAt(row, 0),
@@ -194,9 +184,9 @@ public class ConceptFullAssembler {
         return labels;
     }
 
-    private List<ConceptTermLabel> mapAltTranslations(String conceptId, String thesaurusId, String lang, boolean hidden) {
+    private List<ConceptTermLabel> mapAltTranslations(List<Object[]> source) {
         List<ConceptTermLabel> labels = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findAltLabelTranslations(conceptId, thesaurusId, lang, hidden)) {
+        for (Object[] row : source) {
             labels.add(new ConceptTermLabel(
                     parseInt(stringAt(row, 3)),
                     stringAt(row, 0),
@@ -208,7 +198,7 @@ public class ConceptFullAssembler {
         return labels;
     }
 
-    private void mapNotes(ConceptFullSnapshot concept, String conceptId, String thesaurusId) {
+    private void mapNotes(ConceptFullSnapshot concept, List<Object[]> source) {
         List<ConceptSnapshotNote> notes = new ArrayList<>();
         List<ConceptSnapshotNote> definitions = new ArrayList<>();
         List<ConceptSnapshotNote> examples = new ArrayList<>();
@@ -217,7 +207,7 @@ public class ConceptFullAssembler {
         List<ConceptSnapshotNote> scopeNotes = new ArrayList<>();
         List<ConceptSnapshotNote> historyNotes = new ArrayList<>();
 
-        for (Object[] row : conceptFullQueryRepository.findAllConceptNotes(conceptId, thesaurusId)) {
+        for (Object[] row : source) {
             ConceptSnapshotNote note = toConceptNote(row);
             switch (stringAt(row, 1).trim().toLowerCase(java.util.Locale.ROOT)) {
                 case "note", "customnote" -> notes.add(note);
@@ -250,6 +240,16 @@ public class ConceptFullAssembler {
         );
     }
 
+    private List<ConceptHierarchicalRelation> sliceNarrowers(
+            List<Object[]> preloaded,
+            String thesaurusId,
+            ConceptAssemblePaging paging,
+            ThesaurusPreferences preferences,
+            String applicationBaseUrl
+    ) {
+        return pageNarrowers(new ArrayList<>(preloaded), thesaurusId, paging, preferences, applicationBaseUrl);
+    }
+
     private List<ConceptHierarchicalRelation> loadAlignedNarrowers(
             String thesaurusId,
             String conceptId,
@@ -262,6 +262,16 @@ public class ConceptFullAssembler {
                 || (preferences != null && preferences.showCandidatesToGuests());
         List<Object[]> rows = new ArrayList<>(conceptFullQueryRepository.findNarrowerRelations(
                 conceptId, thesaurusId, lang, includeCandidates));
+        return pageNarrowers(rows, thesaurusId, paging, preferences, applicationBaseUrl);
+    }
+
+    private List<ConceptHierarchicalRelation> pageNarrowers(
+            List<Object[]> rows,
+            String thesaurusId,
+            ConceptAssemblePaging paging,
+            ThesaurusPreferences preferences,
+            String applicationBaseUrl
+    ) {
         boolean sortByNotation = preferences != null && preferences.sortByNotation();
         rows.sort((left, right) -> compareTreeChildren(left, right, sortByNotation));
         int from = Math.min(Math.max(paging.narrowerOffset(), 0), rows.size());
@@ -362,14 +372,14 @@ public class ConceptFullAssembler {
         return items;
     }
 
-    private void mapAlignments(ConceptFullSnapshot concept, String conceptId, String thesaurusId) {
+    private void mapAlignments(ConceptFullSnapshot concept, List<Object[]> source) {
         List<ConceptUriLabel> exact = new ArrayList<>();
         List<ConceptUriLabel> close = new ArrayList<>();
         List<ConceptUriLabel> broad = new ArrayList<>();
         List<ConceptUriLabel> related = new ArrayList<>();
         List<ConceptUriLabel> narrow = new ArrayList<>();
 
-        for (Object[] row : conceptFullQueryRepository.findAlignments(conceptId, thesaurusId)) {
+        for (Object[] row : source) {
             ConceptUriLabel item = new ConceptUriLabel(
                     stringAt(row, 1),
                     stringAt(row, 0),
@@ -394,9 +404,9 @@ public class ConceptFullAssembler {
         concept.setNarrowMatchs(narrow);
     }
 
-    private List<ConceptGpsPoint> mapGps(String conceptId, String thesaurusId) {
+    private List<ConceptGpsPoint> mapGps(List<Object[]> source) {
         List<ConceptGpsPoint> points = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findGpsPoints(conceptId, thesaurusId)) {
+        for (Object[] row : source) {
             points.add(new ConceptGpsPoint(
                     toDouble(row[0]),
                     toDouble(row[1]),
@@ -407,14 +417,13 @@ public class ConceptFullAssembler {
     }
 
     private List<ConceptUriLabel> mapGroupMemberships(
-            String conceptId,
+            List<Object[]> source,
             String thesaurusId,
-            String lang,
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
         List<ConceptUriLabel> members = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findGroupMemberships(conceptId, thesaurusId, lang)) {
+        for (Object[] row : source) {
             String groupId = stringAt(row, 0);
             members.add(new ConceptUriLabel(
                     ConceptUriBuilder.buildGroupUri(
@@ -433,9 +442,9 @@ public class ConceptFullAssembler {
         return members;
     }
 
-    private List<ConceptImageItem> mapImages(String conceptId, String thesaurusId) {
+    private List<ConceptImageItem> mapImages(List<Object[]> source) {
         List<ConceptImageItem> images = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findImages(conceptId, thesaurusId)) {
+        for (Object[] row : source) {
             images.add(new ConceptImageItem(
                     parseInt(stringAt(row, 0)),
                     imageCaptionPart(stringAt(row, 1)),
@@ -447,9 +456,9 @@ public class ConceptFullAssembler {
         return images;
     }
 
-    private List<ConceptUriLabel> mapFacets(String conceptId, String thesaurusId, String lang) {
+    private List<ConceptUriLabel> mapFacets(List<Object[]> source) {
         List<ConceptUriLabel> facets = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findFacets(conceptId, thesaurusId, lang)) {
+        for (Object[] row : source) {
             String facetId = stringAt(row, 0);
             if (StringUtils.isBlank(facetId)) {
                 continue;
@@ -460,24 +469,21 @@ public class ConceptFullAssembler {
         return facets;
     }
 
-    private List<ConceptExternalResourceItem> mapExternalResources(String conceptId, String thesaurusId) {
-        List<ExternalResource> entities = externalResourcesRepository
-                .findAllByIdConceptAndIdThesaurus(conceptId, thesaurusId);
-        if (CollectionUtils.isEmpty(entities)) {
-            return Collections.emptyList();
+    private List<ConceptExternalResourceItem> mapExternalResources(List<Object[]> source) {
+        List<ConceptExternalResourceItem> resources = new ArrayList<>();
+        for (Object[] row : source) {
+            String uri = stringAt(row, 0);
+            String description = stringAt(row, 1);
+            if (StringUtils.isBlank(uri) && StringUtils.isBlank(description)) {
+                continue;
+            }
+            resources.add(new ConceptExternalResourceItem(uri, description));
         }
-        return entities.stream()
-                .filter(resource -> StringUtils.isNotBlank(resource.getExternalUri())
-                        || StringUtils.isNotBlank(resource.getDescription()))
-                .sorted(Comparator.comparing(
-                        resource -> StringUtils.defaultString(resource.getExternalUri()),
-                        String.CASE_INSENSITIVE_ORDER
-                ))
-                .map(resource -> new ConceptExternalResourceItem(
-                        StringUtils.defaultString(resource.getExternalUri()),
-                        StringUtils.defaultString(resource.getDescription())
-                ))
-                .toList();
+        resources.sort(Comparator.comparing(
+                ConceptExternalResourceItem::uri,
+                String.CASE_INSENSITIVE_ORDER
+        ));
+        return resources;
     }
 
     static String imageCaptionPart(String value) {
