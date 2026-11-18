@@ -21,7 +21,7 @@
       <div class="prop-banner-actions">
         <h:commandLink styleClass="bo-btn ghost sm" immediate="true"
                        action="#{propositionSubmitBean.cancel}">
-          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+          <f:ajax execute="@this" render=":previewDetailForm:previewFiche"/>
           #{localeBean.getMsg('cancel')}
         </h:commandLink>
       </div>
@@ -61,28 +61,20 @@
             #{localeBean.getMsg('rightbody.conceptdialog.name')}
             <span class="is-star" aria-hidden="true">*</span>
           </span>
-          <ui:fragment rendered="#{propositionSubmitBean.authorNameEditable}">
-            <h:inputText id="propAuthorName" styleClass="st-input"
-                         value="#{propositionSubmitBean.authorName}"
-                         pt:autocomplete="name"/>
-          </ui:fragment>
-          <ui:fragment rendered="#{not propositionSubmitBean.authorNameEditable}">
-            <span class="prop-compose-readonly">#{propositionSubmitBean.authorName}</span>
-          </ui:fragment>
+          <h:inputText id="propAuthorName" value="#{propositionSubmitBean.authorName}"
+                       readonly="#{not propositionSubmitBean.authorNameEditable}"
+                       styleClass="st-input#{propositionSubmitBean.authorNameEditable ? '' : ' is-readonly'}"
+                       pt:autocomplete="section-prop name"/>
         </div>
         <div class="prop-compose-field">
           <span class="prop-compose-lbl">
             #{localeBean.getMsg('profile.email')}
             <span class="is-star" aria-hidden="true">*</span>
           </span>
-          <ui:fragment rendered="#{propositionSubmitBean.authorEmailEditable}">
-            <h:inputText id="propAuthorEmail" styleClass="st-input"
-                         value="#{propositionSubmitBean.authorEmail}"
-                         pt:autocomplete="email"/>
-          </ui:fragment>
-          <ui:fragment rendered="#{not propositionSubmitBean.authorEmailEditable}">
-            <span class="prop-compose-readonly">#{propositionSubmitBean.authorEmail}</span>
-          </ui:fragment>
+          <h:inputText id="propAuthorEmail" value="#{propositionSubmitBean.authorEmail}"
+                       readonly="#{not propositionSubmitBean.authorEmailEditable}"
+                       styleClass="st-input#{propositionSubmitBean.authorEmailEditable ? '' : ' is-readonly'}"
+                       pt:autocomplete="section-prop email"/>
         </div>
       </div>
       <p class="prop-hint">#{localeBean.getMsg('proposition.submit.mailHint')}</p>
@@ -134,14 +126,14 @@
       <ui:fragment rendered="#{empty propositionSubmitBean.synonymOptions}">
         <p class="prop-compose-empty">#{localeBean.getMsg('proposition.submit.emptySynonyms')}</p>
       </ui:fragment>
-      <ui:repeat value="#{propositionSubmitBean.synonymOptions}" var="syn">
+      <ui:repeat id="propSynList" value="#{propositionSubmitBean.synonymOptions}" var="syn">
         <div class="prop-compose-item#{syn.toRemove ? ' is-removed' : ''}#{syn.toAdd or syn.toUpdate ? ' is-changed' : ''}">
           <ui:fragment rendered="#{not syn.toRemove}">
             <div class="prop-compose-item-row">
               <h:inputText styleClass="st-input" value="#{syn.value}" pt:autocomplete="off"/>
               <h:commandLink styleClass="bo-btn ghost sm danger"
                              action="#{propositionSubmitBean.removeSynonymOption(syn)}">
-                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
                 #{localeBean.getMsg('btnDelete')}
               </h:commandLink>
             </div>
@@ -158,7 +150,7 @@
               <span class="muted">#{syn.oldValue}</span>
               <h:commandLink styleClass="bo-btn ghost sm"
                              action="#{propositionSubmitBean.undoRemoveSynonymOption(syn)}">
-                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
                 #{localeBean.getMsg('proposition.undoRemove')}
               </h:commandLink>
             </div>
@@ -188,7 +180,7 @@
         </label>
         <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
                        action="#{propositionSubmitBean.addSynonymOption}">
-          <f:ajax execute="propSynLang propSynVal propSynHidden @this" render=":previewDetailForm:previewDetail"/>
+          <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
           #{localeBean.getMsg('proposition.add')}
         </h:commandLink>
       </div>
@@ -203,14 +195,14 @@
       <ui:fragment rendered="#{empty propositionSubmitBean.translationOptions}">
         <p class="prop-compose-empty">#{localeBean.getMsg('proposition.submit.emptyTranslations')}</p>
       </ui:fragment>
-      <ui:repeat value="#{propositionSubmitBean.translationOptions}" var="tr">
+      <ui:repeat id="propTrList" value="#{propositionSubmitBean.translationOptions}" var="tr">
         <div class="prop-compose-item#{tr.toRemove ? ' is-removed' : ''}#{tr.toAdd or tr.toUpdate ? ' is-changed' : ''}">
           <ui:fragment rendered="#{not tr.toRemove}">
             <div class="prop-compose-item-row">
               <h:inputText styleClass="st-input" value="#{tr.value}" pt:autocomplete="off"/>
               <h:commandLink styleClass="bo-btn ghost sm danger"
                              action="#{propositionSubmitBean.removeTranslationOption(tr)}">
-                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
                 #{localeBean.getMsg('btnDelete')}
               </h:commandLink>
             </div>
@@ -223,7 +215,7 @@
               <span class="muted">#{tr.oldValue}</span>
               <h:commandLink styleClass="bo-btn ghost sm"
                              action="#{propositionSubmitBean.undoRemoveTranslationOption(tr)}">
-                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
                 #{localeBean.getMsg('proposition.undoRemove')}
               </h:commandLink>
             </div>
@@ -246,7 +238,7 @@
                      pt:placeholder="#{localeBean.getMsg('proposition.translationPlaceholder')}"/>
         <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
                        action="#{propositionSubmitBean.addTranslationOption}">
-          <f:ajax execute="propTrLang propTrVal @this" render=":previewDetailForm:previewDetail"/>
+          <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
           #{localeBean.getMsg('proposition.add')}
         </h:commandLink>
       </div>
@@ -261,18 +253,33 @@
       <ui:fragment rendered="#{empty propositionSubmitBean.visibleNoteOptions}">
         <p class="prop-compose-empty">#{localeBean.getMsg('proposition.submit.emptyNotes')}</p>
       </ui:fragment>
-      <ui:repeat value="#{propositionSubmitBean.visibleNoteOptions}" var="note">
-        <div class="prop-compose-item#{note.hasChanged() ? ' is-changed' : ''}">
-          <div class="prop-compose-item-meta">
-            <span class="prop-compose-lbl">#{localeBean.getMsg(note.messageKey)}</span>
-            <h:commandLink styleClass="bo-btn ghost sm danger"
-                           action="#{propositionSubmitBean.clearNote(note)}">
-              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-              #{localeBean.getMsg('btnDelete')}
-            </h:commandLink>
-          </div>
-          <h:inputTextarea styleClass="st-input prop-compose-note" value="#{note.value}" rows="3"/>
+      <ui:repeat id="propNoteList" value="#{propositionSubmitBean.noteOptions}" var="note">
+        <ui:fragment rendered="#{not empty note.value or not empty note.oldValue}">
+        <div class="prop-compose-item#{note.removed ? ' is-removed' : ''}#{note.hasChanged() ? ' is-changed' : ''}">
+          <ui:fragment rendered="#{not note.removed}">
+            <div class="prop-compose-item-meta">
+              <span class="prop-compose-lbl">#{localeBean.getMsg(note.messageKey)}</span>
+              <h:commandLink styleClass="bo-btn ghost sm danger"
+                             action="#{propositionSubmitBean.clearNote(note)}">
+                <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
+                #{localeBean.getMsg('btnDelete')}
+              </h:commandLink>
+            </div>
+            <h:inputTextarea styleClass="st-input prop-compose-note" value="#{note.value}" rows="3"/>
+          </ui:fragment>
+          <ui:fragment rendered="#{note.removed}">
+            <div class="prop-compose-item-meta">
+              <span class="prop-compose-lbl">#{localeBean.getMsg(note.messageKey)}</span>
+              <h:commandLink styleClass="bo-btn ghost sm"
+                             action="#{propositionSubmitBean.undoClearNote(note)}">
+                <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
+                #{localeBean.getMsg('proposition.undoRemove')}
+              </h:commandLink>
+            </div>
+            <p class="prop-diff-v is-old">#{note.oldValue}</p>
+          </ui:fragment>
         </div>
+        </ui:fragment>
       </ui:repeat>
       <div class="prop-compose-add is-note">
         <h:selectOneMenu id="propNoteType" styleClass="st-input"
@@ -290,7 +297,7 @@
                          pt:placeholder="#{localeBean.getMsg('proposition.notePlaceholder')}"/>
         <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
                        action="#{propositionSubmitBean.addNoteOption}">
-          <f:ajax execute="propNoteType propNoteVal @this" render=":previewDetailForm:previewDetail"/>
+          <f:ajax execute=":previewDetailForm:propComment :previewDetailForm:propAuthorName :previewDetailForm:propAuthorEmail :previewDetailForm:propPrefLabel :previewDetailForm:propSynList :previewDetailForm:propSynLang :previewDetailForm:propSynVal :previewDetailForm:propSynHidden :previewDetailForm:propTrList :previewDetailForm:propTrLang :previewDetailForm:propTrVal :previewDetailForm:propNoteList :previewDetailForm:propNoteType :previewDetailForm:propNoteVal @this" render=":previewDetailForm:previewFiche"/>
           #{localeBean.getMsg('proposition.add')}
         </h:commandLink>
       </div>
@@ -300,7 +307,7 @@
   <div class="prop-compose-foot">
     <h:commandLink styleClass="abt-cancel" immediate="true"
                    action="#{propositionSubmitBean.cancel}">
-      <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+      <f:ajax execute="@this" render=":previewDetailForm:previewFiche"/>
       #{localeBean.getMsg('cancel')}
     </h:commandLink>
     <button type="button" class="abt-save" data-act="prop-send-ask">
@@ -320,7 +327,7 @@
                 data-act="prop-send-dismiss">#{localeBean.getMsg('cancel')}</button>
         <h:commandLink id="propSendOk" styleClass="abt-save abt-save-ok"
                        action="#{propositionSubmitBean.send}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewPropBadge" onevent="onPropSend"/>
+          <f:ajax execute="@form" render=":previewDetailForm:previewFiche :previewPropBadge" onevent="onPropSend"/>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
           <span class="abt-save-label">#{localeBean.getMsg('proposition.submit.send')}</span>
           <span class="abt-save-wait">#{localeBean.getMsg('saving')}</span>

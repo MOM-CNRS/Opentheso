@@ -115,6 +115,16 @@ public class PropositionBean implements Serializable {
     }
 
     /**
+     * Pré-rendu de la vue. Un ajax qui ne touche pas le badge ne relance pas les deux comptages.
+     */
+    public void refreshBadgeForRender() {
+        if (ajaxLeavesBadgeUntouched("previewPropBadge")) {
+            return;
+        }
+        refreshBadgeCount();
+    }
+
+    /**
      * Badge header uniquement : met à jour les compteurs sans recharger la liste.
      */
     public void refreshBadgeCount() {
@@ -143,6 +153,26 @@ public class PropositionBean implements Serializable {
         if (!Strings.CI.equals(loadedThesaurusId, thesaurusId) || propositions.isEmpty()) {
             loadPropositionList(thesaurusId);
         }
+    }
+
+    private static boolean ajaxLeavesBadgeUntouched(String badgeId) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null || !faces.getPartialViewContext().isAjaxRequest()) {
+            return false;
+        }
+        var renderIds = faces.getPartialViewContext().getRenderIds();
+        if (renderIds == null || renderIds.isEmpty()) {
+            return false;
+        }
+        for (String id : renderIds) {
+            if (id == null) {
+                continue;
+            }
+            if ("@all".equals(id) || id.contains(badgeId)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void requestBadgeUpdate() {

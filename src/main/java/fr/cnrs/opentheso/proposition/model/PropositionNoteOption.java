@@ -18,6 +18,13 @@ public class PropositionNoteOption implements Serializable {
         return !current.equals(previous);
     }
 
+    /** Note déjà enregistrée dont le texte a été retiré. */
+    public boolean isRemoved() {
+        String current = value == null ? "" : value.trim();
+        String previous = oldValue == null ? "" : oldValue.trim();
+        return current.isEmpty() && !previous.isEmpty();
+    }
+
     public String getMessageKey() {
         if (typeCode == null) {
             return "rightbody.concept.note";
