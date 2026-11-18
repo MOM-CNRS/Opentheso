@@ -106,7 +106,7 @@
               <div class="abt-composer-foot">
                 <p class="abt-hint">#{localeBean.getMsg('legal.hint')}</p>
                 <div class="abt-actions">
-                  <h:commandLink styleClass="abt-cancel" action="#{legalPageBean.cancelEditing}">
+                  <h:commandLink id="legalCancel" styleClass="abt-cancel" action="#{legalPageBean.cancelEditing}">
                     <f:ajax execute="@this" render="@form"/>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     <span>#{localeBean.getMsg('cancel')}</span>

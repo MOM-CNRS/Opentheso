@@ -91,7 +91,10 @@ public class LegalPageBean implements Serializable {
     }
 
     public void cancelEditing() {
-        load();
+        editing = false;
+        saveMessage = null;
+        saveError = false;
+        applyStored();
     }
 
     public void save() {

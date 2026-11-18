@@ -110,6 +110,25 @@ class LegalPageBeanTest {
     }
 
     @Test
+    void cancelEditing_restoresTheStoredPage() {
+        when(legalPageService.isKnown("mentions")).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(legalPageService.find("mentions", "fr"))
+                .thenReturn(Optional.of(new LegalPageContent("Notice", "<p>Bonjour</p>")));
+        bean.setCode("mentions");
+        bean.load();
+        bean.startEditing();
+        bean.setTitle("Brouillon");
+        bean.setHtml("<p>modifié</p>");
+
+        bean.cancelEditing();
+
+        assertFalse(bean.isEditing());
+        assertEquals("Notice", bean.getTitle());
+        assertEquals("<p>Bonjour</p>", bean.getHtml());
+    }
+
+    @Test
     void footerTitle_prefersTheStoredName() {
         when(legalPageService.findTitles("fr")).thenReturn(Map.of("mentions", "Notice légale"));
 
