@@ -7,6 +7,9 @@ window.appHandleLaterAct = function (e, t, act) {
   if (act === "corpus-calc") {
     e.preventDefault();
     if (typeof window.loadCorpusLinks === "function") window.loadCorpusLinks();
+  } else if (act === "branch-calc") {
+    e.preventDefault();
+    if (typeof window.loadBranchTotal === "function") window.loadBranchTotal();
   } else if (act === "legal-save") {
     e.preventDefault();
     if (typeof syncAboutEditor === "function") syncAboutEditor();

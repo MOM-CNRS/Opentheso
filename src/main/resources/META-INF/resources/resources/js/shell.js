@@ -4364,8 +4364,6 @@ window.onAlignAutoSearch = function (data) {
 
 let conceptExtrasCtrl = null;
 let conceptExtrasToken = 0;
-let conceptExtrasKey = "";
-let conceptExtrasPending = 0;
 let corpusLinksCtrl = null;
 let corpusLinksToken = 0;
 
@@ -4393,39 +4391,81 @@ function safeConceptExtraHref(uri) {
   return "";
 }
 
-function paintBranchTotal(count) {
+function branchCountText(count) {
   const n = Number(count);
-  const text = (Number.isFinite(n) ? n : 0) + " concept" + ((Number.isFinite(n) && n > 1) ? "s" : "");
-  document.querySelectorAll("#previewDetailState [data-slot='branch']").forEach((slot) => {
-    slot.removeAttribute("aria-busy");
-    slot.textContent = text;
+  const value = Number.isFinite(n) ? n : 0;
+  return value + " concept" + (value > 1 ? "s" : "");
+}
+
+function branchCalcButtonHtml() {
+  return '<button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc">Calculer</button>';
+}
+
+function branchLoadingHtml() {
+  return '<div class="cv-corpus-item is-loading" role="status" aria-live="polite" aria-busy="true">'
+    + '<span class="cv-corpus-src">'
+    + '<span class="cv-corpus-name">Calcul en cours</span>'
+    + '<span class="cv-corpus-host">Comptage des concepts</span>'
+    + '</span>'
+    + '<span class="cv-async" data-slot="branch" aria-busy="true" aria-label="Calcul du total de la branche"></span>'
+    + '</div>';
+}
+
+function paintBranchTotal(count) {
+  const text = escapeConceptExtra(branchCountText(count));
+  document.querySelectorAll("#previewDetailState [data-cv-extra='branch']").forEach((box) => {
+    box.innerHTML = '<span class="cv-branch-result">' + text + "</span>";
   });
 }
 
 function paintBranchTotalFailed() {
-  document.querySelectorAll("#previewDetailState [data-slot='branch']").forEach((slot) => {
-    if (slot.getAttribute("aria-busy") !== "true") return;
-    slot.removeAttribute("aria-busy");
-    slot.classList.add("muted");
-    slot.textContent = "—";
+  document.querySelectorAll("#previewDetailState [data-cv-extra='branch']").forEach((box) => {
+    box.innerHTML = branchCalcButtonHtml()
+      + '<span class="cv-corpus-error">Le calcul n\'a pas abouti. Réessayez.</span>';
   });
+}
+
+function corpusCalcButtonHtml() {
+  return '<button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>';
+}
+
+function corpusLoadingHtml() {
+  return '<div class="cv-corpus-item is-loading" role="status" aria-live="polite" aria-busy="true">'
+    + '<span class="cv-corpus-src">'
+    + '<span class="cv-corpus-name">Calcul en cours</span>'
+    + '<span class="cv-corpus-host">Interrogation des sources</span>'
+    + '</span>'
+    + '<span class="cv-async" data-slot="corpus" aria-busy="true" aria-label="Calcul des corpus liés"></span>'
+    + '</div>';
+}
+function corpusHost(href) {
+  try {
+    return new URL(href).host;
+  } catch (err) {
+    return "";
+  }
 }
 
 function corpusLinksHtml(links) {
   const rows = Array.isArray(links) ? links : [];
   if (!rows.length) return '<span class="muted">Aucun</span>';
   return rows.map((link) => {
-    const name = escapeConceptExtra(link && link.name);
+    const name = escapeConceptExtra(link && link.name) || "Source";
     const href = safeConceptExtraHref(link && link.uri);
-    let value = '<span class="muted">—</span>';
-    if (href && link.onlyUri) {
-      value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
-        + escapeConceptExtra(link.uri) + "</a>";
-    } else if (href && Number(link.count) > 0) {
-      value = '<a class="link" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
-        + escapeConceptExtra(String(link.count)) + "</a>";
+    const host = escapeConceptExtra(corpusHost(href));
+    const count = Number(link && link.count);
+    let metric = "";
+    if (link && link.onlyUri) {
+      metric = '<span class="cv-corpus-open">Ouvrir</span>';
+    } else if (Number.isFinite(count) && count > 0) {
+      metric = '<span class="cv-corpus-count">' + escapeConceptExtra(String(count)) + "</span>";
     }
-    return '<span class="cv-corpus-item">' + name + " " + value + "</span>";
+    const body = '<span class="cv-corpus-src"><span class="cv-corpus-name">' + name + "</span>"
+      + (host ? '<span class="cv-corpus-host">' + host + "</span>" : "")
+      + "</span>" + metric;
+    if (!href) return '<span class="cv-corpus-item">' + body + "</span>";
+    return '<a class="cv-corpus-item" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
+      + body + "</a>";
   }).join("");
 }
 
@@ -4437,14 +4477,9 @@ function paintCorpusLinks(links) {
 }
 
 function paintCorpusLinksFailed() {
-  document.querySelectorAll("#previewDetailState [data-slot='corpus']").forEach((slot) => {
-    if (slot.getAttribute("aria-busy") !== "true") return;
-    slot.removeAttribute("aria-busy");
-    slot.classList.add("muted");
-    slot.textContent = "—";
-  });
-  document.querySelectorAll("#previewDetailState [data-act='corpus-calc']").forEach((button) => {
-    button.disabled = false;
+  document.querySelectorAll("#previewDetailState [data-cv-extra='corpus']").forEach((box) => {
+    box.innerHTML = corpusCalcButtonHtml()
+      + '<span class="cv-corpus-error">Le calcul n\'a pas abouti. Réessayez.</span>';
   });
 }
 
@@ -4477,21 +4512,8 @@ function loadCorpusLinks() {
   const query = corpusLinksQuery(conceptId);
   if (!query) return;
   const box = state.querySelector("[data-cv-extra='corpus']");
-  const button = box && box.querySelector("[data-act='corpus-calc']");
-  if (button) {
-    button.disabled = true;
-    let slot = box.querySelector("[data-slot='corpus']");
-    if (!slot) {
-      slot = document.createElement("span");
-      slot.className = "cv-async";
-      slot.setAttribute("data-slot", "corpus");
-      button.insertAdjacentElement("afterend", slot);
-    }
-    slot.className = "cv-async";
-    slot.textContent = "";
-    slot.setAttribute("aria-busy", "true");
-    slot.setAttribute("aria-label", "Calcul des corpus liés");
-  }
+  if (!box || box.querySelector("[aria-busy='true']")) return;
+  box.innerHTML = corpusLoadingHtml();
   abortCorpusLinks();
   const ctrl = new AbortController();
   corpusLinksCtrl = ctrl;
@@ -4520,25 +4542,27 @@ function loadCorpusLinks() {
     });
 }
 
-function loadConceptExtras() {
+function abortBranchCount() {
+  if (conceptExtrasCtrl) conceptExtrasCtrl.abort();
+  conceptExtrasCtrl = null;
+}
+
+function loadBranchTotal() {
   const state = document.getElementById("previewDetailState");
-  if (!state || !state.querySelector("[data-slot='branch'][aria-busy='true']")) return;
+  if (!state) return;
   const conceptId = state.getAttribute("data-id") || "";
   const kind = (state.getAttribute("data-kind") || "").toLowerCase();
   if (!conceptId || (kind !== "concept" && kind !== "candidat")) return;
-  const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
-  if (!theso) return;
-  const key = theso + "\n" + conceptId;
-  if (conceptExtrasPending > 0 && conceptExtrasKey === key) return;
-  if (conceptExtrasCtrl) conceptExtrasCtrl.abort();
-  abortCorpusLinks();
+  const query = corpusLinksQuery(conceptId);
+  if (!query) return;
+  const box = state.querySelector("[data-cv-extra='branch']");
+  if (!box || box.querySelector("[aria-busy='true']")) return;
+  box.innerHTML = branchLoadingHtml();
+  abortBranchCount();
   const ctrl = new AbortController();
   conceptExtrasCtrl = ctrl;
-  conceptExtrasKey = key;
   const token = ++conceptExtrasToken;
-  conceptExtrasPending = 1;
   const ctx = document.body.getAttribute("data-ctx") || "";
-  const query = corpusLinksQuery(conceptId);
   fetch(ctx + "/api/concepts/branch-count?" + query, {
     headers: { Accept: "application/json" },
     signal: ctrl.signal
@@ -4558,12 +4582,12 @@ function loadConceptExtras() {
     })
     .finally(() => {
       if (token !== conceptExtrasToken) return;
-      conceptExtrasPending = 0;
       conceptExtrasCtrl = null;
     });
 }
 
 window.loadCorpusLinks = loadCorpusLinks;
+window.loadBranchTotal = loadBranchTotal;
 
 function finishLiveOpen() {
   const live = $("#viewLive");
@@ -4573,7 +4597,8 @@ function finishLiveOpen() {
   live.removeAttribute("aria-busy");
   const bar = $("#liveProgress");
   if (bar) bar.setAttribute("aria-hidden", "true");
-  loadConceptExtras();
+  abortBranchCount();
+  abortCorpusLinks();
   requestAnimationFrame(() => {
     if (window.applyConceptCardOrder) window.applyConceptCardOrder();
     if (window.syncViewRail) window.syncViewRail();

@@ -384,7 +384,9 @@
           </ui:fragment>
           <div class="crow">
             <div class="crow-lbl">Total de la branche</div>
-            <div class="crow-val"><span class="cv-async" data-slot="branch" aria-busy="true" aria-label="Calcul du total de la branche"></span></div>
+            <div class="crow-val cv-branch-val" data-cv-extra="branch">
+              <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc">Calculer</button>
+            </div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Nombre des corpus liés</div>

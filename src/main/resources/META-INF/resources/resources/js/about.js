@@ -459,6 +459,10 @@ window.onPreviewPrefSave = function (data) {
   if (msg.getAttribute("data-ok") === "true") {
     if (typeof restoreArkLocalDraft === "function") restoreArkLocalDraft();
     if (typeof rememberSettingsBaseline === "function") rememberSettingsBaseline();
+    if (typeof leaveSettingsPage === "function") {
+      leaveSettingsPage();
+      return;
+    }
     const el = $("#stSaveToast");
     if (!el) return;
     el.hidden = false;

@@ -13,6 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
@@ -59,6 +60,50 @@ final class CorpusHttp {
             }
         }
         return http;
+    }
+
+    /**
+     * Ouvre l'URL et suit les redirections, y compris le passage de http vers https.
+     * {@link HttpURLConnection} s'arrête sur ce changement de protocole et renvoie 301.
+     */
+    static HttpURLConnection open(String raw, int connectTimeout, int readTimeout) throws IOException {
+        String current = raw;
+        for (int hop = 0; hop < 5; hop++) {
+            HttpURLConnection conn = open(current);
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("User-Agent", "JavaHttpClient");
+            conn.setUseCaches(false);
+            conn.setDoInput(true);
+            conn.setConnectTimeout(connectTimeout);
+            conn.setReadTimeout(readTimeout);
+            int status = conn.getResponseCode();
+            if (status != HttpURLConnection.HTTP_MOVED_PERM
+                    && status != HttpURLConnection.HTTP_MOVED_TEMP
+                    && status != HttpURLConnection.HTTP_SEE_OTHER
+                    && status != 307
+                    && status != 308) {
+                return conn;
+            }
+            String location = conn.getHeaderField("Location");
+            conn.disconnect();
+            if (location == null || location.isBlank()) {
+                throw new IOException("Corpus redirect without location");
+            }
+            URI base = toUri(current);
+            URI next = base.resolve(location.trim());
+            String from = base.getScheme() == null ? "" : base.getScheme().toLowerCase(Locale.ROOT);
+            String to = next.getScheme() == null ? "" : next.getScheme().toLowerCase(Locale.ROOT);
+            if (!"http".equals(to) && !"https".equals(to)) {
+                throw new IOException("Unsupported corpus redirect");
+            }
+            if ("https".equals(from) && "http".equals(to)) {
+                throw new IOException("Refusing to downgrade corpus URL to http");
+            }
+            current = next.toString();
+        }
+        throw new IOException("Too many corpus redirects");
     }
 
     static String encodeQuery(String raw) {
