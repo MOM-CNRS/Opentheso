@@ -44,13 +44,18 @@ function ensureGlobe() {
   }
   if (document.querySelector("script[data-globe]")) return;
   const ctx = document.body.getAttribute("data-ctx") || "";
-  const script = document.createElement("script");
-  script.src = ctx + "/resources/js/globe.js?v=globe-lazy1";
-  script.dataset.globe = "1";
-  script.onload = () => {
-    if (window.OTGlobe) window.OTGlobe.attach(globeHost()).ensure();
+  const prep = document.createElement("script");
+  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261118-split";
+  prep.dataset.globe = "1";
+  prep.onload = () => {
+    const script = document.createElement("script");
+    script.src = ctx + "/resources/js/globe.js?v=20261118-split";
+    script.onload = () => {
+      if (window.OTGlobe) window.OTGlobe.attach(globeHost()).ensure();
+    };
+    document.head.appendChild(script);
   };
-  document.head.appendChild(script);
+  document.head.appendChild(prep);
 }
 
 function stopGlobe() {

@@ -133,6 +133,29 @@ public class CandidatBoardBean implements Serializable {
     }
 
     /**
+     * Pré-rendu de la vue. Un ajax qui ne touche pas le badge ne relance pas le comptage.
+     */
+    public void refreshBadgeForRender() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces != null && faces.getPartialViewContext().isAjaxRequest()) {
+            var renderIds = faces.getPartialViewContext().getRenderIds();
+            boolean updatesBadge = renderIds == null || renderIds.isEmpty();
+            if (renderIds != null) {
+                for (String id : renderIds) {
+                    if (id != null && ("@all".equals(id) || id.contains("previewCandBadge"))) {
+                        updatesBadge = true;
+                        break;
+                    }
+                }
+            }
+            if (!updatesBadge) {
+                return;
+            }
+        }
+        refreshBadgeCount();
+    }
+
+    /**
      * Compteur du bouton, sans charger les trois listes.
      */
     public void refreshBadgeCount() {

@@ -1,0 +1,624 @@
+/* Administration — projets. */
+/* ── Gestion des projets — liste cartes ── */
+.ia-proj-pane .ia-proj-card{overflow:hidden}
+.ia-proj-card-h{
+  gap:12px !important;
+  padding:14px 16px !important;
+  justify-content:flex-end !important;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 35%, #fff), #fff) !important
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h .ia-proj-toolbar{
+  margin-left:auto;
+  width:auto;
+  max-width:100%;
+  flex:0 1 auto;
+  justify-content:flex-end;
+  flex-wrap:nowrap !important
+}
+.ia-proj-search{
+  position:relative;flex:0 1 280px;min-width:180px;max-width:320px;display:flex;align-items:center
+}
+.ia-proj-search-ico{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:var(--ink-3);pointer-events:none;z-index:1
+}
+.ia-proj-search-ico svg{
+  width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h .ia-proj-search-input.ia-q.st-input,
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h input.ia-proj-search-input{
+  width:100% !important;max-width:none !important;flex:1 1 auto !important;
+  height:40px;padding:8px 14px 8px 38px !important;border-radius:var(--r) !important;
+  background:var(--surface) !important
+}
+.ia-proj-create-btn{
+  display:inline-flex !important;align-items:center;gap:7px;height:40px !important;padding:0 14px !important
+}
+.ia-proj-create-btn svg{
+  width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+.ia-proj-pane .ia-proj-card{
+  display:flex;flex-direction:column;
+  max-height:calc(100vh - 250px);min-height:280px
+}
+.ia-proj-pane .ia-proj-card > .bo-card-b{
+  flex:1;min-height:0;display:flex;flex-direction:column
+}
+.ia-proj-scroll{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:4px 0;-webkit-overflow-scrolling:touch
+}
+.ia-proj-pager{flex:0 0 auto;margin:0;padding:10px 12px 12px;background:var(--surface)}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-thes-pane .ia-thes-card.bo-card{
+  display:flex;flex-direction:column;overflow:hidden;
+  max-height:calc(100vh - 168px);min-height:320px
+}
+.ia-thes-pane .ia-thes-card > .bo-card-b{
+  flex:1;min-height:0;display:flex;flex-direction:column
+}
+.ia-thes-body{flex:1;min-height:0;display:flex;flex-direction:column}
+.ia-thes-scroll{
+  flex:1;min-height:0;overflow:auto;
+  -webkit-overflow-scrolling:touch
+}
+.ia-thes-pager{flex:0 0 auto;margin:0;padding:10px 12px 12px;background:var(--surface)}
+.ia-pager [data-ia-off]{opacity:.45;pointer-events:none}
+.ia-thes-scroll .ia-tab-t thead th{
+  position:sticky;top:0;z-index:2;background:var(--surface-2, var(--surface))
+}
+.ia-thes-scroll .ia-tab-t{table-layout:auto;width:max-content;min-width:100%}
+.ia-thes-scroll .ia-tab-t .ia-th-name{
+  width:auto;max-width:28rem;min-width:12rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.ia-thes-scroll .ia-tab-t .ia-th-project{
+  min-width:10rem;max-width:18rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.ia-thes-scroll .ia-tab-t .ia-th-vis{width:7.5rem;white-space:nowrap}
+.ia-thes-scroll .ia-tab-t .ia-th-act{
+  width:1%;white-space:nowrap;text-align:right
+}
+.ia-proj-row{content-visibility:auto;contain-intrinsic-size:auto 58px}
+.ia-proj-list{list-style:none;margin:0;padding:0}
+.ia-proj-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;margin:0 6px;
+  border-radius:var(--r);
+  transition:background .16s ease
+}
+.ia-proj-row + .ia-proj-row{margin-top:2px}
+.ia-proj-row:hover{background:color-mix(in srgb, var(--accent-soft) 55%, transparent)}
+.ia-proj-main{
+  flex:1;min-width:0;display:flex;align-items:center;gap:14px;
+  padding:10px 8px 10px 6px;border-radius:var(--r);
+  color:inherit;text-decoration:none !important
+}
+.ia-proj-avatar{
+  flex:0 0 auto;width:42px;height:42px;border-radius:var(--r);
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent-soft);color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+  transition:transform .18s ease, background .18s ease
+}
+.ia-proj-row:hover .ia-proj-avatar{
+  transform:scale(1.05);background:color-mix(in srgb, var(--accent-soft) 80%, #fff)
+}
+.ia-proj-avatar svg{
+  width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.85;
+  stroke-linecap:round;stroke-linejoin:round
+}
+.ia-proj-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.ia-proj-name{
+  font-size:15px;font-weight:650;letter-spacing:-.015em;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.ia-proj-meta{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;color:var(--ink-3);line-height:1.3
+}
+.ia-proj-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:20px;padding:0 7px;border-radius:var(--r-full);
+  background:color-mix(in srgb, var(--accent-soft) 90%, #fff);
+  border:1px solid color-mix(in srgb, var(--accent) 16%, var(--line));
+  color:var(--accent);font-size:11.5px;font-weight:700;
+  font-variant-numeric:tabular-nums
+}
+.ia-proj-chev{
+  flex:0 0 auto;width:28px;height:28px;border-radius:var(--r-sm);
+  display:inline-flex;align-items:center;justify-content:center;
+  color:var(--ink-3);opacity:.55;
+  transition:color .16s ease, background .16s ease, transform .16s ease, opacity .16s ease
+}
+.ia-proj-chev svg{
+  width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+.ia-proj-row:hover .ia-proj-chev{
+  opacity:1;color:var(--accent);background:var(--accent-soft);transform:translateX(2px)
+}
+.ia-proj-acts{
+  flex:0 0 auto;padding-right:4px;
+  opacity:.72;transition:opacity .16s ease
+}
+.ia-proj-row:hover .ia-proj-acts{opacity:1}
+.ia-proj-form{padding:22px 20px 20px !important}
+.ia-proj-form .ia-create-h{
+  display:flex;align-items:flex-start;gap:14px;margin-bottom:18px
+}
+.ia-proj-form-ico{
+  flex:0 0 auto;width:44px;height:44px;border-radius:var(--r);
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent-soft);color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 18%, var(--line))
+}
+.ia-proj-form-ico svg{
+  width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.85;
+  stroke-linecap:round;stroke-linejoin:round
+}
+.ia-proj-form .ia-field{max-width:420px}
+.ia-proj-form .ia-create-actions{margin-top:18px}
+.ia-proj-empty{padding:48px 24px !important;gap:8px}
+.ia-proj-empty-ico{
+  width:56px;height:56px;border-radius:var(--r-lg);margin-bottom:6px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg, var(--accent-soft), color-mix(in srgb, var(--accent-soft) 30%, #fff));
+  color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 14%, var(--line));
+  box-shadow:var(--shadow-sm)
+}
+.ia-proj-empty-ico svg{
+  width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round
+}
+.ia-proj-empty-cta{
+  margin-top:14px !important;
+  display:inline-flex !important;align-items:center;gap:7px
+}
+.ia-proj-empty-cta svg{
+  width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+button.ia-icon-btn,
+input.ia-icon-btn{
+  appearance:none;-webkit-appearance:none;margin:0
+}
+.ia-icon-btn{
+  width:32px;height:32px;min-width:32px;padding:0 !important;
+  display:inline-flex !important;align-items:center;justify-content:center;
+  border-radius:var(--r);text-decoration:none !important;
+  color:var(--ink-2);cursor:pointer;border:1px solid var(--line);
+  background:var(--surface, #fff)
+}
+input.ia-icon-btn{
+  font:inherit;font-size:15px;line-height:1;font-weight:650
+}
+.ia-icon-btn svg{
+  width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;pointer-events:none
+}
+.ia-icon-btn:hover{
+  color:var(--ink);border-color:var(--accent-line);background:var(--accent-soft)
+}
+/* Même comportement que .tp-act--del : neutre au repos, danger au survol */
+.ia-icon-btn.is-danger:hover{
+  color:var(--danger, #b42318);
+  border-color:color-mix(in srgb, var(--danger, #b42318) 40%, var(--line));
+  background:color-mix(in srgb, var(--danger, #b42318) 10%, var(--surface, #fff))
+}
+.ia-sr-only{
+  position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0
+}
+/* Proxies JSF : hors écran mais cliquables (clip/sr-only casse parfois faces.ajax) */
+.ia-ajax-proxy{
+  position:absolute !important;
+  left:-10000px !important;
+  top:0 !important;
+  width:1px !important;
+  height:1px !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  opacity:0 !important;
+  border:0 !important
+}
+.ia-ajax-proxy .bo-btn,
+.ia-ajax-proxy input{
+  position:static !important;width:1px !important;height:1px !important;margin:0 !important
+}
+input.ia-ajax-proxy-btn,
+.ia-ajax-proxy-btn{
+  position:absolute !important;
+  left:-10000px !important;
+  top:0 !important;
+  width:1px !important;
+  height:1px !important;
+  margin:0 !important;
+  padding:0 !important;
+  opacity:0 !important;
+  overflow:hidden !important;
+  border:0 !important
+}
+.ia-tab-u tbody tr:hover .ia-sticky-l,
+.ia-tab-u tbody tr:hover .ia-sticky-r{
+  background:color-mix(in srgb, var(--accent-soft) 55%, var(--surface, #fff))
+}
+.ia-tab-u .ia-row-inactive .ia-sticky-l,
+.ia-tab-u .ia-row-inactive .ia-sticky-r{
+  background:var(--surface, #fff)
+}
+.ia-create-actions .bo-btn,
+.ia-create-actions input.bo-btn{
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer
+}
+.ia-create-actions input.bo-btn,
+.confirm-actions input.bo-btn{
+  appearance:none;-webkit-appearance:none;margin:0;font:inherit
+}
+.st-td-act .bo-btn,
+.st-td-act input.bo-btn{
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer
+}
+.ia-proj-add{width:auto}
+.ia-status{
+  display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--r-full);
+  font-size:11.5px;font-weight:650;letter-spacing:.01em
+}
+.ia-status--on{background:color-mix(in srgb, var(--ok, #1a7f4e) 14%, transparent);color:var(--ok, #1a7f4e)}
+.ia-status--off{background:color-mix(in srgb, var(--ink-3) 16%, transparent);color:var(--ink-3)}
+.ia-proj-sum{font-size:12.5px;color:var(--ink-2);max-width:220px}
+.ia-proj-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;margin-right:6px;border-radius:var(--r-full);
+  background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700
+}
+.ia-row-inactive{opacity:.72}
+.ia-pager{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 4px 4px;border-top:1px solid var(--line-2);margin-top:8px
+}
+.ia-pager-meta,.ia-pager-nav{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ia-pager-info{font-size:12.5px;color:var(--ink-3)}
+.ia-pager-size{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin:0}
+.ia-pager-size-select{
+  width:auto !important;min-width:72px;height:32px;padding:4px 8px !important;border-radius:var(--r-sm) !important;
+  -webkit-appearance:menulist;appearance:menulist;font-size:13px !important
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.primary.danger,
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal a.bo-btn.danger,
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal button.bo-btn.danger{
+  background:var(--danger, #b42318);border-color:transparent;color:#fff
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal a.bo-btn.danger:hover,
+body:is([data-page="admin-instance"],[data-page="projets"]) .confirm-modal button.bo-btn.danger:hover{
+  filter:brightness(1.06);color:#fff
+}
+.ia-delete .ia-create-d b{color:var(--ink)}
+.ia-create-actions{
+  display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px
+}
+.ia-edit-actions{
+  justify-content:space-between;align-items:center;gap:12px 16px;
+  padding-top:16px;margin-top:18px;
+  border-top:1px solid var(--line-2)
+}
+.ia-edit-actions-danger{position:relative;display:flex;align-items:center;min-height:38px}
+.ia-edit-actions-main{display:inline-flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete{
+  appearance:none;-webkit-appearance:none;
+  display:inline-flex !important;align-items:center;justify-content:center;gap:9px;
+  height:38px;min-height:38px;padding:0 14px 0 11px;margin:0;
+  border-radius:var(--r);font:inherit;font-size:13px;font-weight:650;letter-spacing:.01em;
+  line-height:1;cursor:pointer;text-decoration:none !important;
+  color:#9f1f1f;
+  background:linear-gradient(
+    180deg,
+    color-mix(in srgb, #b42318 6%, var(--surface, #fff)),
+    color-mix(in srgb, #b42318 10%, var(--surface, #fff))
+  );
+  border:1px solid color-mix(in srgb, #b42318 26%, var(--line));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+  transition:
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease,
+    box-shadow .16s ease,
+    transform .12s ease
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete svg{
+  width:15px;height:15px;flex:0 0 auto;
+  stroke:currentColor;stroke-width:2;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;pointer-events:none
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete:hover{
+  color:#7f1515;
+  background:linear-gradient(
+    180deg,
+    color-mix(in srgb, #b42318 10%, var(--surface, #fff)),
+    color-mix(in srgb, #b42318 16%, var(--surface, #fff))
+  );
+  border-color:color-mix(in srgb, #b42318 46%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.45),
+    0 1px 2px color-mix(in srgb, #b42318 14%, transparent)
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete:active{
+  transform:translateY(1px);
+  background:color-mix(in srgb, #b42318 16%, var(--surface, #fff));
+  box-shadow:inset 0 1px 2px color-mix(in srgb, #b42318 18%, transparent)
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete:focus-visible{
+  outline:2px solid color-mix(in srgb, #b42318 55%, transparent);
+  outline-offset:2px
+}
+
+.ia-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ia-tab{table-layout:auto;width:100%;border-collapse:collapse}
+.ia-tab-t{table-layout:fixed}
+.ia-tab-t .ia-th-name{
+  width:240px;max-width:240px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.ia-tab th,.ia-tab td{
+  padding:12px 16px;text-align:left;vertical-align:middle;
+  border-bottom:1px solid var(--line-2);font-size:13.5px
+}
+.ia-tab td.st-td-act{
+  text-align:right;white-space:nowrap
+}
+.ia-tab td.st-td-act .ia-row-acts{
+  display:inline-flex;width:100%;justify-content:flex-end;align-items:center;gap:6px
+}
+.ia-tab th{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--ink-3);background:var(--surface-2);white-space:nowrap;position:sticky;top:0;z-index:1
+}
+.ia-tab tbody tr{transition:background .14s ease}
+.ia-tab tbody tr:hover{background:rgba(31,122,92,.045)}
+.ia-tab tbody tr:last-child td{border-bottom:none}
+.ia-tab td b{font-weight:650;color:var(--ink)}
+.ia-mail{color:var(--ink-3);font-size:12px}
+.ia-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:36px 20px;text-align:center;color:var(--ink-3)
+}
+.ia-empty-t{font-size:14px;font-weight:650;color:var(--ink-2)}
+.ia-empty-d{font-size:13px;max-width:28rem;line-height:1.45}
+
+.ia-role{
+  display:inline-flex;align-items:center;
+  font-size:11.5px;font-weight:650;border-radius:var(--r-full);padding:3px 9px;
+  border:1px solid transparent
+}
+.ia-role--super{
+  color:var(--accent);background:var(--accent-soft);border-color:var(--accent-line)
+}
+.ia-role--user{
+  color:var(--ink-2);background:var(--surface-2);border-color:var(--line)
+}
+.ia-vis{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--ink-2)
+}
+.ia-vis::before{
+  content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto
+}
+.ia-vis.is-private::before{background:var(--ink-4)}
+
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm{
+  border:1px solid var(--line);border-radius:var(--r);padding:6px 11px;
+  font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--surface);
+  transition:border-color .15s ease, color .15s ease, background .15s ease, transform .15s ease
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm:hover{
+  border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm.danger{
+  color:var(--danger, #b42318);
+  border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm.danger:hover{
+  color:#7f1515;
+  background:color-mix(in srgb, #b42318 10%, var(--surface, #fff));
+  border-color:color-mix(in srgb, #b42318 46%, var(--line))
+}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-btn.ghost.sm:active{transform:scale(.98)}
+
+.bo-todo-box{
+  border:1.5px dashed rgba(217,137,42,.4);background:rgba(217,137,42,.05);
+  border-radius:var(--r-lg);padding:22px 20px;
+  animation:iaRise .34s cubic-bezier(.22,1,.36,1) both
+}
+.bo-todo-t{font-size:14.5px;font-weight:700;color:#9a5e10;margin-bottom:6px}
+.bo-todo-d{font-size:13.5px;color:var(--ink-2);line-height:1.55;max-width:40rem}
+
+@keyframes iaPageIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+@keyframes iaRise{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:none}
+}
+@keyframes iaLeave{
+  from{opacity:1}
+  to{opacity:0}
+}
+@keyframes iaRailPulse{
+  0%{transform:scale(1)}
+  45%{transform:scale(.9)}
+  100%{transform:scale(1)}
+}
+
+/* Sortie page (retour / navigation rail) */
+#iaRoot.ia--leaving,
+#tpRoot.ia--leaving,
+#previewView.ia--leaving,
+.main.ia--leaving{
+  animation:iaLeave .22s ease forwards
+}
+#iaRoot.ia--enter{
+  animation:iaPageIn .34s cubic-bezier(.22,1,.36,1) both
+}
+
+/* Confirmations : toujours centrées sur l'écran (hors transform de #iaRoot).
+   Ne pas utiliser display:contents ici — ça casse l'association form/AJAX
+   des boutons injectés après un re-rendu partiel. */
+.ia-shell{position:relative}
+.ia-confirm-layer{position:static;margin:0;padding:0;border:0;min-height:0}
+body:is([data-page="admin-instance"],[data-page="projets"]) .ia-confirm-overlay.block-overlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:6000 !important;
+  display:grid !important;
+  place-items:center !important;
+  padding:24px !important;
+  margin:0 !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:none !important;
+  max-height:none !important;
+  box-sizing:border-box !important;
+  background:rgba(16,20,18,.55);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px)
+}
+body.ia-nav-leaving{cursor:progress}
+body:is([data-page="admin-instance"],[data-page="projets"]) .bo-back.is-leaving,
+.bo-solo>.bo-back.is-leaving{
+  transform:scale(.9) translateX(-4px);
+  border-color:var(--accent-line);
+  color:var(--accent);
+  background:var(--accent-soft)
+}
+.thesaurus-btn.is-nav-pulse{
+  animation:iaRailPulse .28s ease;
+  background:var(--accent-soft);
+  color:var(--accent)
+}
+
+/* ── Responsive ── */
+@media (max-width:900px){
+  .bo-solo{grid-template-columns:40px minmax(0,1fr);column-gap:12px;padding-bottom:56px}
+  .spl-row{padding:16px 16px}
+  .spl-d{font-size:12.5px}
+}
+
+@media (max-width:720px){
+  .bo-solo{
+    grid-template-columns:1fr;
+    padding:16px var(--ia-pad-x) 48px;column-gap:0
+  }
+  .bo-solo>.bc,
+  .bo-solo>.bo-back,
+  .bo-solo>.bo-head,
+  .bo-solo>.bo-full{grid-column:1}
+  .bo-solo>.bc{grid-row:1}
+  .bo-solo>.bo-back{grid-row:2;margin:0 0 12px}
+  .bo-solo>.bo-head{grid-row:3;margin-bottom:16px}
+  .bo-solo>.bo-full{grid-row:4}
+  .bo-solo>.bo-head{flex-direction:column;align-items:flex-start}
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-card-h-users{
+    flex-wrap:wrap !important
+  }
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar,
+  body[data-page="projets"] #mpToolbar{
+    width:100%;
+    margin-left:0;
+    flex:1 1 100%;
+    justify-content:flex-start
+  }
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-q.st-input,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.ia-q{
+    flex:1 1 auto !important;
+    width:auto !important;
+    max-width:none !important
+  }
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar-actions{
+    width:100%;
+    flex-wrap:wrap
+  }
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-filter-select{
+    flex:1 1 calc(50% - 6px);
+    max-width:none;
+    min-width:0
+  }
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar .ia-create-btn,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar > .bo-btn,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar a.bo-btn,
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-toolbar input.bo-btn{
+    flex:0 0 auto !important
+  }
+  .ia-h-act{width:100%}
+  .ia-create-grid{grid-template-columns:1fr}
+  .ia-mode{grid-template-columns:1fr}
+  .ia-opts{grid-template-columns:1fr}
+  .ia-proj-composer{grid-template-columns:1fr;gap:8px}
+  .ia-proj-commit{width:100%}
+  .ia-tab-u .ia-sticky-l,
+  .ia-tab-u .ia-sticky-r{
+    position:static;box-shadow:none;min-width:0;width:auto
+  }
+  .ia-create-actions{justify-content:stretch}
+  .ia-create-actions .bo-btn{flex:1;justify-content:center}
+  .ia-edit-actions{flex-direction:column-reverse;align-items:stretch;padding-top:14px;margin-top:14px}
+  .ia-edit-actions-main{margin-left:0;width:100%}
+  .ia-edit-actions-main .bo-btn{flex:1}
+  .ia-edit-actions-danger{width:100%;justify-content:stretch;min-height:0}
+  body:is([data-page="admin-instance"],[data-page="projets"]) button.ia-edit-delete{width:100%;padding:0 14px}
+  body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-h{align-items:center}
+  body:is([data-page="admin-instance"],[data-page="projets"]) .bo-card-h .right{margin-left:0;width:100%}
+
+  .ia-proj-card-h{
+    flex-wrap:wrap !important;
+    align-items:stretch !important;
+    justify-content:stretch !important
+  }
+  body:is([data-page="admin-instance"],[data-page="projets"]) .ia-proj-card-h .ia-proj-toolbar{
+    width:100%;
+    margin-left:0;
+    flex-wrap:wrap !important;
+    justify-content:stretch
+  }
+  .ia-proj-search{flex:1 1 100%;max-width:none;min-width:0}
+  .ia-proj-create-btn{width:100%;justify-content:center}
+  .ia-proj-row{
+    flex-wrap:wrap;gap:4px;padding:8px 8px;margin:0 4px
+  }
+  .ia-proj-main{padding:8px 4px;gap:12px}
+  .ia-proj-chev{display:none}
+  .ia-proj-acts{
+    width:100%;opacity:1;justify-content:flex-end;padding:0 4px 6px
+  }
+
+  /* Tables → cards on small screens */
+  .ia-tab thead{display:none}
+  .ia-tab,.ia-tab tbody,.ia-tab tr,.ia-tab td{display:block;width:100%}
+  .ia-tab tr{
+    padding:14px 16px;border-bottom:1px solid var(--line-2)
+  }
+  .ia-tab tr:last-child{border-bottom:none}
+  .ia-tab td{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+    border:0;padding:5px 0;white-space:normal
+  }
+  .ia-tab td::before{
+    content:attr(data-label);
+    flex:0 0 38%;max-width:9rem;
+    font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--ink-4);padding-top:2px
+  }
+  .ia-tab-t .ia-th-name{
+    width:auto;max-width:none;overflow:visible;text-overflow:clip;white-space:normal
+  }
+  .ia-tab td.st-td-act{justify-content:flex-end;padding-top:10px}
+  .ia-tab td.st-td-act::before{display:none}
+  .spl-row{gap:13px}
+  .spl-ico{width:38px;height:38px;border-radius:var(--r)}
+}
+

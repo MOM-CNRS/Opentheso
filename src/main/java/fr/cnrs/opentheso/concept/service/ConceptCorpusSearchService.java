@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.concept.service;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.concept.model.CorpusSearchContext;
 import fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.setting.service.ThesaurusCorpusService;
 import jakarta.json.Json;
@@ -23,10 +24,14 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,11 +45,19 @@ public class ConceptCorpusSearchService {
     private static final String TOKEN_VALUE = "##value##";
     private static final String TOKEN_ARK = "##arkid##";
 
+    private static final int CORPUS_CONNECT_TIMEOUT_MS = 3000;
+    private static final int CORPUS_READ_TIMEOUT_MS = 3000;
+
     private final ThesaurusCorpusService thesaurusCorpusService;
 
     @Transactional(readOnly = true)
     public boolean hasActiveCorpus(String thesaurusId) {
         return thesaurusCorpusService.hasActiveCorpus(thesaurusId);
+    }
+
+    @Transactional(readOnly = true)
+    public CorpusSourceState corpusSourceState(String thesaurusId) {
+        return thesaurusCorpusService.corpusSourceState(thesaurusId);
     }
 
     /**
@@ -79,8 +92,12 @@ public class ConceptCorpusSearchService {
     }
 
     private boolean searchCorpus(List<ResolvedCorpusLink> resolvedLinks, CorpusSearchContext context) {
+        List<ResolvedCorpusLink> counted = new ArrayList<>();
         boolean haveCorpus = false;
         for (ResolvedCorpusLink corpus : resolvedLinks) {
+            if (!corpus.isActive()) {
+                continue;
+            }
             if (corpus.isOnlyUriLink()) {
                 applyOnlyUriLinkPlaceholders(corpus, context);
                 haveCorpus = true;
@@ -88,12 +105,31 @@ public class ConceptCorpusSearchService {
             }
             applyCountPlaceholders(corpus, context);
             applyLinkPlaceholders(corpus, context);
-            setCorpusCount(corpus);
+            counted.add(corpus);
+        }
+        countInParallel(counted);
+        for (ResolvedCorpusLink corpus : counted) {
             if (corpus.getCount() > 0) {
                 haveCorpus = true;
             }
         }
         return haveCorpus;
+    }
+
+    private void countInParallel(List<ResolvedCorpusLink> counted) {
+        if (counted.isEmpty()) {
+            return;
+        }
+        if (counted.size() == 1) {
+            setCorpusCount(counted.getFirst());
+            return;
+        }
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            CompletableFuture<?>[] tasks = counted.stream()
+                    .map(corpus -> CompletableFuture.runAsync(() -> setCorpusCount(corpus), executor))
+                    .toArray(CompletableFuture[]::new);
+            CompletableFuture.allOf(tasks).join();
+        }
     }
 
     private void applyOnlyUriLinkPlaceholders(ResolvedCorpusLink corpus, CorpusSearchContext context) {
@@ -154,15 +190,7 @@ public class ConceptCorpusSearchService {
         StringBuilder json = new StringBuilder();
         HttpURLConnection conn = null;
         try {
-            conn = CorpusHttp.open(uri);
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
-            conn.setRequestProperty("User-Agent", "JavaHttpClient");
-            conn.setUseCaches(false);
-            conn.setDoInput(true);
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(5000);
-
+            conn = CorpusHttp.open(uri, CORPUS_CONNECT_TIMEOUT_MS, CORPUS_READ_TIMEOUT_MS);
             int status = conn.getResponseCode();
             if (status != HttpURLConnection.HTTP_OK) {
                 return -1;
@@ -213,8 +241,7 @@ public class ConceptCorpusSearchService {
             return -1;
         }
         try {
-            HttpURLConnection connection = CorpusHttp.open(uri);
-            connection.setRequestMethod("GET");
+            HttpURLConnection connection = CorpusHttp.open(uri, CORPUS_CONNECT_TIMEOUT_MS, CORPUS_READ_TIMEOUT_MS);
             Map<String, List<String>> headers = connection.getHeaderFields();
             Map<String, List<String>> lowerCaseHeaders = headers.entrySet().stream()
                     .collect(Collectors.toMap(

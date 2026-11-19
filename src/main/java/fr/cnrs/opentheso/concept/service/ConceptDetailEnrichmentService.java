@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.concept.model.ConceptGpsPoint;
 import fr.cnrs.opentheso.concept.model.ConceptImageItem;
 import fr.cnrs.opentheso.concept.model.CorpusSearchContext;
 import fr.cnrs.opentheso.concept.model.ConceptCustomRelationItem;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusPreferences;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -111,6 +112,11 @@ public class ConceptDetailEnrichmentService {
     @Transactional(readOnly = true)
     public boolean hasActiveCorpus(String thesaurusId) {
         return conceptCorpusSearchService.hasActiveCorpus(thesaurusId);
+    }
+
+    @Transactional(readOnly = true)
+    public CorpusSourceState corpusSourceState(String thesaurusId) {
+        return conceptCorpusSearchService.corpusSourceState(thesaurusId);
     }
 
     public List<fr.cnrs.opentheso.concept.model.ConceptCorpusLinkItem> loadCorpusLinks(

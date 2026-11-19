@@ -568,6 +568,8 @@ class ThesaurusViewBeanTest {
         verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
         verify(propositionBean).clearConsultation();
         verify(propositionBean, never()).refreshBadgeCount();
+        verify(consultationViewLogger).logConcept("Lieux", "fr", "c1", "Pactols_Lieux", "th17", "fr");
+        verify(consultationViewLogger, never()).logCandidate(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -784,6 +786,8 @@ class ThesaurusViewBeanTest {
         assertEquals("anais.mauriceau", bean.getCandidateBy());
         assertEquals("2026-09-29", bean.getCandidateOn());
         assertFalse(bean.isRejectedSelected());
+        verify(consultationViewLogger).logCandidate("Tjarou", "fr", "ctj0u1", "Pactols_Lieux", "th17", "fr");
+        verify(consultationViewLogger, never()).logConcept(any(), any(), any(), any(), any(), any());
     }
 
     @Test

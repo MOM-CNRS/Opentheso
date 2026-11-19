@@ -121,6 +121,9 @@
               <ui:fragment rendered="#{instanceAdminBean.statsSection}">
                 <p class="bo-sub">#{localeBean.getMsg('admin.stats.sub')}</p>
               </ui:fragment>
+              <ui:fragment rendered="#{instanceAdminBean.prefsSection}">
+                <p class="bo-sub">#{localeBean.getMsg('admin.prefs.sub')}</p>
+              </ui:fragment>
             </div>
           </div>
 
@@ -157,6 +160,18 @@
                   </span>
                   <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
                 </a>
+                <ui:fragment rendered="#{instanceAdminBean.superAdmin}">
+                <a class="spl-row" href="#{instanceAdminBean.sectionUrl('prefs')}">
+                  <span class="spl-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg>
+                  </span>
+                  <span class="spl-tx">
+                    <span class="spl-t">#{localeBean.getMsg('admin.section.prefs')}</span>
+                    <span class="spl-d">#{localeBean.getMsg('admin.section.prefs.desc')}</span>
+                  </span>
+                  <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+                </a>
+                </ui:fragment>
                 <a class="spl-row" href="#{instanceAdminBean.sectionUrl('stats')}">
                   <span class="spl-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg>
@@ -1484,6 +1499,75 @@
                   </div>
                 </div>
               </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{instanceAdminBean.prefsSection}">
+              <h:panelGroup id="iaPrefs" layout="block" styleClass="bo-card">
+                <div class="bo-card-h">
+                  <span class="bo-card-t">#{localeBean.getMsg('admin.section.prefs')}</span>
+                </div>
+                <div class="ia-prefs-body">
+                  <ui:fragment rendered="#{not instanceSettingsBean.mailConfigured}">
+                    <p class="ia-prefs-note">#{localeBean.getMsg('admin.prefs.mailMissing')}</p>
+                  </ui:fragment>
+                  <div class="st-toggle-row">
+                    <div class="st-toggle-main">
+                      <div class="st-toggle-l">#{localeBean.getMsg('admin.prefs.suggestion')}</div>
+                      <div class="st-toggle-d">#{localeBean.getMsg('admin.prefs.suggestion.desc')}</div>
+                    </div>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="iaPrefsSuggestion"
+                                               styleClass="st-sw-input"
+                                               value="#{instanceSettingsBean.suggestionEnabled}"/>
+                    </label>
+                  </div>
+                  <div class="st-toggle-row">
+                    <div class="st-toggle-main">
+                      <div class="st-toggle-l">#{localeBean.getMsg('admin.prefs.language')}</div>
+                      <div class="st-toggle-d">#{localeBean.getMsg('admin.prefs.language.desc')}</div>
+                    </div>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="iaPrefsLanguage"
+                                               styleClass="st-sw-input"
+                                               value="#{instanceSettingsBean.languageVisible}"/>
+                    </label>
+                  </div>
+                  <div class="st-toggle-row">
+                    <div class="st-toggle-main">
+                      <div class="st-toggle-l">#{localeBean.getMsg('admin.prefs.rest')}</div>
+                      <div class="st-toggle-d">#{localeBean.getMsg('admin.prefs.rest.desc')}</div>
+                    </div>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="iaPrefsRest"
+                                               styleClass="st-sw-input"
+                                               value="#{instanceSettingsBean.restApiVisible}"/>
+                    </label>
+                  </div>
+                  <div class="st-toggle-row">
+                    <div class="st-toggle-main">
+                      <div class="st-toggle-l">#{localeBean.getMsg('admin.prefs.graph')}</div>
+                      <div class="st-toggle-d">#{localeBean.getMsg('admin.prefs.graph.desc')}</div>
+                    </div>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="iaPrefsGraph"
+                                               styleClass="st-sw-input"
+                                               value="#{instanceSettingsBean.graphApiVisible}"/>
+                    </label>
+                  </div>
+                  <ui:fragment rendered="#{not empty instanceSettingsBean.message}">
+                    <p class="#{instanceSettingsBean.messageError ? 'ia-prefs-err' : 'ia-prefs-ok'}" role="status">
+                      #{instanceSettingsBean.message}
+                    </p>
+                  </ui:fragment>
+                  <h:commandButton id="iaPrefsSave"
+                                   styleClass="bo-btn primary st-save"
+                                   value="#{localeBean.getMsg('admin.prefs.save')}"
+                                   action="#{instanceSettingsBean.save}">
+                    <f:ajax execute="iaPrefsSuggestion iaPrefsLanguage iaPrefsRest iaPrefsGraph @this"
+                            render="iaPrefs :previewRailTools"/>
+                  </h:commandButton>
+                </div>
+              </h:panelGroup>
             </ui:fragment>
 
             <ui:include src="/admin/includes/instance-stats-panel.xhtml"/>

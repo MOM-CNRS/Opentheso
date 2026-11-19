@@ -50,6 +50,37 @@ class CorpusHttpTest {
     }
 
     @Test
+    void open_readsFrantiqElasticsearchCount() throws Exception {
+        String raw = "https://pro.frantiq.fr/es/koha_frantiq_biblios/_count?q=koha-auth-number:\"26678/pcrton6An18MdT\"";
+        HttpURLConnection connection = CorpusHttp.open(raw);
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", "JavaHttpClient");
+        connection.setConnectTimeout(8000);
+        connection.setReadTimeout(8000);
+        int status = connection.getResponseCode();
+        String body = new String(connection.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        connection.disconnect();
+
+        assertEquals(200, status);
+        assertTrue(body.contains("\"count\":"));
+    }
+
+    @Test
+    void open_followsHttpToHttpsAndReadsEpicherchellCount() throws Exception {
+        HttpURLConnection connection = CorpusHttp.open(
+                "http://ccj-epicherchel.huma-num.fr/interface/pactols-search/notices/total/17135",
+                8000,
+                8000);
+        int status = connection.getResponseCode();
+        String body = new String(connection.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        connection.disconnect();
+
+        assertEquals(200, status);
+        assertTrue(body.matches("(?s).*\"count\"\\s*:\\s*[1-9][0-9]*.*"));
+    }
+
+    @Test
     void open_reachesSculpturoWithoutHandshakeFailure() throws Exception {
         HttpURLConnection connection = CorpusHttp.open("https://sculpturo.huma-num.fr/");
         connection.setConnectTimeout(8000);

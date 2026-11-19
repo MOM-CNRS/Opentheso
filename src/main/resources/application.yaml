@@ -1,0 +1,5 @@
+# Destinataire des propositions d'évolution (formulaire de la barre de gauche).
+# Laisser vide : le formulaire reste affiché si l'option est activée, mais l'envoi est refusé.
+opentheso:
+  suggestion:
+    mail-to: ""

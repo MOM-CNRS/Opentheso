@@ -195,7 +195,16 @@
       </h:panelGroup>
     </div>
     <div class="thesaurus-spacer"></div>
-    <div class="thesaurus-group">
+    <h:panelGroup id="previewRailTools" layout="block" styleClass="thesaurus-group">
+      <ui:fragment rendered="#{instanceFeatureBean.suggestionEnabled}">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="suggest-ask" title="#{localeBean.getMsg('suggest.open')}" aria-label="#{localeBean.getMsg('suggest.open')}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6"/><path d="M9 10h6"/></svg>
+          <span class="thesaurus-label">#{localeBean.getMsg('suggest.open')}</span>
+        </button>
+      </div>
+      </ui:fragment>
+      <ui:fragment rendered="#{instanceFeatureBean.languageVisible}">
       <div class="thesaurus-item">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="lang" title="#{localeBean.getMsg('nav.interfaceLanguage')}" aria-label="#{localeBean.getMsg('nav.interfaceLanguage')}" aria-expanded="false">
           <span class="thesaurus-flag">#{localeBean.flagEmoji}</span>
@@ -229,6 +238,8 @@
           </button>
         </div></div>
       </div>
+      </ui:fragment>
+      <ui:fragment rendered="#{instanceFeatureBean.restApiVisible}">
       <div class="thesaurus-item">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="api" title="#{localeBean.getMsg('nav.apiRest')}" aria-label="#{localeBean.getMsg('nav.apiRest')}" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/></svg>
@@ -244,6 +255,8 @@
         </div>
         <a class="menu-foot" href="#{navigationBean.swaggerUrl}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>#{localeBean.getMsg('nav.apiDocs')}</a></div>
       </div>
+      </ui:fragment>
+      <ui:fragment rendered="#{instanceFeatureBean.graphApiVisible}">
       <div class="thesaurus-item">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="graph" title="#{localeBean.getMsg('nav.apiGraph')}" aria-label="#{localeBean.getMsg('nav.apiGraph')}" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="4" r="2"/><circle cx="4.6" cy="17.5" r="2"/><circle cx="19.4" cy="17.5" r="2"/><path d="M12 6.3v3.3M10.3 13.4 6.3 16M13.7 13.4l4 2.6"/></svg>
@@ -258,7 +271,8 @@
         </div>
         <a class="menu-foot" href="#{navigationBean.graphiqlUrl}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>#{localeBean.getMsg('nav.apiExplorer')}</a></div>
       </div>
-    </div>
+      </ui:fragment>
+    </h:panelGroup>
     <ui:fragment rendered="#{userSession.loggedIn}">
       <button type="button" class="thesaurus-btn thesaurus-out" data-act="logout-ask"
               title="#{localeBean.getMsg('menu.logout')}" aria-label="#{localeBean.getMsg('menu.logout')}">
@@ -284,6 +298,108 @@
               </h:commandLink>
             </h:form>
           </div>
+        </div>
+      </div>
+    </ui:fragment>
+    <ui:fragment rendered="#{instanceFeatureBean.suggestionEnabled}">
+      <div class="block-overlay confirm-overlay" id="suggestDialog" hidden="hidden"
+           data-act="suggest-dismiss" role="presentation">
+        <div class="confirm-modal is-suggest" role="dialog" aria-modal="true"
+             aria-labelledby="suggestTitle" data-act="suggest-modal">
+          <h:form id="featureSuggestForm" prependId="false">
+            <h:panelGroup id="featureSuggestBox" layout="block" styleClass="sg-box">
+              <ui:fragment rendered="#{featureSuggestionBean.sent}">
+                <div class="confirm-h" id="suggestTitle">#{localeBean.getMsg('suggest.sent.title')}</div>
+                <p class="confirm-p">#{localeBean.getMsg('suggest.sent.body')}</p>
+                <div class="confirm-actions">
+                  <button type="button" class="bo-btn ghost confirm-cancel" data-act="suggest-dismiss">#{localeBean.getMsg('suggest.close')}</button>
+                  <h:commandButton id="featureSuggestAgain"
+                                   styleClass="bo-btn primary"
+                                   value="#{localeBean.getMsg('suggest.another')}"
+                                   action="#{featureSuggestionBean.prepare}">
+                    <f:ajax execute="@this" render="featureSuggestBox"/>
+                  </h:commandButton>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{not featureSuggestionBean.sent}">
+                <div class="confirm-h" id="suggestTitle">#{localeBean.getMsg('suggest.title')}</div>
+                <p class="confirm-p">#{localeBean.getMsg('suggest.intro')}</p>
+                <ui:fragment rendered="#{not empty featureSuggestionBean.error}">
+                  <p class="sg-err" role="alert">#{featureSuggestionBean.error}</p>
+                </ui:fragment>
+                <div class="sg-field">
+                  <span class="sg-lbl" id="suggestKindLabel">#{localeBean.getMsg('suggest.kind')}</span>
+                  <h:selectOneRadio id="featureSuggestKind"
+                                    value="#{featureSuggestionBean.kind}"
+                                    layout="lineDirection"
+                                    styleClass="st-radios sg-kind"
+                                    pt:aria-labelledby="suggestKindLabel">
+                    <f:selectItem itemValue="feature" itemLabel="#{localeBean.getMsg('suggest.kind.feature')}"/>
+                    <f:selectItem itemValue="improvement" itemLabel="#{localeBean.getMsg('suggest.kind.improvement')}"/>
+                  </h:selectOneRadio>
+                </div>
+                <div class="sg-field">
+                  <label class="sg-lbl" for="featureSuggestSubject">#{localeBean.getMsg('suggest.subject')} <span class="st-req">*</span></label>
+                  <h:inputText id="featureSuggestSubject"
+                               value="#{featureSuggestionBean.subject}"
+                               styleClass="st-input"
+                               maxlength="160"
+                               required="false"
+                               pt:placeholder="#{localeBean.getMsg('suggest.subject.ph')}"
+                               pt:autocomplete="off"/>
+                </div>
+                <div class="sg-field">
+                  <label class="sg-lbl" for="featureSuggestMessage">#{localeBean.getMsg('suggest.message')} <span class="st-req">*</span></label>
+                  <h:inputTextarea id="featureSuggestMessage"
+                                   value="#{featureSuggestionBean.message}"
+                                   styleClass="st-input sg-area"
+                                   rows="6"
+                                   pt:maxlength="4000"
+                                   pt:placeholder="#{localeBean.getMsg('suggest.message.ph')}"/>
+                </div>
+                <div class="sg-field">
+                  <label class="sg-lbl" for="featureSuggestName">#{localeBean.getMsg('suggest.name')} <span class="st-req">*</span></label>
+                  <h:inputText id="featureSuggestName"
+                               value="#{featureSuggestionBean.name}"
+                               styleClass="st-input"
+                               maxlength="120"
+                               pt:autocomplete="name"/>
+                </div>
+                <div class="sg-field">
+                  <label class="sg-lbl" for="featureSuggestEmail">#{localeBean.getMsg('suggest.email')} <span class="st-req">*</span></label>
+                  <h:inputText id="featureSuggestEmail"
+                               value="#{featureSuggestionBean.email}"
+                               styleClass="st-input"
+                               maxlength="180"
+                               pt:autocomplete="email"
+                               pt:inputmode="email"/>
+                  <span class="sg-hint">#{localeBean.getMsg('suggest.email.hint')}</span>
+                </div>
+                <h:inputText id="featureSuggestWebsite"
+                             value="#{featureSuggestionBean.website}"
+                             styleClass="sg-hp"
+                             pt:tabindex="-1"
+                             pt:autocomplete="off"
+                             pt:aria-hidden="true"/>
+                <div class="confirm-actions">
+                  <button type="button" class="bo-btn ghost confirm-cancel" data-act="suggest-dismiss">#{localeBean.getMsg('suggest.cancel')}</button>
+                  <h:commandButton id="featureSuggestSend"
+                                   styleClass="bo-btn primary"
+                                   value="#{localeBean.getMsg('suggest.send')}"
+                                   action="#{featureSuggestionBean.submit}">
+                    <f:ajax execute="@form" render="featureSuggestBox"/>
+                  </h:commandButton>
+                </div>
+              </ui:fragment>
+            </h:panelGroup>
+            <h:commandButton id="featureSuggestPrepare"
+                             value="prepare"
+                             styleClass="st-jsf-go"
+                             action="#{featureSuggestionBean.prepare}">
+              <f:ajax execute="@this" render="featureSuggestBox" onevent="onSuggestPrepare"/>
+            </h:commandButton>
+            <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+          </h:form>
         </div>
       </div>
     </ui:fragment>

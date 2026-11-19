@@ -859,23 +859,29 @@
                                                    title="Est-ce que le corpus est un OmekaS ?"/>
                         </label>
                       </div>
-                      <div class="confirm-actions">
-                        <h:commandButton id="previewCorpusCancel" value="Annuler" immediate="true"
-                                         styleClass="st-corpus-btn st-corpus-cancel"
-                                         action="#{thesaurusCorpusBean.cancelCorpusDialog}">
+                      <div class="confirm-actions st-corpus-actions">
+                        <h:commandLink id="previewCorpusCancel" immediate="true"
+                                       styleClass="st-corpus-foot st-corpus-foot-cancel"
+                                       action="#{thesaurusCorpusBean.cancelCorpusDialog}">
                           <f:ajax execute="@this" render="previewCorpusBox"
                                   onevent="onPreviewCorpusDialog"/>
-                        </h:commandButton>
+                          <span>Annuler</span>
+                        </h:commandLink>
                         <h:panelGroup rendered="#{thesaurusCorpusBean.corpusCreateDialog}">
-                          <button type="button" class="st-corpus-btn st-corpus-add" data-act="corpus-create-ask">Ajouter</button>
+                          <button type="button" class="st-corpus-foot st-corpus-foot-go" data-act="corpus-create-ask">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                            <span>Ajouter</span>
+                          </button>
                         </h:panelGroup>
-                        <h:commandButton id="previewCorpusApply" value="Appliquer"
-                                         styleClass="st-corpus-btn st-corpus-add"
-                                         rendered="#{thesaurusCorpusBean.corpusFormDialog and not thesaurusCorpusBean.corpusCreateDialog}"
-                                         action="#{thesaurusCorpusBean.updateCorpus}">
+                        <h:commandLink id="previewCorpusApply"
+                                       styleClass="st-corpus-foot st-corpus-foot-go"
+                                       rendered="#{thesaurusCorpusBean.corpusFormDialog and not thesaurusCorpusBean.corpusCreateDialog}"
+                                       action="#{thesaurusCorpusBean.updateCorpus}">
                           <f:ajax execute="previewCorpusFields" render="previewCorpusBox"
                                   onevent="onPreviewCorpusDialog"/>
-                        </h:commandButton>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                          <span>Appliquer</span>
+                        </h:commandLink>
                       </div>
                     </h:panelGroup>
                   </div>
@@ -1153,27 +1159,10 @@
                 </div>
                 </h:panelGroup>
                 <div class="fsave">
-                  <button type="button" class="fsave-btn" data-act="st-save-ask">
+                  <button type="button" class="fsave-btn" data-act="st-save-go">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                     Enregistrer
                   </button>
-                </div>
-                <div class="block-overlay confirm-overlay" id="stSaveConfirm" hidden="hidden"
-                     data-act="st-save-dismiss" role="presentation">
-                  <div class="confirm-modal" role="dialog" aria-modal="true"
-                       aria-labelledby="stSaveConfirmTitle" data-act="st-save-modal">
-                    <div class="confirm-h" id="stSaveConfirmTitle">Enregistrer les paramètres</div>
-                    <p class="confirm-p">Enregistrer les modifications des paramètres de
-                      <span class="cv-lang">#{thesaurusViewBean.title}</span> ?
-                      Préférences, corpus et sources d'alignement seront enregistrés. Sans Enregistrer, tout est perdu en quittant la page.</p>
-                    <div class="confirm-actions">
-                      <button type="button" class="bo-btn ghost confirm-cancel" data-act="st-save-dismiss">Annuler</button>
-                      <button type="button" class="bo-btn primary" data-act="st-save-go">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                        Enregistrer
-                      </button>
-                    </div>
-                  </div>
                 </div>
                 <div class="bo-toast above" id="stSaveToast" hidden="hidden">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>

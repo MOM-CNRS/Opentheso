@@ -15,6 +15,8 @@ import fr.cnrs.opentheso.proposition.model.PropositionTranslationOption;
 import fr.cnrs.opentheso.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.proposition.service.PropositionMutationService;
 import fr.cnrs.opentheso.proposition.policy.PropositionAccessPolicy;
+import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
+import fr.cnrs.opentheso.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
@@ -56,6 +58,7 @@ class PropositionSubmitBeanTest {
     @Mock private UserSession userSession;
     @Mock private LocaleBean localeBean;
     @Mock private PropositionBean propositionBean;
+    @Mock private ThesaurusViewBean thesaurusViewBean;
 
     private PropositionSubmitBean bean;
     private MockedStatic<MessageUtils> messageUtilsStatic;
@@ -71,7 +74,9 @@ class PropositionSubmitBeanTest {
         bean = new PropositionSubmitBean(
                 propositionMutationService, propositionDraftService, conceptSelectionContext,
                 conceptReadService, conceptLexicalMutationService, thesaurusContext,
-                propositionAccessPolicy, userSession, localeBean, propositionBean);
+                propositionAccessPolicy, userSession, localeBean, propositionBean, thesaurusViewBean);
+        lenient().when(thesaurusViewBean.getLanguages()).thenReturn(List.of());
+        lenient().when(thesaurusViewBean.getSelectedConcept()).thenReturn(null);
         lenient().when(conceptLexicalMutationService.listUsedLanguages(any(), any()))
                 .thenReturn(List.of(new ConceptWriteLanguage("fr", "Français")));
         lenient().when(propositionAccessPolicy.canSubmit(any(), any(), any())).thenReturn(true);
@@ -120,6 +125,28 @@ class PropositionSubmitBeanTest {
         assertEquals("Existing definition", bean.getNoteOptions().stream()
                 .filter(o -> "definition".equals(o.getTypeCode())).findFirst().orElseThrow().getValue());
         assertEquals("fr", bean.getNewTranslationLang());
+    }
+
+    @Test
+    void prepare_reusesTheOpenFicheAndItsLanguages() {
+        when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
+        when(conceptSelectionContext.getConceptId()).thenReturn("C1");
+        var detail = new ConceptDetail(SUMMARY, List.of(), List.of(), List.of(), List.of(),
+                List.of("Synonym 1"), List.of(),
+                List.of(), List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of());
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail);
+        when(thesaurusViewBean.getLanguages()).thenReturn(List.of(
+                new ThesaurusLanguage(1, "fr", "fr", "Thésaurus", "français")));
+
+        bean.prepare();
+
+        assertEquals("Concept 1", bean.getCurrentPreferredLabel());
+        assertEquals(1, bean.getSynonymOptions().size());
+        assertEquals("français", bean.getAvailableLanguages().get(0).label());
+        verify(conceptReadService, never()).loadDetail(any(), any(), any());
+        verify(conceptLexicalMutationService, never()).listUsedLanguages(any(), any());
     }
 
     @Test

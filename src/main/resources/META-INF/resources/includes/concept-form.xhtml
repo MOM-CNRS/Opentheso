@@ -384,12 +384,22 @@
           </ui:fragment>
           <div class="crow">
             <div class="crow-lbl">Total de la branche</div>
-            <div class="crow-val"><span class="cv-async" data-slot="branch" aria-busy="true" aria-label="Calcul du total de la branche"></span></div>
+            <div class="crow-val cv-branch-val" data-cv-extra="branch">
+              <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc">Calculer</button>
+            </div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Nombre des corpus liés</div>
             <div class="crow-val cv-corpus-val" data-cv-extra="corpus">
-              <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>
+              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceMissing}">
+                <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.none')}</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceInactive}">
+                <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.inactive')}</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceActive}">
+                <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>
+              </ui:fragment>
             </div>
           </div>
         </div>
@@ -1511,31 +1521,87 @@
             <div class="cv-ids-main">
               <div class="crow">
                 <div class="crow-lbl">Notation</div>
-                <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.notation)}</span></div>
-              </div>
-              <div class="crow">
-                <div class="crow-lbl">ID interne</div>
-                <div class="crow-val is-mono"><span class="link">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span></div>
-              </div>
-              <div class="crow">
-                <div class="crow-lbl">URI</div>
-                <div class="crow-val">
-                  <ui:fragment rendered="#{empty thesaurusViewBean.conceptUri}">
-                    <span class="muted">—</span>
+                <div class="crow-val is-mono">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.notation}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.selectedConcept.summary.notation}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
                   </ui:fragment>
-                  <ui:fragment rendered="#{not empty thesaurusViewBean.conceptUri}">
-                    <a class="link" href="#{thesaurusViewBean.conceptUri}">#{thesaurusViewBean.conceptUri}</a>
+                  <span class="cv-id-val">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.notation)}</span>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl cv-id-lbl">
+                  <span>ID interne</span>
+                  <span class="cv-id-tag is-amber">LOCAL</span>
+                </div>
+                <div class="crow-val is-mono">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.conceptId}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                  </ui:fragment>
+                  <span class="cv-id-val link">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl cv-id-lbl">
+                  <span>URI</span>
+                  <span class="cv-id-tag is-amber">INSTANCE</span>
+                </div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.localConceptUri}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.localConceptUri}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                    <a class="cv-id-val link" href="#{thesaurusViewBean.localConceptUri}">#{thesaurusViewBean.localConceptUri}</a>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{empty thesaurusViewBean.localConceptUri}">
+                    <span class="cv-id-val muted">—</span>
                   </ui:fragment>
                 </div>
               </div>
               <div class="crow">
-                <div class="crow-lbl">Identifiant permanent</div>
+                <div class="crow-lbl cv-id-lbl">
+                  <span>#{localeBean.getMsg('concept.ids.ark')}</span>
+                  <span class="cv-id-tag is-green">CANONIQUE</span>
+                </div>
                 <div class="crow-val is-mono">
-                  <span>#{thesaurusViewBean.selectedConcept.identifiers == null ? '—' : thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.identifiers.permanentId)}</span>
-                  <ui:fragment rendered="#{thesaurusViewBean.selectedConcept.identifiers != null and not empty thesaurusViewBean.selectedConcept.identifiers.permanentId}">
-                    <button type="button" class="copy-btn" title="Copier"
-                            data-act="copy"
-                            data-copy="#{thesaurusViewBean.selectedConcept.identifiers.permanentId}">⧉</button>
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.arkIdentifier}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.arkIdentifier}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                  </ui:fragment>
+                  <span class="cv-id-val">#{thesaurusViewBean.dash(thesaurusViewBean.arkIdentifier)}</span>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl cv-id-lbl">
+                  <span>#{localeBean.getMsg('concept.ids.permanent')}</span>
+                  <span class="cv-id-tag is-green">N2T.NET</span>
+                </div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.conceptUri}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.conceptUri}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                    <a class="cv-id-val link" href="#{thesaurusViewBean.conceptUri}">#{thesaurusViewBean.conceptUri}</a>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{empty thesaurusViewBean.conceptUri}">
+                    <span class="cv-id-val muted">—</span>
                   </ui:fragment>
                 </div>
               </div>
@@ -1546,16 +1612,28 @@
               </div>
             </ui:fragment>
           </div>
-          <div class="crow">
-            <div class="crow-lbl">Exporter en SKOS</div>
-            <div class="crow-val">
-              <div class="skos-links">
-                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('rdf')}" target="_blank" rel="noopener">RDF/XML</a>
-                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('json')}" target="_blank" rel="noopener">JSON</a>
-                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('jsonld')}" target="_blank" rel="noopener">JSON-LD</a>
-                <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('turtle')}" target="_blank" rel="noopener">Turtle</a>
-              </div>
+          <div class="cv-id-help">
+            <div class="cv-id-help-title">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 8h.01"/></svg>
+              #{localeBean.getMsg('concept.ids.help.title')}
             </div>
+            <ul>
+              <li><h:outputText value="#{localeBean.getMsg('concept.ids.help.cite')}" escape="false"/></li>
+              <li><h:outputText value="#{localeBean.getMsg('concept.ids.help.share')}" escape="false"/></li>
+              <li><h:outputText value="#{localeBean.getMsg('concept.ids.help.local')}" escape="false"/></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="cblock" data-card-id="exportSkos">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">#{localeBean.getMsg('block.exportSkos')}</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <div class="skos-links">
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('rdf')}" target="_blank" rel="noopener">RDF/XML</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('json')}" target="_blank" rel="noopener">JSON</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('jsonld')}" target="_blank" rel="noopener">JSON-LD</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('turtle')}" target="_blank" rel="noopener">Turtle</a>
           </div>
         </div>
       </section>
@@ -1581,7 +1659,7 @@
 
       <section class="cblock" data-card-id="temporel">
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Information temporelle</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
-        <div class="cblock-body">
+        <div class="cblock-body cv-time">
           <div class="crow">
             <div class="crow-lbl">Créé le</div>
             <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.created)}</span></div>

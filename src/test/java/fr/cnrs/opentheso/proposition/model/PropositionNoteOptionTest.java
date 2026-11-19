@@ -5,6 +5,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PropositionNoteOptionTest {
 
@@ -21,6 +23,24 @@ class PropositionNoteOptionTest {
         note.setOldValue(oldValue);
 
         assertEquals(expected, note.hasChanged());
+    }
+
+    @Test
+    void isRemoved_isTrueOnlyWhenAnExistingNoteWasCleared() {
+        var cleared = new PropositionNoteOption();
+        cleared.setValue(null);
+        cleared.setOldValue("Bruder von Moses");
+        assertTrue(cleared.isRemoved());
+
+        var edited = new PropositionNoteOption();
+        edited.setValue("autre texte");
+        edited.setOldValue("Bruder von Moses");
+        assertFalse(edited.isRemoved());
+
+        var added = new PropositionNoteOption();
+        added.setValue(null);
+        added.setOldValue(null);
+        assertFalse(added.isRemoved());
     }
 
     @Test

@@ -29,7 +29,8 @@ public final class ConceptBlockIds {
      */
     private static final List<String> OPTIONAL_ORDER = List.of(
             "branche",
-            "metadonnees"
+            "metadonnees",
+            "exportSkos"
     );
 
     public static final Set<String> ALL = allIds();

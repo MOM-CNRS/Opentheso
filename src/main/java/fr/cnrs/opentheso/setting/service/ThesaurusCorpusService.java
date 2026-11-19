@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.setting.service;
 
 import fr.cnrs.opentheso.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.setting.mapper.SettingMapper;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.shared.persistence.CorpusLinkEntity;
 import fr.cnrs.opentheso.shared.repository.CorpusLinkJpaRepository;
@@ -32,11 +33,21 @@ public class ThesaurusCorpusService {
 
     @Transactional(readOnly = true)
     public boolean hasActiveCorpus(String thesaurusId) {
+        return corpusSourceState(thesaurusId) == CorpusSourceState.ACTIVE;
+    }
+
+    @Transactional(readOnly = true)
+    public CorpusSourceState corpusSourceState(String thesaurusId) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return false;
+            return CorpusSourceState.NONE;
         }
-        return corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc(thesaurusId).stream()
-                .anyMatch(CorpusLinkEntity::isActive);
+        List<CorpusLinkEntity> corpus = corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc(thesaurusId);
+        if (corpus.isEmpty()) {
+            return CorpusSourceState.NONE;
+        }
+        return corpus.stream().anyMatch(CorpusLinkEntity::isActive)
+                ? CorpusSourceState.ACTIVE
+                : CorpusSourceState.INACTIVE;
     }
 
     @Transactional

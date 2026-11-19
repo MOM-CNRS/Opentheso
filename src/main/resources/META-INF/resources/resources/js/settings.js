@@ -227,8 +227,50 @@ function bindSettingsCards() {
   });
 }
 
+function isSettingsPageUrl(url) {
+  try {
+    const path = new URL(url, location.origin).pathname;
+    return /\/setting\/preference(?:\.xhtml)?$/.test(path) || /\/preference(?:\.xhtml)?$/.test(path);
+  } catch (ex) {
+    return false;
+  }
+}
+
+function rememberSettingsReturn() {
+  const referrer = document.referrer || "";
+  if (referrer.indexOf(location.origin) !== 0 || isSettingsPageUrl(referrer)) return;
+  try {
+    sessionStorage.setItem("opentheso.settingsReturn", referrer);
+  } catch (ex) {
+    /* navigation privée */
+  }
+}
+
+function leaveSettingsPage() {
+  if (typeof allowSettingsLeave === "function") allowSettingsLeave();
+  let stored = "";
+  try {
+    stored = sessionStorage.getItem("opentheso.settingsReturn") || "";
+  } catch (ex) {
+    stored = "";
+  }
+  if (stored && stored.indexOf(location.origin) === 0 && !isSettingsPageUrl(stored)) {
+    location.href = stored;
+    return;
+  }
+  if (history.length > 1) {
+    history.back();
+    return;
+  }
+  const back = document.querySelector("#viewSettings .bo-back");
+  const href = back && back.getAttribute("href");
+  if (href) location.href = href;
+}
+window.leaveSettingsPage = leaveSettingsPage;
+
 function initSettingsLeaveGuard() {
   if (SCREEN !== "preference" || !settingsForm()) return;
+  rememberSettingsReturn();
   rememberSettingsBaseline();
   window.addEventListener("beforeunload", (e) => {
     if (settingsAllowLeave || !isSettingsDirty()) return;

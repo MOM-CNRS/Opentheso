@@ -16,7 +16,9 @@ import fr.cnrs.opentheso.proposition.model.PropositionTranslationOption;
 import fr.cnrs.opentheso.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.proposition.service.PropositionMutationService;
 import fr.cnrs.opentheso.proposition.policy.PropositionAccessPolicy;
+import fr.cnrs.opentheso.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
 import jakarta.faces.view.ViewScoped;
@@ -56,6 +58,7 @@ public class PropositionSubmitBean implements Serializable {
     private final transient UserSession userSession;
     private final transient LocaleBean localeBean;
     private final transient PropositionBean propositionBean;
+    private final transient ThesaurusViewBean thesaurusViewBean;
 
     @Getter(lombok.AccessLevel.NONE)
     private boolean composing;
@@ -159,19 +162,14 @@ public class PropositionSubmitBean implements Serializable {
         newNoteTypeCode = "note";
         newNoteLang = null;
         newNoteValue = null;
-        availableLanguages = conceptLexicalMutationService.listUsedLanguages(
-                thesaurusContext.resolveThesaurusId(), thesaurusContext.resolveWorkLanguage());
+        availableLanguages = languagesAlreadyLoaded();
 
         if (!conceptSelectionContext.hasSelection()) {
             currentPreferredLabel = null;
             return;
         }
 
-        ConceptDetail detail = conceptReadService.loadDetail(
-                thesaurusContext.resolveThesaurusId(),
-                conceptSelectionContext.getConceptId(),
-                conceptSelectionContext.getSummary().lang()
-        ).orElse(null);
+        ConceptDetail detail = conceptAlreadyOpen();
 
         if (detail == null) {
             currentPreferredLabel = conceptSelectionContext.getSummary().preferredLabel();
@@ -216,6 +214,35 @@ public class PropositionSubmitBean implements Serializable {
                     : availableLanguages.get(0).code();
         }
         syncNewTranslationLang();
+    }
+
+    /**
+     * La fiche affichée contient déjà les libellés, synonymes et notes.
+     * On ne relance la lecture que si cette fiche n'est pas celle du concept ouvert.
+     */
+    private ConceptDetail conceptAlreadyOpen() {
+        ConceptDetail selected = thesaurusViewBean.getSelectedConcept();
+        if (selected != null && selected.summary() != null
+                && Strings.CS.equals(selected.summary().conceptId(), conceptSelectionContext.getConceptId())) {
+            return selected;
+        }
+        return conceptReadService.loadDetail(
+                thesaurusContext.resolveThesaurusId(),
+                conceptSelectionContext.getConceptId(),
+                conceptSelectionContext.getSummary().lang()
+        ).orElse(null);
+    }
+
+    private List<ConceptWriteLanguage> languagesAlreadyLoaded() {
+        List<ThesaurusLanguage> loaded = thesaurusViewBean.getLanguages();
+        if (loaded == null || loaded.isEmpty()) {
+            return conceptLexicalMutationService.listUsedLanguages(
+                    thesaurusContext.resolveThesaurusId(), thesaurusContext.resolveWorkLanguage());
+        }
+        return loaded.stream()
+                .filter(lang -> StringUtils.isNotBlank(lang.code()))
+                .map(lang -> new ConceptWriteLanguage(lang.code(), StringUtils.defaultString(lang.displayLabel())))
+                .toList();
     }
 
     public boolean isPreferredLabelChanged() {
@@ -313,6 +340,13 @@ public class PropositionSubmitBean implements Serializable {
             return;
         }
         option.setValue(null);
+    }
+
+    public void undoClearNote(PropositionNoteOption option) {
+        if (option == null || option.getOldValue() == null) {
+            return;
+        }
+        option.setValue(option.getOldValue());
     }
 
     public void addNoteOption() {

@@ -28,10 +28,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/prototype-recherche.css?v=20261117-titlelang"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso.css?v=20261118-corpusbtn"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-picker.css?v=20261117-guestcount"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-admin.css?v=20261117-footer"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-shell.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-concept.css?v=20261119-tags"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-suggest.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-batch.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-home.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-shell.css?v=20261119-suggest"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-batch.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-editors.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-account.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-layout.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-list.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-forms.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-transfer.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-hub.css?v=20261119-prefs"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-projects.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-dashboard.css?v=20261118-split"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/theme.css?v=20261101-catalogue"/>
 </h:head>
 <h:body pt:data-page="#{page}" pt:data-ctx="#{request.contextPath}"
@@ -50,8 +62,8 @@
       pt:data-msg-link="#{localeBean.getMsg('home.linkPrompt')}"
       pt:data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
       pt:data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
-<f:event type="preRenderView" listener="#{propositionBean.refreshBadgeCount}"/>
-<f:event type="preRenderView" listener="#{candidatBoardBean.refreshBadgeCount}"/>
+<f:event type="preRenderView" listener="#{propositionBean.refreshBadgeForRender}"/>
+<f:event type="preRenderView" listener="#{candidatBoardBean.refreshBadgeForRender}"/>
 <f:event type="preRenderView" listener="#{propositionBean.openDedicatedReview}"/>
 <div class="app" id="app">
   <ui:include src="/includes/thesaurus.xhtml"/>
@@ -165,18 +177,38 @@
 </ui:fragment>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
 <script src="#{request.contextPath}/resources/js/core.js?v=20261111-colldraft"></script>
-<script src="#{request.contextPath}/resources/js/settings.js?v=20261117-sectionopen"></script>
-<script src="#{request.contextPath}/resources/js/shell.js?v=20261118-corpusdone"></script>
+<script src="#{request.contextPath}/resources/js/settings.js?v=20261118-savereturn"></script>
+<script src="#{request.contextPath}/resources/js/shell-ouverture.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-collections.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-relations.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-media.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-traductions.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-notes.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-corpus.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-creation.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-brouillon.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-brouillon-notes.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-facette.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-lot.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-cartes.js?v=20261118-skos"></script>
 <script src="#{request.contextPath}/resources/js/search.js?v=20261111-labelid"></script>
 <script src="#{request.contextPath}/resources/js/tree.js?v=20261111-caret"></script>
 <script src="#{request.contextPath}/resources/js/table.js"></script>
-<script src="#{request.contextPath}/resources/js/globe-ui.js?v=20261017-pref"></script>
-<script src="#{request.contextPath}/resources/js/collections.js?v=20261114-collkey"></script>
-<script src="#{request.contextPath}/resources/js/selection.js?v=20261102-movehier"></script>
-<script src="#{request.contextPath}/resources/js/export.js?v=20261018-prog"></script>
-<script src="#{request.contextPath}/resources/js/about.js?v=20261114-openark"></script>
+<script src="#{request.contextPath}/resources/js/globe-ui.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/collections-arbre.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/collections-fiche.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/collections-selecteur.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/selection-preferences.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/selection-arbre.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/selection-liste.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/selection-collections.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/selection-deplacement.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/export-options.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/export-execution.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/about.js?v=20261118-savereturn"></script>
 <script src="#{request.contextPath}/resources/js/stats.js?v=20261028-gotop"></script>
-<script src="#{request.contextPath}/resources/js/instance-stats.js"></script>
+<script src="#{request.contextPath}/resources/js/instance-stats.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/instance-stats-bind.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-narrow.js?v=20261111-railmenu"></script>
 <script src="#{request.contextPath}/resources/js/dialogs.js"></script>
 <script src="#{request.contextPath}/resources/js/add-nt.js?v=20261101-cpterr"></script>
@@ -184,8 +216,8 @@
 <script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
 <script src="#{request.contextPath}/resources/js/session.js"></script>
 <script src="#{request.contextPath}/resources/js/app-session.js?v=20261116-prefdirect"></script>
-<script src="#{request.contextPath}/resources/js/app-actions.js?v=20261117-alignsrc"></script>
-<script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261118-corpusbtn"></script>
+<script src="#{request.contextPath}/resources/js/app-actions.js?v=20261119-suggest"></script>
+<script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261118-branchbtn"></script>
 <script src="#{request.contextPath}/resources/js/app-bind.js?v=20261117-sectionopen"></script>
 <script src="#{request.contextPath}/resources/js/app-boot.js?v=20261108-appsplit"></script>
 <script src="#{request.contextPath}/resources/js/ia-proj-ac.js?v=20261111-projsearch"></script>

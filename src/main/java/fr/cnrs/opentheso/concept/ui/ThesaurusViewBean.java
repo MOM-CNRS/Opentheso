@@ -29,6 +29,7 @@ import fr.cnrs.opentheso.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.rights.Permission;
 import fr.cnrs.opentheso.rights.RightsService;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.setting.service.ThesaurusPreferenceService;
@@ -38,6 +39,7 @@ import fr.cnrs.opentheso.shared.ui.UserSession;
 import fr.cnrs.opentheso.shared.ui.LocaleBean;
 import fr.cnrs.opentheso.toolbox.policy.ToolboxAccessPolicy;
 import jakarta.faces.context.FacesContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -164,6 +166,8 @@ public class ThesaurusViewBean implements Serializable {
     private boolean corpusSearched;
     @Getter
     private List<ConceptCorpusLinkItem> displayedCorpusLinks = Collections.emptyList();
+    private String corpusSourceStateFor;
+    private CorpusSourceState corpusSourceState = CorpusSourceState.NONE;
 
     public void ensureSessionThesaurus() {
         sessionReady = true;
@@ -680,10 +684,19 @@ public class ThesaurusViewBean implements Serializable {
                 || ConceptTreeNodeKinds.REJETE.equalsIgnoreCase(nodeType)
                 || "CA".equalsIgnoreCase(selectedConcept.getSummary().getStatus());
         selectedKind = candidate ? ConceptTreeNodeKinds.CANDIDAT : ConceptTreeNodeKinds.CONCEPT;
+        var summary = selectedConcept.getSummary();
         if (candidate) {
             applySelectedCandidateMeta(id);
-            var summary = selectedConcept.getSummary();
             consultationViewLogger.logCandidate(
+                    summary.getPreferredLabel(),
+                    summary.getLang(),
+                    summary.getConceptId(),
+                    getTitle(),
+                    getId(),
+                    getSelectedLang()
+            );
+        } else {
+            consultationViewLogger.logConcept(
                     summary.getPreferredLabel(),
                     summary.getLang(),
                     summary.getConceptId(),
@@ -782,6 +795,27 @@ public class ThesaurusViewBean implements Serializable {
 
     public boolean isCorpusNoResult() {
         return corpusSearched && displayedCorpusLinks.isEmpty();
+    }
+
+    public boolean isCorpusSourceMissing() {
+        return currentCorpusSourceState() == CorpusSourceState.NONE;
+    }
+
+    public boolean isCorpusSourceInactive() {
+        return currentCorpusSourceState() == CorpusSourceState.INACTIVE;
+    }
+
+    public boolean isCorpusSourceActive() {
+        return currentCorpusSourceState() == CorpusSourceState.ACTIVE;
+    }
+
+    private CorpusSourceState currentCorpusSourceState() {
+        String thesaurusId = StringUtils.defaultString(getId());
+        if (!thesaurusId.equals(corpusSourceStateFor)) {
+            corpusSourceStateFor = thesaurusId;
+            corpusSourceState = conceptReadService.corpusSourceState(thesaurusId);
+        }
+        return corpusSourceState;
     }
 
     public boolean isShowQrCode() {
@@ -1181,6 +1215,38 @@ public class ThesaurusViewBean implements Serializable {
             return identifiers.getOriginalUri();
         }
         return StringUtils.defaultString(identifiers.getInternalPermalinkUrl());
+    }
+
+    /** Identifiant ARK du concept, sans préfixe de serveur. */
+    public String getArkIdentifier() {
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            return "";
+        }
+        return StringUtils.trimToEmpty(selectedConcept.getSummary().getArkId());
+    }
+
+    /** Adresse de cette instance : {base}/idt={thésaurus}&idc={concept}. */
+    public String getLocalConceptUri() {
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            return "";
+        }
+        String thesaurusId = StringUtils.trimToEmpty(selectedConcept.getSummary().getThesaurusId());
+        String conceptId = StringUtils.trimToEmpty(selectedConcept.getSummary().getConceptId());
+        if (thesaurusId.isEmpty() || conceptId.isEmpty()) {
+            return "";
+        }
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return "";
+        }
+        HttpServletRequest request = (HttpServletRequest) facesContext.getExternalContext().getRequest();
+        String host = request.getHeader("host");
+        if (StringUtils.isBlank(host)) {
+            return "";
+        }
+        String protocol = request.isSecure() ? "https://" : "http://";
+        String contextPath = StringUtils.defaultString(request.getContextPath());
+        return protocol + host + contextPath + "/idt=" + thesaurusId + "&idc=" + conceptId;
     }
 
     public boolean isBreadcrumbEnabled() {

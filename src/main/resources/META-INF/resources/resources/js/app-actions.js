@@ -3,6 +3,13 @@
  */
 "use strict";
 
+window.onSuggestPrepare = function (data) {
+  if (!data || data.status !== "success") return;
+  if (typeof showConfirm === "function") showConfirm("#suggestDialog");
+  const field = document.getElementById("featureSuggestSubject");
+  if (field) field.focus();
+};
+
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-act]");
   if (!t) {
@@ -132,6 +139,19 @@ document.addEventListener("click", (e) => {
     else closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
     showConfirm("#logoutConfirm");
+  } else if (act === "suggest-ask") {
+    e.preventDefault();
+    if (typeof setThesaurusMenu === "function") setThesaurusMenu(false);
+    else if (typeof closeThesaurus === "function") closeThesaurus();
+    const prep = document.getElementById("featureSuggestPrepare");
+    if (prep) prep.click();
+    return;
+  } else if (act === "suggest-dismiss") {
+    e.preventDefault();
+    if (typeof hideConfirm === "function") hideConfirm("#suggestDialog");
+    return;
+  } else if (act === "suggest-modal") {
+    return;
   } else if (act === "sync-error-dismiss") {
     e.preventDefault();
     hideConfirm("#syncErrorDialog");

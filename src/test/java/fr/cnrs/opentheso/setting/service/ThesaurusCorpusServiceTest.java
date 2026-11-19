@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.setting.service;
 
 import fr.cnrs.opentheso.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.setting.exception.InvalidSettingDataException;
+import fr.cnrs.opentheso.setting.model.CorpusSourceState;
 import fr.cnrs.opentheso.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.shared.persistence.CorpusLinkEntity;
 import fr.cnrs.opentheso.shared.repository.CorpusLinkJpaRepository;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -43,6 +45,32 @@ class ThesaurusCorpusServiceTest {
 
         assertEquals(1, corpus.size());
         assertEquals("Corpus A", corpus.get(0).corpusName());
+    }
+
+    @Test
+    void corpusSourceState_isNoneWhenThesaurusHasNoSource() {
+        when(corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc("TH1")).thenReturn(List.of());
+
+        assertEquals(CorpusSourceState.NONE, thesaurusCorpusService.corpusSourceState("TH1"));
+        assertFalse(thesaurusCorpusService.hasActiveCorpus("TH1"));
+    }
+
+    @Test
+    void corpusSourceState_isInactiveWhenEverySourceIsDisabled() {
+        CorpusLinkEntity disabled = SettingTestFixtures.sampleCorpusEntity();
+        disabled.setActive(false);
+        when(corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc("TH1")).thenReturn(List.of(disabled));
+
+        assertEquals(CorpusSourceState.INACTIVE, thesaurusCorpusService.corpusSourceState("TH1"));
+        assertFalse(thesaurusCorpusService.hasActiveCorpus("TH1"));
+    }
+
+    @Test
+    void corpusSourceState_isActiveWhenOneSourceIsEnabled() {
+        when(corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc("TH1"))
+                .thenReturn(List.of(SettingTestFixtures.sampleCorpusEntity()));
+
+        assertEquals(CorpusSourceState.ACTIVE, thesaurusCorpusService.corpusSourceState("TH1"));
     }
 
     @Test

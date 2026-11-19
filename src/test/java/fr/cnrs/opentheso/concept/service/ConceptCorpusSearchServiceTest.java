@@ -64,6 +64,45 @@ class ConceptCorpusSearchServiceTest {
     }
 
     @Test
+    void loadCorpusLinks_countsFrantiqNoticesAndKeepsTheCatalogueLink() {
+        String ark = "26678/pcrton6An18MdT";
+        when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of(
+                new ThesaurusCorpus(
+                        "Catalogue Frantiq",
+                        "https://catalogue.frantiq.fr/cgi-bin/koha/opac-search.pl?q=an:##arkid##",
+                        "https://pro.frantiq.fr/es/koha_frantiq_biblios/_count?q=koha-auth-number:\"##arkid##\"",
+                        true,
+                        false,
+                        false,
+                        1
+                )
+        ));
+
+        var links = service.loadCorpusLinks("TH1", new CorpusSearchContext("15687", ark, "mode d'acquisition"));
+
+        assertEquals(1, links.size());
+        assertTrue(links.get(0).noticeCount() > 0);
+        assertEquals("https://catalogue.frantiq.fr/cgi-bin/koha/opac-search.pl?q=an:" + ark, links.get(0).uriLink());
+    }
+
+    @Test
+    void loadCorpusLinks_skipsInactiveSourcesWithoutCallingThem() {
+        when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of(
+                new ThesaurusCorpus(
+                        "Catalogue Frantiq",
+                        "https://catalogue.frantiq.fr/cgi-bin/koha/opac-search.pl?q=an:##arkid##",
+                        "http://127.0.0.1:9/count?q=\"##arkid##\"",
+                        false,
+                        false,
+                        false,
+                        1
+                )
+        ));
+
+        assertTrue(service.loadCorpusLinks("TH1", sampleContext()).isEmpty());
+    }
+
+    @Test
     void loadCorpusLinks_returnsEmptyWhenNoCorpusConfigured() {
         when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of());
 
