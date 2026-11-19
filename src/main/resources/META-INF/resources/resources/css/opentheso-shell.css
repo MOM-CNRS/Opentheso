@@ -816,3 +816,23 @@ button.bap-chip-more:hover{color:var(--accent);border-color:var(--accent)}
 
 .hyper-dot.is-active{stroke:var(--accent);stroke-width:3}
 
+.confirm-modal.is-suggest{
+  width:min(480px,94vw);max-height:min(92vh,760px);overflow:auto;gap:14px
+}
+.sg-box{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sg-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sg-lbl{font-size:12.5px;font-weight:650;color:var(--ink-2)}
+.sg-hint{font-size:12px;color:var(--ink-4);line-height:1.35}
+.sg-err{margin:0;font-size:13px;line-height:1.4;color:var(--danger,#b42318);font-weight:600}
+.is-suggest .st-input{width:100%;max-width:none}
+.sg-area{min-height:132px;resize:vertical;line-height:1.45}
+.sg-kind{margin:0}
+.sg-kind td{
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--surface);cursor:pointer
+}
+.sg-kind td:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.sg-hp{
+  position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;
+  overflow:hidden!important;opacity:0!important
+}
+

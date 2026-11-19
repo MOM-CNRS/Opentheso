@@ -64,14 +64,16 @@ public class InstanceAdminBean implements Serializable {
     public static final String SECTION_THESAURI = "thes";
     public static final String SECTION_PROJECTS = "projects";
     public static final String SECTION_STATS = "stats";
+    public static final String SECTION_PREFS = "prefs";
 
     private static final Set<String> KNOWN_SECTIONS = Set.of(
-            SECTION_USERS, SECTION_THESAURI, SECTION_PROJECTS, SECTION_STATS
+            SECTION_USERS, SECTION_THESAURI, SECTION_PROJECTS, SECTION_STATS, SECTION_PREFS
     );
     private static final DateTimeFormatter LAST_LOGIN_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final List<Integer> USERS_PAGE_SIZE_OPTIONS = List.of(10, 25, 50, 100);
     private static final int DEFAULT_USERS_PAGE_SIZE = 25;
     private static final String SESSION_MEMBER_FLASH = "iaMemberCreateFlash";
+    public static final String SESSION_PREFS_FLASH = "iaPrefsFlash";
     private static final String MEMBER_SCOPE_THESAURUS = "thesaurus";
     private static final String MEMBER_SCOPE_PROJECT = "project";
 
@@ -1074,6 +1076,10 @@ public class InstanceAdminBean implements Serializable {
 
     public boolean isStatsSection() {
         return SECTION_STATS.equals(section);
+    }
+
+    public boolean isPrefsSection() {
+        return SECTION_PREFS.equals(section) && userSession.canAccessSuperAdminScreen();
     }
 
     public boolean isPlaceholderSection() {
@@ -2921,6 +2927,9 @@ public class InstanceAdminBean implements Serializable {
         if (StringUtils.isBlank(sectionParam) || !KNOWN_SECTIONS.contains(sectionParam)) {
             return;
         }
+        if (SECTION_PREFS.equals(sectionParam) && !userSession.canAccessSuperAdminScreen()) {
+            return;
+        }
         if (SECTION_PROJECTS.equals(sectionParam) && StringUtils.isBlank(projectId)) {
             redirectToProjectsListPage();
             return;
@@ -3138,6 +3147,7 @@ public class InstanceAdminBean implements Serializable {
             case SECTION_THESAURI -> localeBean.getMsg("admin.section.thesauri");
             case SECTION_PROJECTS -> localeBean.getMsg("admin.section.projects");
             case SECTION_STATS -> localeBean.getMsg("admin.section.stats");
+            case SECTION_PREFS -> localeBean.getMsg("admin.section.prefs");
             default -> key;
         };
     }
@@ -3206,6 +3216,10 @@ public class InstanceAdminBean implements Serializable {
         Object message = facesContext.getExternalContext().getSessionMap().remove(SESSION_MEMBER_FLASH);
         if (message != null && StringUtils.isNotBlank(message.toString())) {
             flashInfo(message.toString());
+        }
+        Object prefs = facesContext.getExternalContext().getSessionMap().remove(SESSION_PREFS_FLASH);
+        if (prefs != null && StringUtils.isNotBlank(prefs.toString())) {
+            flashInfo(prefs.toString());
         }
     }
 

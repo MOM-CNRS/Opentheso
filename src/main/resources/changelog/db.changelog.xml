@@ -382,4 +382,9 @@
         <sqlFile path="v26/26-11_06.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.07" author="Firas">
+        <comment>Instance feature visibility: suggestions, language, REST and graph</comment>
+        <sqlFile path="v26/26-11_07.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

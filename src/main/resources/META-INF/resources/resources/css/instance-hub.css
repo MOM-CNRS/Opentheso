@@ -823,4 +823,11 @@ input.ia-mode-opt:focus-visible{
   font-variant-numeric:tabular-nums;font-weight:650;color:var(--ink-2)
 }
 .ia-proj-count:hover{color:var(--accent);text-decoration:underline}
+.ia-prefs-body{padding:4px 16px 16px}
+.ia-prefs-note{
+  margin:12px 0 0;padding:10px 12px;border-radius:var(--r-sm);font-size:13px;line-height:1.45;
+  background:#fde4c2;color:#8a4e16
+}
+.ia-prefs-ok{margin:12px 0 0;font-size:13px;font-weight:650;color:#145c40}
+.ia-prefs-err{margin:12px 0 0;font-size:13px;font-weight:650;color:var(--danger,#b42318)}
 

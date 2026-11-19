@@ -33,6 +33,8 @@ app:
 
 opentheso:
   public-base-url: ${OPENTHESO_PUBLIC_BASE_URL:http://localhost:8099}
+  suggestion:
+    mail-to: ""
 
 management:
   health:

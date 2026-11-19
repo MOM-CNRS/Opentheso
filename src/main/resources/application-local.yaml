@@ -106,6 +106,8 @@ settings:
 
 opentheso:
   public-base-url: ${OPENTHESO_PUBLIC_BASE_URL:http://localhost:8099}
+  suggestion:
+    mail-to: ""
   concept-write:
     native-persistence-enabled: true
   auth:
