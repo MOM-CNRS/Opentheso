@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.ws.graphql;
 
 import fr.cnrs.opentheso.entites.User;
-import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.services.ApiKeyService;
 import fr.cnrs.opentheso.services.ConceptService;
 import fr.cnrs.opentheso.services.DcTermsService;
@@ -25,26 +24,18 @@ public class ConceptMutationController {
     private final TermService termService;
     private final ApiKeyService apiKeyService;
     private final AuthorizationService authorizationService;
-    private final TermRepository termRepository;
     private final ConceptService conceptService;
     private final DcTermsService dcTermsService;
 
-    public ConceptMutationController(TermService termService, ApiKeyService apiKeyService, AuthorizationService authorizationService, TermRepository termRepository, ConceptService conceptService, DcTermsService dcTermsService) {
+    public ConceptMutationController(TermService termService, ApiKeyService apiKeyService,
+                                     AuthorizationService authorizationService, ConceptService conceptService,
+                                     DcTermsService dcTermsService) {
         this.termService = termService;
         this.apiKeyService = apiKeyService;
         this.authorizationService = authorizationService;
-        this.termRepository = termRepository;
         this.conceptService = conceptService;
         this.dcTermsService = dcTermsService;
     }
-
-    /* exemple de clé d'API
-            {
-          "X-API-KEY": "ta_cle_api_ici"
-        }
-
-        test pour miled : qOX-bSvnf-T24o5dphJ8In88GyUxKsN7Z24nhqIvMfo
-     */
 
     @MutationMapping
     public MutationResponse setPrefLabel(

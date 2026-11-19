@@ -28,9 +28,14 @@ public class GraphQlExceptionResolver extends DataFetcherExceptionResolverAdapte
                     .errorType(ErrorType.UNAUTHORIZED)
                     .build();
         }
-        if (ex instanceof UserCantWriteOnThesaurusException userEx) {
+        if (ex instanceof UserCantWriteOnThesaurusException
+                || ex instanceof fr.cnrs.opentheso.ws.openapi.exception.UserCantWriteOnThesaurusException) {
+            String message = ex.getMessage();
+            if (message == null || message.isBlank()) {
+                message = "Cet utilisateur ne peut pas modifier ce thésaurus.";
+            }
             return GraphqlErrorBuilder.newError(env)
-                    .message(userEx.getMessage())
+                    .message(message)
                     .errorType(ErrorType.UNAUTHORIZED)
                     .build();
         }

@@ -60,7 +60,8 @@ public class SecurityConfig {
                                 "/openapi/v2/**",
                                 "/api/v2/**",
                                 "/api/v2/auth/token",
-                                "/api/**"
+                                "/api/**",
+                                "/graphql"
                         )
                         .ignoringRequestMatchers("/reset-password")
                         .ignoringRequestMatchers(
@@ -97,6 +98,7 @@ public class SecurityConfig {
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
                 new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/graphql", configuration);
         return source;
     }
 

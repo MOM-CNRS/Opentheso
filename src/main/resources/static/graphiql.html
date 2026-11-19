@@ -50,9 +50,8 @@
         import { explorerPlugin } from '@graphiql/plugin-explorer';
         import 'graphiql/setup-workers/esm.sh';
 
-        // 👉 Ici on pointe vers ton backend Spring Boot
         const fetcher = createGraphiQLFetcher({
-            url: 'http://localhost:8099/graphql',
+            url: new URL('graphql', window.location.href).href,
         });
 
         const plugins = [HISTORY_PLUGIN, explorerPlugin()];
