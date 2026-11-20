@@ -31,21 +31,26 @@ function safeConceptExtraHref(uri) {
 function branchCountText(count) {
   const n = Number(count);
   const value = Number.isFinite(n) ? n : 0;
-  return value + " concept" + (value > 1 ? "s" : "");
+  return String(value);
+}
+
+function calcButtonIconHtml() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+    + '<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>'
+    + '<path d="M8 7h8v3H8z"/>'
+    + '<path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>'
+    + '<path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/>'
+    + "</svg>";
 }
 
 function branchCalcButtonHtml() {
-  return '<button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc">Calculer</button>';
+  return '<button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc">'
+    + calcButtonIconHtml() + "Calculer</button>";
 }
 
 function branchLoadingHtml() {
-  return '<div class="cv-corpus-item is-loading" role="status" aria-live="polite" aria-busy="true">'
-    + '<span class="cv-corpus-src">'
-    + '<span class="cv-corpus-name">Calcul en cours</span>'
-    + '<span class="cv-corpus-host">Comptage des concepts</span>'
-    + '</span>'
-    + '<span class="cv-async" data-slot="branch" aria-busy="true" aria-label="Calcul du total de la branche"></span>'
-    + '</div>';
+  return '<span class="cv-branch-result is-loading" role="status" aria-live="polite" aria-busy="true">'
+    + "Calcul en cours…</span>";
 }
 
 function paintBranchTotal(count) {
@@ -62,18 +67,16 @@ function paintBranchTotalFailed() {
   });
 }
 
-function corpusCalcButtonHtml() {
-  return '<button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>';
+function corpusLoadingHtml() {
+  return '<span class="cv-corpus-wait" role="status" aria-live="polite" aria-busy="true">Calcul en cours…</span>';
 }
 
-function corpusLoadingHtml() {
-  return '<div class="cv-corpus-item is-loading" role="status" aria-live="polite" aria-busy="true">'
-    + '<span class="cv-corpus-src">'
-    + '<span class="cv-corpus-name">Calcul en cours</span>'
-    + '<span class="cv-corpus-host">Interrogation des sources</span>'
-    + '</span>'
-    + '<span class="cv-async" data-slot="corpus" aria-busy="true" aria-label="Calcul des corpus liés"></span>'
-    + '</div>';
+function revealCorpusBlock(box) {
+  const section = box && box.closest ? box.closest('[data-card-id="usage"]') : null;
+  if (!section) return;
+  section.classList.remove("is-sparse", "is-collapsed");
+  const fold = section.querySelector(":scope > .cblock-head .cblock-fold");
+  if (fold) fold.setAttribute("aria-expanded", "true");
 }
 function corpusHost(href) {
   try {
@@ -97,9 +100,9 @@ function corpusLinksHtml(links) {
     } else if (Number.isFinite(count) && count > 0) {
       metric = '<span class="cv-corpus-count">' + escapeConceptExtra(String(count)) + "</span>";
     }
-    const body = '<span class="cv-corpus-src"><span class="cv-corpus-name">' + name + "</span>"
+    const body = '<span class="cv-corpus-name">' + name + "</span>"
       + (host ? '<span class="cv-corpus-host">' + host + "</span>" : "")
-      + "</span>" + metric;
+      + metric;
     if (!href) return '<span class="cv-corpus-item">' + body + "</span>";
     return '<a class="cv-corpus-item" href="' + escapeConceptExtra(href) + '" target="_blank" rel="noopener">'
       + body + "</a>";
@@ -109,14 +112,15 @@ function corpusLinksHtml(links) {
 function paintCorpusLinks(links) {
   const html = corpusLinksHtml(links);
   document.querySelectorAll("#previewDetailState [data-cv-extra='corpus']").forEach((box) => {
+    revealCorpusBlock(box);
     box.innerHTML = html;
   });
 }
 
 function paintCorpusLinksFailed() {
   document.querySelectorAll("#previewDetailState [data-cv-extra='corpus']").forEach((box) => {
-    box.innerHTML = corpusCalcButtonHtml()
-      + '<span class="cv-corpus-error">Le calcul n\'a pas abouti. Réessayez.</span>';
+    revealCorpusBlock(box);
+    box.innerHTML = '<span class="cv-corpus-error">Le calcul n\'a pas abouti. Réessayez.</span>';
   });
 }
 
@@ -150,6 +154,7 @@ function loadCorpusLinks() {
   if (!query) return;
   const box = state.querySelector("[data-cv-extra='corpus']");
   if (!box || box.querySelector("[aria-busy='true']")) return;
+  revealCorpusBlock(box);
   box.innerHTML = corpusLoadingHtml();
   abortCorpusLinks();
   const ctrl = new AbortController();

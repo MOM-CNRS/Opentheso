@@ -371,12 +371,15 @@ function flushTermTagInputs() {
 
 function saveEditingLabelBlock(from) {
   const root = (from && from.closest && from.closest("#viewLive")) || document;
-  const block = from && from.closest
-      ? from.closest("section.cblock.is-editing[data-card-id='contexte'], section.cblock.is-editing[data-card-id='f-label'], section.cblock[data-card-id='branche']")
-      : null;
+  const facet = from && from.closest && from.closest("#labelFacetPick");
+  const block = facet
+      ? facet.closest("section.cblock")
+      : (from && from.closest
+          ? from.closest("section.cblock.is-editing[data-card-id='contexte'], section.cblock.is-editing[data-card-id='f-label']")
+          : null);
   if (!block) return;
   flushTermTagInputs();
-  const save = block.querySelector("[id$='labelEditSave'], [id$='fcLabelEditSave']")
+  const save = block.querySelector("[id$='labelEditSave'], [id$='fcLabelEditSave'], [id$='branchLabelEditSave']")
       || root.querySelector("section.cblock.is-editing [id$='labelEditSave'], section.cblock.is-editing [id$='fcLabelEditSave']");
   if (save && !save.classList.contains("is-busy")) save.click();
 }
@@ -386,7 +389,7 @@ document.addEventListener("keydown", (e) => {
   if (!e.target || !e.target.closest) return;
   const block = e.target.closest("section.cblock.is-editing[data-card-id='contexte'], section.cblock.is-editing[data-card-id='f-label']")
       || (document.querySelector("section.cblock.is-editing[data-card-id='contexte']")
-          && e.target.closest("section.cblock[data-card-id='branche']"));
+          && e.target.closest("#labelFacetPick"));
   if (!block) return;
   if (e.target.closest("a, button, textarea, .term-tags-add")) return;
   if (e.target.id === "labelFacetQuery") return;

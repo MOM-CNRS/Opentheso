@@ -89,7 +89,8 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     public boolean isBranchEditing() {
         releaseStaleEdit();
         String card = thesaurusViewBean.getFicheEditCard();
-        return editing && (FICHE_CARD.equals(card) || BRANCH_CARD.equals(card));
+        return editing && (FICHE_CARD.equals(card) || BRANCH_CARD.equals(card)
+                || ConceptCollectionBlockEditorBean.FICHE_CARD.equals(card));
     }
 
     public void startBranchEditing() {
@@ -154,6 +155,20 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         saveInternal(false);
     }
 
+    /** Enregistre les facettes sans recharger la fiche, le temps d'enregistrer aussi les collections. */
+    public boolean saveWithoutClosing() {
+        duplicateWarning = false;
+        errorMessage = "";
+        if (!prepareLabelSave()) {
+            return false;
+        }
+        return persistLabelChanges(false, false);
+    }
+
+    public void closeQuietly() {
+        editing = false;
+    }
+
     public void saveForced() {
         saveInternal(true);
     }
@@ -164,7 +179,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         if (!prepareLabelSave()) {
             return;
         }
-        persistLabelChanges(forced);
+        persistLabelChanges(forced, true);
     }
 
     private boolean prepareLabelSave() {
@@ -201,7 +216,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         return true;
     }
 
-    private void persistLabelChanges(boolean forced) {
+    private boolean persistLabelChanges(boolean forced, boolean close) {
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         LabelWriteContext ctx = new LabelWriteContext(
                 thesaurusViewBean.getId(),
@@ -212,16 +227,19 @@ public class ConceptLabelBlockEditorBean implements Serializable {
                 forced);
         DirtyUpdate dirty = renamePreferredIfNeeded(current, ctx, false);
         if (!dirty.ok) {
-            return;
+            return false;
         }
         dirty = syncSynonyms(current, ctx, dirty.dirty);
         if (!dirty.ok) {
-            return;
+            return false;
         }
         if (!syncFacets(current, ctx, dirty.dirty).ok) {
-            return;
+            return false;
         }
-        finishSuccess();
+        if (close) {
+            finishSuccess();
+        }
+        return true;
     }
 
     private DirtyUpdate renamePreferredIfNeeded(ConceptDetail current, LabelWriteContext ctx, boolean dirty) {

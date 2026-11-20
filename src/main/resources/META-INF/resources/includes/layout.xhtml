@@ -29,10 +29,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-shell.css?v=20261118-split"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-concept.css?v=20261119-tags"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-concept.css?v=20261120-relnature"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-suggest.css?v=20261118-split"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-batch.css?v=20261118-split"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-home.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-batch.css?v=20261120-fiche"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-home.css?v=20261120-langfix"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-shell.css?v=20261119-suggest"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-batch.css?v=20261118-split"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-editors.css?v=20261118-split"/>
@@ -177,25 +177,25 @@
 </ui:fragment>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
 <script src="#{request.contextPath}/resources/js/core.js?v=20261111-colldraft"></script>
-<script src="#{request.contextPath}/resources/js/settings.js?v=20261118-savereturn"></script>
-<script src="#{request.contextPath}/resources/js/shell-ouverture.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/settings.js?v=20261120-langfix"></script>
+<script src="#{request.contextPath}/resources/js/shell-ouverture.js?v=20261120-fiche"></script>
 <script src="#{request.contextPath}/resources/js/shell-collections.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-relations.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-relations.js?v=20261120-rel"></script>
 <script src="#{request.contextPath}/resources/js/shell-media.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-traductions.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-notes.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-corpus.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-notes.js?v=20261120-lang"></script>
+<script src="#{request.contextPath}/resources/js/shell-corpus.js?v=20261120-calc"></script>
 <script src="#{request.contextPath}/resources/js/shell-creation.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-brouillon.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-brouillon-notes.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-facette.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/shell-facette.js?v=20261120-lang"></script>
 <script src="#{request.contextPath}/resources/js/shell-lot.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-cartes.js?v=20261118-skos"></script>
+<script src="#{request.contextPath}/resources/js/shell-cartes.js?v=20261120-hist"></script>
 <script src="#{request.contextPath}/resources/js/search.js?v=20261111-labelid"></script>
 <script src="#{request.contextPath}/resources/js/tree.js?v=20261111-caret"></script>
 <script src="#{request.contextPath}/resources/js/table.js"></script>
 <script src="#{request.contextPath}/resources/js/globe-ui.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/collections-arbre.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/collections-arbre.js?v=20261120-nolang"></script>
 <script src="#{request.contextPath}/resources/js/collections-fiche.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/collections-selecteur.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/selection-preferences.js?v=20261118-split"></script>
@@ -205,7 +205,7 @@
 <script src="#{request.contextPath}/resources/js/selection-deplacement.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/export-options.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/export-execution.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/about.js?v=20261118-savereturn"></script>
+<script src="#{request.contextPath}/resources/js/about.js?v=20261120-langmark"></script>
 <script src="#{request.contextPath}/resources/js/stats.js?v=20261028-gotop"></script>
 <script src="#{request.contextPath}/resources/js/instance-stats.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/instance-stats-bind.js?v=20261118-split"></script>
@@ -215,9 +215,9 @@
 <script src="#{request.contextPath}/resources/js/ark-progress.js"></script>
 <script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
 <script src="#{request.contextPath}/resources/js/session.js"></script>
-<script src="#{request.contextPath}/resources/js/app-session.js?v=20261116-prefdirect"></script>
+<script src="#{request.contextPath}/resources/js/app-session.js?v=20261120-qr"></script>
 <script src="#{request.contextPath}/resources/js/app-actions.js?v=20261119-suggest"></script>
-<script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261118-branchbtn"></script>
+<script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261120-qr"></script>
 <script src="#{request.contextPath}/resources/js/app-bind.js?v=20261117-sectionopen"></script>
 <script src="#{request.contextPath}/resources/js/app-boot.js?v=20261108-appsplit"></script>
 <script src="#{request.contextPath}/resources/js/ia-proj-ac.js?v=20261111-projsearch"></script>

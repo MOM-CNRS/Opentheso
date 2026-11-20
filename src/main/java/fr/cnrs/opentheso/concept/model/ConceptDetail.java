@@ -200,6 +200,11 @@ public record ConceptDetail(
                 || (externalResources != null && !externalResources.isEmpty());
     }
 
+    /** Accesseur EL : {@code selectedConcept.hasMediaData}. */
+    public boolean isHasMediaData() {
+        return hasMediaData();
+    }
+
     public boolean hasCustomRelations() {
         return !customRelations.isEmpty();
     }

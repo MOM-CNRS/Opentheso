@@ -82,6 +82,7 @@ public final class SettingMapper {
                 entity.isShowCandidatesToGuests(),
                 entity.isSynchronisation(),
                 entity.isPortail(),
+                entity.isLanguageCodes(),
                 languages
         );
     }
@@ -140,6 +141,7 @@ public final class SettingMapper {
         entity.setShowCandidatesToGuests(preferences.showCandidatesToGuests());
         entity.setSynchronisation(preferences.synchronisation());
         entity.setPortail(preferences.portail());
+        entity.setLanguageCodes(preferences.languageCodes());
     }
 
     public static ThesaurusCorpus toCorpus(CorpusLinkEntity entity) {

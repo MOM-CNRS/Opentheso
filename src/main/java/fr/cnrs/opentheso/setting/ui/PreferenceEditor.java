@@ -76,6 +76,7 @@ public class PreferenceEditor implements Serializable {
     private boolean showCandidatesToGuests;
     private boolean synchronisation;
     private boolean portail;
+    private boolean languageCodes;
 
     private String newPassArk;
     private String newPassHandle;
@@ -152,6 +153,7 @@ public class PreferenceEditor implements Serializable {
         editor.setShowCandidatesToGuests(preferences.showCandidatesToGuests());
         editor.setSynchronisation(preferences.synchronisation());
         editor.setPortail(preferences.portail());
+        editor.setLanguageCodes(preferences.languageCodes());
         editor.setLanguages(new ArrayList<>(preferences.languages()));
         return editor;
     }
@@ -213,6 +215,7 @@ public class PreferenceEditor implements Serializable {
                 showCandidatesToGuests,
                 synchronisation,
                 portail,
+                languageCodes,
                 languages
         );
     }

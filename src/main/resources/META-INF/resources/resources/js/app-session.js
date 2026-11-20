@@ -681,7 +681,7 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     return;
   }
-  if (hideConfirm("#syncErrorDialog") || hideConfirm("#syncDoneDialog")) {
+  if (hideConfirm("#cvQr") || hideConfirm("#syncErrorDialog") || hideConfirm("#syncDoneDialog")) {
     e.preventDefault();
     return;
   }

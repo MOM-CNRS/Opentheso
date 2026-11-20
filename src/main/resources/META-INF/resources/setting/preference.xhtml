@@ -248,6 +248,34 @@
                                                  title="Fil d'Ariane"/>
                       </label>
                     </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Marque de langue</div>
+                        <div class="st-toggle-d">Drapeau ou code à deux lettres, dans les blocs Traductions et Notes.</div>
+                      </div>
+                      <div class="st-mark" role="group" aria-label="Marque de langue">
+                        <h:selectBooleanCheckbox styleClass="st-mark-input"
+                                                 pt:data-flag="languageCodes"
+                                                 value="#{thesaurusPreferenceBean.preference.languageCodes}"
+                                                 title="Codes de langue"/>
+                        <button type="button"
+                                class="st-mark-opt#{thesaurusPreferenceBean.preference.languageCodes ? '' : ' is-on'}"
+                                data-act="lang-mark"
+                                data-codes="false"
+                                aria-pressed="#{thesaurusPreferenceBean.preference.languageCodes ? 'false' : 'true'}">
+                          <span class="st-mark-sample" aria-hidden="true">🇫🇷</span>
+                          <span>Drapeaux</span>
+                        </button>
+                        <button type="button"
+                                class="st-mark-opt#{thesaurusPreferenceBean.preference.languageCodes ? ' is-on' : ''}"
+                                data-act="lang-mark"
+                                data-codes="true"
+                                aria-pressed="#{thesaurusPreferenceBean.preference.languageCodes ? 'true' : 'false'}">
+                          <span class="st-mark-sample st-mark-letters" aria-hidden="true">FR</span>
+                          <span>Codes</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="bo-card is-closed">

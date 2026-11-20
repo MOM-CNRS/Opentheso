@@ -51,6 +51,9 @@ import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -96,6 +99,7 @@ public class ThesaurusViewBean implements Serializable {
     private Boolean sortByNotation;
     private Boolean customRelationVisible;
     private Boolean suggestionEnabled;
+    private Boolean languageCodes;
     @Getter
     private boolean showAllNoteLanguages;
     @Getter
@@ -200,6 +204,7 @@ public class ThesaurusViewBean implements Serializable {
         languages = null;
         selectedLang = null;
         canEdit = null;
+        languageCodes = null;
     }
 
     public String getId() {
@@ -369,6 +374,7 @@ public class ThesaurusViewBean implements Serializable {
         breadcrumbEnabled = null;
         customRelationVisible = null;
         suggestionEnabled = null;
+        languageCodes = null;
         if (editing) {
             homeHtml = thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage());
         }
@@ -754,6 +760,24 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     /**
+     * Nature du lien stockée dans {@code hierarchical_relationship.role}.
+     * Générique (BT/NT, BTG/NTG, RT) : rien. Instantiel : « instance de ». Partitif : « partie ».
+     */
+    public String relationNatureLabel(String role) {
+        String code = StringUtils.trimToEmpty(role).toUpperCase(Locale.ROOT);
+        String key = switch (code) {
+            case "BTI", "NTI" -> "concept.rel.nature.instance";
+            case "BTP", "NTP", "RHP" -> "concept.rel.nature.part";
+            default -> "";
+        };
+        if (key.isEmpty() || localeBean == null) {
+            return "";
+        }
+        String label = StringUtils.trimToEmpty(localeBean.getMsg(key));
+        return key.equals(label) ? "" : label;
+    }
+
+    /**
      * Reprend la sélection partagée (après mutation menu fil d'Ariane) et recharge arbre + fiche.
      */
     public void refreshFromSelectionContext() {
@@ -830,6 +854,26 @@ public class ThesaurusViewBean implements Serializable {
         return ConceptQrSvgSupport.toSvg(selectedConcept.getIdentifiers().getQrCodeValue());
     }
 
+    /** Valeur du QR code : l'identifiant permanent, sinon l'ARK, sinon l'URI. */
+    public String getQrPopupValue() {
+        if (isShowQrCode()) {
+            return StringUtils.trimToEmpty(selectedConcept.getIdentifiers().getQrCodeValue());
+        }
+        String ark = getArkIdentifier();
+        if (StringUtils.isNotBlank(ark)) {
+            return ark;
+        }
+        return StringUtils.trimToEmpty(getConceptUri());
+    }
+
+    public boolean isShowQrPopup() {
+        return StringUtils.isNotBlank(getQrPopupSvg());
+    }
+
+    public String getQrPopupSvg() {
+        return ConceptQrSvgSupport.toSvg(getQrPopupValue());
+    }
+
     public String getGpsDisplay() {
         if (selectedConcept == null || selectedConcept.getGpsPoints() == null
                 || selectedConcept.getGpsPoints().isEmpty()) {
@@ -865,6 +909,52 @@ public class ThesaurusViewBean implements Serializable {
 
     public boolean hasDisplayedNotes() {
         return !getDisplayedNotes().isEmpty();
+    }
+
+    public String getCreatedDateLabel() {
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            return "";
+        }
+        return formatSummaryDate(selectedConcept.getSummary().getCreated());
+    }
+
+    public String getModifiedDateLabel() {
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            return "";
+        }
+        return formatSummaryDate(selectedConcept.getSummary().getModified());
+    }
+
+    private String formatSummaryDate(String raw) {
+        String value = StringUtils.trimToEmpty(raw);
+        if (value.isEmpty()) {
+            return "";
+        }
+        LocalDate date = parseSummaryDate(value);
+        if (date == null) {
+            return value;
+        }
+        String lang = localeBean == null ? "fr" : StringUtils.defaultIfBlank(localeBean.getIdLangue(), "fr");
+        return DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag(lang)).format(date);
+    }
+
+    private static LocalDate parseSummaryDate(String raw) {
+        String day = raw.length() >= 10 ? raw.substring(0, 10) : raw;
+        try {
+            return LocalDate.parse(day);
+        } catch (DateTimeParseException ex) {
+            return null;
+        }
+    }
+
+    public java.util.List<String> getContributorNames() {
+        if (selectedConcept == null || StringUtils.isBlank(selectedConcept.getContributors())) {
+            return java.util.List.of();
+        }
+        return java.util.Arrays.stream(selectedConcept.getContributors().split(";"))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .toList();
     }
 
     /** EL JSF : {@code #{bean.hasDisplayedNotes}} résout {@code isHasDisplayedNotes()}, pas {@code hasDisplayedNotes()}. */
@@ -972,7 +1062,29 @@ public class ThesaurusViewBean implements Serializable {
         return items;
     }
 
+    public boolean isLanguageCodes() {
+        if (languageCodes == null) {
+            ThesaurusPreferences preferences = loadThesaurusPreferences();
+            languageCodes = preferences != null && preferences.languageCodes();
+        }
+        return languageCodes;
+    }
+
+    public void clearLanguageDisplayPreference() {
+        languageCodes = null;
+    }
+
+    public String languageMark(String lang) {
+        if (isLanguageCodes()) {
+            return "";
+        }
+        return flagEmoji(lang);
+    }
+
     public boolean hasLanguageFlag(String lang) {
+        if (isLanguageCodes()) {
+            return false;
+        }
         String emoji = flagEmoji(lang);
         return StringUtils.isNotBlank(emoji) && !"🏳️".equals(emoji);
     }

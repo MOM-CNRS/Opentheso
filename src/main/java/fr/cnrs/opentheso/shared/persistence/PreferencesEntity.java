@@ -136,6 +136,9 @@ public class PreferencesEntity {
     @Column(name = "portail")
     private boolean portail;
 
+    @Column(name = "language_codes")
+    private boolean languageCodes;
+
     @Column(name = "portal_url")
     private String portalUrl;
 

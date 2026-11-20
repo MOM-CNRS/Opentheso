@@ -250,6 +250,7 @@ class ConceptFullAssemblerTest {
                 base.showCandidatesToGuests(),
                 base.synchronisation(),
                 base.portail(),
+                base.languageCodes(),
                 base.languages()
         );
     }

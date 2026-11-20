@@ -41,6 +41,7 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
     static final String FICHE_CARD = "collections";
 
     private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptLabelBlockEditorBean conceptLabelBlockEditorBean;
     private final transient ConceptCollectionMutationService conceptCollectionMutationService;
     private final transient ConceptWritePolicy conceptWritePolicy;
     private final transient UserSession userSession;
@@ -67,6 +68,15 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
         return editing && FICHE_CARD.equals(thesaurusViewBean.getFicheEditCard());
     }
 
+    public void startBelongingEditing() {
+        if (conceptLabelBlockEditorBean.isEditable()) {
+            conceptLabelBlockEditorBean.startBranchEditing();
+        }
+        if (isEditable()) {
+            startEditing();
+        }
+    }
+
     public void startEditing() {
         if (!isEditable()) {
             return;
@@ -86,6 +96,9 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
     }
 
     public void cancel() {
+        if (facetsShareThisCard()) {
+            conceptLabelBlockEditorBean.closeQuietly();
+        }
         resetForm(false);
     }
 
@@ -99,7 +112,16 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
 
     public void save() {
         errorMessage = "";
+        if (facetsShareThisCard() && !conceptLabelBlockEditorBean.saveWithoutClosing()) {
+            errorMessage = StringUtils.defaultIfBlank(
+                    conceptLabelBlockEditorBean.getErrorMessage(), "L'enregistrement a échoué.");
+            return;
+        }
         if (!isEditable() || !isEditing()) {
+            if (conceptLabelBlockEditorBean.isBranchEditing()) {
+                conceptLabelBlockEditorBean.closeQuietly();
+                thesaurusViewBean.reloadSelectedConcept();
+            }
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -219,7 +241,14 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
         return false;
     }
 
+    private boolean facetsShareThisCard() {
+        return conceptLabelBlockEditorBean.isBranchEditing() && FICHE_CARD.equals(thesaurusViewBean.getFicheEditCard());
+    }
+
     private void finishSuccess() {
+        if (conceptLabelBlockEditorBean.isBranchEditing()) {
+            conceptLabelBlockEditorBean.closeQuietly();
+        }
         editing = false;
         if (FICHE_CARD.equals(thesaurusViewBean.getFicheEditCard())) {
             thesaurusViewBean.setFicheEditCard(null);

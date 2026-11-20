@@ -387,4 +387,9 @@
         <sqlFile path="v26/26-11_07.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.08" author="Firas">
+        <comment>Thesaurus preference: language mark as flag or two-letter code</comment>
+        <sqlFile path="v26/26-11_08.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

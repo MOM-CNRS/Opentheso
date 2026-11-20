@@ -4,7 +4,13 @@
 "use strict";
 
 window.appHandleLaterAct = function (e, t, act) {
-  if (act === "corpus-calc") {
+  if (act === "id-qr") {
+    e.preventDefault();
+    if (typeof showConfirm === "function") showConfirm("#cvQr");
+  } else if (act === "id-qr-close") {
+    e.preventDefault();
+    if (typeof hideConfirm === "function") hideConfirm("#cvQr");
+  } else if (act === "corpus-calc") {
     e.preventDefault();
     if (typeof window.loadCorpusLinks === "function") window.loadCorpusLinks();
   } else if (act === "branch-calc") {

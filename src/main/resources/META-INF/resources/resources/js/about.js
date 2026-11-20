@@ -449,6 +449,7 @@ window.onPreviewPrefSave = function (data) {
     return;
   }
   if (data.status !== "success") return;
+  if (typeof syncLangMark === "function") syncLangMark();
   const msg = $("#previewPrefSaveMsg");
   if (!msg) return;
   const text = (msg.textContent || "").trim();

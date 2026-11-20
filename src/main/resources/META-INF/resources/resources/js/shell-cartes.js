@@ -1,5 +1,6 @@
 /** Fiche — ordre des blocs et libellés. */
-const CARD_IDS = ["contexte", "branche", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "exportSkos", "metadonnees", "temporel"];
+const CARD_IDS = ["contexte", "traductions", "notes", "relations", "collections", "alignement", "ressources", "usage", "identifiants", "temporel", "exportSkos"];
+const CARD_LAYOUT_VERSION = 2;
 /** Blocs gouvernance candidat : toujours juste après la bannière (hors réordonnancement fiche). */
 const GOVERNANCE_CARD_ORDER = { candVotes: -2, candDiscussion: -1 };
 
@@ -15,13 +16,13 @@ function parseCardLayout() {
   const layout = defaultCardLayout();
   try {
     const raw = JSON.parse(document.body.getAttribute("data-card-layout") || "");
-    if (Array.isArray(raw.order)) {
+    if (raw.v === CARD_LAYOUT_VERSION && Array.isArray(raw.order)) {
       const next = raw.order.filter((id) => CARD_IDS.indexOf(id) >= 0);
       CARD_IDS.forEach((id) => {
         if (next.indexOf(id) >= 0) return;
-        if (id === "branche") {
-          const at = next.indexOf("contexte");
-          next.splice(at < 0 ? 0 : at + 1, 0, id);
+        if (id === "usage") {
+          const at = next.indexOf("ressources");
+          next.splice(at < 0 ? next.length : at + 1, 0, id);
         } else if (id === "exportSkos") {
           const at = next.indexOf("identifiants");
           next.splice(at < 0 ? next.length : at + 1, 0, id);
@@ -61,6 +62,7 @@ function persistCardLayout() {
   const layout = currentCardLayout();
   const body = document.body;
   const payload = {
+    v: CARD_LAYOUT_VERSION,
     order: layout.order,
     collapsed: Object.keys(layout.collapsed)
   };
