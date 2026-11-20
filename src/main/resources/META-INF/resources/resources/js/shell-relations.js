@@ -132,6 +132,13 @@ function cvRelKindLabel(kind) {
   return (CV_REL_META[kind] || {}).code || kind;
 }
 
+function cvRelKindCode(kind) {
+  const editor = $("#cvRelEditor");
+  const fromDom = editor && editor.getAttribute("data-code-" + kind);
+  if (fromDom) return fromDom;
+  return (CV_REL_META[kind] || {}).code || kind;
+}
+
 function cvRelMsg(key, fallback, vars) {
   const editor = $("#cvRelEditor");
   let text = (editor && editor.getAttribute("data-" + key)) || fallback;
@@ -237,10 +244,9 @@ function paintCvRelKind() {
   const btn = $("#cvRelKindBtn");
   const menu = $("#cvRelKindMenu");
   const kind = cvRelState.kind;
-  const meta = CV_REL_META[kind] || CV_REL_META.nt;
   if (btn) {
     btn.className = "re-pill rel-" + kind;
-    btn.innerHTML = meta.code + '<span class="re-caret" aria-hidden="true"></span>';
+    btn.innerHTML = cvRelKindCode(kind) + '<span class="re-caret" aria-hidden="true"></span>';
   }
   if (menu) {
     menu.querySelectorAll("[data-kind]").forEach((mi) => {
@@ -276,7 +282,7 @@ function cvRelKindMenuHtml(currentKind, act, extraAttrs, open) {
       const on = kind === currentKind ? " on" : "";
       return '<button type="button" class="re-mi' + on + '" role="option" data-act="' + act
         + '" data-kind="' + kind + '"' + (extraAttrs || "") + ">"
-        + '<span class="rel-code rel-' + kind + '">' + ((CV_REL_META[kind] || {}).code || kind) + "</span>"
+        + '<span class="rel-code rel-' + kind + '">' + cvRelKindCode(kind) + "</span>"
         + escapeHtml(cvRelKindLabel(kind))
         + "</button>";
     }).join("")
@@ -284,7 +290,7 @@ function cvRelKindMenuHtml(currentKind, act, extraAttrs, open) {
 }
 
 function cvRelRowHtml(row, remove) {
-  const code = (CV_REL_META[row.k] || {}).code || row.k;
+  const code = cvRelKindCode(row.k);
   const label = escapeHtml(row.item.label || row.item.id || "");
   const rawId = String(row.item.id || "");
   const key = rawId.toLowerCase();
@@ -309,14 +315,13 @@ function cvRelRowHtml(row, remove) {
 
 function paintCvRelGroup(kind, remove) {
   const items = cvRelState[kind] || [];
-  const meta = CV_REL_META[kind] || { code: kind };
   const title = escapeHtml(cvRelKindLabel(kind));
   const count = items.length ? '<span class="rel-count">' + items.length + "</span>" : "";
   const rows = items.length
     ? items.map((item, i) => cvRelRowHtml({ k: kind, i: i, item: item }, remove)).join("")
     : '<div class="re-empty"><span class="muted">—</span></div>';
   return '<div class="re-group" data-kind="' + kind + '">'
-    + '<div class="re-group-h"><span class="rel-code rel-' + kind + '">' + meta.code + "</span>"
+    + '<div class="re-group-h"><span class="rel-code rel-' + kind + '">' + cvRelKindCode(kind) + "</span>"
     + title + count + "</div>"
     + rows
     + "</div>";

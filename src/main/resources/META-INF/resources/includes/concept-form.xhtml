@@ -84,7 +84,7 @@
                   aria-label="#{localeBean.getMsg('concept.headTitle.copy')}"
                   data-act="copy"
                   data-copy="#{thesaurusViewBean.displayedPreferredLabel}"
-                  data-msg="#{localeBean.getMsg('concept.headTitle.copied')}">⧉</button>
+                  data-msg="#{localeBean.getMsg('concept.headTitle.copied')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg></button>
         </ui:fragment>
         <span class="cv-lang">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.lang)}</span>
         <ui:fragment rendered="#{thesaurusViewBean.candidateSelected}"><span class="cv-status">#{localeBean.getMsg('concept.badge.candidate')}</span></ui:fragment>
@@ -119,7 +119,7 @@
                   aria-label="#{localeBean.getMsg('concept.headUri.copy')}"
                   data-act="copy"
                   data-copy="#{thesaurusViewBean.conceptUri}"
-                  data-msg="#{localeBean.getMsg('concept.headUri.copied')}">⧉</button>
+                  data-msg="#{localeBean.getMsg('concept.headUri.copied')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg></button>
         </ui:fragment>
         <ui:fragment rendered="#{empty thesaurusViewBean.conceptUri}">
           <span class="is-mono">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span>
@@ -128,7 +128,10 @@
                   aria-label="#{localeBean.getMsg('concept.headUri.copy')}"
                   data-act="copy"
                   data-copy="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
-                  data-msg="#{localeBean.getMsg('concept.headUri.copied')}">⧉</button>
+                  data-msg="#{localeBean.getMsg('concept.headUri.copied')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg></button>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty thesaurusViewBean.modifiedDateLabel}">
+          <span class="cv-head-modified">#{localeBean.getMsg('rightbody.concept.modified')} #{thesaurusViewBean.modifiedDateLabel}</span>
         </ui:fragment>
       </p>
     </div>
@@ -148,11 +151,11 @@
     <div class="cv-blocks">
       <ui:include src="/includes/candidate-governance.xhtml"/>
       <section class="cblock#{conceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Libellé</span><div class="cblock-tools"><h:commandButton id="labelEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptLabelBlockEditorBean.editable and not conceptLabelBlockEditorBean.editing}" action="#{conceptLabelBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><path d="M7 7h.01"/></svg></span><span class="cblock-title">Libellés</span><div class="cblock-tools"><h:commandButton id="labelEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptLabelBlockEditorBean.editable and not conceptLabelBlockEditorBean.editing}" action="#{conceptLabelBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptLabelBlockEditorBean.editing}">
           <div class="crow cblock-edit-row">
-            <div class="crow-lbl">Libellé</div>
+            <div class="crow-lbl">Préférentiel</div>
             <div class="crow-val">
               <h:inputText id="labelPrefInput" styleClass="st-input"
                            value="#{conceptLabelBlockEditorBean.preferredLabel}"
@@ -161,7 +164,7 @@
             </div>
           </div>
           <div class="crow cblock-edit-row">
-            <div class="crow-lbl">Formes alternatives</div>
+            <div class="crow-lbl">Alternatifs</div>
             <div class="crow-val">
               <div class="term-tags" data-kind="alts" data-lang="#{thesaurusViewBean.selectedConcept.summary.lang}">
                 <div class="term-tags-chips">
@@ -181,7 +184,7 @@
             </div>
           </div>
           <div class="crow cblock-edit-row">
-            <div class="crow-lbl">Formes cachées</div>
+            <div class="crow-lbl">Cachés</div>
             <div class="crow-val">
               <div class="term-tags" data-kind="hidden" data-lang="#{thesaurusViewBean.selectedConcept.summary.lang}">
                 <div class="term-tags-chips">
@@ -231,14 +234,14 @@
           </ui:fragment>
           <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
           <div class="crow">
-            <div class="crow-lbl">Libellé</div>
+            <div class="crow-lbl">Préférentiel</div>
             <div class="crow-val">
               <span class="val-strong#{thesaurusViewBean.preferredLabelFromSource ? ' cv-source' : ''}"
                     title="#{thesaurusViewBean.preferredLabelFromSource ? localeBean.getMsg('concept.label.source').concat(' · ').concat(thesaurusViewBean.sourceLanguageName) : ''}">#{thesaurusViewBean.dash(thesaurusViewBean.displayedPreferredLabel)}</span>
               <span class="val-lang#{thesaurusViewBean.preferredLabelFromSource ? ' cv-source' : ''}">(#{thesaurusViewBean.preferredLabelFromSource ? thesaurusViewBean.sourceLanguageCode : thesaurusViewBean.selectedConcept.summary.lang})</span>
               <button type="button" class="copy-btn" title="Copier"
                       data-act="copy"
-                      data-copy="#{thesaurusViewBean.displayedPreferredLabel}">⧉</button>
+                      data-copy="#{thesaurusViewBean.displayedPreferredLabel}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg></button>
             </div>
           </div>
           <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.replaces}">
@@ -254,7 +257,7 @@
           </div>
           </ui:fragment>
           <div class="crow">
-            <div class="crow-lbl">Formes alternatives</div>
+            <div class="crow-lbl">Alternatifs</div>
             <div class="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.synonyms}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.synonyms}">
@@ -267,7 +270,7 @@
             </div>
           </div>
           <div class="crow">
-            <div class="crow-lbl">Formes cachées</div>
+            <div class="crow-lbl">Cachés</div>
             <div class="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.hiddenSynonyms}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.hiddenSynonyms}">
@@ -295,25 +298,8 @@
         </div>
       </section>
 
-      <section class="cblock#{conceptLabelBlockEditorBean.branchEditing ? ' is-editing' : ''}" data-card-id="branche">
-        <div class="cblock-head">
-          <span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc">
-            <svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg>
-          </span>
-          <span class="cblock-title">Branche</span>
-          <div class="cblock-tools">
-            <h:commandButton id="branchEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}"
-                             rendered="#{conceptLabelBlockEditorBean.editable and not conceptLabelBlockEditorBean.branchEditing}"
-                             action="#{conceptLabelBlockEditorBean.startBranchEditing}">
-              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-            </h:commandButton>
-            <button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold"
-                    title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true"
-                    aria-label="#{localeBean.getMsg('block.collapse')}">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-          </div>
-        </div>
+      <section class="cblock#{conceptCollectionBlockEditorBean.editing or conceptLabelBlockEditorBean.branchEditing ? ' is-editing' : ''}" data-card-id="collections">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5V19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/></svg></span><span class="cblock-title">Appartenance</span><div class="cblock-tools"><h:commandButton id="collEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{(conceptCollectionBlockEditorBean.editable or conceptLabelBlockEditorBean.editable) and not conceptCollectionBlockEditorBean.editing and not conceptLabelBlockEditorBean.branchEditing}" action="#{conceptCollectionBlockEditorBean.startBelongingEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptLabelBlockEditorBean.branchEditing}">
             <div class="crow cblock-edit-row">
@@ -347,12 +333,12 @@
                 </div>
               </div>
             </div>
-            <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing and not empty conceptLabelBlockEditorBean.errorMessage}">
+            <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing and not conceptCollectionBlockEditorBean.editing and not empty conceptLabelBlockEditorBean.errorMessage}">
               <div class="cblock-edit-warn" role="alert">
                 <p>#{conceptLabelBlockEditorBean.errorMessage}</p>
               </div>
             </ui:fragment>
-            <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing}">
+            <ui:fragment rendered="#{not conceptLabelBlockEditorBean.editing and not conceptCollectionBlockEditorBean.editing}">
               <div class="cblock-edit-foot">
                 <h:commandLink id="branchEditCancel" styleClass="abt-cancel" immediate="true"
                                action="#{conceptLabelBlockEditorBean.cancel}">
@@ -375,39 +361,16 @@
               <div class="crow-lbl">Facettes</div>
               <div class="crow-val">
                 <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.facets}"><span class="muted">—</span></ui:fragment>
-                <ui:repeat value="#{thesaurusViewBean.selectedConcept.facets}" var="facet" varStatus="st">
-                  <button type="button" class="link" data-act="open" data-id="#{facet.conceptId}" data-type="facet">#{facet.displayLabel}</button>
-                  <h:outputText value=", " rendered="#{not st.last}"/>
-                </ui:repeat>
+                <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.facets}">
+                  <div class="belong-list">
+                    <ui:repeat value="#{thesaurusViewBean.selectedConcept.facets}" var="facet">
+                      <button type="button" class="belong-chip" data-act="open" data-id="#{facet.conceptId}" data-type="facet">#{facet.displayLabel}</button>
+                    </ui:repeat>
+                  </div>
+                </ui:fragment>
               </div>
             </div>
           </ui:fragment>
-          <div class="crow">
-            <div class="crow-lbl">Total de la branche</div>
-            <div class="crow-val cv-branch-val" data-cv-extra="branch">
-              <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc">Calculer</button>
-            </div>
-          </div>
-          <div class="crow">
-            <div class="crow-lbl">Nombre des corpus liés</div>
-            <div class="crow-val cv-corpus-val" data-cv-extra="corpus">
-              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceMissing}">
-                <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.none')}</span>
-              </ui:fragment>
-              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceInactive}">
-                <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.inactive')}</span>
-              </ui:fragment>
-              <ui:fragment rendered="#{thesaurusViewBean.corpusSourceActive}">
-                <button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc">Calculer</button>
-              </ui:fragment>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="cblock#{conceptCollectionBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="collections">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Collections</span><div class="cblock-tools"><h:commandButton id="collEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptCollectionBlockEditorBean.editable and not conceptCollectionBlockEditorBean.editing}" action="#{conceptCollectionBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
-        <div class="cblock-body">
           <ui:fragment rendered="#{conceptCollectionBlockEditorBean.editing}">
           <div class="coll-pick" id="cvCollPick">
             <div class="coll-pick-chips" id="cvCollChips" hidden="hidden"></div>
@@ -475,25 +438,27 @@
           </div>
           </ui:fragment>
           <ui:fragment rendered="#{not conceptCollectionBlockEditorBean.editing}">
-          <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.collections}">
-            <div class="muted">Ce concept n'appartient à aucune collection.</div>
-          </ui:fragment>
-          <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.collections}">
-          <div class="coll-list">
-            <ui:repeat value="#{thesaurusViewBean.selectedConcept.collections}" var="coll">
-              <button type="button" class="coll-item" data-act="open" data-id="#{coll.conceptId}" data-type="group">
-                <span class="coll-name link">#{coll.displayLabel}</span>
-                <span class="coll-id is-mono">id=#{coll.conceptId}</span>
-              </button>
-            </ui:repeat>
+          <div class="crow">
+            <div class="crow-lbl">Collections</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.selectedConcept.collections}">
+                <span class="muted">—</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.collections}">
+                <div class="belong-list">
+                  <ui:repeat value="#{thesaurusViewBean.selectedConcept.collections}" var="coll">
+                    <button type="button" class="belong-chip" data-act="open" data-id="#{coll.conceptId}" data-type="group" title="#{coll.conceptId}">#{coll.displayLabel}</button>
+                  </ui:repeat>
+                </div>
+              </ui:fragment>
+            </div>
           </div>
-          </ui:fragment>
           </ui:fragment>
         </div>
       </section>
 
       <section class="cblock#{conceptRelationBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="relations">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Relations sémantiques</span><div class="cblock-tools"><h:commandButton id="relEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8 11.2 15.6 7.2"/><path d="M8 12.8 15.6 16.8"/></svg></span><span class="cblock-title">Relations sémantiques</span><div class="cblock-tools"><span class="cblock-branch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v6"/><path d="M6 15v6"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 11.2 16 7"/><path d="M8 12.8 16 17"/></svg><span>Branche</span><span class="cv-branch-val" data-cv-extra="branch"><button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 7h8v3H8z"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>Calculer</button></span></span><h:commandButton id="relEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptRelationBlockEditorBean.editing}">
           <div class="re" id="cvRelEditor"
@@ -507,17 +472,20 @@
                data-poly="#{localeBean.getMsg('concept.rel.poly')}"
                data-kind-bt="#{localeBean.getMsg('candidat.draft.bt')}"
                data-kind-nt="#{localeBean.getMsg('candidat.draft.nt')}"
-               data-kind-rt="#{localeBean.getMsg('candidat.draft.rt')}">
+               data-kind-rt="#{localeBean.getMsg('candidat.draft.rt')}"
+               data-code-bt="#{localeBean.getMsg('concept.rel.code.bt')}"
+               data-code-nt="#{localeBean.getMsg('concept.rel.code.nt')}"
+               data-code-rt="#{localeBean.getMsg('concept.rel.code.rt')}">
             <div class="re-rows" id="cvRelRows">
               <div class="re-group" data-kind="bt">
-                <div class="re-group-h"><span class="rel-code rel-bt">TG</span>#{localeBean.getMsg('candidat.draft.bt')}
+                <div class="re-group-h"><span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('candidat.draft.bt')}
                   <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedBroader}">
                     <span class="rel-count">#{conceptRelationBlockEditorBean.selectedBroader.size()}</span>
                   </ui:fragment>
                 </div>
                 <ui:repeat value="#{conceptRelationBlockEditorBean.selectedBroader}" var="row">
                   <div class="re-row" data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}">
-                    <span class="re-type"><span class="re-pill rel-bt">TG</span></span>
+                    <span class="re-type"><span class="re-pill rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span></span>
                     <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
                   </div>
                 </ui:repeat>
@@ -526,14 +494,14 @@
                 </ui:fragment>
               </div>
               <div class="re-group" data-kind="nt">
-                <div class="re-group-h"><span class="rel-code rel-nt">TS</span>#{localeBean.getMsg('candidat.draft.nt')}
+                <div class="re-group-h"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('candidat.draft.nt')}
                   <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedNarrower}">
                     <span class="rel-count">#{conceptRelationBlockEditorBean.selectedNarrower.size()}</span>
                   </ui:fragment>
                 </div>
                 <ui:repeat value="#{conceptRelationBlockEditorBean.selectedNarrower}" var="row">
                   <div class="re-row" data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}">
-                    <span class="re-type"><span class="re-pill rel-nt">TS</span></span>
+                    <span class="re-type"><span class="re-pill rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span></span>
                     <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
                   </div>
                 </ui:repeat>
@@ -542,14 +510,14 @@
                 </ui:fragment>
               </div>
               <div class="re-group" data-kind="rt">
-                <div class="re-group-h"><span class="rel-code rel-rt">TA</span>#{localeBean.getMsg('candidat.draft.rt')}
+                <div class="re-group-h"><span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('candidat.draft.rt')}
                   <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedRelated}">
                     <span class="rel-count">#{conceptRelationBlockEditorBean.selectedRelated.size()}</span>
                   </ui:fragment>
                 </div>
                 <ui:repeat value="#{conceptRelationBlockEditorBean.selectedRelated}" var="row">
                   <div class="re-row" data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}">
-                    <span class="re-type"><span class="re-pill rel-rt">TA</span></span>
+                    <span class="re-type"><span class="re-pill rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span></span>
                     <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
                   </div>
                 </ui:repeat>
@@ -562,17 +530,17 @@
               <span class="re-type">
                 <button type="button" class="re-pill rel-nt" id="cvRelKindBtn"
                         data-act="cv-rel-kind-toggle" aria-haspopup="listbox" aria-expanded="false">
-                  TS<span class="re-caret" aria-hidden="true"></span>
+                  #{localeBean.getMsg('concept.rel.code.nt')}<span class="re-caret" aria-hidden="true"></span>
                 </button>
                 <div class="re-menu" id="cvRelKindMenu" hidden="hidden" role="listbox">
                   <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="bt">
-                    <span class="rel-code rel-bt">TG</span>#{localeBean.getMsg('candidat.draft.bt')}
+                    <span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('candidat.draft.bt')}
                   </button>
                   <button type="button" class="re-mi on" role="option" data-act="cv-rel-kind" data-kind="nt">
-                    <span class="rel-code rel-nt">TS</span>#{localeBean.getMsg('candidat.draft.nt')}
+                    <span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('candidat.draft.nt')}
                   </button>
                   <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="rt">
-                    <span class="rel-code rel-rt">TA</span>#{localeBean.getMsg('candidat.draft.rt')}
+                    <span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('candidat.draft.rt')}
                   </button>
                 </div>
               </span>
@@ -624,7 +592,7 @@
           </ui:fragment>
           <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editing}">
           <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
+            <div class="crow-lbl"><span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('concept.rel.label.bt')}</div>
             <h:panelGroup id="broaderVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleBroaders}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleBroaders}">
@@ -643,7 +611,7 @@
             </h:panelGroup>
           </div>
           <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
+            <div class="crow-lbl"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('concept.rel.label.nt')}</div>
             <h:panelGroup id="narrowerVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleNarrowers}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleNarrowers}">
@@ -662,7 +630,7 @@
             </h:panelGroup>
           </div>
           <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
+            <div class="crow-lbl"><span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('concept.rel.label.rt')}</div>
             <h:panelGroup id="relatedVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleRelateds}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleRelateds}">
@@ -684,8 +652,8 @@
         </div>
       </section>
 
-      <section class="cblock#{conceptTranslationBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="traductions">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Traductions</span><div class="cblock-tools"><h:commandButton id="trEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptTranslationBlockEditorBean.editable and not conceptTranslationBlockEditorBean.editing}" action="#{conceptTranslationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+      <section class="cblock#{conceptTranslationBlockEditorBean.editing ? ' is-editing' : ''}#{not conceptTranslationBlockEditorBean.editing and empty thesaurusViewBean.translationViewItems ? ' is-sparse' : ''}" data-card-id="traductions">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2v3"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg></span><span class="cblock-title">Traductions</span><ui:fragment rendered="#{not conceptTranslationBlockEditorBean.editing and empty thesaurusViewBean.translationViewItems}"><span class="cblock-em">· aucune</span></ui:fragment><ui:fragment rendered="#{not empty thesaurusViewBean.translationViewItems}"><span class="cblock-count">#{thesaurusViewBean.translationViewItems.size()}</span></ui:fragment><div class="cblock-tools"><h:commandButton id="trEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptTranslationBlockEditorBean.editable and not conceptTranslationBlockEditorBean.editing}" action="#{conceptTranslationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptTranslationBlockEditorBean.editing}">
               <div class="te" id="cvTrEditor"
@@ -726,11 +694,13 @@
                             class="tree-lang-opt"
                             data-act="cv-tr-add"
                             data-lang="#{lang.code}"
-                            data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                            data-flag="#{thesaurusViewBean.languageMark(lang.code)}"
                             data-name="#{lang.value}"
                             role="option"
                             aria-selected="false">
-                      <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      <ui:fragment rendered="#{not thesaurusViewBean.languageCodes}">
+                        <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      </ui:fragment>
                       <span class="tree-lang-opt-name">#{lang.value}</span>
                       <span class="tree-lang-opt-code">#{lang.code}</span>
                     </button>
@@ -786,7 +756,6 @@
                             onevent="onPreviewTermLang"/>
                     <h:outputText value="#{htmlText.formatInline(tr.value)}" escape="false"/>
                   </h:commandLink>
-                  <span class="tr-lang">#{thesaurusViewBean.languageLabel(tr.lang)}</span>
                   <ui:fragment rendered="#{tr.todo}">
                     <span class="tr-todo">#{localeBean.getMsg('concept.translation.todo')}</span>
                   </ui:fragment>
@@ -805,8 +774,8 @@
         </div>
       </section>
 
-      <section class="cblock#{conceptNoteBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="notes">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Notes</span><div class="cblock-tools"><h:commandLink id="noteLangToggle" styleClass="vo-sw cblock-note-sw#{thesaurusViewBean.showAllNoteLanguages ? ' on' : ''}" title="#{localeBean.getMsg('concept.showNotesOtherLang')}" rendered="#{thesaurusViewBean.noteLanguageToggleVisible and not conceptNoteBlockEditorBean.editing}" action="#{thesaurusViewBean.toggleNoteLanguages}" pt:role="switch" pt:aria-checked="#{thesaurusViewBean.showAllNoteLanguages}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandLink><h:commandButton id="noteEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptNoteBlockEditorBean.editable and not conceptNoteBlockEditorBean.editing}" action="#{conceptNoteBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+      <section class="cblock#{conceptNoteBlockEditorBean.editing ? ' is-editing' : ''}#{not conceptNoteBlockEditorBean.editing and not thesaurusViewBean.hasDisplayedNotes ? ' is-sparse' : ''}" data-card-id="notes">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8a2 2 0 0 1 2 2v14l-4-2-4 2-4-2V6a2 2 0 0 1 2-2z"/><path d="M9 9h6"/><path d="M9 13h4"/></svg></span><span class="cblock-title">Notes</span><ui:fragment rendered="#{not conceptNoteBlockEditorBean.editing and not thesaurusViewBean.hasDisplayedNotes}"><span class="cblock-em">· aucune</span></ui:fragment><div class="cblock-tools"><h:commandLink id="noteLangToggle" styleClass="vo-sw cblock-note-sw#{thesaurusViewBean.showAllNoteLanguages ? ' on' : ''}" title="#{localeBean.getMsg('concept.showNotesOtherLang')}" rendered="#{thesaurusViewBean.noteLanguageToggleVisible and not conceptNoteBlockEditorBean.editing}" action="#{thesaurusViewBean.toggleNoteLanguages}" pt:role="switch" pt:aria-checked="#{thesaurusViewBean.showAllNoteLanguages}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandLink><h:commandButton id="noteEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptNoteBlockEditorBean.editable and not conceptNoteBlockEditorBean.editing}" action="#{conceptNoteBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptNoteBlockEditorBean.editing}">
           <div class="note-ed" id="cvNoteEditor"
@@ -839,11 +808,13 @@
                             class="tree-lang-opt"
                             data-act="cv-note-add-lang"
                             data-lang="#{lang.code}"
-                            data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                            data-flag="#{thesaurusViewBean.languageMark(lang.code)}"
                             data-name="#{lang.value}"
                             role="option"
                             aria-selected="false">
-                      <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      <ui:fragment rendered="#{not thesaurusViewBean.languageCodes}">
+                        <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                      </ui:fragment>
                       <span class="tree-lang-opt-name">#{lang.value}</span>
                       <span class="tree-lang-opt-code">#{lang.code}</span>
                     </button>
@@ -871,7 +842,7 @@
               <ui:repeat value="#{conceptNoteBlockEditorBean.pickerLanguages}" var="lang">
                 <span data-code="#{lang.code}"
                       data-name="#{lang.value}"
-                      data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"></span>
+                      data-flag="#{thesaurusViewBean.languageMark(lang.code)}"></span>
               </ui:repeat>
             </div>
             <h:inputHidden id="cvNotePayload" pt:id="cvNotePayload"
@@ -911,8 +882,7 @@
                     <span class="tr-code">#{note.lang}</span>
                   </ui:fragment>
                   <div class="note-line-b">
-                    <div class="cv-def cv-html" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}"><h:outputText value="#{htmlText.format(note.value)}" escape="false"/>
-                      <span class="note-lang">(#{note.lang})</span></div>
+                    <div class="cv-def cv-html" lang="#{note.lang}" dir="#{thesaurusViewBean.textDirection(note.lang)}"><h:outputText value="#{htmlText.format(note.value)}" escape="false"/></div>
                     <ui:fragment rendered="#{not empty note.source}">
                       <span class="note-src">#{note.source}</span>
                     </ui:fragment>
@@ -925,8 +895,8 @@
         </div>
       </section>
 
-      <section class="cblock#{conceptResourceBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="ressources">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Ressources externes</span><div class="cblock-tools"><h:commandButton id="resEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptResourceBlockEditorBean.editable and not conceptResourceBlockEditorBean.editing}" action="#{conceptResourceBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+      <section class="cblock#{conceptResourceBlockEditorBean.editing ? ' is-editing' : ''}#{not conceptResourceBlockEditorBean.editing and not thesaurusViewBean.selectedConcept.hasMediaData ? ' is-sparse' : ''}" data-card-id="ressources">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></span><span class="cblock-title">Ressources externes</span><ui:fragment rendered="#{not conceptResourceBlockEditorBean.editing and not thesaurusViewBean.selectedConcept.hasMediaData}"><span class="cblock-em">· aucune (liens, image, GPS)</span></ui:fragment><div class="cblock-tools"><h:commandButton id="resEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptResourceBlockEditorBean.editable and not conceptResourceBlockEditorBean.editing}" action="#{conceptResourceBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptResourceBlockEditorBean.editing}">
           <div class="cv-res-ed" id="cvResEditor"
@@ -1166,7 +1136,7 @@
 
 
       <section class="cblock#{conceptAlignmentBlockEditorBean.editing or conceptAlignmentAutoSearchBean.open ? ' is-editing' : ''}" data-card-id="alignement">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Alignement</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7h11"/><path d="m16 4 3 3-3 3"/><path d="M16 17H5"/><path d="m8 14-3 3 3 3"/></svg></span><span class="cblock-title">Alignements</span><ui:fragment rendered="#{not conceptAlignmentBlockEditorBean.editing and not conceptAlignmentAutoSearchBean.open and empty thesaurusViewBean.selectedConcept.alignmentGroups}"><span class="cblock-em">· aucun</span></ui:fragment><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{conceptAlignmentBlockEditorBean.editing}">
           <div class="align-edit">
@@ -1514,81 +1484,29 @@
         </div>
       </section>
 
+      <section class="cblock#{thesaurusViewBean.corpusSourceActive ? ' is-sparse' : ''}" data-card-id="usage">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><span class="cblock-title">Usage</span><span class="cblock-em">· corpus liés</span><div class="cblock-tools"><ui:fragment rendered="#{thesaurusViewBean.corpusSourceActive}"><button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="corpus-calc"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 7h8v3H8z"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>Compter</button></ui:fragment><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-body">
+          <div class="cv-corpus-val" data-cv-extra="corpus">
+            <ui:fragment rendered="#{thesaurusViewBean.corpusSourceMissing}">
+              <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.none')}</span>
+            </ui:fragment>
+            <ui:fragment rendered="#{thesaurusViewBean.corpusSourceInactive}">
+              <span class="muted">#{localeBean.getMsg('rightbody.concept.corpus.inactive')}</span>
+            </ui:fragment>
+          </div>
+        </div>
+      </section>
+
       <section class="cblock" data-card-id="identifiants">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Identifiants &amp; notation</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4c0 3-4 5-4 5s-4-2-4-5a4 4 0 0 1 4-4z"/><path d="M8 14c.6 1.4 1.8 2.4 4 2.4s3.4-1 4-2.4"/><path d="M7 18c.8 1.2 2.4 2 5 2s4.2-.8 5-2"/></svg></span><span class="cblock-title">Identifiants</span><div class="cblock-tools"><ui:fragment rendered="#{thesaurusViewBean.showQrPopup}"><button type="button" class="cblock-gear cblock-qr" data-act="id-qr" title="QR code" aria-label="Afficher le QR code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4z"/><path d="M14 4h6v6h-6z"/><path d="M4 14h6v6H4z"/><path d="M14 14h2"/><path d="M18 14h2"/><path d="M14 18h2"/><path d="M18 18h2"/><path d="M14 20h2"/><path d="M20 20h.01"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/></svg></button></ui:fragment><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <div class="cv-ids">
             <div class="cv-ids-main">
               <div class="crow">
-                <div class="crow-lbl">Notation</div>
-                <div class="crow-val is-mono">
-                  <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.notation}">
-                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
-                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
-                            data-copy="#{thesaurusViewBean.selectedConcept.summary.notation}"
-                            data-msg="#{localeBean.getMsg('concept.ids.copied')}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-                  </ui:fragment>
-                  <span class="cv-id-val">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.notation)}</span>
-                </div>
-              </div>
-              <div class="crow">
-                <div class="crow-lbl cv-id-lbl">
-                  <span>ID interne</span>
-                  <span class="cv-id-tag is-amber">LOCAL</span>
-                </div>
-                <div class="crow-val is-mono">
-                  <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.conceptId}">
-                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
-                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
-                            data-copy="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
-                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                  </ui:fragment>
-                  <span class="cv-id-val link">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span>
-                </div>
-              </div>
-              <div class="crow">
-                <div class="crow-lbl cv-id-lbl">
-                  <span>URI</span>
-                  <span class="cv-id-tag is-amber">INSTANCE</span>
-                </div>
-                <div class="crow-val">
-                  <ui:fragment rendered="#{not empty thesaurusViewBean.localConceptUri}">
-                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
-                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
-                            data-copy="#{thesaurusViewBean.localConceptUri}"
-                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                    <a class="cv-id-val link" href="#{thesaurusViewBean.localConceptUri}">#{thesaurusViewBean.localConceptUri}</a>
-                  </ui:fragment>
-                  <ui:fragment rendered="#{empty thesaurusViewBean.localConceptUri}">
-                    <span class="cv-id-val muted">—</span>
-                  </ui:fragment>
-                </div>
-              </div>
-              <div class="crow">
-                <div class="crow-lbl cv-id-lbl">
-                  <span>#{localeBean.getMsg('concept.ids.ark')}</span>
-                  <span class="cv-id-tag is-green">CANONIQUE</span>
-                </div>
-                <div class="crow-val is-mono">
-                  <ui:fragment rendered="#{not empty thesaurusViewBean.arkIdentifier}">
-                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
-                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
-                            data-copy="#{thesaurusViewBean.arkIdentifier}"
-                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                  </ui:fragment>
-                  <span class="cv-id-val">#{thesaurusViewBean.dash(thesaurusViewBean.arkIdentifier)}</span>
-                </div>
-              </div>
-              <div class="crow">
                 <div class="crow-lbl cv-id-lbl">
                   <span>#{localeBean.getMsg('concept.ids.permanent')}</span>
-                  <span class="cv-id-tag is-green">N2T.NET</span>
+                  <span class="cv-id-tag is-green">à partager</span>
                 </div>
                 <div class="crow-val">
                   <ui:fragment rendered="#{not empty thesaurusViewBean.conceptUri}">
@@ -1596,7 +1514,7 @@
                             aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
                             data-copy="#{thesaurusViewBean.conceptUri}"
                             data-msg="#{localeBean.getMsg('concept.ids.copied')}">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg>
                     </button>
                     <a class="cv-id-val link" href="#{thesaurusViewBean.conceptUri}">#{thesaurusViewBean.conceptUri}</a>
                   </ui:fragment>
@@ -1605,13 +1523,74 @@
                   </ui:fragment>
                 </div>
               </div>
-            </div>
-            <ui:fragment rendered="#{thesaurusViewBean.showQrCode}">
-              <div class="cv-qr">
-                <h:outputText value="#{thesaurusViewBean.qrSvg}" escape="false"/>
+              <div class="crow">
+                <div class="crow-lbl cv-id-lbl">
+                  <span>#{localeBean.getMsg('concept.ids.ark')}</span>
+                  <span class="cv-id-tag is-green">à citer</span>
+                </div>
+                <div class="crow-val is-mono">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.arkIdentifier}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.arkIdentifier}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg>
+                    </button>
+                  </ui:fragment>
+                  <span class="cv-id-val">#{thesaurusViewBean.dash(thesaurusViewBean.arkIdentifier)}</span>
+                </div>
               </div>
-            </ui:fragment>
-          </div>
+              <div class="crow">
+                <div class="crow-lbl">Notation</div>
+                <div class="crow-val is-mono">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.notation}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.selectedConcept.summary.notation}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg></button>
+                  </ui:fragment>
+                  <span class="cv-id-val">#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.notation)}</span>
+                </div>
+              </div>
+              <details class="cv-id-more">
+                <summary>Identifiants locaux et aide</summary>
+              <div class="crow">
+                <div class="crow-lbl cv-id-lbl">
+                  <span>ID interne</span>
+                  <span class="cv-id-tag is-amber">local</span>
+                </div>
+                <div class="crow-val is-mono">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.selectedConcept.summary.conceptId}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.selectedConcept.summary.conceptId}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg>
+                    </button>
+                  </ui:fragment>
+                  <span class="cv-id-val link">#{thesaurusViewBean.selectedConcept.summary.conceptId}</span>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl cv-id-lbl">
+                  <span>URI d'instance</span>
+                  <span class="cv-id-tag is-amber">local</span>
+                </div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{not empty thesaurusViewBean.localConceptUri}">
+                    <button type="button" class="copy-btn cv-id-copy" title="#{localeBean.getMsg('ui.copy')}"
+                            aria-label="#{localeBean.getMsg('ui.copy')}" data-act="copy"
+                            data-copy="#{thesaurusViewBean.localConceptUri}"
+                            data-msg="#{localeBean.getMsg('concept.ids.copied')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></svg>
+                    </button>
+                    <a class="cv-id-val link" href="#{thesaurusViewBean.localConceptUri}">#{thesaurusViewBean.localConceptUri}</a>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{empty thesaurusViewBean.localConceptUri}">
+                    <span class="cv-id-val muted">—</span>
+                  </ui:fragment>
+                </div>
+              </div>
           <div class="cv-id-help">
             <div class="cv-id-help-title">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 8h.01"/></svg>
@@ -1623,11 +1602,29 @@
               <li><h:outputText value="#{localeBean.getMsg('concept.ids.help.local')}" escape="false"/></li>
             </ul>
           </div>
+              </details>
+            </div>
+          </div>
         </div>
+        <ui:fragment rendered="#{thesaurusViewBean.showQrPopup}">
+          <div class="block-overlay" id="cvQr" hidden="hidden" data-act="id-qr-close" role="presentation">
+            <div class="confirm-modal cv-qr-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="cvQrTitle" data-act="id-qr-modal">
+              <div class="confirm-h" id="cvQrTitle">QR code</div>
+              <div class="cv-qr-box">
+                <h:outputText value="#{thesaurusViewBean.qrPopupSvg}" escape="false"/>
+              </div>
+              <p class="cv-qr-caption">#{thesaurusViewBean.qrPopupValue}</p>
+              <div class="confirm-actions">
+                <button type="button" class="bo-btn ghost confirm-cancel" data-act="id-qr-close">Fermer</button>
+              </div>
+            </div>
+          </div>
+        </ui:fragment>
       </section>
 
       <section class="cblock" data-card-id="exportSkos">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">#{localeBean.getMsg('block.exportSkos')}</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg></span><span class="cblock-title">#{localeBean.getMsg('block.exportSkos')}</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <div class="skos-links">
             <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('rdf')}" target="_blank" rel="noopener">RDF/XML</a>
@@ -1638,36 +1635,29 @@
         </div>
       </section>
 
-      <ui:fragment rendered="#{not empty thesaurusViewBean.conceptMetadata}">
-      <section class="cblock" data-card-id="metadonnees">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Métadonnées</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+      <section class="cblock" data-card-id="temporel">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg></span><span class="cblock-title">Historique</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
-          <ui:repeat value="#{thesaurusViewBean.conceptMetadata}" var="meta">
-            <div class="crow">
-              <div class="crow-lbl">#{thesaurusViewBean.metadataLabel(meta.name)}</div>
-              <div class="crow-val">
-                <span>#{meta.value}</span>
-                <ui:fragment rendered="#{not empty meta.language}">
-                  <span class="muted"> (#{meta.language})</span>
-                </ui:fragment>
+          <ol class="hist-line">
+            <li>
+              <span class="hist-k">Créé le</span>
+              <span class="hist-d">#{thesaurusViewBean.dash(thesaurusViewBean.createdDateLabel)}</span>
+            </li>
+            <li>
+              <span class="hist-k">Modifié le</span>
+              <span class="hist-d">#{thesaurusViewBean.dash(thesaurusViewBean.modifiedDateLabel)}</span>
+            </li>
+          </ol>
+          <ui:fragment rendered="#{not empty thesaurusViewBean.contributorNames}">
+            <div class="hist-foot">
+              <span class="hist-k">Contributeurs</span>
+              <div class="hist-people">
+                <ui:repeat value="#{thesaurusViewBean.contributorNames}" var="name">
+                  <span class="hist-chip">#{name}</span>
+                </ui:repeat>
               </div>
             </div>
-          </ui:repeat>
-        </div>
-      </section>
-      </ui:fragment>
-
-      <section class="cblock" data-card-id="temporel">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Information temporelle</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
-        <div class="cblock-body cv-time">
-          <div class="crow">
-            <div class="crow-lbl">Créé le</div>
-            <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.created)}</span></div>
-          </div>
-          <div class="crow">
-            <div class="crow-lbl">Dernière modification</div>
-            <div class="crow-val is-mono"><span>#{thesaurusViewBean.dash(thesaurusViewBean.selectedConcept.summary.modified)}</span></div>
-          </div>
+          </ui:fragment>
         </div>
       </section>
     </div>

@@ -7,6 +7,13 @@ function fctTrOpt(code) {
   return $("#fctTrMenu") && $("#fctTrMenu").querySelector('.tree-lang-opt[data-lang="' + code + '"]');
 }
 
+function fctLangMark(meta, lang) {
+  if (meta.flag && meta.flag !== "🏳️") {
+    return '<span class="tr-flag">' + meta.flag + "</span>";
+  }
+  return '<span class="tr-code">' + escapeHtml(lang) + "</span>";
+}
+
 function fctTrMeta(code) {
   const opt = fctTrOpt(code);
   return {
@@ -113,7 +120,7 @@ function paintFacetDraftTr() {
         + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>';
     return '<div class="te-lang">'
       + '<div class="te-head">'
-      + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+      + fctLangMark(meta, code)
       + '<span class="te-name">' + escapeHtml(meta.name) + "</span>"
       + '<span class="te-code">' + escapeHtml(code) + "</span>"
       + actions
@@ -312,7 +319,7 @@ function fctNoteCompareLang() {
 function paintFacetDraftNoteColHead(lang) {
   const meta = fctNoteMeta(lang);
   return '<div class="note-ed-colh">'
-    + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+    + fctLangMark(meta, lang)
     + "<span>" + escapeHtml(meta.name || lang) + "</span>"
     + '<span class="te-code">' + escapeHtml(lang) + "</span>"
     + "</div>";
@@ -441,7 +448,7 @@ function paintFacetDraftNotes() {
     const on = fctNoteNorm(code) === fctNoteNorm(fctNoteState.lang);
     return '<button type="button" class="note-ed-tab' + (on ? " on" : "") + '" data-act="fct-note-tab" data-lang="'
       + escapeHtml(code) + '" role="tab" aria-selected="' + (on ? "true" : "false") + '">'
-      + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+      + fctLangMark(meta, code)
       + "<span>" + escapeHtml(meta.name || code) + "</span>"
       + (count ? '<span class="note-ed-n">' + count + "</span>" : '<span class="note-ed-void" aria-hidden="true"></span>')
       + "</button>";

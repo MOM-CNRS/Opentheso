@@ -430,7 +430,7 @@ body.is-gps-lightbox{overflow:hidden}
 .crow-rel .crow-lbl{font-weight:600;color:var(--ink-2)}
 .rel-code{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;border-radius:var(--r-sm);
   padding:2px 6px;flex:0 0 auto}
-.rel-bt{background:#6b7886}.rel-nt{background:var(--accent)}.rel-rt{background:#a98b3e}.rel-custom{background:#9a8aa8}
+.rel-bt{background:#5F5E5A}.rel-nt{background:#27500A}.rel-rt{background:#854F0B}.rel-custom{background:#9a8aa8}
 .rel-items{display:flex;flex-wrap:wrap;gap:7px}
 .rel-term{font-size:13.5px;font-weight:500;color:var(--ink);background:var(--surface-2);
   border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 12px;transition:all .12s}

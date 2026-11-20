@@ -157,6 +157,7 @@ public class ThesaurusPreferenceBean implements Serializable {
             corpusBean.load();
             alignmentBean.load();
             thesaurusViewBean.applyPreferenceTreeSort(preference.isSortByNotation());
+            thesaurusViewBean.clearLanguageDisplayPreference();
             preferenceSaveMessage = "Paramètres enregistrés avec succès";
         } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
             preferenceSaveError = true;

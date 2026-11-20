@@ -35,6 +35,7 @@ public final class PreferenceFlagSnapshot {
                 case "useCustomRelation" -> editor.setUseCustomRelation(value);
                 case "synchronisation" -> editor.setSynchronisation(value);
                 case "portail" -> editor.setPortail(value);
+                case "languageCodes" -> editor.setLanguageCodes(value);
                 case "showCandidatesToGuests" -> editor.setShowCandidatesToGuests(value);
                 case "showHistoryNote" -> editor.setShowHistoryNote(value);
                 case "showEditorialNote" -> editor.setShowEditorialNote(value);

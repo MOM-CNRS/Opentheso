@@ -29,7 +29,6 @@ public final class ConceptBlockIds {
      */
     private static final List<String> OPTIONAL_ORDER = List.of(
             "branche",
-            "metadonnees",
             "exportSkos"
     );
 

@@ -265,11 +265,13 @@
                               class="tree-lang-opt"
                               data-act="fc-tr-add"
                               data-lang="#{lang.code}"
-                              data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"
+                              data-flag="#{thesaurusViewBean.languageMark(lang.code)}"
                               data-name="#{lang.value}"
                               role="option"
                               aria-selected="false">
-                        <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                        <ui:fragment rendered="#{not thesaurusViewBean.languageCodes}">
+                          <span class="tree-lang-opt-flag" aria-hidden="true">#{thesaurusViewBean.flagEmoji(lang.code)}</span>
+                        </ui:fragment>
                         <span class="tree-lang-opt-name">#{lang.value}</span>
                         <span class="tree-lang-opt-code">#{lang.code}</span>
                       </button>
@@ -324,7 +326,6 @@
                                 onevent="onPreviewTermLang"/>
                         #{thesaurusViewBean.dash(tr.value)}
                       </h:commandLink>
-                      <span class="tr-lang">#{thesaurusViewBean.languageLabel(tr.lang)}</span>
                       <ui:fragment rendered="#{tr.todo}">
                         <span class="tr-todo">#{localeBean.getMsg('concept.translation.todo')}</span>
                       </ui:fragment>
@@ -383,7 +384,7 @@
                 <ui:repeat value="#{facetNoteBlockEditorBean.pickerLanguages}" var="lang">
                   <span data-code="#{lang.code}"
                         data-name="#{lang.value}"
-                        data-flag="#{thesaurusViewBean.flagEmoji(lang.code)}"></span>
+                        data-flag="#{thesaurusViewBean.languageMark(lang.code)}"></span>
                 </ui:repeat>
               </div>
               <h:inputHidden id="fcNotesPayload" pt:id="fcNotesPayload"
@@ -415,8 +416,13 @@
               <div class="note-grp">
                 <div class="note-grp-t">#{thesaurusViewBean.noteTypeLabel(note.typeCode)}</div>
                 <div class="note-line">
-                  <span class="tr-flag">#{thesaurusViewBean.flagEmoji(note.lang)}</span>
-                  <p class="cv-def">#{note.value} <span class="note-lang">(#{note.lang})</span></p>
+                  <ui:fragment rendered="#{thesaurusViewBean.hasLanguageFlag(note.lang)}">
+                    <span class="tr-flag">#{thesaurusViewBean.flagEmoji(note.lang)}</span>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not thesaurusViewBean.hasLanguageFlag(note.lang)}">
+                    <span class="tr-code">#{note.lang}</span>
+                  </ui:fragment>
+                  <p class="cv-def">#{note.value}</p>
                 </div>
               </div>
             </ui:repeat>

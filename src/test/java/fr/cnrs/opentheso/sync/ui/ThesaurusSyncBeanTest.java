@@ -747,6 +747,7 @@ class ThesaurusSyncBeanTest {
                 base.showCandidatesToGuests(),
                 enabled,
                 base.portail(),
+                base.languageCodes(),
                 base.languages()
         );
     }

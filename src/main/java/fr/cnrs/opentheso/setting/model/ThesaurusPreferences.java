@@ -58,6 +58,7 @@ public record ThesaurusPreferences(
         boolean showCandidatesToGuests,
         boolean synchronisation,
         boolean portail,
+        boolean languageCodes,
         List<ThesaurusLanguage> languages
 ) implements Serializable {
 }

@@ -65,6 +65,13 @@ function cvNoteMeta(code) {
     || { code: code || "", name: code || "", flag: "" };
 }
 
+function cvNoteLangMark(meta, lang) {
+  if (meta.flag && meta.flag !== "🏳️") {
+    return '<span class="tr-flag">' + meta.flag + "</span>";
+  }
+  return '<span class="tr-code">' + escapeHtml(lang) + "</span>";
+}
+
 function cvNoteNorm(code) {
   return String(code || "").trim().toLowerCase();
 }
@@ -256,7 +263,7 @@ function cvNoteCompareLang() {
 function paintNoteColHead(lang) {
   const meta = cvNoteMeta(lang);
   return '<div class="note-ed-colh">'
-    + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+    + cvNoteLangMark(meta, lang)
     + '<span>' + escapeHtml(meta.name || lang) + "</span>"
     + '<span class="te-code">' + escapeHtml(lang) + "</span>"
     + "</div>";
@@ -451,7 +458,7 @@ function paintConceptNotes() {
     const on = cvNoteNorm(code) === cvNoteNorm(cvNoteState.lang);
     return '<button type="button" class="note-ed-tab' + (on ? " on" : "") + '" data-act="cv-note-tab" data-lang="'
       + escapeHtml(code) + '" role="tab" aria-selected="' + (on ? "true" : "false") + '">'
-      + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+      + cvNoteLangMark(meta, code)
       + '<span>' + escapeHtml(meta.name || code) + "</span>"
       + (count ? '<span class="note-ed-n">' + count + "</span>" : '<span class="note-ed-void" aria-hidden="true"></span>')
       + "</button>";

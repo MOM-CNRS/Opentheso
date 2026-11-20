@@ -25,6 +25,7 @@ public record UpdateThesaurusPreferencesRequest(
         Boolean kohaLink,
         Boolean uppercaseForArk,
         Boolean synchronisation,
-        Boolean portail
+        Boolean portail,
+        @Schema(description = "Afficher les langues par leur code à deux lettres") Boolean languageCodes
 ) {
 }

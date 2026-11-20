@@ -122,6 +122,42 @@ function bindPrefSwitches() {
     sync(input);
   });
   $$(".st-sw input[type='checkbox']").forEach(sync);
+  bindLangMark();
+}
+
+function syncLangMark(root) {
+  (root || document).querySelectorAll(".st-mark").forEach((box) => {
+    const input = box.querySelector("input[data-flag='languageCodes']");
+    if (!input) return;
+    const codes = !!input.checked;
+    box.querySelectorAll("[data-act='lang-mark']").forEach((btn) => {
+      const on = (btn.getAttribute("data-codes") === "true") === codes;
+      btn.classList.toggle("is-on", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  });
+}
+
+function bindLangMark() {
+  if (bindLangMark.done) {
+    syncLangMark();
+    return;
+  }
+  bindLangMark.done = true;
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest && e.target.closest("[data-act='lang-mark']");
+    if (!btn) return;
+    const box = btn.closest(".st-mark");
+    const input = box && box.querySelector("input[data-flag='languageCodes']");
+    if (!input) return;
+    const next = btn.getAttribute("data-codes") === "true";
+    if (input.checked !== next) {
+      input.checked = next;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    syncLangMark(box);
+  });
+  syncLangMark();
 }
 
 const settingsOpenCards = new Set();

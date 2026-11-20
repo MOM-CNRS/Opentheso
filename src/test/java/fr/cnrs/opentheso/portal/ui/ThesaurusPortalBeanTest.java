@@ -344,6 +344,7 @@ class ThesaurusPortalBeanTest {
                 base.showCandidatesToGuests(),
                 base.synchronisation(),
                 enabled,
+                base.languageCodes(),
                 base.languages()
         );
     }

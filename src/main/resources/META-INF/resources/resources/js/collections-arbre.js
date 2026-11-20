@@ -387,7 +387,6 @@ function collectionTranslationsHtml(translations) {
     html += '<button type="button" class="tr-label" data-act="term-lang" data-lang="' + esc(code) + '"'
       + ' lang="' + esc(code) + '" dir="' + collectionTextDirection(code) + '"'
       + ' title="' + esc(meta.name) + '">' + esc(value) + "</button>";
-    html += '<span class="tr-lang">' + esc(meta.name) + "</span>";
     if (todo) html += '<span class="tr-todo">' + esc(collectionTrMsg("todo", "à compléter")) + "</span>";
     html += "</div></div>";
   });
@@ -514,8 +513,7 @@ function collectionNotesHtml(notes, workLang) {
         ? '<span class="tr-flag">' + meta.flag + "</span>"
         : '<span class="tr-code">' + escapeHtml(code) + "</span>";
       html += '<div class="note-line-b"><p class="cv-def" lang="' + escapeHtml(code) + '" dir="'
-        + collectionTextDirection(code) + '">' + escapeHtml(note.value || "")
-        + ' <span class="note-lang">(' + escapeHtml(code) + ")</span></p>";
+        + collectionTextDirection(code) + '">' + escapeHtml(note.value || "") + "</p>";
       if (note.source) html += '<span class="note-src">' + escapeHtml(note.source) + "</span>";
       html += "</div></div>";
     });

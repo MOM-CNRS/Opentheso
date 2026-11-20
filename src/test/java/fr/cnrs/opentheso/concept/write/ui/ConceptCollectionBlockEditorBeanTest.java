@@ -39,6 +39,8 @@ class ConceptCollectionBlockEditorBeanTest {
     @Mock
     private ThesaurusViewBean thesaurusViewBean;
     @Mock
+    private ConceptLabelBlockEditorBean conceptLabelBlockEditorBean;
+    @Mock
     private ConceptCollectionMutationService conceptCollectionMutationService;
     @Mock
     private ConceptWritePolicy conceptWritePolicy;
@@ -54,6 +56,7 @@ class ConceptCollectionBlockEditorBeanTest {
     void setUp() {
         bean = new ConceptCollectionBlockEditorBean(
                 thesaurusViewBean,
+                conceptLabelBlockEditorBean,
                 conceptCollectionMutationService,
                 conceptWritePolicy,
                 userSession,
