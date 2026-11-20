@@ -768,6 +768,7 @@ public class ThesaurusViewBean implements Serializable {
         String key = switch (code) {
             case "BTI", "NTI" -> "concept.rel.nature.instance";
             case "BTP", "NTP", "RHP" -> "concept.rel.nature.part";
+            case "BTG", "NTG" -> "concept.rel.nature.generic";
             default -> "";
         };
         if (key.isEmpty() || localeBean == null) {

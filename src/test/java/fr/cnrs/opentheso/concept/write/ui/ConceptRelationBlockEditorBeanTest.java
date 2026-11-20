@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -266,11 +267,115 @@ class ConceptRelationBlockEditorBeanTest {
         assertEquals("R2", addedRt.getValue().targetConceptId());
         assertEquals("fr", addedRt.getValue().lang());
         assertFalse(addedRt.getValue().tagPrefLabel());
+        verify(conceptRelationMutationService, never())
+                .updateHierarchicalRole(any(), any(), any(), any(), anyInt(), any());
 
         assertFalse(bean.isEditing());
         assertTrue(bean.isTreeReload());
         assertEquals("Relations enregistrées", bean.getFlashMessage());
         verify(thesaurusViewBean).reloadSelectedConcept();
+    }
+
+    @Test
+    void selectedJson_keepsHierarchicalRole() {
+        bean.setSelectedBroaderJson("[{\"id\":\"B1\",\"label\":\"Métal\",\"role\":\"BTP\"}]");
+
+        assertEquals("BTP", bean.getSelectedBroader().get(0).getRole());
+        assertEquals(
+                "[{\"id\":\"B1\",\"label\":\"Métal\",\"role\":\"BTP\"}]",
+                bean.getSelectedBroaderJson());
+    }
+
+    @Test
+    void save_updatesBroaderRoleWhenTypeChanges() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(new ConceptRelation("B1", "Métal", null, "BT")),
+                List.of(),
+                List.of()));
+        when(conceptRelationMutationService.updateHierarchicalRole(any(), any(), any(), any(), anyInt(), any()))
+                .thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setSelectedBroaderJson("[{\"id\":\"B1\",\"label\":\"Métal\",\"role\":\"BTP\"}]");
+
+        bean.save();
+
+        verify(conceptRelationMutationService).updateHierarchicalRole("TH1", "C1", "B1", "BTP", 7, "alice");
+        verify(conceptRelationMutationService, never()).addBroaderRelation(any());
+        assertFalse(bean.isEditing());
+    }
+
+    @Test
+    void save_replacesGenericRoleWithSpecific() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(new ConceptRelation("B1", "Métal", null, "BTG")),
+                List.of(),
+                List.of()));
+        when(conceptRelationMutationService.updateHierarchicalRole(any(), any(), any(), any(), anyInt(), any()))
+                .thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setSelectedBroaderJson("[{\"id\":\"B1\",\"label\":\"Métal\",\"role\":\"BT\"}]");
+
+        bean.save();
+
+        verify(conceptRelationMutationService).updateHierarchicalRole("TH1", "C1", "B1", "BT", 7, "alice");
+        assertFalse(bean.isEditing());
+    }
+
+    @Test
+    void save_setsNarrowerGenericRole() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(),
+                List.of(new ConceptRelation("N1", "Bronze", null, "NT")),
+                List.of()));
+        when(conceptRelationMutationService.updateHierarchicalRole(any(), any(), any(), any(), anyInt(), any()))
+                .thenReturn(MutationResult.ok("ok"));
+        bean.startEditing("nt");
+        bean.setSelectedNarrowerJson("[{\"id\":\"N1\",\"label\":\"Bronze\",\"role\":\"NTG\"}]");
+
+        bean.save();
+
+        verify(conceptRelationMutationService).updateHierarchicalRole("TH1", "C1", "N1", "NTG", 7, "alice");
+        assertFalse(bean.isEditing());
+    }
+
+    @Test
+    void save_editsOnlyTheOpenedKind() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(new ConceptRelation("B1", "Métal", null, "BT")),
+                List.of(new ConceptRelation("N1", "Bronze", null, "NT")),
+                List.of(new ConceptRelation("R1", "Cuivre", null))));
+        when(conceptRelationMutationService.deleteNarrowerRelation(any())).thenReturn(MutationResult.ok("ok"));
+        bean.startEditing("nt");
+        assertTrue(bean.isEditingNarrower());
+        bean.setSelectedBroaderJson("[]");
+        bean.setSelectedNarrowerJson("[]");
+        bean.setSelectedRelatedJson("[]");
+
+        bean.save();
+
+        ArgumentCaptor<DeleteNarrowerRelationCommand> removedNt =
+                ArgumentCaptor.forClass(DeleteNarrowerRelationCommand.class);
+        verify(conceptRelationMutationService).deleteNarrowerRelation(removedNt.capture());
+        assertEquals("N1", removedNt.getValue().targetConceptId());
+        verify(conceptRelationMutationService, never()).deleteBroaderRelation(any());
+        verify(conceptRelationMutationService, never()).deleteRelatedRelation(any());
+        assertFalse(bean.isEditing());
+    }
+
+    @Test
+    void save_typesANewNarrowerRelation() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(), List.of(), List.of()));
+        when(conceptRelationMutationService.addNarrowerRelation(any())).thenReturn(MutationResult.ok("ok"));
+        when(conceptRelationMutationService.updateHierarchicalRole(any(), any(), any(), any(), anyInt(), any()))
+                .thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setSelectedNarrowerJson("[{\"id\":\"N9\",\"label\":\"Ascagne\",\"role\":\"NTI\"}]");
+
+        bean.save();
+
+        verify(conceptRelationMutationService).addNarrowerRelation(any());
+        verify(conceptRelationMutationService).updateHierarchicalRole("TH1", "C1", "N9", "NTI", 7, "alice");
+        assertFalse(bean.isEditing());
     }
 
     private static ConceptDetail detail(

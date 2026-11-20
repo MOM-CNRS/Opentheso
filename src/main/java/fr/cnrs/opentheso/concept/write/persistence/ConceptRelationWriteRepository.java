@@ -52,15 +52,13 @@ public class ConceptRelationWriteRepository {
     @Transactional
     public void deleteBroaderRelation(String narrowerConceptId, String broaderConceptId, String thesaurusId, int userId) {
         insertRelationHistory(narrowerConceptId, broaderConceptId, thesaurusId, "BT", userId, "DEL");
-        deleteRelationship(narrowerConceptId, broaderConceptId, thesaurusId, "BT");
-        deleteRelationship(broaderConceptId, narrowerConceptId, thesaurusId, "NT");
+        deleteHierarchicalPair(narrowerConceptId, broaderConceptId, thesaurusId);
     }
 
     @Transactional
     public void deleteNarrowerRelation(String broaderConceptId, String narrowerConceptId, String thesaurusId, int userId) {
         insertRelationHistory(broaderConceptId, narrowerConceptId, thesaurusId, "RT", userId, "DELETE");
-        deleteRelationship(broaderConceptId, narrowerConceptId, thesaurusId, "NT");
-        deleteRelationship(narrowerConceptId, broaderConceptId, thesaurusId, "BT");
+        deleteHierarchicalPair(broaderConceptId, narrowerConceptId, thesaurusId);
     }
 
     @Transactional
@@ -238,6 +236,22 @@ public class ConceptRelationWriteRepository {
                 .setParameter(NativeQueryParams.CONCEPT_ID2, toId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("role", role)
+                .executeUpdate();
+    }
+
+    private void deleteHierarchicalPair(String conceptId1, String conceptId2, String thesaurusId) {
+        entityManager.createNativeQuery("""
+                        DELETE FROM hierarchical_relationship
+                        WHERE id_thesaurus = :thesaurusId
+                          AND (
+                            (id_concept1 = :conceptId1 AND id_concept2 = :conceptId2)
+                            OR (id_concept1 = :conceptId2 AND id_concept2 = :conceptId1)
+                          )
+                          AND (role LIKE 'BT%' OR role LIKE 'NT%')
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
                 .executeUpdate();
     }
 

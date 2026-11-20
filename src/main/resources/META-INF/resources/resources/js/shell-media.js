@@ -693,7 +693,7 @@ function playLabelBlockEnter(nowEditing) {
 }
 
 function interceptLabelEditSwap(e) {
-  const start = e.target.closest("[id$='labelEditStart'], [id$='collEditStart'], [id$='relEditStart'], [id$='crelEditStart'], [id$='trEditStart'], [id$='noteEditStart'], [id$='resEditStart'], [id$='alignEditStart']");
+  const start = e.target.closest("[id$='labelEditStart'], [id$='collEditStart'], [id$='relEditStart'], [id$='relEditBt'], [id$='relEditNt'], [id$='relEditRt'], [id$='crelEditStart'], [id$='trEditStart'], [id$='noteEditStart'], [id$='resEditStart'], [id$='alignEditStart']");
   const cancel = e.target.closest("[id$='labelEditCancel'], [id$='collEditCancel'], [id$='relEditCancel'], [id$='crelEditCancel'], [id$='trEditCancel'], [id$='noteEditCancel'], [id$='resEditCancel'], [id$='alignAutoClose'], [id$='alignAutoCancelFoot']");
   const trigger = start || cancel;
   if (!trigger) return;

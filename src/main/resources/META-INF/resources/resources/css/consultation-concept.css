@@ -653,8 +653,9 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewLive .rel-count{font-family:var(--mono);font-size:10px;color:var(--ink-3);background:var(--surface-2);
   border-radius:var(--r-sm);padding:1px 5px}
 #viewLive .re-row.is-saved{background:var(--accent-soft)}
-#viewLive .rel-btype{font-size:11px;font-weight:500;letter-spacing:0;color:var(--ink-3);
-  background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-left:6px}
+#viewLive .rel-term{display:inline-flex;align-items:center;gap:6px}
+#viewLive .rel-btype{flex:0 0 auto;font-size:11px;font-weight:500;line-height:1.35;letter-spacing:0;
+  color:var(--ink-3);background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:0 5px;margin:0}
 #viewLive .re-row{display:flex;align-items:center;gap:8px 12px;padding:7px 4px;border-bottom:1px solid var(--line-2);flex-wrap:wrap}
 #viewLive .re-row:first-child{border-top:1px solid var(--line-2)}
 #viewLive .re-lbl{flex:1 1 auto;min-width:0;font-size:14.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -664,6 +665,38 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewLive .re-pill.rel-bt{background:#5c6875}
 #viewLive .re-pill.rel-nt{background:var(--accent)}
 #viewLive .re-pill.rel-rt{background:#8a6a16}
+#viewLive .re-hsel{flex:0 0 auto;height:22px;max-width:132px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);
+  font-family:var(--sans);font-size:11.5px;color:var(--ink-2);padding:0 4px;cursor:pointer}
+#viewLive .re-hsel:hover{border-color:var(--accent-line)}
+#viewLive .re-hsel[hidden]{display:none}
+#viewLive .re-pill.is-fixed{cursor:default}
+#viewLive [data-card-id="relations"] .rel-stack{display:flex;flex-direction:column}
+#viewLive [data-card-id="relations"].is-editing .rel-stack{gap:12px}
+#viewLive [data-card-id="relations"].is-editing .rel-stack > .crow,
+#viewLive [data-card-id="relations"].is-editing .rel-editor{
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:8px 12px 10px}
+#viewLive [data-card-id="relations"].is-editing .rel-editor{border-color:var(--accent-line);background:var(--surface)}
+#viewLive [data-card-id="relations"].is-editing .rel-stack > .crow{padding-top:6px;padding-bottom:6px}
+#viewLive #cvRelEditor .re-filter{margin:0 0 8px}
+#viewLive #cvRelEditor .re-filter-q{width:100%;height:34px;border-style:solid;background:var(--surface)}
+#viewLive #cvRelEditor.is-kind .re-rows{max-height:min(320px,46vh);overflow:auto;border:1px solid var(--line-2);
+  border-radius:var(--r-sm);background:var(--surface)}
+#viewLive #cvRelEditor.is-kind .re-group{padding-bottom:0}
+#viewLive #cvRelEditor.is-kind .re-group-h{position:sticky;top:0;z-index:2;margin:0;padding:7px 10px;
+  background:var(--surface-2);border-bottom:1px solid var(--line-2)}
+#viewLive #cvRelEditor.is-kind .re-rows .re-row{display:grid;grid-template-columns:minmax(0,1fr) 148px 28px;
+  align-items:center;gap:10px;flex-wrap:nowrap;margin:0;padding:6px 8px;border:0;border-bottom:1px solid var(--line-2);
+  border-radius:0;background:var(--surface)}
+#viewLive #cvRelEditor.is-kind .re-rows .re-row[data-kind="rt"]{grid-template-columns:minmax(0,1fr) 28px}
+#viewLive #cvRelEditor.is-kind .re-rows .re-row:last-child{border-bottom:0}
+#viewLive #cvRelEditor.is-kind .re-rows .re-row:hover{background:var(--surface-2)}
+#viewLive #cvRelEditor.is-kind .re-rows .re-row.is-saved{background:var(--accent-soft)}
+#viewLive #cvRelEditor.is-kind .re-lbl{font-size:14px;font-weight:500}
+#viewLive #cvRelEditor.is-kind .re-hsel{height:30px;width:148px;max-width:148px;padding:0 8px;font-size:13px;color:var(--ink)}
+#viewLive #cvRelEditor.is-kind .re-rows .re-x{justify-self:center;opacity:1}
+#viewLive #cvRelEditor.is-kind .re-empty{padding:10px 12px}
+#viewLive [data-card-id="relations"] .crow{grid-template-columns:minmax(210px,240px) 1fr}
+#viewLive [data-card-id="relations"] .crow-lbl .cblock-gear{flex:0 0 auto}
 #viewLive .re-caret{width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4px solid rgba(255,255,255,.85)}
 #viewLive .re-menu{position:absolute;left:0;top:calc(100% + 5px);z-index:40;min-width:212px;background:var(--surface);
   border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:4px}

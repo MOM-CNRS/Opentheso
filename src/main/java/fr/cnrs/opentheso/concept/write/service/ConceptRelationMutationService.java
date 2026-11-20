@@ -64,6 +64,19 @@ public class ConceptRelationMutationService {
     }
 
     @Transactional
+    public MutationResult updateHierarchicalRole(
+            String thesaurusId,
+            String conceptId,
+            String targetConceptId,
+            String directRole,
+            int userId,
+            String contributorName
+    ) {
+        return conceptRelationNativeWriteService.updateHierarchicalRole(
+                thesaurusId, conceptId, targetConceptId, directRole, userId, contributorName);
+    }
+
+    @Transactional
     public MutationResult applyNarrowerRelationToBranch(ApplyNarrowerRelationToBranchCommand command) {
         return conceptRelationNativeWriteService.applyNarrowerRelationToBranch(command);
     }

@@ -631,8 +631,11 @@ public class ConceptLabelBlockEditorBean implements Serializable {
             }
             first = false;
             sb.append("{\"id\":").append(jsonQuote(row.getId()))
-                    .append(",\"label\":").append(jsonQuote(row.getDisplayLabel()))
-                    .append('}');
+                    .append(",\"label\":").append(jsonQuote(row.getDisplayLabel()));
+            if (StringUtils.isNotBlank(row.getRole())) {
+                sb.append(",\"role\":").append(jsonQuote(row.getRole()));
+            }
+            sb.append('}');
         }
         return sb.append(']').toString();
     }
@@ -669,7 +672,12 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         if (StringUtils.isBlank(id) || !seen.add(id)) {
             return;
         }
-        rows.add(new FacetEditRow(id, node.path("label").asText("")));
+        FacetEditRow row = new FacetEditRow(id, node.path("label").asText(""));
+        String role = node.path("role").asText("");
+        if (StringUtils.isNotBlank(role)) {
+            row.setRole(role);
+        }
+        rows.add(row);
     }
 
     private static String jsonQuote(String value) {

@@ -1,0 +1,119 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="re#{empty conceptRelationBlockEditorBean.editingKind ? '' : ' is-kind'}" id="cvRelEditor"
+       data-edit-kind="#{conceptRelationBlockEditorBean.editingKind}"
+       data-none="#{localeBean.getMsg('candidat.draft.rel.none')}"
+       data-remove="#{localeBean.getMsg('candidat.draft.rel.remove')}"
+       data-exists="#{localeBean.getMsg('candidat.draft.rel.exists')}"
+       data-self="#{localeBean.getMsg('concept.rel.self')}"
+       data-other="#{localeBean.getMsg('concept.rel.other')}"
+       data-loop-nt="#{localeBean.getMsg('concept.rel.loopNt')}"
+       data-loop-bt="#{localeBean.getMsg('concept.rel.loopBt')}"
+       data-poly="#{localeBean.getMsg('concept.rel.poly')}"
+       data-kind-bt="#{localeBean.getMsg('candidat.draft.bt')}"
+       data-kind-nt="#{localeBean.getMsg('candidat.draft.nt')}"
+       data-kind-rt="#{localeBean.getMsg('candidat.draft.rt')}"
+       data-code-bt="#{localeBean.getMsg('concept.rel.code.bt')}"
+       data-code-nt="#{localeBean.getMsg('concept.rel.code.nt')}"
+       data-code-rt="#{localeBean.getMsg('concept.rel.code.rt')}"
+       data-hier-title="#{localeBean.getMsg('concept.rel.hier.title')}"
+       data-hier-s="#{localeBean.getMsg('concept.rel.hier.s')}"
+       data-hier-g="#{localeBean.getMsg('concept.rel.hier.g')}"
+       data-hier-p="#{localeBean.getMsg('concept.rel.hier.p')}"
+       data-hier-i="#{localeBean.getMsg('concept.rel.hier.i')}"
+       data-filter-empty="#{localeBean.getMsg('concept.rel.filter.empty')}">
+    <div class="re-filter">
+      <input type="text" class="st-input re-filter-q" id="cvRelFilter" autocomplete="off" spellcheck="false"
+             placeholder="#{localeBean.getMsg('concept.rel.filter')}"
+             aria-label="#{localeBean.getMsg('concept.rel.filter')}"/>
+    </div>
+    <div class="re-rows" id="cvRelRows">
+      <div class="re-group" data-kind="#{conceptRelationBlockEditorBean.editingKind}">
+        <div class="re-group-h"><span class="rel-code rel-#{conceptRelationBlockEditorBean.editingKind}">#{conceptRelationBlockEditorBean.editingBroader ? localeBean.getMsg('concept.rel.code.bt') : (conceptRelationBlockEditorBean.editingNarrower ? localeBean.getMsg('concept.rel.code.nt') : localeBean.getMsg('concept.rel.code.rt'))}</span>#{conceptRelationBlockEditorBean.editingBroader ? localeBean.getMsg('candidat.draft.bt') : (conceptRelationBlockEditorBean.editingNarrower ? localeBean.getMsg('candidat.draft.nt') : localeBean.getMsg('candidat.draft.rt'))}
+          <ui:fragment rendered="#{conceptRelationBlockEditorBean.editingBroader and not empty conceptRelationBlockEditorBean.selectedBroader}">
+            <span class="rel-count">#{conceptRelationBlockEditorBean.selectedBroader.size()}</span>
+          </ui:fragment>
+          <ui:fragment rendered="#{conceptRelationBlockEditorBean.editingNarrower and not empty conceptRelationBlockEditorBean.selectedNarrower}">
+            <span class="rel-count">#{conceptRelationBlockEditorBean.selectedNarrower.size()}</span>
+          </ui:fragment>
+          <ui:fragment rendered="#{conceptRelationBlockEditorBean.editingRelated and not empty conceptRelationBlockEditorBean.selectedRelated}">
+            <span class="rel-count">#{conceptRelationBlockEditorBean.selectedRelated.size()}</span>
+          </ui:fragment>
+        </div>
+        <ui:repeat value="#{conceptRelationBlockEditorBean.editingBroader ? conceptRelationBlockEditorBean.selectedBroader : (conceptRelationBlockEditorBean.editingNarrower ? conceptRelationBlockEditorBean.selectedNarrower : conceptRelationBlockEditorBean.selectedRelated)}" var="row">
+          <div class="re-row" data-kind="#{conceptRelationBlockEditorBean.editingKind}" data-id="#{row.id}" data-label="#{row.displayLabel}" data-role="#{row.role}">
+            <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+          </div>
+        </ui:repeat>
+        <ui:fragment rendered="#{(conceptRelationBlockEditorBean.editingBroader and empty conceptRelationBlockEditorBean.selectedBroader) or (conceptRelationBlockEditorBean.editingNarrower and empty conceptRelationBlockEditorBean.selectedNarrower) or (conceptRelationBlockEditorBean.editingRelated and empty conceptRelationBlockEditorBean.selectedRelated)}">
+          <div class="re-empty"><span class="muted">—</span></div>
+        </ui:fragment>
+      </div>
+    </div>
+    <div class="re-row re-new" id="cvRelNew">
+      <span class="re-type">
+        <span class="re-pill rel-#{conceptRelationBlockEditorBean.editingKind}" id="cvRelKindBtn">#{conceptRelationBlockEditorBean.editingBroader ? localeBean.getMsg('concept.rel.code.bt') : (conceptRelationBlockEditorBean.editingNarrower ? localeBean.getMsg('concept.rel.code.nt') : localeBean.getMsg('concept.rel.code.rt'))}</span>
+      </span>
+      <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingRelated}">
+        <select class="re-hsel" id="cvRelHier" title="#{localeBean.getMsg('concept.rel.hier.title')}" aria-label="#{localeBean.getMsg('concept.rel.hier.title')}">
+          <option value="S">#{localeBean.getMsg('concept.rel.hier.s')}</option>
+          <option value="G">#{localeBean.getMsg('concept.rel.hier.g')}</option>
+          <option value="P">#{localeBean.getMsg('concept.rel.hier.p')}</option>
+          <option value="I">#{localeBean.getMsg('concept.rel.hier.i')}</option>
+        </select>
+      </ui:fragment>
+      <div class="re-field">
+        <input type="text" class="st-input re-q" id="cvRelQ" autocomplete="off" spellcheck="false"
+               placeholder="#{localeBean.getMsg('candidat.draft.rel.add')}"
+               aria-label="#{localeBean.getMsg('candidat.draft.rel.add')}"/>
+        <div class="re-drop" id="cvRelDrop" hidden="hidden"></div>
+        <div class="re-none" id="cvRelEmpty" hidden="hidden">#{localeBean.getMsg('candidat.draft.rel.none')}</div>
+      </div>
+    </div>
+    <div class="re-msg" id="cvRelMsg" hidden="hidden"></div>
+    <div id="cvRelSeed" hidden="hidden">
+      <ui:fragment rendered="#{conceptRelationBlockEditorBean.editingBroader}">
+        <ui:repeat value="#{conceptRelationBlockEditorBean.selectedBroader}" var="row">
+          <span data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}" data-role="#{row.role}"></span>
+        </ui:repeat>
+      </ui:fragment>
+      <ui:fragment rendered="#{conceptRelationBlockEditorBean.editingNarrower}">
+        <ui:repeat value="#{conceptRelationBlockEditorBean.selectedNarrower}" var="row">
+          <span data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}" data-role="#{row.role}"></span>
+        </ui:repeat>
+      </ui:fragment>
+      <ui:fragment rendered="#{conceptRelationBlockEditorBean.editingRelated}">
+        <ui:repeat value="#{conceptRelationBlockEditorBean.selectedRelated}" var="row">
+          <span data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+        </ui:repeat>
+      </ui:fragment>
+    </div>
+    <h:inputHidden id="cvRelBtJson" pt:id="cvRelBtJson"
+                   value="#{conceptRelationBlockEditorBean.selectedBroaderJson}"/>
+    <h:inputHidden id="cvRelNtJson" pt:id="cvRelNtJson"
+                   value="#{conceptRelationBlockEditorBean.selectedNarrowerJson}"/>
+    <h:inputHidden id="cvRelRtJson" pt:id="cvRelRtJson"
+                   value="#{conceptRelationBlockEditorBean.selectedRelatedJson}"/>
+  </div>
+  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.errorMessage}">
+    <div class="cblock-edit-warn" role="alert">
+      <p>#{conceptRelationBlockEditorBean.errorMessage}</p>
+    </div>
+  </ui:fragment>
+  <div class="cblock-edit-foot">
+    <h:commandLink id="relEditCancel" styleClass="bo-btn ghost sm" immediate="true"
+                   action="#{conceptRelationBlockEditorBean.cancel}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+      <span>#{localeBean.getMsg('cancel')}</span>
+    </h:commandLink>
+    <h:commandLink id="relEditSave" styleClass="bo-btn primary sm"
+                   action="#{conceptRelationBlockEditorBean.save}">
+      <f:ajax execute="cvRelBtJson cvRelNtJson cvRelRtJson @this"
+              render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+      <span>#{localeBean.getMsg('concept.translation.done')}</span>
+    </h:commandLink>
+  </div>
+</ui:composition>
