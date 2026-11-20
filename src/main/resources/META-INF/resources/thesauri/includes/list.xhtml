@@ -457,7 +457,7 @@
                       data-tp-f-projects="#{thesaurusPickerBean.colFilterProjects(row)}"
                       data-tp-f-org="#{thesaurusPickerBean.colFilterOrg(row)}"
                       data-tp-f-langs="#{thesaurusPickerBean.colFilterLangs(row)}">
-                    <td class="tp-c-cfg"/>
+                    <td class="tp-c-cfg"><span class="tp-c-id" title="#{row.id}">#{row.id}</span></td>
                     <ui:repeat value="#{thesaurusPickerBean.columnCfg}" var="col">
                       <ui:fragment rendered="#{col.key eq 'name'}">
                         <td data-label="Thésaurus" data-col="name" class="tp-c-name tp-col-name#{col.on ? '' : ' is-col-off'}">
@@ -475,7 +475,6 @@
                                 </ui:fragment>
                               </span>
                             </span>
-                            <span class="tp-id">#{row.id}</span>
                           </a>
                         </td>
                       </ui:fragment>
