@@ -760,6 +760,24 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     /**
+     * Nature du lien stockée dans {@code hierarchical_relationship.role}.
+     * Générique (BT/NT, BTG/NTG, RT) : rien. Instantiel : « instance de ». Partitif : « partie ».
+     */
+    public String relationNatureLabel(String role) {
+        String code = StringUtils.trimToEmpty(role).toUpperCase(Locale.ROOT);
+        String key = switch (code) {
+            case "BTI", "NTI" -> "concept.rel.nature.instance";
+            case "BTP", "NTP", "RHP" -> "concept.rel.nature.part";
+            default -> "";
+        };
+        if (key.isEmpty() || localeBean == null) {
+            return "";
+        }
+        String label = StringUtils.trimToEmpty(localeBean.getMsg(key));
+        return key.equals(label) ? "" : label;
+    }
+
+    /**
      * Reprend la sélection partagée (après mutation menu fil d'Ariane) et recharge arbre + fiche.
      */
     public void refreshFromSelectionContext() {

@@ -125,8 +125,14 @@ function bindPrefSwitches() {
   bindLangMark();
 }
 
+function langMarkBoxes(root) {
+  if (!root || root === document) return document.querySelectorAll(".st-mark");
+  if (root.classList && root.classList.contains("st-mark")) return [root];
+  return root.querySelectorAll(".st-mark");
+}
+
 function syncLangMark(root) {
-  (root || document).querySelectorAll(".st-mark").forEach((box) => {
+  langMarkBoxes(root).forEach((box) => {
     const input = box.querySelector("input[data-flag='languageCodes']");
     if (!input) return;
     const codes = !!input.checked;

@@ -653,8 +653,8 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewLive .rel-count{font-family:var(--mono);font-size:10px;color:var(--ink-3);background:var(--surface-2);
   border-radius:var(--r-sm);padding:1px 5px}
 #viewLive .re-row.is-saved{background:var(--accent-soft)}
-#viewLive .rel-btype{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--ink-3);
-  border:1px solid var(--line-2);border-radius:var(--r-sm);padding:1px 4px;margin-left:6px}
+#viewLive .rel-btype{font-size:11px;font-weight:500;letter-spacing:0;color:var(--ink-3);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-left:6px}
 #viewLive .re-row{display:flex;align-items:center;gap:8px 12px;padding:7px 4px;border-bottom:1px solid var(--line-2);flex-wrap:wrap}
 #viewLive .re-row:first-child{border-top:1px solid var(--line-2)}
 #viewLive .re-lbl{flex:1 1 auto;min-width:0;font-size:14.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
