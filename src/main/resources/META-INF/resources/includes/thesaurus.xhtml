@@ -106,7 +106,8 @@
                 </h:form>
                 <h:outputLink value="#{request.contextPath}/oauth2/authorization/keycloak"
                               styleClass="menu-foot login-sso"
-                              rendered="#{appConfigBean.keycloakEnabled}">
+                              rendered="#{loginBean.keycloakEnabled}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.4 3.2 7.2 8 9 4.8-1.8 8-4.6 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>
                   #{localeBean.getMsg('nav.sso')}
                 </h:outputLink>
               </ui:fragment>

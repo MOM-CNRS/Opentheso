@@ -247,6 +247,12 @@ a.th-id{flex:1}
 .reset-card .login-go{border:0}
 #menu-login.is-forgot #previewLoginForm,
 #menu-login.is-forgot .login-sso{display:none}
+.login-sso{
+  justify-content:center;margin-top:14px;padding:10px 12px;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
+  font-weight:650;text-decoration:none
+}
+.login-sso:hover{border-color:var(--accent-line);background:var(--accent-soft);text-decoration:none}
 #menu-login:not(.is-forgot) #previewForgotForm{display:none}
 
 .login-go,a.login-go{
