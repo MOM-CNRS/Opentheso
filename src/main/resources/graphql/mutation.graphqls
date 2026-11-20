@@ -1,21 +1,5 @@
 # Mutations pour modifier un concept
 
 type Mutation {
-    # Labels
     setPrefLabel(idConcept: String!, idThesaurus: String!, input: LabelInput!): MutationResponse!
-    addAltLabel(identifier: String!, input: LabelInput!): NodeFullConcept
-    removeAltLabel(identifier: String!, input: LabelInput!): NodeFullConcept
-    addHiddenLabel(identifier: String!, input: LabelInput!): NodeFullConcept
-    removeHiddenLabel(identifier: String!, input: LabelInput!): NodeFullConcept
-
-    # Notes
-    setNote(identifier: String!, input: NoteInput!): NodeFullConcept
-    removeNote(identifier: String!, type: String!, lang: String!): NodeFullConcept
-
-    # Relations
-    addRelation(identifier: String!, input: RelationInput!): NodeFullConcept
-    removeRelation(identifier: String!, input: RelationInput!): NodeFullConcept
-
-    # Geo
-    setGeo(identifier: String!, input: GeoInput!): NodeFullConcept
 }

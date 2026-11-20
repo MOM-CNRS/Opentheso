@@ -6,8 +6,6 @@ import org.springframework.graphql.server.WebGraphQlResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
 @Component
 public class GraphQLContextInterceptor implements WebGraphQlInterceptor {
 
@@ -23,7 +21,7 @@ public class GraphQLContextInterceptor implements WebGraphQlInterceptor {
 
         // injecter dans le contexte GraphQL
         request.configureExecutionInput((executionInput, builder) ->
-                builder.graphQLContext(Map.of("X-API-KEY", apiKey)).build()
+                builder.graphQLContext(context -> context.put("X-API-KEY", apiKey)).build()
         );
 
         return chain.next(request);

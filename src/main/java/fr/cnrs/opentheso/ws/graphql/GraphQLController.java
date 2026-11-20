@@ -27,8 +27,7 @@ public class GraphQLController {
                                               @Argument String idConcept,
                                               @Argument String idLang) {
 
-        boolean isPrivate = !authenticatedUserSource.isLoggedIn();
-        return resourceService.getFullConcept(idTheso, idConcept, idLang, 0, 10, isPrivate);
+        return resourceService.getFullConcept(idTheso, idConcept, idLang, 0, 10, hidePrivateGroups());
     }
 
     @QueryMapping
@@ -48,13 +47,26 @@ public class GraphQLController {
             }
             listIds = searchService.searchAutoCompletionWSForWidget(value, idLang, stringArray, idTheso);
         } else {
-            listIds = searchService.searchFullTextElasticId(value, idLang, idTheso, false);
+            listIds = searchService.searchFullTextElasticId(value, idLang, idTheso, hidePrivateGroups());
         }
+        if (listIds == null || listIds.isEmpty()) {
+            return List.of();
+        }
+        boolean hidePrivateGroups = hidePrivateGroups();
         List<NodeFullConcept> nodeFullConcepts = new ArrayList<>();
         for (String idConcept : listIds) {
-            boolean isPrivate = !authenticatedUserSource.isLoggedIn();
-            nodeFullConcepts.add(resourceService.getFullConcept(idTheso, idConcept, idLang, 0, 10, isPrivate));
+            if (StringUtils.isBlank(idConcept)) {
+                continue;
+            }
+            NodeFullConcept concept = resourceService.getFullConcept(idTheso, idConcept, idLang, 0, 10, hidePrivateGroups);
+            if (concept != null) {
+                nodeFullConcepts.add(concept);
+            }
         }
         return nodeFullConcepts;
+    }
+
+    private boolean hidePrivateGroups() {
+        return !authenticatedUserSource.isLoggedIn();
     }
 }

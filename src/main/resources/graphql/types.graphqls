@@ -50,19 +50,3 @@ input LabelInput {
     lang: String!
     value: String!
 }
-
-input NoteInput {
-    type: String!
-    lang: String!
-    value: String!
-}
-
-input RelationInput {
-    type: String!
-    targetUri: String!
-}
-
-input GeoInput {
-    latitude: Float!
-    longitude: Float!
-}
