@@ -458,141 +458,17 @@
       </section>
 
       <section class="cblock#{conceptRelationBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="relations">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8 11.2 15.6 7.2"/><path d="M8 12.8 15.6 16.8"/></svg></span><span class="cblock-title">Relations sémantiques</span><div class="cblock-tools"><span class="cblock-branch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v6"/><path d="M6 15v6"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 11.2 16 7"/><path d="M8 12.8 16 17"/></svg><span>Branche</span><span class="cv-branch-val" data-cv-extra="branch"><button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 7h8v3H8z"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>Calculer</button></span></span><h:commandButton id="relEditStart" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8 11.2 15.6 7.2"/><path d="M8 12.8 15.6 16.8"/></svg></span><span class="cblock-title">Relations sémantiques</span><div class="cblock-tools"><span class="cblock-branch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v6"/><path d="M6 15v6"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 11.2 16 7"/><path d="M8 12.8 16 17"/></svg><span>Branche</span><span class="cv-branch-val" data-cv-extra="branch"><button type="button" class="bo-btn ghost sm cv-corpus-calc" data-act="branch-calc"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 7h8v3H8z"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>Calculer</button></span></span><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
+          <div class="rel-stack">
           <ui:fragment rendered="#{conceptRelationBlockEditorBean.editing}">
-          <div class="re" id="cvRelEditor"
-               data-none="#{localeBean.getMsg('candidat.draft.rel.none')}"
-               data-remove="#{localeBean.getMsg('candidat.draft.rel.remove')}"
-               data-exists="#{localeBean.getMsg('candidat.draft.rel.exists')}"
-               data-self="#{localeBean.getMsg('concept.rel.self')}"
-               data-other="#{localeBean.getMsg('concept.rel.other')}"
-               data-loop-nt="#{localeBean.getMsg('concept.rel.loopNt')}"
-               data-loop-bt="#{localeBean.getMsg('concept.rel.loopBt')}"
-               data-poly="#{localeBean.getMsg('concept.rel.poly')}"
-               data-kind-bt="#{localeBean.getMsg('candidat.draft.bt')}"
-               data-kind-nt="#{localeBean.getMsg('candidat.draft.nt')}"
-               data-kind-rt="#{localeBean.getMsg('candidat.draft.rt')}"
-               data-code-bt="#{localeBean.getMsg('concept.rel.code.bt')}"
-               data-code-nt="#{localeBean.getMsg('concept.rel.code.nt')}"
-               data-code-rt="#{localeBean.getMsg('concept.rel.code.rt')}">
-            <div class="re-rows" id="cvRelRows">
-              <div class="re-group" data-kind="bt">
-                <div class="re-group-h"><span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('candidat.draft.bt')}
-                  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedBroader}">
-                    <span class="rel-count">#{conceptRelationBlockEditorBean.selectedBroader.size()}</span>
-                  </ui:fragment>
-                </div>
-                <ui:repeat value="#{conceptRelationBlockEditorBean.selectedBroader}" var="row">
-                  <div class="re-row" data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}">
-                    <span class="re-type"><span class="re-pill rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span></span>
-                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
-                  </div>
-                </ui:repeat>
-                <ui:fragment rendered="#{empty conceptRelationBlockEditorBean.selectedBroader}">
-                  <div class="re-empty"><span class="muted">—</span></div>
-                </ui:fragment>
-              </div>
-              <div class="re-group" data-kind="nt">
-                <div class="re-group-h"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('candidat.draft.nt')}
-                  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedNarrower}">
-                    <span class="rel-count">#{conceptRelationBlockEditorBean.selectedNarrower.size()}</span>
-                  </ui:fragment>
-                </div>
-                <ui:repeat value="#{conceptRelationBlockEditorBean.selectedNarrower}" var="row">
-                  <div class="re-row" data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}">
-                    <span class="re-type"><span class="re-pill rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span></span>
-                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
-                  </div>
-                </ui:repeat>
-                <ui:fragment rendered="#{empty conceptRelationBlockEditorBean.selectedNarrower}">
-                  <div class="re-empty"><span class="muted">—</span></div>
-                </ui:fragment>
-              </div>
-              <div class="re-group" data-kind="rt">
-                <div class="re-group-h"><span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('candidat.draft.rt')}
-                  <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.selectedRelated}">
-                    <span class="rel-count">#{conceptRelationBlockEditorBean.selectedRelated.size()}</span>
-                  </ui:fragment>
-                </div>
-                <ui:repeat value="#{conceptRelationBlockEditorBean.selectedRelated}" var="row">
-                  <div class="re-row" data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}">
-                    <span class="re-type"><span class="re-pill rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span></span>
-                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
-                  </div>
-                </ui:repeat>
-                <ui:fragment rendered="#{empty conceptRelationBlockEditorBean.selectedRelated}">
-                  <div class="re-empty"><span class="muted">—</span></div>
-                </ui:fragment>
-              </div>
-            </div>
-            <div class="re-row re-new" id="cvRelNew">
-              <span class="re-type">
-                <button type="button" class="re-pill rel-nt" id="cvRelKindBtn"
-                        data-act="cv-rel-kind-toggle" aria-haspopup="listbox" aria-expanded="false">
-                  #{localeBean.getMsg('concept.rel.code.nt')}<span class="re-caret" aria-hidden="true"></span>
-                </button>
-                <div class="re-menu" id="cvRelKindMenu" hidden="hidden" role="listbox">
-                  <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="bt">
-                    <span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('candidat.draft.bt')}
-                  </button>
-                  <button type="button" class="re-mi on" role="option" data-act="cv-rel-kind" data-kind="nt">
-                    <span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('candidat.draft.nt')}
-                  </button>
-                  <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="rt">
-                    <span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('candidat.draft.rt')}
-                  </button>
-                </div>
-              </span>
-              <div class="re-field">
-                <input type="text" class="st-input re-q" id="cvRelQ" autocomplete="off" spellcheck="false"
-                       placeholder="#{localeBean.getMsg('candidat.draft.rel.add')}"
-                       aria-label="#{localeBean.getMsg('candidat.draft.rel.add')}"/>
-                <div class="re-drop" id="cvRelDrop" hidden="hidden"></div>
-                <div class="re-none" id="cvRelEmpty" hidden="hidden">#{localeBean.getMsg('candidat.draft.rel.none')}</div>
-              </div>
-            </div>
-            <div class="re-msg" id="cvRelMsg" hidden="hidden"></div>
-            <div id="cvRelSeed" hidden="hidden">
-              <ui:repeat value="#{conceptRelationBlockEditorBean.selectedBroader}" var="row">
-                <span data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
-              </ui:repeat>
-              <ui:repeat value="#{conceptRelationBlockEditorBean.selectedNarrower}" var="row">
-                <span data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
-              </ui:repeat>
-              <ui:repeat value="#{conceptRelationBlockEditorBean.selectedRelated}" var="row">
-                <span data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
-              </ui:repeat>
-            </div>
-            <h:inputHidden id="cvRelBtJson" pt:id="cvRelBtJson"
-                           value="#{conceptRelationBlockEditorBean.selectedBroaderJson}"/>
-            <h:inputHidden id="cvRelNtJson" pt:id="cvRelNtJson"
-                           value="#{conceptRelationBlockEditorBean.selectedNarrowerJson}"/>
-            <h:inputHidden id="cvRelRtJson" pt:id="cvRelRtJson"
-                           value="#{conceptRelationBlockEditorBean.selectedRelatedJson}"/>
-          </div>
-          <ui:fragment rendered="#{not empty conceptRelationBlockEditorBean.errorMessage}">
-            <div class="cblock-edit-warn" role="alert">
-              <p>#{conceptRelationBlockEditorBean.errorMessage}</p>
+            <div class="rel-editor" style="order:#{conceptRelationBlockEditorBean.editingRelated ? 3 : (conceptRelationBlockEditorBean.editingNarrower ? 2 : 1)}">
+              <ui:include src="concept-rel-editor.xhtml"/>
             </div>
           </ui:fragment>
-          <div class="cblock-edit-foot">
-            <h:commandLink id="relEditCancel" styleClass="bo-btn ghost sm" immediate="true"
-                           action="#{conceptRelationBlockEditorBean.cancel}">
-              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-              <span>#{localeBean.getMsg('cancel')}</span>
-            </h:commandLink>
-            <h:commandLink id="relEditSave" styleClass="bo-btn primary sm"
-                           action="#{conceptRelationBlockEditorBean.save}">
-              <f:ajax execute="cvRelBtJson cvRelNtJson cvRelRtJson @this"
-                      render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
-              <span>#{localeBean.getMsg('concept.translation.done')}</span>
-            </h:commandLink>
-          </div>
-          </ui:fragment>
-          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editing}">
-          <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('concept.rel.label.bt')}</div>
+          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingBroader}">
+          <div class="crow crow-rel" style="order:1">
+            <div class="crow-lbl"><span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('concept.rel.label.bt')}<h:commandButton id="relEditBt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('bt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
             <h:panelGroup id="broaderVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleBroaders}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleBroaders}">
@@ -610,8 +486,10 @@
               </ui:fragment>
             </h:panelGroup>
           </div>
-          <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('concept.rel.label.nt')}</div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingNarrower}">
+          <div class="crow crow-rel" style="order:2">
+            <div class="crow-lbl"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('concept.rel.label.nt')}<h:commandButton id="relEditNt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('nt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
             <h:panelGroup id="narrowerVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleNarrowers}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleNarrowers}">
@@ -629,8 +507,10 @@
               </ui:fragment>
             </h:panelGroup>
           </div>
-          <div class="crow crow-rel">
-            <div class="crow-lbl"><span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('concept.rel.label.rt')}</div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingRelated}">
+          <div class="crow crow-rel" style="order:3">
+            <div class="crow-lbl"><span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('concept.rel.label.rt')}<h:commandButton id="relEditRt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('rt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
             <h:panelGroup id="relatedVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleRelateds}"><span class="muted">—</span></ui:fragment>
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleRelateds}">
@@ -649,6 +529,7 @@
             </h:panelGroup>
           </div>
           </ui:fragment>
+          </div>
         </div>
       </section>
 

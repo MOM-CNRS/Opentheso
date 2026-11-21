@@ -28,9 +28,11 @@ import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,6 +66,12 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private List<ConceptRelation> baselineNarrower = new ArrayList<>();
+    private Map<String, String> baselineBroaderRoles = new LinkedHashMap<>();
+    private Map<String, String> baselineNarrowerRoles = new LinkedHashMap<>();
+    private List<FacetEditRow> snapshotBroader = new ArrayList<>();
+    private List<FacetEditRow> snapshotNarrower = new ArrayList<>();
+    private List<FacetEditRow> snapshotRelated = new ArrayList<>();
+    private String editingKind;
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
@@ -83,6 +91,30 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     }
 
     public void startEditing() {
+        openEditor(null);
+    }
+
+    public void startEditing(String kind) {
+        String normalized = normalizeKind(kind);
+        if (normalized == null) {
+            return;
+        }
+        openEditor(normalized);
+    }
+
+    public boolean isEditingBroader() {
+        return isEditing() && "bt".equals(editingKind);
+    }
+
+    public boolean isEditingNarrower() {
+        return isEditing() && "nt".equals(editingKind);
+    }
+
+    public boolean isEditingRelated() {
+        return isEditing() && "rt".equals(editingKind);
+    }
+
+    private void openEditor(String kind) {
         if (!isEditable()) {
             return;
         }
@@ -95,6 +127,12 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         selectedBroader = copyRelations(detail.getBroaderTerms());
         selectedNarrower = copyRelations(loadAllNarrowerRelations(detail));
         selectedRelated = copyRelations(detail.getRelatedTerms());
+        baselineBroaderRoles = roleIndex(detail.getBroaderTerms());
+        baselineNarrowerRoles = roleIndex(baselineNarrower);
+        snapshotBroader = copyRows(selectedBroader);
+        snapshotNarrower = copyRows(selectedNarrower);
+        snapshotRelated = copyRows(selectedRelated);
+        editingKind = kind;
         errorMessage = "";
         flashMessage = "";
         flashToken = "";
@@ -148,6 +186,8 @@ public class ConceptRelationBlockEditorBean implements Serializable {
             errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
+
+        restoreUntouchedKinds();
 
         String thesaurusId = thesaurusViewBean.getId();
         String conceptId = current.getSummary().getConceptId();
@@ -242,6 +282,17 @@ public class ConceptRelationBlockEditorBean implements Serializable {
                 dirty);
         if (!added.ok()) {
             treeReload = hierarchicalDirty;
+            return;
+        }
+
+        if (!applyRoleUpdates(
+                true, selectedBroader, baselineBroaderRoles, thesaurusId, conceptId, userId, contributor)) {
+            treeReload = true;
+            return;
+        }
+        if (!applyRoleUpdates(
+                false, selectedNarrower, baselineNarrowerRoles, thesaurusId, conceptId, userId, contributor)) {
+            treeReload = true;
             return;
         }
 
@@ -385,6 +436,12 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         selectedNarrower = new ArrayList<>();
         selectedRelated = new ArrayList<>();
         baselineNarrower = new ArrayList<>();
+        baselineBroaderRoles = new LinkedHashMap<>();
+        baselineNarrowerRoles = new LinkedHashMap<>();
+        snapshotBroader = new ArrayList<>();
+        snapshotNarrower = new ArrayList<>();
+        snapshotRelated = new ArrayList<>();
+        editingKind = null;
         errorMessage = "";
         treeReload = false;
         if (!keepFlash) {
@@ -458,6 +515,40 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         return new ArrayList<>(relations);
     }
 
+    private void restoreUntouchedKinds() {
+        if ("bt".equals(editingKind)) {
+            selectedNarrower = copyRows(snapshotNarrower);
+            selectedRelated = copyRows(snapshotRelated);
+        } else if ("nt".equals(editingKind)) {
+            selectedBroader = copyRows(snapshotBroader);
+            selectedRelated = copyRows(snapshotRelated);
+        } else if ("rt".equals(editingKind)) {
+            selectedBroader = copyRows(snapshotBroader);
+            selectedNarrower = copyRows(snapshotNarrower);
+        }
+    }
+
+    private static List<FacetEditRow> copyRows(List<FacetEditRow> rows) {
+        List<FacetEditRow> copy = new ArrayList<>();
+        if (rows == null) {
+            return copy;
+        }
+        for (FacetEditRow row : rows) {
+            if (row == null || StringUtils.isBlank(row.getId())) {
+                continue;
+            }
+            copy.add(new FacetEditRow(row.getId(), row.getLabel(), row.getRole()));
+        }
+        return copy;
+    }
+
+    private static String normalizeKind(String kind) {
+        return switch (StringUtils.trimToEmpty(kind).toLowerCase(Locale.ROOT)) {
+            case "bt", "nt", "rt" -> kind.trim().toLowerCase(Locale.ROOT);
+            default -> null;
+        };
+    }
+
     private static List<FacetEditRow> copyRelations(List<ConceptRelation> relations) {
         if (relations == null || relations.isEmpty()) {
             return new ArrayList<>();
@@ -467,7 +558,8 @@ public class ConceptRelationBlockEditorBean implements Serializable {
             if (relation == null || StringUtils.isBlank(relation.getConceptId())) {
                 continue;
             }
-            rows.add(new FacetEditRow(relation.getConceptId(), relation.getDisplayLabel()));
+            rows.add(new FacetEditRow(
+                    relation.getConceptId(), relation.getDisplayLabel(), relation.getRole()));
         }
         return rows;
     }
@@ -479,6 +571,73 @@ public class ConceptRelationBlockEditorBean implements Serializable {
             }
         }
         return false;
+    }
+
+    private boolean applyRoleUpdates(
+            boolean broader,
+            List<FacetEditRow> selected,
+            Map<String, String> baseline,
+            String thesaurusId,
+            String conceptId,
+            int userId,
+            String contributor
+    ) {
+        Map<String, String> previousRoles = baseline == null ? Map.of() : baseline;
+        String fallback = broader ? "BT" : "NT";
+        for (FacetEditRow row : selected) {
+            if (row == null || StringUtils.isBlank(row.getId())) {
+                continue;
+            }
+            String previous = StringUtils.trimToEmpty(previousRoles.get(normalizeId(row.getId())));
+            String wanted = directHierarchicalRole(broader, row.getRole());
+            String current = previous.isEmpty() ? fallback : previous;
+            if (wanted.equalsIgnoreCase(current)) {
+                continue;
+            }
+            MutationResult updated = conceptRelationMutationService.updateHierarchicalRole(
+                    thesaurusId, conceptId, row.getId(), wanted, userId, contributor);
+            if (!applyResult(updated, true)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static String directHierarchicalRole(boolean broader, String requested) {
+        return switch (hierarchicalFamily(requested)) {
+            case "G" -> broader ? "BTG" : "NTG";
+            case "P" -> broader ? "BTP" : "NTP";
+            case "I" -> broader ? "BTI" : "NTI";
+            default -> broader ? "BT" : "NT";
+        };
+    }
+
+    private static String hierarchicalFamily(String role) {
+        String code = StringUtils.trimToEmpty(role).toUpperCase(Locale.ROOT);
+        if ("BTG".equals(code) || "NTG".equals(code) || "G".equals(code)) {
+            return "G";
+        }
+        if ("BTP".equals(code) || "NTP".equals(code) || "P".equals(code)) {
+            return "P";
+        }
+        if ("BTI".equals(code) || "NTI".equals(code) || "I".equals(code)) {
+            return "I";
+        }
+        return "S";
+    }
+
+    private static Map<String, String> roleIndex(List<ConceptRelation> relations) {
+        Map<String, String> roles = new LinkedHashMap<>();
+        if (relations == null) {
+            return roles;
+        }
+        for (ConceptRelation relation : relations) {
+            if (relation == null || StringUtils.isBlank(relation.getConceptId())) {
+                continue;
+            }
+            roles.put(normalizeId(relation.getConceptId()), StringUtils.trimToEmpty(relation.getRole()));
+        }
+        return roles;
     }
 
     private static String normalizeId(String id) {

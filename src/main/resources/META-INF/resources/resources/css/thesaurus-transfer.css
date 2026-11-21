@@ -484,14 +484,18 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
     display:block;padding:0;border:0
   }
   .tp-table tbody tr.tp-empty-row td::before{content:none}
-  .tp-table tbody .tp-c-cfg{display:none!important}
+  .tp-table tbody .tp-c-cfg{
+    display:inline-flex!important;align-items:center;order:1;flex:0 1 auto;
+    width:auto!important;min-width:0!important;max-width:42%;padding:0!important
+  }
+  .tp-table tbody .tp-c-id{font-size:12px;color:var(--ink-3)}
   .tp-table tbody td{
     display:block;width:auto;border:0;padding:0;white-space:normal;order:4;
     overflow-wrap:anywhere;background:transparent!important;box-shadow:none!important;
     position:static!important
   }
   .tp-table tbody td::before{content:none!important}
-  .tp-table tbody .tp-c-name{flex:1 1 calc(100% - 120px);min-width:0;order:1}
+  .tp-table tbody .tp-c-name{flex:1 1 auto;min-width:0;order:1}
   .tp-table tbody .tp-c-edit{flex:0 0 auto;width:auto;min-width:0;order:2;margin-left:auto}
   .tp-table tbody td[data-col="access"],
   .tp-table tbody td[data-col="role"],
@@ -555,7 +559,7 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
   .tp-sub{font-size:13.5px}
   .tp-title{font-size:clamp(1.35rem,4.5vw,1.7rem)}
   .tp-bar-actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
-  .tp-import,.tp-create{width:100%;height:48px;border-radius:var(--r);font-size:13.5px;padding:0 12px}
+  .tp-sso,.tp-import,.tp-create{width:100%;height:48px;border-radius:var(--r);font-size:13.5px;padding:0 12px}
   .tp-add{width:100%}
   .tp-add-menu{left:0;right:0;width:auto}
   .tp-tabs{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none}

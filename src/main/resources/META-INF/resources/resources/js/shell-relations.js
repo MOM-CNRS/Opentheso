@@ -5,7 +5,7 @@ var CV_REL_META = {
   rt: { code: "TA" }
 };
 var cvRelState = {
-  bt: [], nt: [], rt: [], kind: "nt", seq: 0, timer: null, hits: [],
+  bt: [], nt: [], rt: [], kind: "nt", locked: false, seq: 0, timer: null, hits: [],
   painted: false, bound: null, added: {}, rowMenu: null, flash: null
 };
 
@@ -23,7 +23,7 @@ function parseCvRelSeed(kind) {
     const key = id.toLowerCase();
     if (!id || seen.has(key)) return;
     seen.add(key);
-    out.push({ id: id, label: el.getAttribute("data-label") || id });
+    out.push(cvRelItem(id, el.getAttribute("data-label") || id, el.getAttribute("data-role")));
   });
   return out;
 }
@@ -38,7 +38,7 @@ function parseCvRelFromDom(kind) {
     const key = id.toLowerCase();
     if (!id || seen.has(key)) return;
     seen.add(key);
-    out.push({ id: id, label: el.getAttribute("data-label") || el.textContent.trim() || id });
+    out.push(cvRelItem(id, el.getAttribute("data-label") || el.textContent.trim() || id, el.getAttribute("data-role")));
   });
   return out;
 }
@@ -64,7 +64,7 @@ function parseCvRelJson(kind) {
       const key = id.toLowerCase();
       if (!id || seen.has(key)) return;
       seen.add(key);
-      out.push({ id: id, label: row.label || id });
+      out.push(cvRelItem(id, row.label || id, row.role));
     });
     return out;
   } catch (ex) {
@@ -72,14 +72,19 @@ function parseCvRelJson(kind) {
   }
 }
 
+function cvRelActiveKinds() {
+  return cvRelState.locked ? [cvRelState.kind] : ["bt", "nt", "rt"];
+}
+
 function syncCvRelHidden() {
-  ["bt", "nt", "rt"].forEach((kind) => {
+  cvRelActiveKinds().forEach((kind) => {
     const el = cvRelHiddenEl(kind);
     if (el) {
-      el.value = JSON.stringify((cvRelState[kind] || []).map((item) => ({
-        id: item.id,
-        label: item.label || item.id
-      })));
+      el.value = JSON.stringify((cvRelState[kind] || []).map((item) => {
+        const payload = { id: item.id, label: item.label || item.id };
+        if (item.role) payload.role = item.role;
+        return payload;
+      }));
     }
   });
 }
@@ -89,16 +94,19 @@ function seedConceptRelFromHidden() {
   if (!editor) {
     cvRelState.bound = null;
     cvRelState.painted = false;
+    cvRelState.locked = false;
     cvRelState.added = {};
     cvRelState.rowMenu = null;
     return;
   }
   const box = $("#cvRelRows");
   if (cvRelState.bound === editor && cvRelState.painted && box && box.children.length) return;
+  const lockedKind = editor.getAttribute("data-edit-kind");
+  cvRelState.locked = !!(lockedKind && CV_REL_META[lockedKind]);
+  cvRelState.kind = cvRelState.locked ? lockedKind : "nt";
   cvRelState.bt = parseCvRelKind("bt");
   cvRelState.nt = parseCvRelKind("nt");
   cvRelState.rt = parseCvRelKind("rt");
-  cvRelState.kind = "nt";
   cvRelState.hits = [];
   cvRelState.added = {};
   cvRelState.rowMenu = null;
@@ -130,6 +138,54 @@ function cvRelKindLabel(kind) {
   const fromDom = editor && editor.getAttribute("data-kind-" + kind);
   if (fromDom) return fromDom;
   return (CV_REL_META[kind] || {}).code || kind;
+}
+
+function cvRelItem(id, label, role) {
+  const item = { id: id, label: label || id };
+  if (role) item.role = String(role);
+  return item;
+}
+
+function cvRelFamily(role) {
+  const code = String(role || "").toUpperCase();
+  if (code === "BTG" || code === "NTG" || code === "G") return "G";
+  if (code === "BTP" || code === "NTP" || code === "P") return "P";
+  if (code === "BTI" || code === "NTI" || code === "I") return "I";
+  return "S";
+}
+
+function cvRelRoleFor(kind, family) {
+  if (kind === "rt") return "";
+  if (family === "G") return kind === "bt" ? "BTG" : "NTG";
+  if (family === "P") return kind === "bt" ? "BTP" : "NTP";
+  if (family === "I") return kind === "bt" ? "BTI" : "NTI";
+  return kind === "bt" ? "BT" : "NT";
+}
+
+function cvRelHierLabel(family) {
+  const editor = $("#cvRelEditor");
+  const fromDom = editor && editor.getAttribute("data-hier-" + String(family || "G").toLowerCase());
+  if (fromDom) return fromDom;
+  if (family === "G") return "Generic";
+  if (family === "P") return "Partitive";
+  if (family === "I") return "Instantial";
+  return "Spécifique";
+}
+
+function cvRelHierTitle() {
+  const editor = $("#cvRelEditor");
+  return (editor && editor.getAttribute("data-hier-title")) || "Type de la relation hiérarchique";
+}
+
+function cvRelHierSelectHtml(kind, index, role) {
+  const family = cvRelFamily(role);
+  const title = escapeHtml(cvRelHierTitle());
+  const options = ["S", "G", "P", "I"].map((value) => {
+    const selected = value === family ? " selected" : "";
+    return '<option value="' + value + '"' + selected + ">" + escapeHtml(cvRelHierLabel(value)) + "</option>";
+  }).join("");
+  return '<select class="re-hsel" data-kind="' + kind + '" data-index="' + index
+    + '" title="' + title + '" aria-label="' + title + '">' + options + "</select>";
 }
 
 function cvRelKindCode(kind) {
@@ -245,14 +301,16 @@ function paintCvRelKind() {
   const menu = $("#cvRelKindMenu");
   const kind = cvRelState.kind;
   if (btn) {
-    btn.className = "re-pill rel-" + kind;
-    btn.innerHTML = cvRelKindCode(kind) + '<span class="re-caret" aria-hidden="true"></span>';
+    btn.className = "re-pill rel-" + kind + (cvRelState.locked ? " is-fixed" : "");
+    btn.innerHTML = cvRelKindCode(kind) + (cvRelState.locked ? "" : '<span class="re-caret" aria-hidden="true"></span>');
   }
   if (menu) {
     menu.querySelectorAll("[data-kind]").forEach((mi) => {
       mi.classList.toggle("on", mi.getAttribute("data-kind") === kind);
     });
   }
+  const hier = $("#cvRelHier");
+  if (hier) hier.hidden = kind === "rt";
 }
 
 function setCvRelKindMenu(open) {
@@ -263,7 +321,7 @@ function setCvRelKindMenu(open) {
 }
 
 function setCvRelKind(kind) {
-  if (!CV_REL_META[kind]) return;
+  if (cvRelState.locked || !CV_REL_META[kind]) return;
   cvRelState.kind = kind;
   cvRelState.rowMenu = null;
   paintCvRelKind();
@@ -272,7 +330,9 @@ function setCvRelKind(kind) {
 }
 
 function setCvRelRowMenu(key) {
-  cvRelState.rowMenu = key || null;
+  const next = key || null;
+  if (cvRelState.rowMenu === next) return;
+  cvRelState.rowMenu = next;
   paintCvRel();
 }
 
@@ -297,29 +357,62 @@ function cvRelRowHtml(row, remove) {
   const saved = cvRelState.added && cvRelState.added[row.k + ":" + key] ? " is-saved" : "";
   const menuKey = row.k + ":" + row.i;
   const open = cvRelState.rowMenu === menuKey;
+  const type = cvRelState.locked
+    ? ""
+    : '<span class="re-type">'
+      + '<button type="button" class="re-pill rel-' + row.k + '" data-act="cv-rel-row-kind-toggle"'
+      + ' data-kind="' + row.k + '" data-index="' + row.i + '"'
+      + ' aria-haspopup="listbox" aria-expanded="' + (open ? "true" : "false") + '">'
+      + code + '<span class="re-caret" aria-hidden="true"></span></button>'
+      + cvRelKindMenuHtml(row.k, "cv-rel-row-kind",
+          ' data-from="' + row.k + '" data-index="' + row.i + '"', open)
+      + "</span>";
+  const hier = row.k === "rt" ? "" : cvRelHierSelectHtml(row.k, row.i, row.item.role);
   return '<div class="re-row' + saved + '" data-kind="' + row.k
-    + '" data-id="' + escapeHtml(rawId) + '" data-label="' + label + '">'
-    + '<span class="re-type">'
-    + '<button type="button" class="re-pill rel-' + row.k + '" data-act="cv-rel-row-kind-toggle"'
-    + ' data-kind="' + row.k + '" data-index="' + row.i + '"'
-    + ' aria-haspopup="listbox" aria-expanded="' + (open ? "true" : "false") + '">'
-    + code + '<span class="re-caret" aria-hidden="true"></span></button>'
-    + cvRelKindMenuHtml(row.k, "cv-rel-row-kind",
-        ' data-from="' + row.k + '" data-index="' + row.i + '"', open)
-    + "</span>"
+    + '" data-id="' + escapeHtml(rawId) + '" data-label="' + label + '"'
+    + (row.item.role ? ' data-role="' + escapeHtml(String(row.item.role)) + '"' : "") + '>'
+    + type
     + '<span class="re-lbl" title="' + label + '">' + label + "</span>"
+    + hier
     + '<button type="button" class="re-x" data-act="cv-rel-remove" data-kind="' + row.k
     + '" data-index="' + row.i + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
     + "</div>";
 }
 
+function cvRelFold(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function cvRelListQuery() {
+  const input = $("#cvRelFilter");
+  return cvRelFold(input ? input.value : "");
+}
+
 function paintCvRelGroup(kind, remove) {
   const items = cvRelState[kind] || [];
+  const query = cvRelListQuery();
+  const visible = [];
+  items.forEach((item, i) => {
+    if (!query) {
+      visible.push({ item: item, i: i });
+      return;
+    }
+    const label = cvRelFold(item.label || item.id || "");
+    const id = cvRelFold(item.id || "");
+    if (label.indexOf(query) !== -1 || id.indexOf(query) !== -1) visible.push({ item: item, i: i });
+  });
   const title = escapeHtml(cvRelKindLabel(kind));
-  const count = items.length ? '<span class="rel-count">' + items.length + "</span>" : "";
-  const rows = items.length
-    ? items.map((item, i) => cvRelRowHtml({ k: kind, i: i, item: item }, remove)).join("")
-    : '<div class="re-empty"><span class="muted">—</span></div>';
+  const countLabel = items.length
+    ? (query ? visible.length + "/" + items.length : String(items.length))
+    : "";
+  const count = countLabel ? '<span class="rel-count">' + countLabel + "</span>" : "";
+  const editor = $("#cvRelEditor");
+  const emptyText = query
+    ? escapeHtml((editor && editor.getAttribute("data-filter-empty")) || "Aucun terme")
+    : "—";
+  const rows = visible.length
+    ? visible.map((row) => cvRelRowHtml({ k: kind, i: row.i, item: row.item }, remove)).join("")
+    : '<div class="re-empty"><span class="muted">' + emptyText + "</span></div>";
   return '<div class="re-group" data-kind="' + kind + '">'
     + '<div class="re-group-h"><span class="rel-code rel-' + kind + '">' + cvRelKindCode(kind) + "</span>"
     + title + count + "</div>"
@@ -332,7 +425,7 @@ function paintCvRel() {
   const editor = $("#cvRelEditor");
   if (!box) return;
   const remove = (editor && editor.getAttribute("data-remove")) || "Retirer";
-  box.innerHTML = ["bt", "nt", "rt"].map((kind) => paintCvRelGroup(kind, remove)).join("");
+  box.innerHTML = cvRelActiveKinds().map((kind) => paintCvRelGroup(kind, remove)).join("");
 }
 
 function setCvRelMsg(text, level) {
@@ -374,7 +467,12 @@ function addCvRel(id, label) {
     setCvRelMsg(check.msg, "error");
     return;
   }
-  cvRelState[kind].push({ id: key, label: name });
+  const added = { id: key, label: name };
+  if (kind !== "rt") {
+    const hier = $("#cvRelHier");
+    added.role = cvRelRoleFor(kind, hier && !hier.hidden ? hier.value : "S");
+  }
+  cvRelState[kind].push(added);
   const q = $("#cvRelQ");
   if (q) q.value = "";
   cvRelState.hits = [];
@@ -387,7 +485,7 @@ function addCvRel(id, label) {
 }
 
 function retypeCvRel(fromKind, index, toKind) {
-  if (!CV_REL_META[toKind] || !cvRelState[fromKind]) return;
+  if (cvRelState.locked || !CV_REL_META[toKind] || !cvRelState[fromKind]) return;
   const item = cvRelState[fromKind][Number(index)];
   if (!item) return;
   if (fromKind === toKind) {
@@ -403,6 +501,11 @@ function retypeCvRel(fromKind, index, toKind) {
     return;
   }
   cvRelState[fromKind].splice(Number(index), 1);
+  if (toKind === "rt") {
+    delete item.role;
+  } else {
+    item.role = cvRelRoleFor(toKind, fromKind === "rt" ? "S" : cvRelFamily(item.role));
+  }
   cvRelState[toKind].push(item);
   cvRelState.rowMenu = null;
   setCvRelMsg(check.level === "warn" ? check.msg : "", check.level);
@@ -974,4 +1077,20 @@ function pickActiveCrel() {
   toggleCrelPick(row.getAttribute("data-id"), row.getAttribute("data-label"), row.getAttribute("data-type"));
   return true;
 }
+
+document.addEventListener("input", (e) => {
+  if (!e.target || e.target.id !== "cvRelFilter") return;
+  cvRelState.rowMenu = null;
+  paintCvRel();
+});
+
+document.addEventListener("change", (e) => {
+  const sel = e.target && e.target.closest ? e.target.closest("#cvRelEditor select.re-hsel") : null;
+  if (!sel || sel.id === "cvRelHier") return;
+  const kind = sel.getAttribute("data-kind");
+  const item = cvRelState[kind] && cvRelState[kind][Number(sel.getAttribute("data-index"))];
+  if (!item) return;
+  item.role = cvRelRoleFor(kind, sel.value);
+  syncCvRelHidden();
+});
 

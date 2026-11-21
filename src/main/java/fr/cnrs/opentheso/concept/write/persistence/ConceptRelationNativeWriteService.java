@@ -322,6 +322,26 @@ public class ConceptRelationNativeWriteService {
     }
 
     @Transactional
+    public MutationResult updateHierarchicalRole(
+            String thesaurusId,
+            String conceptId,
+            String targetConceptId,
+            String directRole,
+            int userId,
+            String contributorName
+    ) {
+        String direct = StringUtils.trimToEmpty(directRole).toUpperCase(Locale.ROOT);
+        conceptRelationWriteRepository.updateRelationRoles(
+                conceptId,
+                targetConceptId,
+                thesaurusId,
+                direct,
+                inverseHierarchicalRole(direct),
+                userId);
+        return finalizeMutation(thesaurusId, conceptId, userId, contributorName, "Relation modifiée avec succès");
+    }
+
+    @Transactional
     public MutationResult applyNarrowerRelationToBranch(ApplyNarrowerRelationToBranchCommand command) {
         if (StringUtils.isBlank(command.ntRole())) {
             return MutationResult.validationError(NO_RELATION_SELECTED);
@@ -444,6 +464,20 @@ public class ConceptRelationNativeWriteService {
                     parentConceptId, childConceptId, thesaurusId, relation, inverseRelation, userId);
             applyRelationToBranchRecursive(childConceptId, thesaurusId, relation, inverseRelation, userId);
         }
+    }
+
+    private static String inverseHierarchicalRole(String role) {
+        return switch (StringUtils.defaultString(role)) {
+            case "BT" -> "NT";
+            case "NT" -> "BT";
+            case "BTG" -> "NTG";
+            case "NTG" -> "BTG";
+            case "BTP" -> "NTP";
+            case "NTP" -> "BTP";
+            case "BTI" -> "NTI";
+            case "NTI" -> "BTI";
+            default -> StringUtils.defaultString(role).startsWith("BT") ? "NT" : "BT";
+        };
     }
 
     private String inverseNtRole(String role) {

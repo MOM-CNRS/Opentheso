@@ -36,7 +36,7 @@ document.addEventListener("click", (e) => {
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
     if (!e.target.closest("#draftRelNew .re-type")) setDraftRelKindMenu(false);
     if (!e.target.closest("#draftRelNew .re-field")) hideDraftRelDrop();
-    if (!e.target.closest("#cvRelEditor .re-type") && typeof setCvRelKindMenu === "function") {
+    if (!e.target.closest("#cvRelEditor .re-type") && !e.target.closest("#cvRelEditor select") && typeof setCvRelKindMenu === "function") {
       setCvRelKindMenu(false);
       if (typeof setCvRelRowMenu === "function") setCvRelRowMenu(null);
     }

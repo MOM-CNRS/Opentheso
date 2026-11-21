@@ -14,10 +14,16 @@ public class FacetEditRow implements Serializable {
 
     private String id;
     private String label;
+    private String role;
 
     public FacetEditRow(String id, String label) {
         this.id = id;
         this.label = label;
+    }
+
+    public FacetEditRow(String id, String label, String role) {
+        this(id, label);
+        this.role = role;
     }
 
     public String getDisplayLabel() {

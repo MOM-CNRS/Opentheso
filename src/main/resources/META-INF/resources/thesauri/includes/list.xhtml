@@ -49,6 +49,12 @@
             </a>
           </div>
           <div class="tp-bar-actions">
+            <ui:fragment rendered="#{not thesaurusPickerBean.loggedIn and loginBean.keycloakEnabled}">
+              <a class="tp-sso" href="#{request.contextPath}/oauth2/authorization/keycloak">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.4 3.2 7.2 8 9 4.8-1.8 8-4.6 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>
+                <span>#{localeBean.getMsg('nav.sso')}</span>
+              </a>
+            </ui:fragment>
             <ui:fragment rendered="#{thesaurusPickerBean.canAddThesaurus}">
             <div class="tp-add" id="tpAdd">
               <button type="button"
@@ -457,7 +463,7 @@
                       data-tp-f-projects="#{thesaurusPickerBean.colFilterProjects(row)}"
                       data-tp-f-org="#{thesaurusPickerBean.colFilterOrg(row)}"
                       data-tp-f-langs="#{thesaurusPickerBean.colFilterLangs(row)}">
-                    <td class="tp-c-cfg"/>
+                    <td class="tp-c-cfg"><span class="tp-c-id" title="#{row.id}">#{row.id}</span></td>
                     <ui:repeat value="#{thesaurusPickerBean.columnCfg}" var="col">
                       <ui:fragment rendered="#{col.key eq 'name'}">
                         <td data-label="Thésaurus" data-col="name" class="tp-c-name tp-col-name#{col.on ? '' : ' is-col-off'}">
@@ -475,7 +481,6 @@
                                 </ui:fragment>
                               </span>
                             </span>
-                            <span class="tp-id">#{row.id}</span>
                           </a>
                         </td>
                       </ui:fragment>
