@@ -14,7 +14,7 @@
 
     <groupId>cnrs.opentheso</groupId>
     <artifactId>opentheso</artifactId>
-    <version>26.07.02</version>
+    <version>27.01.01</version>
     <packaging>jar</packaging>
     <name>opentheso</name>
 

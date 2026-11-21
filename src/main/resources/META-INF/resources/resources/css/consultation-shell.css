@@ -58,7 +58,7 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-
   flex:0 0 auto
 }
 .thesaurus-logo img{
-  width:35px;height:35px;display:block;object-fit:cover;border-radius:var(--r)}
+  width:35px;height:35px;display:block;border-radius:var(--r)}
 .thesaurus-logo:hover{filter:brightness(1.06)}
 .thesaurus-logo:active{transform:scale(.96)}
 .thesaurus-group{display:flex;flex-direction:column;align-items:center;gap:7px}

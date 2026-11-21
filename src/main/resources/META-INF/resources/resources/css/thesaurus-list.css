@@ -114,11 +114,11 @@ img.tp-gov-mark{
 }
 .gv-mark{
   display:block;flex:0 0 auto;
-  width:84px;height:auto;max-width:none;max-height:none;
+  max-height:40px;
   object-fit:unset;object-position:unset;
   padding:0;background:transparent;border:0;border-radius:0
 }
-.gv-brand{display:block;line-height:0;flex:0 0 auto}
+.gv-brand{display:block;line-height:0;flex:0 0 auto;}
 .tp-sub{
   font-family:var(--sans);
   font-size:14.5px;color:var(--ink-2);margin:5px 0 0;line-height:1.45;max-width:40rem;font-weight:400

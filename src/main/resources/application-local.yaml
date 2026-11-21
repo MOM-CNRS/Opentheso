@@ -120,28 +120,6 @@ crypto:
   openark:
     key: 12345678901234567890123456789012 # 32 caractères exactement pour la clé d'API pour OpenArk
 
-ai:
-  default-provider: ollama
-
-  providers:
-    ollama:
-      enabled: true
-      base-url: https://ollama.com/api/generate
-      api-key: ${OLLAMA_API_KEY}
-      model: gpt-oss:120b
-      response-path: response
-      timeout-ms: 30000
-      max-tokens: 800
-
-    openai:
-      enabled: false
-      base-url: https://api.openai.com/v1/chat/completions
-      api-key: ${OPENAI_API_KEY}
-      model: gpt-4o-mini
-      response-path: choices[0].message.content
-      timeout-ms: 30000
-      max-tokens: 800
-
 certificats:
   admpriv: ./certificats/admpriv.bin
   cacerts2: /Users/miledrousset/NetBeansProjects22/Opentheso/src/main/resources/certificats/cacerts2
