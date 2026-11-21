@@ -367,7 +367,6 @@ class ConceptReadServiceTest {
         ));
         when(conceptQueryRepository.findFacetMembers("F1", "TH1", "fr")).thenReturn(List.of());
         when(conceptQueryRepository.findFacetTranslations("F1", "TH1", "fr")).thenReturn(List.of());
-        when(conceptQueryRepository.findNotesByIdentifier("F1", "TH1", "fr")).thenReturn(List.of());
 
         var detail = service.loadFacetDetail("TH1", "F1", "fr");
 
