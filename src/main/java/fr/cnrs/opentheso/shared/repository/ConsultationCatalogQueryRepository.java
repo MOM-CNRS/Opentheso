@@ -68,21 +68,53 @@ public class ConsultationCatalogQueryRepository {
                 .toList();
     }
 
+    /**
+     * Thésaurus visibles pour une personne rattachée à des projets :
+     * les thésaurus publics, et ceux rattachés à ses projets (y compris privés).
+     * {@code projectId < 0} = tous ses projets ; sinon uniquement ce projet.
+     */
     @SuppressWarnings("unchecked")
     public List<ConsultationThesaurusOption> findAccessibleThesauriForUser(int userId, int projectId, String lang) {
         String sql = """
+                WITH visible AS (
+                    SELECT ugt.id_thesaurus
+                    FROM user_group_thesaurus ugt
+                    WHERE (:projectId < 0 OR ugt.id_group = :projectId)
+                      AND (
+                          EXISTS (
+                              SELECT 1 FROM user_role_group urg
+                              WHERE urg.id_user = :userId AND urg.id_group = ugt.id_group
+                          )
+                          OR EXISTS (
+                              SELECT 1 FROM user_role_only_on uro
+                              WHERE uro.id_user = :userId AND uro.id_group = ugt.id_group
+                          )
+                      )
+                    UNION
+                    SELECT t.id_thesaurus
+                    FROM thesaurus t
+                    WHERE COALESCE(t."private", false) = false
+                      AND (
+                          :projectId < 0
+                          OR EXISTS (
+                              SELECT 1
+                              FROM user_group_thesaurus gt
+                              WHERE gt.id_thesaurus = t.id_thesaurus
+                                AND gt.id_group = :projectId
+                          )
+                      )
+                )
                 SELECT
-                    ugt.id_thesaurus,
-                    COALESCE(tl_sub.title, NULLIF(p.preferredname, ugt.id_thesaurus), ugt.id_thesaurus) AS thesaurus_title,
+                    t.id_thesaurus,
+                    COALESCE(tl_sub.title, NULLIF(p.preferredname, t.id_thesaurus), t.id_thesaurus) AS thesaurus_title,
                     COALESCE(p.source_lang, :lang) AS default_lang
-                FROM user_group_label ugl
-                JOIN user_group_thesaurus ugt ON ugt.id_group = ugl.id_group
-                JOIN thesaurus t ON t.id_thesaurus = ugt.id_thesaurus
-                LEFT JOIN preferences p ON p.id_thesaurus = ugt.id_thesaurus
+                FROM visible v
+                JOIN thesaurus t ON t.id_thesaurus = v.id_thesaurus
+                LEFT JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
                 LEFT JOIN LATERAL (
                     SELECT tl.title
                     FROM thesaurus_label tl
-                    WHERE tl.id_thesaurus = ugt.id_thesaurus
+                    WHERE tl.id_thesaurus = t.id_thesaurus
                       AND tl.title IS NOT NULL
                       AND BTRIM(tl.title) <> ''
                     ORDER BY
@@ -93,12 +125,7 @@ public class ConsultationCatalogQueryRepository {
                       END
                     LIMIT 1
                 ) tl_sub ON true
-                WHERE (:projectId < 0 OR ugl.id_group = :projectId)
-                  AND (
-                      EXISTS (SELECT 1 FROM user_role_group urg WHERE urg.id_user = :userId AND urg.id_group = ugl.id_group)
-                      OR EXISTS (SELECT 1 FROM user_role_only_on uro WHERE uro.id_user = :userId AND uro.id_group = ugl.id_group)
-                  )
-                ORDER BY LOWER(ugt.id_thesaurus)
+                ORDER BY LOWER(t.id_thesaurus)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
                 .setParameter(NativeQueryParams.USER_ID, userId)
@@ -118,7 +145,9 @@ public class ConsultationCatalogQueryRepository {
     }
 
     /**
-     * Liste enrichie pour l'écran de sélection de thésaurus (publics + membres).
+     * Liste de la page principale.
+     * Invité : thésaurus publics. Super-admin : tous.
+     * Personne rattachée à des projets : thésaurus publics, plus ceux de ses projets.
      */
     @SuppressWarnings("unchecked")
     public List<Object[]> findPickerThesaurusRows(Integer userId, boolean superAdmin, String lang) {
@@ -164,6 +193,15 @@ public class ConsultationCatalogQueryRepository {
                         FROM user_role_group urg
                         JOIN user_group_thesaurus ugt ON ugt.id_group = urg.id_group
                         WHERE urg.id_user = CAST(:userId AS integer)
+
+                        UNION ALL
+
+                        SELECT
+                            ugt.id_thesaurus,
+                            uro.id_role
+                        FROM user_role_only_on uro
+                        JOIN user_group_thesaurus ugt ON ugt.id_group = uro.id_group
+                        WHERE uro.id_user = CAST(:userId AS integer)
 
                         UNION ALL
 

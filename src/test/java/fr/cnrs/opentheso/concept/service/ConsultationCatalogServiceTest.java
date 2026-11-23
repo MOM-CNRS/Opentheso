@@ -90,6 +90,19 @@ class ConsultationCatalogServiceTest {
     }
 
     @Test
+    void listThesauri_whenMember_usesPublicAndProjectThesauri() {
+        when(consultationCatalogQueryRepository.findAccessibleThesauriForUser(11, -1, "fr"))
+                .thenReturn(List.of(new ConsultationThesaurusOption("th59", "Public", "fr")));
+
+        List<ConsultationThesaurusOption> result = service.listThesauri(11, false, -1, "fr");
+
+        assertEquals("th59", result.get(0).id());
+        verify(consultationCatalogQueryRepository).findAccessibleThesauriForUser(11, -1, "fr");
+        verifyNoInteractions(projectAdminQueryRepository);
+        verifyNoInteractions(adminQueryRepository);
+    }
+
+    @Test
     void listThesauri_whenAllProjectsAndSuperAdmin_returnsAllThesauri() {
         when(adminQueryRepository.findAllThesauri("fr")).thenReturn(List.of());
 

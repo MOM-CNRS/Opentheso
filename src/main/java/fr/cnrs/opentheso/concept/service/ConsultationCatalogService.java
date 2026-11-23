@@ -54,9 +54,7 @@ public class ConsultationCatalogService {
         if (userId == null) {
             return consultationCatalogQueryRepository.findPublicThesauri(projectId, resolvedLang);
         }
-        // Aligné legacy SelectedTheso.setSelectedProject / getThesaurusOfProject :
-        // un projet précis → tous les thésaurus du projet (y compris privés).
-        if (projectId >= 0) {
+        if (superAdmin && projectId >= 0) {
             return projectAdminQueryRepository.findThesauriOfProject(projectId, resolvedLang).stream()
                     .map(row -> new ConsultationThesaurusOption(row.id(), row.title(), resolvedLang))
                     .toList();
@@ -70,6 +68,7 @@ public class ConsultationCatalogService {
                     ))
                     .toList();
         }
+        // Personne rattachée à des projets : thésaurus publics, plus ceux de ses projets.
         return consultationCatalogQueryRepository.findAccessibleThesauriForUser(userId, projectId, resolvedLang);
     }
 
