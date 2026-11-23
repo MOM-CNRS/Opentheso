@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.ws.openapi.v1.routes.thesaurus;
 
 import fr.cnrs.opentheso.services.PreferenceService;
+import fr.cnrs.opentheso.ws.api.RestThesaurusAccess;
+import fr.cnrs.opentheso.ws.api.RestThesaurusVisibility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +30,8 @@ public class ThesaurusNameController {
 
     @Autowired
     private PreferenceService preferenceService;
+    @Autowired
+    private RestThesaurusVisibility restThesaurusVisibility;
 
 
     /**
@@ -48,16 +52,21 @@ public class ThesaurusNameController {
         String idTheso = preferenceService.getThesaurusIdFromPersistentName(persistentThesaurusName);
 
         if (idTheso == null) {
-
             var error = Json.createObjectBuilder()
                     .add("code", "THESAURUS_NOT_FOUND")
                     .add("message", "Aucun thésaurus trouvé pour le nom pérenne fourni.")
                     .build();
-
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(error.toString());
+        }
+        RestThesaurusAccess access = restThesaurusVisibility.explain(restThesaurusVisibility.currentUserId(), idTheso);
+        if (access != RestThesaurusAccess.ALLOWED) {
+            return ResponseEntity
+                    .status(access.status())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(access.body());
         }
         var job = Json.createObjectBuilder();
         job.add("idTheso", idTheso);

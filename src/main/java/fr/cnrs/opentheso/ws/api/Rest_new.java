@@ -61,6 +61,7 @@ public class Rest_new {
     private final GroupService groupService;
     private final ThesaurusService thesaurusService;
     private final ConceptService conceptService;
+    private final RestThesaurusVisibility restThesaurusVisibility;
 
     private static final String JSON_FORMAT = "application/json";
     private static final String JSON_FORMAT_LONG = JSON_FORMAT + ";charset=UTF-8";
@@ -706,7 +707,7 @@ public class Rest_new {
     }
 
     private String getlistAllPublicTheso__() {
-        List<String> listPublicTheso = thesaurusService.getAllIdOfThesaurus(false);
+        List<String> listPublicTheso = restThesaurusVisibility.visibleIds(restThesaurusVisibility.currentUserId());
 
         NodeThesaurus nodeThesaurus;
 

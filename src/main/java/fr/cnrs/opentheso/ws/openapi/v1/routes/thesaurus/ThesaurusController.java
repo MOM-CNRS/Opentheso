@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 
 import fr.cnrs.opentheso.services.ThesaurusService;
+import fr.cnrs.opentheso.ws.api.RestThesaurusVisibility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,11 +38,12 @@ import static fr.cnrs.opentheso.ws.openapi.helper.CustomMediaType.APPLICATION_JS
 public class ThesaurusController {
 
     private final ThesaurusService thesaurusService;
+    private final RestThesaurusVisibility restThesaurusVisibility;
 
 
     @GetMapping
-    @Operation(summary = "Permet de récupérer tous les thesaurus publiques",
-            description = "Ancienne version : `/api/info/list?theso=all`<br/>Récupère une liste de tous les thésaurus publiques ainsi que les langues dans lesquelles ils sont disponibles.",
+    @Operation(summary = "Liste les thésaurus visibles avec la clé API fournie",
+            description = "Sans clé : thésaurus publics. Avec une clé : publics et thésaurus des projets du profil, ou tous les thésaurus si le profil est super-administrateur. Ancienne version : `/api/info/list?theso=all`.",
             tags = {"Thesaurus"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Liste contenant les ID des thesaurus publiques.", content = { @Content(mediaType = APPLICATION_JSON_UTF_8) }),
@@ -50,7 +52,7 @@ public class ThesaurusController {
     )
     public ResponseEntity<Object> getListAllPublicTheso() {
 
-        var listPublicTheso = thesaurusService.getAllIdOfThesaurus(false);
+        var listPublicTheso = restThesaurusVisibility.visibleIds(restThesaurusVisibility.currentUserId());
 
         JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
 

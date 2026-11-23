@@ -307,8 +307,9 @@ body[data-page="thesauri"] .tp-sub{
 body[data-page="thesauri"] .tp-head{align-items:flex-start;margin-bottom:26px}
 body[data-page="thesauri"] .tp-bar{align-items:center}
 body[data-page="thesauri"] .tp-search{
-  min-height:0;height:auto;gap:9px;padding:0 14px;
-  margin-bottom: 10px;
+  align-self:center;box-sizing:border-box;
+  height:var(--h-md);min-height:var(--h-md);max-height:var(--h-md);
+  gap:9px;padding:0 14px;margin:0;
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:none
 }
 body[data-page="thesauri"] .tp-search:hover{border-color:var(--line)}
@@ -322,12 +323,16 @@ body[data-page="thesauri"] .tp-search-ico svg{
 body[data-page="thesauri"] .tp-search-input,
 body[data-page="thesauri"] .tp-search input.tp-search-input,
 body[data-page="thesauri"] .tp-search input[type="text"]{
-  height:var(--h-md);font-size:var(--f-md);font-weight:400
+  height:100%;min-height:0;margin:0;padding:0;
+  font-size:var(--f-md);font-weight:400;line-height:1
 }
+body[data-page="thesauri"] .tp-bar-actions,
+body[data-page="thesauri"] .tp-add{align-self:center;margin:0}
 body[data-page="thesauri"] .tp-create,
 body[data-page="thesauri"] .tp-create:link,
 body[data-page="thesauri"] .tp-create:visited{
-  height:var(--h-md);padding:0 12px;border-radius:var(--r-sm);gap:var(--s-2);
+  align-self:center;box-sizing:border-box;margin:0;
+  height:var(--h-md);min-height:var(--h-md);padding:0 12px;border-radius:var(--r-sm);gap:var(--s-2);
   font:var(--w-semi) var(--f-md)/1 var(--sans);letter-spacing:0;box-shadow:none
 }
 body[data-page="thesauri"] .tp-create:hover,

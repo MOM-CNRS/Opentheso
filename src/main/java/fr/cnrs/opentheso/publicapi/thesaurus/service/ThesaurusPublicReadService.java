@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Service
@@ -89,20 +91,38 @@ public class ThesaurusPublicReadService {
 
     public List<PublicThesaurusSummaryResponse> listPublicThesauri() {
         return thesaurusRepository.findAllByIsPrivateFalseOrderByCreatedDesc().stream()
-                .map(thesaurus -> {
-                    String thesaurusId = thesaurus.getIdThesaurus();
-                    String type = thesaurusDcTermRepository.findAllByIdThesaurus(thesaurusId).stream()
-                            .filter(term -> "type".equalsIgnoreCase(term.getName()))
-                            .map(term -> term.getValue())
-                            .findFirst()
-                            .orElse("");
-                    var labels = thesaurusLabelRepository.findDistinctLangByIdThesaurus(thesaurusId).stream()
-                            .flatMap(lang -> thesaurusLabelRepository.findByIdThesaurusAndLang(thesaurusId, lang).stream())
-                            .map(label -> new PublicThesaurusSummaryResponse.Translation(label.getLang(), label.getTitle()))
-                            .toList();
-                    return new PublicThesaurusSummaryResponse(thesaurusId, type, labels);
-                })
+                .map(this::toSummary)
                 .toList();
+    }
+
+    public List<PublicThesaurusSummaryResponse> listByIds(List<String> thesaurusIds) {
+        if (thesaurusIds == null || thesaurusIds.isEmpty()) {
+            return List.of();
+        }
+        var byId = new LinkedHashMap<String, fr.cnrs.opentheso.entites.Thesaurus>();
+        thesaurusRepository.findAllById(thesaurusIds).forEach(thesaurus -> byId.putIfAbsent(thesaurus.getIdThesaurus(), thesaurus));
+        List<PublicThesaurusSummaryResponse> summaries = new ArrayList<>();
+        for (String thesaurusId : thesaurusIds) {
+            var thesaurus = byId.get(thesaurusId);
+            if (thesaurus != null) {
+                summaries.add(toSummary(thesaurus));
+            }
+        }
+        return summaries;
+    }
+
+    private PublicThesaurusSummaryResponse toSummary(fr.cnrs.opentheso.entites.Thesaurus thesaurus) {
+        String thesaurusId = thesaurus.getIdThesaurus();
+        String type = thesaurusDcTermRepository.findAllByIdThesaurus(thesaurusId).stream()
+                .filter(term -> "type".equalsIgnoreCase(term.getName()))
+                .map(term -> term.getValue())
+                .findFirst()
+                .orElse("");
+        var labels = thesaurusLabelRepository.findDistinctLangByIdThesaurus(thesaurusId).stream()
+                .flatMap(lang -> thesaurusLabelRepository.findByIdThesaurusAndLang(thesaurusId, lang).stream())
+                .map(label -> new PublicThesaurusSummaryResponse.Translation(label.getLang(), label.getTitle()))
+                .toList();
+        return new PublicThesaurusSummaryResponse(thesaurusId, type, labels);
     }
 
     private String resolveLang(String thesaurusId, String lang) {
