@@ -1,10 +1,8 @@
 package fr.cnrs.opentheso.ws.openapi.v1.routes.conceptpost;
 
+import fr.cnrs.opentheso.candidat.api.CandidatAuthSupport;
 import fr.cnrs.opentheso.services.CandidatService;
-import fr.cnrs.opentheso.services.ApiKeyService;
 import fr.cnrs.opentheso.services.UserService;
-import fr.cnrs.opentheso.utils.MD5Password;
-import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,8 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class CandidatController {
 
     private final CandidatService candidatService;
-    private final ApiKeyService apiKeyHelper;
     private final UserService userService;
+    private final CandidatAuthSupport candidatAuthSupport;
 
 
     /**
@@ -54,6 +52,7 @@ public class CandidatController {
         if (user == null) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Clé d'API invalide");
         }
+        candidatAuthSupport.requireContributor(user.getId(), candidate.getThesoId());
         String unknownNoteType = candidatService.unsupportedNoteType(candidate);
         if (unknownNoteType != null) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON)
