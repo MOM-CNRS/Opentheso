@@ -485,10 +485,10 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
   }
   .tp-table tbody tr.tp-empty-row td::before{content:none}
   .tp-table tbody .tp-c-cfg{
-    display:inline-flex!important;align-items:center;order:1;flex:0 1 auto;
-    width:auto!important;min-width:0!important;max-width:42%;padding:0!important
+    display:inline-flex!important;align-items:center;order:1;flex:0 0 auto;
+    width:auto!important;min-width:0!important;max-width:none!important;padding:0!important
   }
-  .tp-table tbody .tp-c-id{font-size:12px;color:var(--ink-3)}
+  .tp-table tbody .tp-c-id{font-size:12px;color:var(--ink-3);max-width:none;overflow:visible;text-overflow:clip}
   .tp-table tbody td{
     display:block;width:auto;border:0;padding:0;white-space:normal;order:4;
     overflow-wrap:anywhere;background:transparent!important;box-shadow:none!important;
