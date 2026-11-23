@@ -41,7 +41,7 @@ class FacetReadServiceTest {
                 .thenReturn(List.of(new ConceptTreeRow("C2", "", "Member", "D", false)));
         when(conceptQueryRepository.findFacetTranslations("F1", "TH1", "fr"))
                 .thenReturn(List.<Object[]>of(new Object[]{"en", "Facet EN"}));
-        when(conceptQueryRepository.findNotesByIdentifier("F1", "TH1", "fr"))
+        when(conceptQueryRepository.findAllNotesByIdentifier("F1", "TH1"))
                 .thenReturn(List.<Object[]>of(new Object[]{3, "definition", "fr", "Def"}));
 
         var detail = service.loadDetail("TH1", "F1", "fr");
