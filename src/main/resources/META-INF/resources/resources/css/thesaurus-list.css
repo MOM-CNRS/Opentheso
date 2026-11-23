@@ -199,14 +199,6 @@ img.tp-gov-mark{
 .tp-search-x:focus-visible{box-shadow:0 0 0 2px var(--accent-soft)}
 .tp-search-x svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
 .tp-bar-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto;position:relative;z-index:20}
-.tp-sso{
-  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  height:52px;padding:0 16px;border:1px solid var(--line);border-radius:var(--r);
-  background:var(--surface);color:var(--ink)!important;font-size:14px;font-weight:650;
-  letter-spacing:.01em;text-decoration:none!important;white-space:nowrap
-}
-.tp-sso svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.tp-sso:hover,.tp-sso:focus-visible{border-color:var(--accent-line);color:var(--accent)!important;background:var(--accent-soft)}
 .tp-add{position:relative;flex:0 0 auto}
 .tp-create,.tp-create:link,.tp-create:visited{
   flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
