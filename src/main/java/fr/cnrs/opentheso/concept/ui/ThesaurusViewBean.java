@@ -761,14 +761,16 @@ public class ThesaurusViewBean implements Serializable {
 
     /**
      * Nature du lien stockée dans {@code hierarchical_relationship.role}.
-     * Générique (BT/NT, BTG/NTG, RT) : rien. Instantiel : « instance de ». Partitif : « partie ».
+     * Le sens de lecture dépend de la liste affichée : « partie de » côté TG, « partie » côté TS.
+     * Relation standard (BT/NT) ou relation associative : rien.
      */
-    public String relationNatureLabel(String role) {
+    public String relationNatureLabel(String kind, String role) {
         String code = StringUtils.trimToEmpty(role).toUpperCase(Locale.ROOT);
+        String side = "bt".equals(kind) ? "bt" : "nt";
         String key = switch (code) {
-            case "BTI", "NTI" -> "concept.rel.nature.instance";
-            case "BTP", "NTP", "RHP" -> "concept.rel.nature.part";
-            case "BTG", "NTG" -> "concept.rel.nature.generic";
+            case "BTI", "NTI" -> "concept.rel.nature." + side + ".instance";
+            case "BTP", "NTP", "RHP" -> "concept.rel.nature." + side + ".part";
+            case "BTG", "NTG" -> "concept.rel.nature." + side + ".generic";
             default -> "";
         };
         if (key.isEmpty() || localeBean == null) {
