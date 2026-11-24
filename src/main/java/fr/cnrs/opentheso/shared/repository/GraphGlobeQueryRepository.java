@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.shared.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,41 +14,6 @@ public class GraphGlobeQueryRepository {
 
     @PersistenceContext
     private EntityManager em;
-
-    /**
-     * Points du globe : id, label, statut. Requête légère pour charger tout le thésaurus.
-     */
-    @SuppressWarnings("unchecked")
-    public List<Object[]> findGlobeConcepts(
-            String thesaurusId,
-            String lang,
-            boolean includeCandidates,
-            int limit
-    ) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT c.id_concept,
-                   COALESCE(t.lexical_value, c.id_concept) AS label,
-                   COALESCE(c.status, '') AS status
-            FROM concept c
-            LEFT JOIN preferred_term pt
-                ON pt.id_concept = c.id_concept
-                AND pt.id_thesaurus = c.id_thesaurus
-            LEFT JOIN term t
-                ON t.id_term = pt.id_term
-                AND t.id_thesaurus = c.id_thesaurus
-                AND t.lang = :lang
-            WHERE c.id_thesaurus = :thesaurusId
-            """);
-        if (!includeCandidates) {
-            sql.append(" AND c.status != 'CA' ");
-        }
-        sql.append(" ORDER BY label ");
-        Query query = em.createNativeQuery(sql.toString())
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter("lang", lang);
-        query.setMaxResults(Math.max(1, limit));
-        return query.getResultList();
-    }
 
     /**
      * Concept central : id, label, statut. Vide si le concept n'existe pas ou est un candidat masqué.

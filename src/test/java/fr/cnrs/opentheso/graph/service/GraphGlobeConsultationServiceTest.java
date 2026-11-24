@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.graph.service;
 
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
-import fr.cnrs.opentheso.graph.model.GraphGlobeNode;
 import fr.cnrs.opentheso.shared.repository.GraphGlobeQueryRepository;
 import fr.cnrs.opentheso.shared.repository.GraphGlobeQueryRepository.NeighborPage;
 import fr.cnrs.opentheso.concept.policy.ThesaurusConsultationAccessPolicy;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -53,55 +50,6 @@ class GraphGlobeConsultationServiceTest {
                 graphGlobeQueryRepository, authenticatedUserSource, preferencesRepository,
                 consultationAccessPolicy, rightsService);
         lenient().when(preferencesRepository.findByIdThesaurus(any())).thenReturn(Optional.empty());
-    }
-
-    @Test
-    void loadGlobe_mapsStatusAndLabel() {
-        when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
-        when(graphGlobeQueryRepository.findGlobeConcepts("TH1", "fr", false, 15001))
-                .thenReturn(List.<Object[]>of(
-                        new Object[]{"C1", "Adobe", "C"},
-                        new Object[]{"C2", "", "DEP"}
-                ));
-
-        var response = service.loadGlobe("TH1", "fr");
-
-        assertFalse(response.truncated());
-        assertEquals(2, response.nodes().size());
-        GraphGlobeNode first = response.nodes().get(0);
-        assertEquals("C1", first.id());
-        assertEquals("Adobe", first.label());
-        assertEquals("valide", first.status());
-        assertEquals("C2", response.nodes().get(1).id());
-        assertEquals("C2", response.nodes().get(1).label());
-        assertEquals("deprecie", response.nodes().get(1).status());
-        verify(graphGlobeQueryRepository).findGlobeConcepts(eq("TH1"), eq("fr"), eq(false), anyInt());
-    }
-
-    @Test
-    void loadGlobe_includesCandidatesWhenLoggedIn() {
-        when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
-        when(graphGlobeQueryRepository.findGlobeConcepts("TH1", "fr", true, 15001))
-                .thenReturn(List.<Object[]>of(new Object[]{"CA1", "Aiguille", "CA"}));
-
-        assertEquals("candidat", service.loadGlobe("TH1", "fr").nodes().get(0).status());
-        verify(graphGlobeQueryRepository).findGlobeConcepts(eq("TH1"), eq("fr"), eq(true), anyInt());
-    }
-
-    @Test
-    void loadGlobe_truncatesAfterCap() {
-        when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
-        List<Object[]> rows = new ArrayList<>();
-        for (int i = 0; i < 15001; i++) {
-            rows.add(new Object[]{"C" + i, "L" + i, "C"});
-        }
-        when(graphGlobeQueryRepository.findGlobeConcepts(eq("TH1"), eq("fr"), eq(false), anyInt()))
-                .thenReturn(rows);
-
-        var response = service.loadGlobe("TH1", "fr");
-
-        assertTrue(response.truncated());
-        assertEquals(15000, response.nodes().size());
     }
 
     @Test

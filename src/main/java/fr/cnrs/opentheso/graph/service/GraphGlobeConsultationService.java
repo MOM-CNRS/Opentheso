@@ -4,8 +4,6 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.concept.policy.ConceptStatusPolicy;
 import fr.cnrs.opentheso.concept.policy.ThesaurusConsultationAccessPolicy;
-import fr.cnrs.opentheso.graph.model.GraphGlobeNode;
-import fr.cnrs.opentheso.graph.model.GraphGlobeResponse;
 import fr.cnrs.opentheso.graph.model.GraphNeighbor;
 import fr.cnrs.opentheso.graph.model.GraphNeighborGroup;
 import fr.cnrs.opentheso.graph.model.GraphNeighborhoodResponse;
@@ -25,7 +23,6 @@ import java.util.Optional;
 @Service
 public class GraphGlobeConsultationService {
 
-    static final int MAX_NODES = 15_000;
     static final int NEIGHBORS_PER_ROLE = 30;
 
     private final GraphGlobeQueryRepository graphGlobeQueryRepository;
@@ -46,30 +43,6 @@ public class GraphGlobeConsultationService {
         this.preferencesRepository = preferencesRepository;
         this.consultationAccessPolicy = consultationAccessPolicy;
         this.rightsService = rightsService;
-    }
-
-    @Transactional(readOnly = true)
-    public GraphGlobeResponse loadGlobe(String thesaurusId, String lang) {
-        if (StringUtils.isAnyBlank(thesaurusId, lang)) {
-            return new GraphGlobeResponse(List.of(), false);
-        }
-        boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
-        List<Object[]> raw = graphGlobeQueryRepository.findGlobeConcepts(
-                thesaurusId, lang, includeCandidates, MAX_NODES + 1);
-        boolean truncated = raw.size() > MAX_NODES;
-        if (truncated) {
-            raw = new ArrayList<>(raw.subList(0, MAX_NODES));
-        }
-        List<GraphGlobeNode> nodes = new ArrayList<>(raw.size());
-        for (Object[] row : raw) {
-            String id = str(row, 0);
-            String label = str(row, 1);
-            if (label.isEmpty()) {
-                label = id;
-            }
-            nodes.add(new GraphGlobeNode(id, label, uiStatus(str(row, 2))));
-        }
-        return new GraphGlobeResponse(List.copyOf(nodes), truncated);
     }
 
     /**
