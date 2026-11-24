@@ -7,7 +7,10 @@
   "use strict";
 
   const ROLES = ["TG", "TS", "TA", "FA"];
-  const COLOR = { TG: "#1f7a5c", TS: "#2f6cb0", TA: "#a06e24", FA: "#7a4fa3", center: "#17382c" };
+  const COLOR = { TG: "#1f7a5c", TS: "#2f6cb0", TA: "#a06e24", FA: "#b3392f", center: "#17382c" };
+  /* Icône de facette de l'arbre (includes/tree-nodes.xhtml), dessinée dans un carré de 24. */
+  const FACET_ICON = ["m12 2 9 5-9 5-9-5 9-5Z", "m3 12 9 5 9-5", "m3 17 9 5 9-5"];
+  const FACET_PATHS = FACET_ICON.map((d) => new Path2D(d));
   const FOCAL = 2.35;
   const GOLDEN = Math.PI * (3 - Math.sqrt(5));
   const LABEL_MAX = 30;
@@ -274,8 +277,6 @@
       ctx.lineTo(x + size * 1.1, y);
       ctx.lineTo(x, y + size * 1.1);
       ctx.lineTo(x - size * 1.1, y);
-    } else if (n.role === "FA" || n.kind === "facet") {
-      ctx.rect(x - size * 0.9, y - size * 0.9, size * 1.8, size * 1.8);
     } else {
       ctx.arc(x, y, size, 0, Math.PI * 2);
     }
@@ -303,9 +304,40 @@
     return n.role === "center" ? 1 : 0.4 + 0.6 * Math.min(1, Math.max(0, (n.sz + 0.8) / 1.2));
   }
 
+  function isFacet(n) {
+    return n.role === "FA" || n.kind === "facet";
+  }
+
+  function nodeColor(n) {
+    return isFacet(n) ? COLOR.FA : COLOR[n.role];
+  }
+
+  /* Pastille claire sous l'icône : le lien ne la traverse pas. */
+  function drawFacet(ctx, n, size, active) {
+    const side = size * 2.5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(n.sx, n.sy, side * 0.62, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.translate(n.sx - side / 2, n.sy - side / 2);
+    ctx.scale(side / 24, side / 24);
+    ctx.strokeStyle = COLOR.FA;
+    ctx.lineWidth = active ? 2.6 : 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    FACET_PATHS.forEach((path) => ctx.stroke(path));
+    ctx.restore();
+  }
+
   function drawNode(ctx, n, active) {
     const size = n.role === "center" ? 13 : (n.sz > 0 ? 8 : 6.5) + (active ? 2 : 0);
     ctx.globalAlpha = active ? 1 : fade(n);
+    if (isFacet(n)) {
+      drawFacet(ctx, n, size, active);
+      ctx.globalAlpha = 1;
+      return;
+    }
     shape(ctx, n, size);
     const ghost = n.status === "candidat" || n.status === "deprecie";
     ctx.fillStyle = ghost ? "#ffffff" : COLOR[n.role];
@@ -356,7 +388,7 @@
       ctx.lineWidth = 4;
       ctx.lineJoin = "round";
       ctx.strokeStyle = "rgba(255,255,255,0.94)";
-      ctx.fillStyle = COLOR[n.role];
+      ctx.fillStyle = nodeColor(n);
       const tx = spot.x + w / 2;
       const ty = spot.y + h / 2;
       ctx.strokeText(text, tx, ty);
@@ -468,7 +500,7 @@
       if (role === "FA" && !group.total) return;
       const section = node("section", "hyper-sec hyper-sec-" + role);
       const head = node("h3", "hyper-sec-h");
-      const mark = node("span", "hyper-mark");
+      const mark = role === "FA" ? facetMark() : node("span", "hyper-mark");
       mark.setAttribute("aria-hidden", "true");
       head.append(mark);
       if (!facet && role !== "FA") head.append(node("span", "hyper-code", msg("code-" + code)));
@@ -487,6 +519,20 @@
       list.prepend(node("p", "hyper-none", msg("none")));
     }
     restoreFocus(list, inside);
+  }
+
+  function facetMark() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    FACET_ICON.forEach((d) => {
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", d);
+      svg.append(path);
+    });
+    const box = node("span", "tn-facet-ico");
+    box.append(svg);
+    return box;
   }
 
   function sectionLabel(role) {

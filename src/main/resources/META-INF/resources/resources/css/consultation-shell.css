@@ -594,7 +594,8 @@ html.is-tree-dnd #panelTree .tn-label{cursor:grabbing}
 .hyper-sec-TG{--rel:#1f7a5c}
 .hyper-sec-TS{--rel:#2f6cb0}
 .hyper-sec-TA{--rel:#a06e24}
-.hyper-sec-FA{--rel:#7a4fa3}
+.hyper-sec-FA{--rel:#b3392f}
+.hyper-sec-FA .tn-facet-ico{color:var(--rel)}
 .hyper-sec-h{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:12.5px;font-weight:700;color:var(--rel)}
 .hyper-mark{flex:0 0 12px;width:12px;height:12px;background:var(--rel)}
 .hyper-sec-TG .hyper-mark{clip-path:polygon(50% 0,100% 100%,0 100%)}

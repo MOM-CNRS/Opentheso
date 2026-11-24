@@ -89,11 +89,11 @@ function ensureGlobe() {
   if (document.querySelector("script[data-globe]")) return;
   const ctx = document.body.getAttribute("data-ctx") || "";
   const prep = document.createElement("script");
-  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261124-facettes";
+  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261124-facettes2";
   prep.dataset.globe = "1";
   prep.onload = () => {
     const script = document.createElement("script");
-    script.src = ctx + "/resources/js/globe.js?v=20261124-facettes";
+    script.src = ctx + "/resources/js/globe.js?v=20261124-facettes2";
     script.onload = () => {
       if (window.OTGlobe) window.OTGlobe.attach(globeHost()).ensure();
     };
