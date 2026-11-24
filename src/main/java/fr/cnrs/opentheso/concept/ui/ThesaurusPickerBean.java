@@ -106,6 +106,9 @@ public class ThesaurusPickerBean implements Serializable {
 
     private boolean editMode;
     private String editThesaurusId;
+    private String editThesaurusNewId;
+    private String editArkId;
+    private String editNotice;
     private String editTitle;
     private String editLanguage;
     private List<LanguageOption> editLanguages = Collections.emptyList();
@@ -766,6 +769,9 @@ public class ThesaurusPickerBean implements Serializable {
             cancelImportThesaurus();
             cancelExportThesaurus();
             editThesaurusId = details.id();
+            editThesaurusNewId = details.id();
+            editArkId = StringUtils.trimToNull(details.arkId());
+            editNotice = null;
             editLanguage = StringUtils.defaultIfBlank(details.sourceLang(), localeBean.getIdLangue());
             editLanguages = modifyThesaurusService.loadAllLanguages();
             editPossibleLanguages = new ArrayList<>();
@@ -792,6 +798,9 @@ public class ThesaurusPickerBean implements Serializable {
     public void cancelEditThesaurus() {
         editMode = false;
         editThesaurusId = null;
+        editThesaurusNewId = null;
+        editArkId = null;
+        editNotice = null;
         editTitle = null;
         editLanguage = null;
         editLanguages = Collections.emptyList();
@@ -810,8 +819,37 @@ public class ThesaurusPickerBean implements Serializable {
         editPrivateThesaurus = true;
     }
 
+    public void generateEditArk() {
+        editError = null;
+        editNotice = null;
+        if (!editMode || StringUtils.isBlank(editThesaurusId) || !assertCanManage(editThesaurusId)) {
+            editError = localeBean.getMsg("picker.edit.denied");
+            return;
+        }
+        var preferences = modifyThesaurusService.loadPreferences(editThesaurusId);
+        if (preferences == null || (!preferences.isUseArk() && !preferences.isUseArkLocal())) {
+            editError = localeBean.getMsg("picker.edit.ark.disabled");
+            return;
+        }
+        boolean alreadyAssigned = StringUtils.isNotBlank(editArkId);
+        String generated;
+        try {
+            generated = modifyThesaurusService.generateArkId(editThesaurusId);
+        } catch (InvalidToolboxDataException ex) {
+            editError = StringUtils.defaultIfBlank(ex.getMessage(), localeBean.getMsg("picker.edit.ark.failed"));
+            return;
+        }
+        if (StringUtils.isBlank(generated)) {
+            editError = localeBean.getMsg("picker.edit.ark.failed");
+            return;
+        }
+        editArkId = generated;
+        editNotice = localeBean.getMsg(alreadyAssigned ? "picker.edit.ark.exists" : "picker.edit.ark.done");
+    }
+
     public void submitEditThesaurus() {
         editError = null;
+        editNotice = null;
         applyPostedEditLanguages();
         if (!editMode || StringUtils.isBlank(editThesaurusId) || !assertCanManage(editThesaurusId)) {
             editError = localeBean.getMsg("picker.edit.denied");
@@ -821,17 +859,27 @@ public class ThesaurusPickerBean implements Serializable {
             editError = localeBean.getMsg("picker.edit.titleRequired");
             return;
         }
+        String thesaurusId = editThesaurusId;
+        String requestedId = StringUtils.trimToEmpty(editThesaurusNewId);
         try {
+            if (!requestedId.equals(thesaurusId)) {
+                modifyThesaurusService.changeIdentifier(thesaurusId, requestedId);
+                thesaurusId = fr.cnrs.opentheso.utils.StringUtils.convertString(requestedId);
+                if (consultationShellBean != null
+                        && Strings.CS.equals(consultationShellBean.getSelectedThesaurusId(), editThesaurusId)) {
+                    consultationShellBean.setSelectedThesaurusId(thesaurusId);
+                }
+            }
             String creator = StringUtils.defaultIfBlank(userSession.getCurrentUsername(), "user");
             modifyThesaurusService.updateLanguages(
-                    editThesaurusId,
+                    thesaurusId,
                     StringUtils.defaultIfBlank(editLanguage, localeBean.getIdLangue()),
                     editPossibleLanguages,
                     editTitle.trim(),
                     creator,
                     editTitles()
             );
-            modifyThesaurusService.changeVisibility(editThesaurusId, editPrivateThesaurus);
+            modifyThesaurusService.changeVisibility(thesaurusId, editPrivateThesaurus);
             String ok = localeBean.getMsg("picker.edit.success");
             MessageUtils.showInformationMessage(ok);
             showListFlash(ok);

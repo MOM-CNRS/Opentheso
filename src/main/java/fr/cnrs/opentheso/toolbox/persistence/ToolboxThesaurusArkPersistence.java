@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.toolbox.persistence;
 
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.concept.NodeMetaData;
+import fr.cnrs.opentheso.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.ws.ark.ArkHelper2;
@@ -39,8 +40,8 @@ public class ToolboxThesaurusArkPersistence {
     private String generateRemoteArk(Preferences preferences, String thesaurusId, String currentArk) {
         ArkHelper2 arkHelper2 = new ArkHelper2(preferences);
         if (!arkHelper2.login()) {
-            MessageUtils.showErrorMessage("Erreur de connexion Ark !!");
-            return null;
+            throw new InvalidToolboxDataException(StringUtils.defaultIfBlank(
+                    arkHelper2.getMessage(), "Erreur de connexion au serveur ARK."));
         }
         if (StringUtils.isNotEmpty(currentArk)) {
             return currentArk;

@@ -499,6 +499,7 @@ public class ThesaurusService {
         return true;
     }
 
+    @Transactional
     public boolean changeIdOfThesaurus(String oldIdThesaurus, String newIdThesaurus) {
 
         log.debug("Changement de l'id du thésaurus du {} vers {}", oldIdThesaurus, newIdThesaurus);

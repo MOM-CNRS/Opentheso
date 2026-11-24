@@ -149,11 +149,16 @@ public class ModifyThesaurusBean implements Serializable {
         if (!canManage()) {
             return;
         }
-        String generated = modifyThesaurusService.generateArkId(thesaurusId);
-        if (StringUtils.isNotBlank(generated)) {
-            arkId = generated;
+        try {
+            String generated = modifyThesaurusService.generateArkId(thesaurusId);
+            if (StringUtils.isNotBlank(generated)) {
+                arkId = generated;
+            }
+            refreshDetails();
+        } catch (InvalidToolboxDataException ex) {
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(
+                    ex.getMessage(), "Erreur de connexion au serveur ARK."));
         }
-        refreshDetails();
     }
 
     public void changeThesaurusId() {

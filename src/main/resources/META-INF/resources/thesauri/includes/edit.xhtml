@@ -23,11 +23,45 @@
               <ui:fragment rendered="#{not empty thesaurusPickerBean.editError}">
                 <div class="tp-alert is-err" role="alert">#{thesaurusPickerBean.editError}</div>
               </ui:fragment>
+              <ui:fragment rendered="#{empty thesaurusPickerBean.editError and not empty thesaurusPickerBean.editNotice}">
+                <div class="tp-alert is-ok" role="status">#{thesaurusPickerBean.editNotice}</div>
+              </ui:fragment>
             </h:panelGroup>
             <div class="tp-form-card">
               <div class="tp-form-row">
-                <span class="tp-form-l">#{localeBean.getMsg('picker.edit.id')}</span>
-                <div class="tp-form-ro"><code>#{thesaurusPickerBean.editThesaurusId}</code></div>
+                <label class="tp-form-l" for="tpEditId">#{localeBean.getMsg('picker.edit.id')}</label>
+                <div class="tp-form-field">
+                  <h:inputText id="tpEditId"
+                               styleClass="tp-form-i tp-form-id"
+                               value="#{thesaurusPickerBean.editThesaurusNewId}"
+                               pt:autocomplete="off"
+                               pt:spellcheck="false"
+                               pt:maxlength="64"/>
+                  <p class="tp-lang-hint">#{localeBean.getMsg('picker.edit.idHint')}</p>
+                </div>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">#{localeBean.getMsg('picker.edit.ark')}</span>
+                <div class="tp-form-field">
+                  <div class="tp-ark-line">
+                    <h:panelGroup id="tpEditArk" layout="block" styleClass="tp-ark-value">
+                      <ui:fragment rendered="#{not empty thesaurusPickerBean.editArkId}">
+                        <code>#{thesaurusPickerBean.editArkId}</code>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{empty thesaurusPickerBean.editArkId}">
+                        <span class="muted">#{localeBean.getMsg('picker.edit.ark.none')}</span>
+                      </ui:fragment>
+                    </h:panelGroup>
+                    <h:commandLink id="tpEditArkBtn"
+                                   styleClass="tp-ark-btn"
+                                   action="#{thesaurusPickerBean.generateEditArk}"
+                                   title="#{localeBean.getMsg('picker.edit.ark.generateTitle')}">
+                      <f:ajax execute="@this" render="tpEditAlerts tpEditArk"/>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.5 4.6L18.2 9 13.5 10.6 12 15.2 10.5 10.6 5.8 9l4.7-1.4L12 3z"/><path d="M18.5 14.2l.7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7.7-2.1z"/></svg>
+                      <span>#{localeBean.getMsg('picker.edit.ark.generate')}</span>
+                    </h:commandLink>
+                  </div>
+                </div>
               </div>
               <div class="tp-form-row">
                 <label class="tp-form-l" for="tpEditTitle">Nom <span class="tp-req">*</span></label>
