@@ -935,12 +935,16 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewLive [data-card-id="relations"]:not(.is-editing) :is(.crow-bt,.crow-nt)::before{top:14px}
 #viewLive [data-card-id="relations"]:not(.is-editing) .crow-bt::before{background:var(--rel-bt);clip-path:polygon(50% 0,100% 100%,0 100%)}
 #viewLive [data-card-id="relations"]:not(.is-editing) .crow-nt::before{background:var(--rel-nt);clip-path:polygon(0 0,100% 0,50% 100%)}
+/* Le rail s'arrête à la pointe ▼, même quand les spécifiques tiennent sur plusieurs lignes. */
+#viewLive [data-card-id="relations"]:not(.is-editing) .crow-nt::after{
+  content:"";position:absolute;inset-inline-start:7px;top:27px;bottom:0;width:4px;background:var(--surface)}
 #viewLive [data-card-id="relations"] .rel-mid{display:grid;grid-template-columns:minmax(210px,240px) minmax(0,1fr);gap:12px;align-items:center}
 #viewLive [data-card-id="relations"] .rel-self{font-size:15px;font-weight:700;color:var(--ink);min-width:0;overflow-wrap:anywhere}
 #viewLive [data-card-id="relations"] .rel-mid .rel-self::before{top:calc(50% - 7px);height:14px;width:14px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--surface)}
 #viewLive [data-card-id="relations"] .rel-mid .crow-rt{position:relative;display:flex;flex-direction:column;gap:7px;align-items:stretch;border:0;padding:0}
 #viewLive [data-card-id="relations"] .rel-mid .crow-rt::before{
-  content:"";position:absolute;inset-inline-start:-36px;top:50%;width:28px;border-top:2px dashed var(--rel-rt)}
+  content:"↔";content:"↔" / "";position:absolute;inset-inline-start:-36px;top:50%;width:28px;
+  transform:translateY(-50%);text-align:center;font-size:22px;line-height:1;color:var(--rel-rt)}
 #viewLive [data-card-id="relations"] .crow-rt .crow-lbl .cblock-gear{margin-inline-start:4px}
 #viewLive [data-card-id="relations"] .crow-bt .rel-term{border-color:color-mix(in srgb,var(--rel-bt) 45%,var(--line))}
 #viewLive [data-card-id="relations"] .crow-nt .rel-term{border-color:color-mix(in srgb,var(--rel-nt) 45%,var(--line))}
@@ -954,5 +958,5 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
   #viewLive [data-card-id="relations"]:not(.is-editing) .rel-self::before{top:13px}
   #viewLive [data-card-id="relations"] .crow-rel{grid-template-columns:minmax(0,1fr);gap:7px}
   #viewLive [data-card-id="relations"] .rel-mid .crow-rt{padding-inline-start:26px}
-  #viewLive [data-card-id="relations"] .rel-mid .crow-rt::before{inset-inline-start:0;width:18px;top:10px}
+  #viewLive [data-card-id="relations"] .rel-mid .crow-rt::before{inset-inline-start:0;width:20px;top:10px;font-size:18px}
 }
