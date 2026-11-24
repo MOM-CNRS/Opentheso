@@ -2,6 +2,8 @@
 /* ── Shell fluide : respecte target.html, s'adapte aux écrans ── */
 html{height:100%}
 .app{min-height:100%;min-height:100dvh}
+/* Les panneaux défilent eux-mêmes : la page ne doit jamais ajouter son propre ascenseur. */
+body:is([data-page="accueil"],[data-page="consultation"]){overflow:hidden}
 .view{scroll-behavior:smooth}
 .sb-rail-btn,.sb-scrim{display:none}
 .view-panel.is-nav-in.is-on > .cv,
