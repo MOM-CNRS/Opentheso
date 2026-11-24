@@ -462,12 +462,12 @@
         <div class="cblock-body">
           <div class="rel-stack">
           <ui:fragment rendered="#{conceptRelationBlockEditorBean.editing}">
-            <div class="rel-editor" style="order:#{conceptRelationBlockEditorBean.editingRelated ? 3 : (conceptRelationBlockEditorBean.editingNarrower ? 2 : 1)}">
+            <div class="rel-editor" style="order:#{conceptRelationBlockEditorBean.editingRelated ? 3 : (conceptRelationBlockEditorBean.editingNarrower ? 4 : 1)}">
               <ui:include src="concept-rel-editor.xhtml"/>
             </div>
           </ui:fragment>
           <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingBroader}">
-          <div class="crow crow-rel" style="order:1">
+          <div class="crow crow-rel crow-bt" style="order:1">
             <div class="crow-lbl"><span class="rel-code rel-bt">#{localeBean.getMsg('concept.rel.code.bt')}</span>#{localeBean.getMsg('concept.rel.label.bt')}<h:commandButton id="relEditBt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('bt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
             <h:panelGroup id="broaderVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleBroaders}"><span class="muted">—</span></ui:fragment>
@@ -487,29 +487,10 @@
             </h:panelGroup>
           </div>
           </ui:fragment>
-          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingNarrower}">
-          <div class="crow crow-rel" style="order:2">
-            <div class="crow-lbl"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('concept.rel.label.nt')}<h:commandButton id="relEditNt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('nt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
-            <h:panelGroup id="narrowerVal" layout="block" styleClass="crow-val">
-              <ui:fragment rendered="#{empty thesaurusViewBean.visibleNarrowers}"><span class="muted">—</span></ui:fragment>
-              <ui:fragment rendered="#{not empty thesaurusViewBean.visibleNarrowers}">
-              <div class="rel-items">
-                <ui:repeat value="#{thesaurusViewBean.visibleNarrowers}" var="rel" varStatus="st">
-                  <button type="button" class="#{thesaurusViewBean.relationTermClass('nt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('nt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel('nt', rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel('nt', rel.role)}</span></ui:fragment></button>
-                </ui:repeat>
-                <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.narrowerMoreVisible}"
-                               action="#{thesaurusViewBean.showMoreNarrowers}"
-                               pt:aria-label="Afficher 20 de plus" pt:title="Afficher 20 de plus">
-                  <f:ajax execute="@this" render="narrowerVal"/>
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
-                </h:commandLink>
-              </div>
-              </ui:fragment>
-            </h:panelGroup>
-          </div>
-          </ui:fragment>
+          <div class="rel-mid" style="order:2">
+            <div class="rel-self"><bdi class="rel-self-l">#{thesaurusViewBean.dash(thesaurusViewBean.displayedPreferredLabel)}</bdi></div>
           <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingRelated}">
-          <div class="crow crow-rel" style="order:3">
+          <div class="crow crow-rel crow-rt">
             <div class="crow-lbl"><span class="rel-code rel-rt">#{localeBean.getMsg('concept.rel.code.rt')}</span>#{localeBean.getMsg('concept.rel.label.rt')}<h:commandButton id="relEditRt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('rt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
             <h:panelGroup id="relatedVal" layout="block" styleClass="crow-val">
               <ui:fragment rendered="#{empty thesaurusViewBean.visibleRelateds}"><span class="muted">—</span></ui:fragment>
@@ -522,6 +503,28 @@
                                action="#{thesaurusViewBean.showMoreRelateds}"
                                pt:aria-label="Afficher 10 de plus" pt:title="Afficher 10 de plus">
                   <f:ajax execute="@this" render="relatedVal"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+                </h:commandLink>
+              </div>
+              </ui:fragment>
+            </h:panelGroup>
+          </div>
+          </ui:fragment>
+          </div>
+          <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingNarrower}">
+          <div class="crow crow-rel crow-nt" style="order:4">
+            <div class="crow-lbl"><span class="rel-code rel-nt">#{localeBean.getMsg('concept.rel.code.nt')}</span>#{localeBean.getMsg('concept.rel.label.nt')}<h:commandButton id="relEditNt" value="✎" styleClass="cblock-gear" title="#{localeBean.getMsg('edit')}" rendered="#{conceptRelationBlockEditorBean.editable and not conceptRelationBlockEditorBean.editing}" action="#{conceptRelationBlockEditorBean.startEditing('nt')}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton></div>
+            <h:panelGroup id="narrowerVal" layout="block" styleClass="crow-val">
+              <ui:fragment rendered="#{empty thesaurusViewBean.visibleNarrowers}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty thesaurusViewBean.visibleNarrowers}">
+              <div class="rel-items">
+                <ui:repeat value="#{thesaurusViewBean.visibleNarrowers}" var="rel" varStatus="st">
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('nt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('nt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel('nt', rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel('nt', rel.role)}</span></ui:fragment></button>
+                </ui:repeat>
+                <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.narrowerMoreVisible}"
+                               action="#{thesaurusViewBean.showMoreNarrowers}"
+                               pt:aria-label="Afficher 20 de plus" pt:title="Afficher 20 de plus">
+                  <f:ajax execute="@this" render="narrowerVal"/>
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
                 </h:commandLink>
               </div>
