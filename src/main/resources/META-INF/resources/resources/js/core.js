@@ -129,6 +129,7 @@ var state = {
   xferParent: null,
   graphFront: true,
   graphSearch: false,
+  graphKind: "",
   pendingOpenId: "",
   pendingOpenAt: 0
 };

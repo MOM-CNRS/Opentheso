@@ -13,17 +13,24 @@ function graphOnScreen() {
   return graphMode() && state.graphFront && !!$("#viewHyper");
 }
 
-/* Concept à mettre au centre ; une facette n'a pas de voisinage. */
 function graphConceptId() {
-  const live = liveDetailState();
-  if (live && live.getAttribute("data-kind") === "facet"
-      && live.getAttribute("data-id") === state.conceptId) return "";
   return state.conceptId || "";
+}
+
+/* Nature du centre : la fiche fait foi quand elle est chargée, sinon le dernier clic. */
+function graphConceptKind() {
+  const live = liveDetailState();
+  if (live && live.getAttribute("data-id") === state.conceptId && live.getAttribute("data-kind")) {
+    return live.getAttribute("data-kind") === "facet" ? "facet" : "concept";
+  }
+  return state.graphKind || "concept";
 }
 
 function graphPageUrl() {
   const id = graphConceptId();
-  return "graph/graphe.xhtml" + (id ? "?id=" + encodeURIComponent(id) : "");
+  if (!id) return "graph/graphe.xhtml";
+  return "graph/graphe.xhtml?id=" + encodeURIComponent(id)
+    + (graphConceptKind() === "facet" ? "&type=facet" : "");
 }
 
 /* Ouvre un concept sans quitter le graphe : sphère recentrée, fiche chargée à côté. */
@@ -34,8 +41,9 @@ function openGraphConcept(id, nodeType, label) {
   state.facetDraft = false;
   state.collectionDraft = false;
   state.conceptId = id;
+  state.graphKind = nodeType === "facet" ? "facet" : "concept";
   openLiveDetail(id, nodeType || "concept", label);
-  syncConceptUrl(id, "");
+  syncConceptUrl(id, state.graphKind);
   highlightConcept(id);
   paint();
 }
@@ -46,10 +54,11 @@ function globeHost() {
     thesaurusId: thesaurusId,
     thesaurusLang: thesaurusLang,
     conceptId: graphConceptId,
+    conceptKind: graphConceptKind,
     ctx: () => document.body.getAttribute("data-ctx") || "",
     toast: toast,
-    onPick: (id, label) => openGraphConcept(id, "concept", label),
-    onOpen: (id) => {
+    onPick: (id, label, kind) => openGraphConcept(id, kind, label),
+    onOpen: (id, kind) => {
       state.graphFront = false;
       const live = liveDetailState();
       const ready = live && live.getAttribute("data-requested") === "1" && live.getAttribute("data-id") === id;
@@ -62,7 +71,7 @@ function globeHost() {
         beginLiveOpen();
         return;
       }
-      openGraphConcept(id, "concept");
+      openGraphConcept(id, kind);
     }
   };
 }
@@ -80,11 +89,11 @@ function ensureGlobe() {
   if (document.querySelector("script[data-globe]")) return;
   const ctx = document.body.getAttribute("data-ctx") || "";
   const prep = document.createElement("script");
-  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261124-voisins";
+  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261124-facettes";
   prep.dataset.globe = "1";
   prep.onload = () => {
     const script = document.createElement("script");
-    script.src = ctx + "/resources/js/globe.js?v=20261124-voisins";
+    script.src = ctx + "/resources/js/globe.js?v=20261124-facettes";
     script.onload = () => {
       if (window.OTGlobe) window.OTGlobe.attach(globeHost()).ensure();
     };
@@ -101,8 +110,8 @@ function invalidateGlobe() {
   if (window.OTGlobe) window.OTGlobe.invalidate();
 }
 
-function globeSelectId(id) {
-  if (window.OTGlobe) window.OTGlobe.selectId(id);
+function globeSelectId(id, kind) {
+  if (window.OTGlobe) window.OTGlobe.selectId(id, kind);
 }
 
 function onThesaurusLangChanged() {

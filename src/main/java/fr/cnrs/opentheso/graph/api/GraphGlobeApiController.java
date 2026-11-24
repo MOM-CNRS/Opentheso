@@ -26,17 +26,21 @@ public class GraphGlobeApiController {
             @RequestParam(required = false) String thesaurusId,
             @RequestParam(required = false) String lang,
             @RequestParam(required = false) String conceptId,
+            @RequestParam(required = false) String kind,
             @RequestParam(defaultValue = "0") int broaderOffset,
             @RequestParam(defaultValue = "0") int narrowerOffset,
-            @RequestParam(defaultValue = "0") int relatedOffset
+            @RequestParam(defaultValue = "0") int relatedOffset,
+            @RequestParam(defaultValue = "0") int facetOffset
     ) {
         GraphNeighborhoodResponse body = graphGlobeConsultationService.loadNeighborhood(
                 thesaurusId,
                 StringUtils.firstNonBlank(lang, "fr"),
                 StringUtils.trimToEmpty(conceptId),
+                "facet".equalsIgnoreCase(kind),
                 broaderOffset,
                 narrowerOffset,
-                relatedOffset
+                relatedOffset,
+                facetOffset
         );
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())

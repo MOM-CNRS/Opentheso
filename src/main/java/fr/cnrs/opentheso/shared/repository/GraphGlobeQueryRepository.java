@@ -50,13 +50,124 @@ public class GraphGlobeQueryRepository {
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 
+    /** Facette au centre : id, label, statut vide. */
+    @SuppressWarnings("unchecked")
+    public Optional<Object[]> findFacetCenter(String thesaurusId, String facetId, String lang) {
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT ta.id_facet,
+                   COALESCE(NULLIF(nl.lexical_value, ''), ta.id_facet) AS label,
+                   '' AS status
+            FROM thesaurus_array ta
+            LEFT JOIN node_label nl
+                ON nl.id_facet = ta.id_facet
+                AND nl.id_thesaurus = ta.id_thesaurus
+                AND nl.lang = :lang
+            WHERE ta.id_thesaurus = :thesaurusId
+              AND ta.id_facet = :facetId
+            LIMIT 1
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.FACET_ID, facetId)
+                .setParameter("lang", lang)
+                .getResultList();
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
+
+    /**
+     * Facettes d'un concept : celles dont il est le parent (FACET) et celles qui le contiennent (FACETOF).
+     * Mêmes colonnes que {@link #findNeighborhood}. Le parent peut être stocké par son ARK (ancien import).
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findFacets(String thesaurusId, String conceptId, String lang, int offset, int size) {
+        return em.createNativeQuery("""
+            WITH rel AS (
+                SELECT ta.id_facet AS id, 'FACET' AS role
+                FROM thesaurus_array ta
+                WHERE ta.id_thesaurus = :thesaurusId
+                  AND (
+                      ta.id_concept_parent = :conceptId
+                      OR ta.id_concept_parent = (
+                          SELECT NULLIF(c.id_ark, '')
+                          FROM concept c
+                          WHERE c.id_concept = :conceptId
+                            AND c.id_thesaurus = :thesaurusId
+                      )
+                  )
+                UNION
+                SELECT cf.id_facet AS id, 'FACETOF' AS role
+                FROM concept_facet cf
+                JOIN thesaurus_array ta
+                    ON ta.id_facet = cf.id_facet
+                    AND ta.id_thesaurus = cf.id_thesaurus
+                WHERE cf.id_thesaurus = :thesaurusId
+                  AND cf.id_concept = :conceptId
+            ),
+            visible AS (
+                SELECT rel.id, MIN(rel.role) AS role,
+                       MIN(COALESCE(NULLIF(nl.lexical_value, ''), rel.id)) AS label
+                FROM rel
+                LEFT JOIN node_label nl
+                    ON nl.id_facet = rel.id
+                    AND nl.id_thesaurus = :thesaurusId
+                    AND nl.lang = :lang
+                GROUP BY rel.id
+            ),
+            ranked AS (
+                SELECT v.*,
+                       ROW_NUMBER() OVER (ORDER BY v.role, LOWER(v.label), v.id) AS rn,
+                       COUNT(*) OVER () AS total
+                FROM visible v
+            )
+            SELECT id, label, role, '' AS status, 'FA' AS family, total
+            FROM ranked
+            WHERE rn BETWEEN :rowFrom AND :rowTo
+            ORDER BY rn
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter("lang", lang)
+                .setParameter("rowFrom", offset + 1)
+                .setParameter("rowTo", offset + size)
+                .getResultList();
+    }
+
+    private static final String CONCEPT_RELATIONS = """
+            SELECT hr.id_concept2 AS id,
+                   SUBSTRING(hr.role, 1, 2) AS family,
+                   MIN(hr.role) AS role
+            FROM hierarchical_relationship hr
+            WHERE hr.id_thesaurus = :thesaurusId
+              AND hr.id_concept1 = :centerId
+              AND hr.id_concept2 <> :centerId
+              AND (hr.role LIKE 'BT%' OR hr.role LIKE 'NT%' OR hr.role LIKE 'RT%')
+            GROUP BY hr.id_concept2, SUBSTRING(hr.role, 1, 2)
+            """;
+
+    private static final String FACET_RELATIONS = """
+            SELECT COALESCE(byid.id_concept, byark.id_concept) AS id, 'BT' AS family, 'PARENT' AS role
+            FROM thesaurus_array ta
+            LEFT JOIN concept byid
+                ON byid.id_concept = ta.id_concept_parent
+                AND byid.id_thesaurus = ta.id_thesaurus
+            LEFT JOIN concept byark
+                ON byark.id_ark = ta.id_concept_parent
+                AND byark.id_thesaurus = ta.id_thesaurus
+                AND byark.id_ark <> ''
+            WHERE ta.id_thesaurus = :thesaurusId
+              AND ta.id_facet = :centerId
+            UNION
+            SELECT cf.id_concept, 'NT', 'MEMBER'
+            FROM concept_facet cf
+            WHERE cf.id_thesaurus = :thesaurusId
+              AND cf.id_facet = :centerId
+            """;
+
     /**
      * Voisins BT / NT / RT d'un concept, une page par famille.
      * Colonnes : id, label, rôle, statut, famille (BT, NT, RT), total de la famille.
      * Les groupes privés suivent la règle de la fiche : un concept rangé seulement
      * dans des groupes privés est masqué si {@code includePrivateGroups} est faux.
      */
-    @SuppressWarnings("unchecked")
     public List<Object[]> findNeighborhood(
             String thesaurusId,
             String conceptId,
@@ -65,17 +176,34 @@ public class GraphGlobeQueryRepository {
             boolean includePrivateGroups,
             NeighborPage page
     ) {
-        return em.createNativeQuery("""
-            WITH rel AS (
-                SELECT hr.id_concept2 AS id,
-                       SUBSTRING(hr.role, 1, 2) AS family,
-                       MIN(hr.role) AS role
-                FROM hierarchical_relationship hr
-                WHERE hr.id_thesaurus = :thesaurusId
-                  AND hr.id_concept1 = :conceptId
-                  AND hr.id_concept2 <> :conceptId
-                  AND (hr.role LIKE 'BT%' OR hr.role LIKE 'NT%' OR hr.role LIKE 'RT%')
-                GROUP BY hr.id_concept2, SUBSTRING(hr.role, 1, 2)
+        return findPage(CONCEPT_RELATIONS, thesaurusId, conceptId, lang,
+                includeCandidates, includePrivateGroups, page);
+    }
+
+    /** Autour d'une facette : concept parent (famille BT, rôle PARENT) et membres (famille NT, rôle MEMBER). */
+    public List<Object[]> findFacetNeighborhood(
+            String thesaurusId,
+            String facetId,
+            String lang,
+            boolean includeCandidates,
+            boolean includePrivateGroups,
+            NeighborPage page
+    ) {
+        return findPage(FACET_RELATIONS, thesaurusId, facetId, lang,
+                includeCandidates, includePrivateGroups, page);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object[]> findPage(
+            String relations,
+            String thesaurusId,
+            String centerId,
+            String lang,
+            boolean includeCandidates,
+            boolean includePrivateGroups,
+            NeighborPage page
+    ) {
+        return em.createNativeQuery("WITH rel AS (" + relations + """
             ),
             visible AS (
                 SELECT DISTINCT ON (rel.family, rel.id)
@@ -133,7 +261,7 @@ public class GraphGlobeQueryRepository {
             ORDER BY family, rn
             """)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter("centerId", centerId)
                 .setParameter("lang", lang)
                 .setParameter("includeCandidates", includeCandidates)
                 .setParameter("includePrivateGroups", includePrivateGroups)
@@ -147,7 +275,8 @@ public class GraphGlobeQueryRepository {
     }
 
     /** Page demandée pour chaque famille ; les décalages négatifs sont ramenés à 0. */
-    public record NeighborPage(int broaderOffset, int narrowerOffset, int relatedOffset, int size) {
+    public record NeighborPage(
+            int broaderOffset, int narrowerOffset, int relatedOffset, int facetOffset, int size) {
 
         private static final int MAX_OFFSET = 1_000_000;
 
@@ -155,6 +284,7 @@ public class GraphGlobeQueryRepository {
             broaderOffset = clamp(broaderOffset);
             narrowerOffset = clamp(narrowerOffset);
             relatedOffset = clamp(relatedOffset);
+            facetOffset = clamp(facetOffset);
         }
 
         private static int clamp(int offset) {

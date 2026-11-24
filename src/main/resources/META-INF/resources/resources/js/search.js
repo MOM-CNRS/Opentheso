@@ -453,7 +453,7 @@ function openSearchHit(hit, stay) {
     return;
   }
   const nodeType = hit.kind === "facet" ? "facet" : "concept";
-  if (nodeType === "concept" && typeof graphMode === "function" && graphMode()) {
+  if (typeof graphMode === "function" && graphMode()) {
     openGraphConcept(hit.id, nodeType);
     closeSearchUi();
     return;

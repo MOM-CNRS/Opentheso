@@ -6,15 +6,15 @@
 (function (global) {
   "use strict";
 
-  const ROLES = ["TG", "TS", "TA"];
-  const COLOR = { TG: "#1f7a5c", TS: "#2f6cb0", TA: "#a06e24", center: "#17382c" };
+  const ROLES = ["TG", "TS", "TA", "FA"];
+  const COLOR = { TG: "#1f7a5c", TS: "#2f6cb0", TA: "#a06e24", FA: "#7a4fa3", center: "#17382c" };
   const FOCAL = 2.35;
   const GOLDEN = Math.PI * (3 - Math.sqrt(5));
   const LABEL_MAX = 30;
 
   let host = null;
   let data = null;
-  let wanted = { id: "", key: "", offsets: { TG: 0, TS: 0, TA: 0 } };
+  let wanted = { id: "", kind: "", key: "", offsets: { TG: 0, TS: 0, TA: 0, FA: 0 } };
   let request = null;
   let refocus = "";
   const loop = {
@@ -41,14 +41,14 @@
   }
 
   function groups() {
-    if (!data || !data.found) return { TG: null, TS: null, TA: null };
-    return { TG: data.broader, TS: data.narrower, TA: data.related };
+    if (!data || !data.found) return { TG: null, TS: null, TA: null, FA: null };
+    return { TG: data.broader, TS: data.narrower, TA: data.related, FA: data.facets };
   }
 
   /* ── Données ── */
 
-  function keyOf(id) {
-    return host.thesaurusId() + "|" + host.thesaurusLang() + "|" + (id || "");
+  function keyOf(id, kind) {
+    return host.thesaurusId() + "|" + host.thesaurusLang() + "|" + (kind || "concept") + "|" + (id || "");
   }
 
   function setLoading(on) {
@@ -77,16 +77,16 @@
   }
 
   /* Recentre sur un concept. Sans changement de concept ni de langue, ne relance rien. */
-  function selectId(id) {
+  function selectId(id, kind) {
     if (!host || !el("hyperGlobe")) return;
     if (!id || !host.thesaurusId()) {
-      wanted = { id: "", key: "", offsets: { TG: 0, TS: 0, TA: 0 } };
+      wanted = { id: "", kind: "", key: "", offsets: { TG: 0, TS: 0, TA: 0, FA: 0 } };
       clear(msg("pick"));
       return;
     }
-    const key = keyOf(id);
+    const key = keyOf(id, kind);
     if (wanted.key === key && (data || request)) return;
-    wanted = { id: id, key: key, offsets: { TG: 0, TS: 0, TA: 0 } };
+    wanted = { id: id, kind: kind || "concept", key: key, offsets: { TG: 0, TS: 0, TA: 0, FA: 0 } };
     fetchNeighborhood(true);
   }
 
@@ -102,6 +102,8 @@
       thesaurusId: host.thesaurusId(),
       lang: host.thesaurusLang(),
       conceptId: wanted.id,
+      kind: wanted.kind,
+      facetOffset: wanted.offsets.FA,
       broaderOffset: wanted.offsets.TG,
       narrowerOffset: wanted.offsets.TS,
       relatedOffset: wanted.offsets.TA
@@ -182,9 +184,16 @@
     return point(t * 0.26, dir * (1.35 + depth));
   }
 
+  /* Facettes : arc entre le centre et les spécifiques. */
+  function facetPoint(n, i) {
+    if (n === 1) return point(0.34, 0.4);
+    if (n <= 5) return point(0.34, ((i / (n - 1)) * 2 - 1) * 0.75);
+    return point(0.22 + 0.12 * (i % 2), (i / n) * Math.PI * 2);
+  }
+
   function layout() {
     const nodes = [{
-      id: data.id, label: data.label, role: "center", status: data.status, x: 0, y: 0, z: 0
+      id: data.id, label: data.label, role: "center", kind: data.kind, status: data.status, x: 0, y: 0, z: 0
     }];
     const g = groups();
     ROLES.forEach((role) => {
@@ -192,6 +201,7 @@
       items.forEach((item, i) => {
         const p = role === "TG" ? cap(items.length, i, -1)
           : role === "TS" ? cap(items.length, i, 1)
+          : role === "FA" ? facetPoint(items.length, i)
           : side(items.length, i);
         nodes.push({
           id: item.id, label: item.label, role: role, status: item.status, type: item.type,
@@ -264,6 +274,8 @@
       ctx.lineTo(x + size * 1.1, y);
       ctx.lineTo(x, y + size * 1.1);
       ctx.lineTo(x - size * 1.1, y);
+    } else if (n.role === "FA" || n.kind === "facet") {
+      ctx.rect(x - size * 0.9, y - size * 0.9, size * 1.8, size * 1.8);
     } else {
       ctx.arc(x, y, size, 0, Math.PI * 2);
     }
@@ -451,12 +463,16 @@
     ROLES.forEach((role) => {
       const group = g[role];
       const code = role.toLowerCase();
+      const facet = data.kind === "facet";
+      if (facet && (role === "TA" || role === "FA")) return;
+      if (role === "FA" && !group.total) return;
       const section = node("section", "hyper-sec hyper-sec-" + role);
       const head = node("h3", "hyper-sec-h");
       const mark = node("span", "hyper-mark");
       mark.setAttribute("aria-hidden", "true");
-      head.append(mark, node("span", "hyper-code", msg("code-" + code)),
-        node("span", "hyper-sec-l", msg("label-" + code)),
+      head.append(mark);
+      if (!facet && role !== "FA") head.append(node("span", "hyper-code", msg("code-" + code)));
+      head.append(node("span", "hyper-sec-l", sectionLabel(role)),
         node("span", "hyper-sec-n", String(group.total)));
       section.append(head);
       if (group.items.length) {
@@ -467,10 +483,15 @@
       if (group.total > data.pageSize) section.append(pager(group, role));
       list.append(section);
     });
-    if (!g.TG.total && !g.TS.total && !g.TA.total) {
+    if (!g.TG.total && !g.TS.total && !g.TA.total && !g.FA.total) {
       list.prepend(node("p", "hyper-none", msg("none")));
     }
     restoreFocus(list, inside);
+  }
+
+  function sectionLabel(role) {
+    if (data.kind === "facet") return msg(role === "TG" ? "label-parent" : "label-members");
+    return msg("label-" + role.toLowerCase());
   }
 
   function listItem(item, role) {
@@ -481,11 +502,13 @@
     btn.title = item.label;
     const label = node("bdi", "hyper-item-l", item.label);
     btn.append(label);
-    const kind = (item.type || "").length > 2 ? item.type.slice(2) : "";
+    const typed = role !== "FA" && data.kind !== "facet";
+    const kind = typed && (item.type || "").length > 2 ? item.type.slice(2) : "";
+    if (item.type === "FACETOF") btn.append(node("span", "hyper-kind", msg("facetof")));
     if (kind) btn.append(node("span", "hyper-kind", msg("code-" + role.toLowerCase()) + kind));
     const chip = badge(item.status);
     if (chip) btn.append(chip);
-    btn.addEventListener("click", () => pickId(item.id, item.label));
+    btn.addEventListener("click", () => pickId(item.id, item.label, role));
     const light = (on) => () => {
       loop.hover = on ? loop.nodes.findIndex((n) => n.id === item.id && n.role === role) : -1;
       draw();
@@ -508,7 +531,7 @@
       btn.disabled = off;
       btn.dataset.page = role + ":" + name;
       btn.title = msg(name);
-      btn.setAttribute("aria-label", msg(name) + " — " + msg("label-" + role.toLowerCase()));
+      btn.setAttribute("aria-label", msg(name) + " — " + sectionLabel(role));
       btn.addEventListener("click", () => turnPage(role, step));
       return btn;
     };
@@ -531,18 +554,18 @@
 
   /* ── Choix et ouverture ── */
 
-  function pickId(id, label) {
+  function pickId(id, label, role) {
     if (!id || !data || id === data.id) return;
-    if (host.onPick) host.onPick(id, label);
+    if (host.onPick) host.onPick(id, label, role === "FA" ? "facet" : "concept");
   }
 
   function pick(i) {
     const n = loop.nodes[i];
-    if (n && i > 0) pickId(n.id, n.label);
+    if (n && i > 0) pickId(n.id, n.label, n.role);
   }
 
   function openCenter() {
-    if (data && data.found && host.onOpen) host.onOpen(data.id);
+    if (data && data.found && host.onOpen) host.onOpen(data.id, data.kind);
   }
 
   function hit(x, y) {
@@ -584,7 +607,7 @@
     });
     resize();
     const id = host.conceptId();
-    const same = id && wanted.key === keyOf(id) && data;
+    const same = id && wanted.key === keyOf(id, host.conceptKind()) && data;
     const back = !loop.shown;
     loop.shown = true;
     if (same && !request) {
@@ -594,7 +617,7 @@
       if (back) fetchNeighborhood(false);
       return;
     }
-    selectId(id);
+    selectId(id, host.conceptKind());
     draw();
   }
 

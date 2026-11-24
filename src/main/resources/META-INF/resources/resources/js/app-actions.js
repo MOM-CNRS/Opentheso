@@ -647,15 +647,10 @@ document.addEventListener("click", (e) => {
       || t.closest("#panelCollection") || t.closest("#collectionDetail") || state.view === "collection");
     if (typeof rememberTreeFocus === "function") rememberTreeFocus(t.closest(".tn"), id);
     if (graphMode()) {
-      if (nodeType !== "facet") {
-        openGraphConcept(id, nodeType, openLabelFrom(t));
-        closeSearchUi();
-        closeSidebarDrawer();
-        return;
-      }
-      /* Une facette n'a pas de voisinage : sa fiche remplace le graphe. */
-      state.view = "arbo";
-      paint();
+      openGraphConcept(id, nodeType, openLabelFrom(t));
+      closeSearchUi();
+      closeSidebarDrawer();
+      return;
     }
     if (openLiveDetail(id, nodeType, openLabelFrom(t))) {
       state.home = false;

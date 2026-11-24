@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -57,7 +58,7 @@ class GraphGlobeConsultationServiceTest {
         when(consultationAccessPolicy.canConsult("TH1", false)).thenReturn(true);
         center("C1", "Adobe", "D", false);
         when(graphGlobeQueryRepository.findNeighborhood(
-                "TH1", "C1", "fr", false, false, new NeighborPage(0, 30, 0, 30)))
+                "TH1", "C1", "fr", false, false, new NeighborPage(0, 30, 0, 0, 30)))
                 .thenReturn(List.<Object[]>of(
                         new Object[]{"P1", "Parent", "BTG", "D", "BT", 1L},
                         new Object[]{"N1", "", "NT", "DEP", "NT", 312L},
@@ -65,7 +66,7 @@ class GraphGlobeConsultationServiceTest {
                         new Object[]{"", "ignoré", "BT", "D", "BT", 1L}
                 ));
 
-        var response = service.loadNeighborhood("TH1", "fr", "C1", -5, 30, 0);
+        var response = service.loadNeighborhood("TH1", "fr", "C1", false, -5, 30, 0, 0);
 
         assertTrue(response.found());
         assertEquals("Adobe", response.label());
@@ -84,7 +85,7 @@ class GraphGlobeConsultationServiceTest {
         when(consultationAccessPolicy.canConsult("TH1", false)).thenReturn(true);
         center("C1", "Adobe", "D", false);
 
-        var response = service.loadNeighborhood("TH1", "fr", "C1", 0, 0, 0);
+        var response = service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0);
 
         assertTrue(response.found());
         assertEquals(0, response.broader().total());
@@ -97,7 +98,7 @@ class GraphGlobeConsultationServiceTest {
         when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
         center("C1", "Adobe", "CA", true);
 
-        assertEquals("candidat", service.loadNeighborhood("TH1", "fr", "C1", 0, 0, 0).status());
+        assertEquals("candidat", service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0).status());
         verify(graphGlobeQueryRepository).findNeighborhood(
                 eq("TH1"), eq("C1"), eq("fr"), eq(true), eq(true), any());
     }
@@ -107,7 +108,7 @@ class GraphGlobeConsultationServiceTest {
         when(consultationAccessPolicy.canConsult("TH1", false)).thenReturn(true);
         when(graphGlobeQueryRepository.findCenter("TH1", "C1", "fr", false)).thenReturn(Optional.empty());
 
-        assertFalse(service.loadNeighborhood("TH1", "fr", "C1", 0, 0, 0).found());
+        assertFalse(service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0).found());
         verify(graphGlobeQueryRepository, never()).findNeighborhood(
                 any(), any(), any(), anyBoolean(), anyBoolean(), any());
     }
@@ -117,8 +118,8 @@ class GraphGlobeConsultationServiceTest {
         when(authenticatedUserSource.getUserId()).thenReturn(Optional.empty(), Optional.of(7));
         when(rightsService.roleOnThesaurus(7, "TH1")).thenReturn(Optional.empty());
 
-        assertFalse(service.loadNeighborhood("TH1", "fr", "C1", 0, 0, 0).found());
-        assertFalse(service.loadNeighborhood("TH1", "fr", "C1", 0, 0, 0).found());
+        assertFalse(service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0).found());
+        assertFalse(service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0).found());
         verifyNoInteractions(graphGlobeQueryRepository);
     }
 
@@ -128,13 +129,52 @@ class GraphGlobeConsultationServiceTest {
         when(rightsService.can(7, Permission.SUPER_ADMIN)).thenReturn(true);
         center("C1", "Adobe", "D", false);
 
-        assertTrue(service.loadNeighborhood("TH1", "fr", "C1", 0, 0, 0).found());
+        assertTrue(service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0).found());
     }
 
     @Test
     void loadNeighborhood_emptyWhenBlank() {
-        assertFalse(service.loadNeighborhood("", "fr", "C1", 0, 0, 0).found());
+        assertFalse(service.loadNeighborhood("", "fr", "C1", false, 0, 0, 0, 0).found());
         verifyNoInteractions(graphGlobeQueryRepository);
+    }
+
+    @Test
+    void loadNeighborhood_listsFacetsOfConcept() {
+        when(consultationAccessPolicy.canConsult("TH1", false)).thenReturn(true);
+        center("C1", "Adobe", "D", false);
+        when(graphGlobeQueryRepository.findFacets("TH1", "C1", "fr", 0, 30))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{"F1", "par forme", "FACET", "", "FA", 2L},
+                        new Object[]{"F2", "par matière", "FACETOF", "", "FA", 2L}
+                ));
+
+        var facets = service.loadNeighborhood("TH1", "fr", "C1", false, 0, 0, 0, 0).facets();
+
+        assertEquals(2, facets.total());
+        assertEquals("FA", facets.items().get(0).role());
+        assertEquals("FACETOF", facets.items().get(1).type());
+    }
+
+    @Test
+    void loadNeighborhood_facetCenterHasParentAndMembers() {
+        when(consultationAccessPolicy.canConsult("TH1", false)).thenReturn(true);
+        when(graphGlobeQueryRepository.findFacetCenter("TH1", "F1", "fr"))
+                .thenReturn(Optional.of(new Object[]{"F1", "par forme", ""}));
+        when(graphGlobeQueryRepository.findFacetNeighborhood(
+                "TH1", "F1", "fr", false, false, new NeighborPage(0, 0, 0, 0, 30)))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{"C1", "Adobe", "PARENT", "D", "BT", 1L},
+                        new Object[]{"C2", "Brique", "MEMBER", "D", "NT", 1L}
+                ));
+
+        var response = service.loadNeighborhood("TH1", "fr", "F1", true, 0, 0, 0, 0);
+
+        assertEquals("facet", response.kind());
+        assertEquals("", response.status());
+        assertEquals("C1", response.broader().items().get(0).id());
+        assertEquals("C2", response.narrower().items().get(0).id());
+        assertTrue(response.facets().items().isEmpty());
+        verify(graphGlobeQueryRepository, never()).findFacets(any(), any(), any(), anyInt(), anyInt());
     }
 
     private void center(String id, String label, String status, boolean includeCandidates) {

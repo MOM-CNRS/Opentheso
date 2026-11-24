@@ -54,33 +54,46 @@ public class GraphGlobeConsultationService {
             String thesaurusId,
             String lang,
             String conceptId,
+            boolean facet,
             int broaderOffset,
             int narrowerOffset,
-            int relatedOffset
+            int relatedOffset,
+            int facetOffset
     ) {
         if (StringUtils.isAnyBlank(thesaurusId, lang, conceptId) || !canRead(thesaurusId)) {
             return GraphNeighborhoodResponse.notFound(conceptId, NEIGHBORS_PER_ROLE);
         }
         boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
-        Optional<Object[]> center = graphGlobeQueryRepository.findCenter(
-                thesaurusId, conceptId, lang, includeCandidates);
+        Optional<Object[]> center = facet
+                ? graphGlobeQueryRepository.findFacetCenter(thesaurusId, conceptId, lang)
+                : graphGlobeQueryRepository.findCenter(thesaurusId, conceptId, lang, includeCandidates);
         if (center.isEmpty()) {
             return GraphNeighborhoodResponse.notFound(conceptId, NEIGHBORS_PER_ROLE);
         }
         NeighborPage page = new NeighborPage(
-                broaderOffset, narrowerOffset, relatedOffset, NEIGHBORS_PER_ROLE);
-        List<Object[]> rows = graphGlobeQueryRepository.findNeighborhood(
-                thesaurusId, conceptId, lang, includeCandidates,
-                authenticatedUserSource.isLoggedIn(), page);
+                broaderOffset, narrowerOffset, relatedOffset, facetOffset, NEIGHBORS_PER_ROLE);
+        List<Object[]> rows = facet
+                ? graphGlobeQueryRepository.findFacetNeighborhood(
+                        thesaurusId, conceptId, lang, includeCandidates,
+                        authenticatedUserSource.isLoggedIn(), page)
+                : graphGlobeQueryRepository.findNeighborhood(
+                        thesaurusId, conceptId, lang, includeCandidates,
+                        authenticatedUserSource.isLoggedIn(), page);
+        List<Object[]> facets = facet
+                ? List.of()
+                : graphGlobeQueryRepository.findFacets(
+                        thesaurusId, conceptId, lang, page.facetOffset(), page.size());
         return new GraphNeighborhoodResponse(
                 conceptId,
+                facet ? "facet" : "concept",
                 labelOr(center.get(), conceptId),
-                uiStatus(str(center.get(), 2)),
+                facet ? "" : uiStatus(str(center.get(), 2)),
                 true,
                 NEIGHBORS_PER_ROLE,
                 group(rows, "BT", "TG", page.broaderOffset()),
                 group(rows, "NT", "TS", page.narrowerOffset()),
-                group(rows, "RT", "TA", page.relatedOffset())
+                group(rows, "RT", "TA", page.relatedOffset()),
+                group(facets, "FA", "FA", page.facetOffset())
         );
     }
 

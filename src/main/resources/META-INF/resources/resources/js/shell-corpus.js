@@ -660,7 +660,7 @@ function setView(view) {
   }
   if (!IS_CONSULT && view === "arbo" && !$("#viewHome")) {
     const cid = SCREEN === "graphe" ? state.conceptId : "";
-    go("index.xhtml" + (cid ? "?idc=" + encodeURIComponent(cid) : ""));
+    go("index.xhtml" + (cid ? "?idc=" + encodeURIComponent(cid) + (graphConceptKind() === "facet" ? "&type=facet" : "") : ""));
     return;
   }
   state.graphSearch = false;
@@ -743,7 +743,7 @@ function highlightConcept(id) {
     }
   }
   if (state.view === "tableau") revealTableConcept(id);
-  if (graphOnScreen()) globeSelectId(graphConceptId());
+  if (graphOnScreen()) globeSelectId(graphConceptId(), graphConceptKind());
   const tr = $(`#panelTable tr[data-id="${CSS.escape(id)}"]`);
   if (tr) tr.classList.add("is-active");
   const rl = Array.from(document.querySelectorAll(".rl-item[data-id]")).find(el => el.getAttribute("data-id") === id);
