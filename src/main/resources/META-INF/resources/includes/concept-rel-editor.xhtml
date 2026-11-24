@@ -24,6 +24,11 @@
        data-hier-g="#{localeBean.getMsg('concept.rel.hier.g')}"
        data-hier-p="#{localeBean.getMsg('concept.rel.hier.p')}"
        data-hier-i="#{localeBean.getMsg('concept.rel.hier.i')}"
+       data-hier-codes="#{localeBean.getMsg('concept.rel.hier.codes')}"
+       data-hier-all="#{localeBean.getMsg('concept.rel.hier.all')}"
+       data-sentence-g="#{localeBean.getMsg('concept.rel.sentence.g')}"
+       data-sentence-p="#{localeBean.getMsg('concept.rel.sentence.p')}"
+       data-sentence-i="#{localeBean.getMsg('concept.rel.sentence.i')}"
        data-filter-empty="#{localeBean.getMsg('concept.rel.filter.empty')}">
     <div class="re-filter">
       <input type="text" class="st-input re-filter-q" id="cvRelFilter" autocomplete="off" spellcheck="false"
@@ -59,7 +64,7 @@
       </span>
       <ui:fragment rendered="#{not conceptRelationBlockEditorBean.editingRelated}">
         <select class="re-hsel" id="cvRelHier" title="#{localeBean.getMsg('concept.rel.hier.title')}" aria-label="#{localeBean.getMsg('concept.rel.hier.title')}">
-          <option value="S">#{localeBean.getMsg('concept.rel.hier.s')}</option>
+          <option value="S">#{localeBean.getMsg(conceptRelationBlockEditorBean.editingBroader ? 'concept.rel.code.bt' : 'concept.rel.code.nt')} · #{localeBean.getMsg('concept.rel.hier.s')}</option>
           <option value="G">#{localeBean.getMsg('concept.rel.hier.g')}</option>
           <option value="P">#{localeBean.getMsg('concept.rel.hier.p')}</option>
           <option value="I">#{localeBean.getMsg('concept.rel.hier.i')}</option>

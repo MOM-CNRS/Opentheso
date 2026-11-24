@@ -1183,4 +1183,15 @@ class ThesaurusViewBeanTest {
         }
         return values;
     }
+
+    @Test
+    void relationNatureLabel_dependsOnDisplayedSide() {
+        when(localeBean.getMsg("concept.rel.nature.bt.part")).thenReturn("partie de");
+        when(localeBean.getMsg("concept.rel.nature.nt.part")).thenReturn("partie");
+
+        assertEquals("partie de", bean.relationNatureLabel("bt", "BTP"));
+        assertEquals("partie", bean.relationNatureLabel("nt", "NTP"));
+        assertEquals("", bean.relationNatureLabel("bt", "BT"));
+        assertEquals("", bean.relationNatureLabel("rt", "RT"));
+    }
 }

@@ -169,7 +169,7 @@ function cvRelHierLabel(family) {
   if (family === "G") return "Generic";
   if (family === "P") return "Partitive";
   if (family === "I") return "Instantial";
-  return "Spécifique";
+  return "Standard";
 }
 
 function cvRelHierTitle() {
@@ -177,13 +177,44 @@ function cvRelHierTitle() {
   return (editor && editor.getAttribute("data-hier-title")) || "Type de la relation hiérarchique";
 }
 
-function cvRelHierSelectHtml(kind, index, role) {
-  const family = cvRelFamily(role);
-  const title = escapeHtml(cvRelHierTitle());
-  const options = ["S", "G", "P", "I"].map((value) => {
+/** « TGP · Partitive » côté TG, « TSP · Partitive » côté TS ; sigle de base seul si la langue n'a pas de sigle typé. */
+function cvRelHierOption(kind, family) {
+  const editor = $("#cvRelEditor");
+  if (family === "S") return cvRelKindCode(kind) + " · " + cvRelHierLabel(family);
+  const coded = editor && editor.getAttribute("data-hier-codes") === "1";
+  return (coded ? cvRelKindCode(kind) + family + " · " : "") + cvRelHierLabel(family);
+}
+
+function cvRelHierOptionsHtml(kind, family) {
+  return ["S", "G", "P", "I"].map((value) => {
     const selected = value === family ? " selected" : "";
-    return '<option value="' + value + '"' + selected + ">" + escapeHtml(cvRelHierLabel(value)) + "</option>";
+    return '<option value="' + value + '"' + selected + ">" + escapeHtml(cvRelHierOption(kind, value)) + "</option>";
   }).join("");
+}
+
+/** Phrase lue du spécifique vers le générique, quel que soit le côté édité. */
+function cvRelSentence(kind, item) {
+  const family = cvRelFamily(item.role);
+  if (kind === "rt" || family === "S") return "";
+  const cv = document.querySelector("#viewLive .cv.is-on");
+  const self = (cv && cv.getAttribute("data-pref")) || currentConceptId() || "";
+  const label = item.label || item.id || "";
+  const editor = $("#cvRelEditor");
+  const pattern = (editor && editor.getAttribute("data-sentence-" + family.toLowerCase())) || "";
+  const values = kind === "bt" ? [self, label] : [label, self];
+  return pattern.replace(/\{([01])\}/g, (_, index) => values[Number(index)]);
+}
+
+/** Applique un type aux termes visibles (le filtre restreint la portée). */
+function applyCvRelHierAll(kind, family) {
+  cvRelVisible(kind).forEach((row) => { row.item.role = cvRelRoleFor(kind, family); });
+  syncCvRelHidden();
+  paintCvRel();
+}
+
+function cvRelHierSelectHtml(kind, index, role) {
+  const title = escapeHtml(cvRelHierTitle());
+  const options = cvRelHierOptionsHtml(kind, cvRelFamily(role));
   return '<select class="re-hsel" data-kind="' + kind + '" data-index="' + index
     + '" title="' + title + '" aria-label="' + title + '">' + options + "</select>";
 }
@@ -310,7 +341,10 @@ function paintCvRelKind() {
     });
   }
   const hier = $("#cvRelHier");
-  if (hier) hier.hidden = kind === "rt";
+  if (hier) {
+    hier.hidden = kind === "rt";
+    if (kind !== "rt") hier.innerHTML = cvRelHierOptionsHtml(kind, hier.value || "S");
+  }
 }
 
 function setCvRelKindMenu(open) {
@@ -372,7 +406,8 @@ function cvRelRowHtml(row, remove) {
     + '" data-id="' + escapeHtml(rawId) + '" data-label="' + label + '"'
     + (row.item.role ? ' data-role="' + escapeHtml(String(row.item.role)) + '"' : "") + '>'
     + type
-    + '<span class="re-lbl" title="' + label + '">' + label + "</span>"
+    + '<span class="re-main"><span class="re-lbl" title="' + label + '">' + label + "</span>"
+    + '<span class="re-sent">' + escapeHtml(cvRelSentence(row.k, row.item)) + "</span></span>"
     + hier
     + '<button type="button" class="re-x" data-act="cv-rel-remove" data-kind="' + row.k
     + '" data-index="' + row.i + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
@@ -388,7 +423,7 @@ function cvRelListQuery() {
   return cvRelFold(input ? input.value : "");
 }
 
-function paintCvRelGroup(kind, remove) {
+function cvRelVisible(kind) {
   const items = cvRelState[kind] || [];
   const query = cvRelListQuery();
   const visible = [];
@@ -401,6 +436,13 @@ function paintCvRelGroup(kind, remove) {
     const id = cvRelFold(item.id || "");
     if (label.indexOf(query) !== -1 || id.indexOf(query) !== -1) visible.push({ item: item, i: i });
   });
+  return visible;
+}
+
+function paintCvRelGroup(kind, remove) {
+  const items = cvRelState[kind] || [];
+  const query = cvRelListQuery();
+  const visible = cvRelVisible(kind);
   const title = escapeHtml(cvRelKindLabel(kind));
   const countLabel = items.length
     ? (query ? visible.length + "/" + items.length : String(items.length))
@@ -410,12 +452,17 @@ function paintCvRelGroup(kind, remove) {
   const emptyText = query
     ? escapeHtml((editor && editor.getAttribute("data-filter-empty")) || "Aucun terme")
     : "—";
+  const allLabel = escapeHtml((editor && editor.getAttribute("data-hier-all")) || "Appliquer à tous…");
+  const bulk = kind !== "rt" && visible.length > 1
+    ? '<select class="re-hsel re-hall" data-kind="' + kind + '" aria-label="' + allLabel + '">'
+      + '<option value="">' + allLabel + "</option>" + cvRelHierOptionsHtml(kind, "") + "</select>"
+    : "";
   const rows = visible.length
     ? visible.map((row) => cvRelRowHtml({ k: kind, i: row.i, item: row.item }, remove)).join("")
     : '<div class="re-empty"><span class="muted">' + emptyText + "</span></div>";
   return '<div class="re-group" data-kind="' + kind + '">'
     + '<div class="re-group-h"><span class="rel-code rel-' + kind + '">' + cvRelKindCode(kind) + "</span>"
-    + title + count + "</div>"
+    + title + count + bulk + "</div>"
     + rows
     + "</div>";
 }
@@ -1088,9 +1135,19 @@ document.addEventListener("change", (e) => {
   const sel = e.target && e.target.closest ? e.target.closest("#cvRelEditor select.re-hsel") : null;
   if (!sel || sel.id === "cvRelHier") return;
   const kind = sel.getAttribute("data-kind");
+  if (sel.classList.contains("re-hall")) {
+    if (sel.value) applyCvRelHierAll(kind, sel.value);
+    return;
+  }
   const item = cvRelState[kind] && cvRelState[kind][Number(sel.getAttribute("data-index"))];
   if (!item) return;
   item.role = cvRelRoleFor(kind, sel.value);
+  const row = sel.closest(".re-row");
+  if (row) {
+    row.setAttribute("data-role", item.role);
+    const sentence = row.querySelector(".re-sent");
+    if (sentence) sentence.textContent = cvRelSentence(kind, item);
+  }
   syncCvRelHidden();
 });
 

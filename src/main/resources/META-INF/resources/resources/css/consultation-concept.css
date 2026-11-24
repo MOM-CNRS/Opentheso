@@ -684,7 +684,7 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewLive #cvRelEditor.is-kind .re-group{padding-bottom:0}
 #viewLive #cvRelEditor.is-kind .re-group-h{position:sticky;top:0;z-index:2;margin:0;padding:7px 10px;
   background:var(--surface-2);border-bottom:1px solid var(--line-2)}
-#viewLive #cvRelEditor.is-kind .re-rows .re-row{display:grid;grid-template-columns:minmax(0,1fr) 148px 28px;
+#viewLive #cvRelEditor.is-kind .re-rows .re-row{display:grid;grid-template-columns:minmax(0,1fr) 176px 28px;
   align-items:center;gap:10px;flex-wrap:nowrap;margin:0;padding:6px 8px;border:0;border-bottom:1px solid var(--line-2);
   border-radius:0;background:var(--surface)}
 #viewLive #cvRelEditor.is-kind .re-rows .re-row[data-kind="rt"]{grid-template-columns:minmax(0,1fr) 28px}
@@ -692,7 +692,11 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewLive #cvRelEditor.is-kind .re-rows .re-row:hover{background:var(--surface-2)}
 #viewLive #cvRelEditor.is-kind .re-rows .re-row.is-saved{background:var(--accent-soft)}
 #viewLive #cvRelEditor.is-kind .re-lbl{font-size:14px;font-weight:500}
-#viewLive #cvRelEditor.is-kind .re-hsel{height:30px;width:148px;max-width:148px;padding:0 8px;font-size:13px;color:var(--ink)}
+#viewLive #cvRelEditor.is-kind .re-hsel{height:30px;width:176px;max-width:176px;padding:0 8px;font-size:13px;color:var(--ink)}
+#viewLive #cvRelEditor .re-main{display:flex;flex-direction:column;flex:1 1 auto;min-width:0;gap:1px}
+#viewLive #cvRelEditor .re-sent{font-size:12px;line-height:1.4;color:var(--ink-3);overflow-wrap:anywhere}
+#viewLive #cvRelEditor .re-sent:empty{display:none}
+#viewLive #cvRelEditor .re-hall{margin-left:auto;font-weight:400}
 #viewLive #cvRelEditor.is-kind .re-rows .re-x{justify-self:center;opacity:1}
 #viewLive #cvRelEditor.is-kind .re-empty{padding:10px 12px}
 #viewLive [data-card-id="relations"] .crow{grid-template-columns:minmax(210px,240px) 1fr}

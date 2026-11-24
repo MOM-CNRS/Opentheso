@@ -474,7 +474,7 @@
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleBroaders}">
               <div class="rel-items">
                 <ui:repeat value="#{thesaurusViewBean.visibleBroaders}" var="rel" varStatus="st">
-                  <button type="button" class="#{thesaurusViewBean.relationTermClass('bt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('bt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel(rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel(rel.role)}</span></ui:fragment></button>
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('bt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('bt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept"><ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel('bt', rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel('bt', rel.role)}</span></ui:fragment>#{rel.displayLabel}</button>
                 </ui:repeat>
                 <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.broaderMoreVisible}"
                                action="#{thesaurusViewBean.showMoreBroaders}"
@@ -495,7 +495,7 @@
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleNarrowers}">
               <div class="rel-items">
                 <ui:repeat value="#{thesaurusViewBean.visibleNarrowers}" var="rel" varStatus="st">
-                  <button type="button" class="#{thesaurusViewBean.relationTermClass('nt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('nt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel(rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel(rel.role)}</span></ui:fragment></button>
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('nt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('nt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel('nt', rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel('nt', rel.role)}</span></ui:fragment></button>
                 </ui:repeat>
                 <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.narrowerMoreVisible}"
                                action="#{thesaurusViewBean.showMoreNarrowers}"
@@ -516,7 +516,7 @@
               <ui:fragment rendered="#{not empty thesaurusViewBean.visibleRelateds}">
               <div class="rel-items">
                 <ui:repeat value="#{thesaurusViewBean.visibleRelateds}" var="rel" varStatus="st">
-                  <button type="button" class="#{thesaurusViewBean.relationTermClass('rt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('rt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel(rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel(rel.role)}</span></ui:fragment></button>
+                  <button type="button" class="#{thesaurusViewBean.relationTermClass('rt', st.index)}" style="#{thesaurusViewBean.relationTermDelay('rt', st.index)}" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty thesaurusViewBean.relationNatureLabel('rt', rel.role)}"><span class="rel-btype">#{thesaurusViewBean.relationNatureLabel('rt', rel.role)}</span></ui:fragment></button>
                 </ui:repeat>
                 <h:commandLink styleClass="rel-more" rendered="#{thesaurusViewBean.relatedMoreVisible}"
                                action="#{thesaurusViewBean.showMoreRelateds}"
