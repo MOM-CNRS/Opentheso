@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.services;
 
+import fr.cnrs.opentheso.shared.time.Dates;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.ConceptFacet;
 import fr.cnrs.opentheso.entites.NodeLabel;
@@ -192,8 +193,8 @@ public class FacetService {
             nodeFacet.setIdThesaurus(idThesaurus);
             nodeFacet.setLexicalValue((String) facet[5]);
             nodeFacet.setLang((String) facet[2]);
-            nodeFacet.setCreated(created != null ? created.toString() : null);
-            nodeFacet.setModified(modified != null ? modified.toString() : null);
+            nodeFacet.setCreated(Dates.toIsoDate(created));
+            nodeFacet.setModified(Dates.toIsoDate(modified));
             nodeFacet.setIdConceptParent(idConceptParent);
 
             // Infos URI

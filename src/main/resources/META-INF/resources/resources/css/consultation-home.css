@@ -9,6 +9,18 @@
 .boc-ico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .boc-t{font-size:15px;font-weight:700}
 .boc-d{font-size:12.5px;color:var(--ink-3);margin-top:2px;text-wrap:pretty}
+/* Carte repliable (<details class="boc boc-fold">), repliée par défaut */
+.boc-fold > .boc-h{align-items:center;margin:0;list-style:none;cursor:pointer;user-select:none;border-radius:var(--r-sm)}
+.boc-fold > .boc-h::-webkit-details-marker{display:none}
+.boc-fold > .boc-h:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.boc-fold > .boc-h .boc-ht{flex:1;min-width:0}
+.boc-fold[open] > .boc-h{margin-bottom:14px}
+.boc-chev{flex:0 0 auto;color:var(--ink-3)}
+.boc-chev svg{display:block;width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(-90deg);transition:transform .15s ease}
+.boc-fold[open] > .boc-h .boc-chev svg{transform:none}
+.boc-fold > .boc-h:hover .boc-chev{color:var(--accent)}
+[dir="rtl"] .boc-fold:not([open]) > .boc-h .boc-chev svg{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.boc-chev svg{transition:none}}
 .boc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .boc-grid-1{grid-template-columns:1fr}
 .boc-item{display:flex;align-items:center;gap:10px;text-align:left;padding:11px 13px;border-radius:var(--r);

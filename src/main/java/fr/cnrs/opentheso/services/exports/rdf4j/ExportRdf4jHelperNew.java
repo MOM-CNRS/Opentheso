@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.services.exports.rdf4j;
 
+import fr.cnrs.opentheso.shared.time.Dates;
 import fr.cnrs.opentheso.entites.CandidatStatus;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.nodes.DcElement;
@@ -173,10 +174,10 @@ public class ExportRdf4jHelperNew {
 
         // dates
         if (nodeConcept.getConcept().getCreated() != null) {
-            sKOSResource.addDate(nodeConcept.getConcept().getCreated().toString(), SKOSProperty.CREATED);
+            sKOSResource.addDate(Dates.toIsoDate(nodeConcept.getConcept().getCreated()), SKOSProperty.CREATED);
         }
         if (nodeConcept.getConcept().getModified() != null) {
-            sKOSResource.addDate(nodeConcept.getConcept().getModified().toString(), SKOSProperty.MODIFIED);
+            sKOSResource.addDate(Dates.toIsoDate(nodeConcept.getConcept().getModified()), SKOSProperty.MODIFIED);
         }
 
         return sKOSResource;
@@ -224,8 +225,8 @@ public class ExportRdf4jHelperNew {
                     nodeConcept.getNodeListIdsOfRT(), sKOSResource, nodeConcept.getConcept().getIdThesaurus());
         }
         String notation = nodeConcept.getConcept().getNotation();
-        String created = nodeConcept.getConcept().getCreated().toString();
-        String modified = nodeConcept.getConcept().getModified().toString();
+        String created = Dates.toIsoDate(nodeConcept.getConcept().getCreated());
+        String modified = Dates.toIsoDate(nodeConcept.getConcept().getModified());
 
         if (notation != null && !notation.equals("null")) {
             sKOSResource.addNotation(notation);
@@ -268,10 +269,10 @@ public class ExportRdf4jHelperNew {
 
             //dates
             if (thesaurus.getCreated() != null) {
-                conceptScheme.addDate(thesaurus.getCreated().toString(), SKOSProperty.CREATED);
+                conceptScheme.addDate(Dates.toIsoDate(thesaurus.getCreated()), SKOSProperty.CREATED);
             }
             if (thesaurus.getModified() != null) {
-                conceptScheme.addDate(thesaurus.getModified().toString(), SKOSProperty.MODIFIED);
+                conceptScheme.addDate(Dates.toIsoDate(thesaurus.getModified()), SKOSProperty.MODIFIED);
             }
             conceptScheme.setThesaurus(thesaurus);
         }
@@ -305,8 +306,12 @@ public class ExportRdf4jHelperNew {
             SKOSResource sKOSResource =  new SKOSResource(getUriForFacette(facet.getIdFacet(), idTheso), SKOSProperty.FACET);
             sKOSResource.addRelation(facet.getIdFacet(), getUriFromNodeUri(facet.getNodeUri(), idTheso), SKOSProperty.SUPER_ORDINATE);
             sKOSResource.addLabel(facet.getLexicalValue(), facet.getLang(), SKOSProperty.PREF_LABEL);
-            sKOSResource.addDate(facet.getCreated(), SKOSProperty.CREATED);
-            sKOSResource.addDate(facet.getModified(), SKOSProperty.MODIFIED);
+            if (facet.getCreated() != null) {
+                sKOSResource.addDate(facet.getCreated(), SKOSProperty.CREATED);
+            }
+            if (facet.getModified() != null) {
+                sKOSResource.addDate(facet.getModified(), SKOSProperty.MODIFIED);
+            }
             addFacetMembers(sKOSResource, facet, idTheso);
             facetList.add(sKOSResource);
         }
@@ -352,9 +357,9 @@ public class ExportRdf4jHelperNew {
         String created = null;
         String modified = null;
         if(nodeGroupLabel.getCreated()!=null)
-            created = nodeGroupLabel.getCreated().toString();
+            created = Dates.toIsoDate(nodeGroupLabel.getCreated());
         if(nodeGroupLabel.getModified()!=null)
-            modified = nodeGroupLabel.getModified().toString();
+            modified = Dates.toIsoDate(nodeGroupLabel.getModified());
         if (created != null) {
             sKOSResource.addDate(created, SKOSProperty.CREATED);
         }
@@ -415,8 +420,8 @@ public class ExportRdf4jHelperNew {
             //dates
             String created;
             String modified;
-            created = traduction.getCreated().toString();
-            modified = traduction.getModified().toString();
+            created = Dates.toIsoDate(traduction.getCreated());
+            modified = Dates.toIsoDate(traduction.getModified());
             if (created != null) {
                 sKOSResource.addDate(created, SKOSProperty.CREATED);
             }

@@ -1,12 +1,17 @@
 package fr.cnrs.opentheso.shared.time;
 
 import java.time.Clock;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 
 /**
  * Horodatage V2 avec fuseau explicite (évite {@code now()} sans {@link ZoneId} ni {@link Clock}).
@@ -14,6 +19,20 @@ import java.time.ZoneId;
  * (entités et procédure {@code opentheso_add_new_concept}).
  */
 public final class Dates {
+
+    /** Date ISO, suivie ou non d'une heure (séparée par un espace ou « T ») et d'un décalage horaire. */
+    private static final DateTimeFormatter ISO_TOLERANT = new DateTimeFormatterBuilder()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE)
+            .optionalStart()
+            .appendPattern("[ ]['T']")
+            .append(DateTimeFormatter.ISO_LOCAL_TIME)
+            .optionalStart()
+            .parseLenient()
+            .appendOffset("+HH:mm", "Z")
+            .parseStrict()
+            .optionalEnd()
+            .optionalEnd()
+            .toFormatter();
 
     private Dates() {
     }
@@ -103,6 +122,11 @@ public final class Dates {
         return java.sql.Date.valueOf(LocalDate.ofInstant(instant, zone()));
     }
 
+    /** Date au format {@code yyyy-MM-dd} (xsd:date) pour les exports ; {@code null} si absente. */
+    public static String toIsoDate(java.util.Date date) {
+        return date == null ? null : LocalDate.ofInstant(toInstant(date), zone()).toString();
+    }
+
     public static java.util.Date toUtilDate(LocalDate date) {
         return date == null ? null : toUtilDate(date.atStartOfDay(zone()).toInstant());
     }
@@ -113,5 +137,35 @@ public final class Dates {
 
     public static java.util.Date nowUtilDate() {
         return toUtilDate(nowInstant());
+    }
+
+    /**
+     * Lit une date importée : d'abord au format choisi, sinon en ISO avec ou sans heure
+     * (ex. {@code 2023-11-28 00:00:00.0}, issu d'un {@code Timestamp.toString()}).
+     *
+     * @return {@code null} si la valeur est vide ou illisible
+     */
+    public static Instant parseImportDate(String value, DateTimeFormatter preferred) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String text = value.trim();
+        Instant parsed = preferred == null ? null : tryParse(text, preferred);
+        return parsed != null ? parsed : tryParse(text, ISO_TOLERANT);
+    }
+
+    private static Instant tryParse(String text, DateTimeFormatter formatter) {
+        try {
+            TemporalAccessor parsed = formatter.parse(text);
+            if (parsed.isSupported(ChronoField.INSTANT_SECONDS)) {
+                return Instant.from(parsed);
+            }
+            if (parsed.isSupported(ChronoField.NANO_OF_DAY)) {
+                return LocalDateTime.from(parsed).atZone(zone()).toInstant();
+            }
+            return LocalDate.from(parsed).atStartOfDay(zone()).toInstant();
+        } catch (DateTimeException ex) {
+            return null;
+        }
     }
 }

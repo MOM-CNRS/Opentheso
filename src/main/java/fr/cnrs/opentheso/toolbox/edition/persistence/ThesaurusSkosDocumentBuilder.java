@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.toolbox.edition.persistence;
 
+import fr.cnrs.opentheso.shared.time.Dates;
 import fr.cnrs.opentheso.entites.ConceptFacet;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.ThesaurusLabel;
@@ -812,10 +813,10 @@ public class ThesaurusSkosDocumentBuilder {
             conceptScheme.addLabel(label.getTitle(), label.getLang(), SKOSProperty.PREF_LABEL);
         }
         if (label.getCreated() != null) {
-            conceptScheme.addDate(label.getCreated().toString(), SKOSProperty.CREATED);
+            conceptScheme.addDate(label.getCreated().toLocalDate().toString(), SKOSProperty.CREATED);
         }
         if (label.getModified() != null) {
-            conceptScheme.addDate(label.getModified().toString(), SKOSProperty.MODIFIED);
+            conceptScheme.addDate(label.getModified().toLocalDate().toString(), SKOSProperty.MODIFIED);
         }
         conceptScheme.setThesaurus(toThesaurusModel(label));
     }
@@ -876,10 +877,10 @@ public class ThesaurusSkosDocumentBuilder {
         resource.setProperty(SKOSProperty.CONCEPT_GROUP);
 
         if (groupLabel.getCreated() != null) {
-            resource.addDate(groupLabel.getCreated().toString(), SKOSProperty.CREATED);
+            resource.addDate(Dates.toIsoDate(groupLabel.getCreated()), SKOSProperty.CREATED);
         }
         if (groupLabel.getModified() != null) {
-            resource.addDate(groupLabel.getModified().toString(), SKOSProperty.MODIFIED);
+            resource.addDate(Dates.toIsoDate(groupLabel.getModified()), SKOSProperty.MODIFIED);
         }
 
         for (NodeGroupTraductions translation : groupLabel.getNodeGroupTraductionses()) {

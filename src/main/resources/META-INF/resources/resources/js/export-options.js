@@ -142,7 +142,6 @@ function saveExportPrefs() {
     clearHtml: exportSwitchOn("bulkExportHtml"),
     delimiter: exportDelimiter(),
     pdfType: exportPdfType(),
-    zip: exportSwitchOn("bulkExportZip"),
     images: exportSwitchOn("bulkExportImg"),
     filterGroup: exportSwitchOn("bulkExportGroup")
   };
@@ -282,7 +281,7 @@ function initExportPanel() {
   setExportSwitch("bulkExportDesc", prefs.descendants !== false);
   setExportSwitch("bulkExportHtml", !!prefs.clearHtml);
   setExportSwitch("bulkExportGroup", false);
-  setExportSwitch("bulkExportZip", !!prefs.zip);
+  setExportSwitch("bulkExportZip", false);
   setExportSwitch("bulkExportImg", !!prefs.images);
   $$("[data-act='export-delim']").forEach(btn => {
     btn.classList.toggle("is-on", btn.getAttribute("data-delim") === (prefs.delimiter || ","));

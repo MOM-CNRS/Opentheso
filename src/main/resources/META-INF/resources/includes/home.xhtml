@@ -382,14 +382,16 @@
                       </div>
                     </div>
                   </h:form>
-              <h:panelGroup rendered="#{thesaurusViewBean.workshopVisible}" layout="block" styleClass="boc">
-                <div class="boc-h">
+              <ui:fragment rendered="#{thesaurusViewBean.workshopVisible}">
+              <details class="boc boc-fold">
+                <summary class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
                   <div class="boc-ht">
                     <div class="boc-t">#{localeBean.getMsg('home.workshop')}</div>
                     <div class="boc-d">#{localeBean.getMsg('home.workshop.desc')}</div>
                   </div>
-                </div>
+                  <span class="boc-chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+                </summary>
                 <div class="boc-grid">
                   <a class="boc-item" href="toolbox/atelier.xhtml?obj=alignements"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg></span><span class="boc-l">#{localeBean.getMsg('home.workshop.alignments')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
                   <a class="boc-item" href="toolbox/atelier.xhtml?obj=relations"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.7 10.7 15.3 7.3"/><path d="M8.7 13.3 15.3 16.7"/></svg></span><span class="boc-l">#{localeBean.getMsg('home.workshop.relations')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
@@ -407,7 +409,8 @@
                   <a class="boc-item" href="toolbox/portail.xhtml#{empty thesaurusViewBean.id ? '' : '?idt='}#{thesaurusViewBean.id}"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg></span><span class="boc-l">#{localeBean.getMsg('home.workshop.portal')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
                   </ui:fragment>
                 </div>
-              </h:panelGroup>
+              </details>
+              </ui:fragment>
               <ui:fragment rendered="#{thesaurusViewBean.statisticsBlockVisible}">
               <div class="boc#{thesaurusViewBean.statisticsDetailVisible ? ' boc-clickable' : ''}"
                    data-act="#{thesaurusViewBean.statisticsDetailVisible ? 'show' : ''}"
@@ -452,14 +455,16 @@
                 </div>
               </div>
               </ui:fragment>
-              <h:panelGroup rendered="#{thesaurusViewBean.settingsVisible}" layout="block" styleClass="boc">
-                <div class="boc-h">
+              <ui:fragment rendered="#{thesaurusViewBean.settingsVisible}">
+              <details class="boc boc-fold">
+                <summary class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
                   <div class="boc-ht">
                     <div class="boc-t">#{localeBean.getMsg('home.settings')}</div>
                     <div class="boc-d">#{localeBean.getMsg('home.settings.desc')}</div>
                   </div>
-                </div>
+                  <span class="boc-chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+                </summary>
                 <div class="boc-grid boc-grid-1">
                   <a class="boc-item boc-nav" href="setting/preference.xhtml#stPrefs">
                     <span class="boc-v">›</span><span class="boc-l">#{localeBean.getMsg('home.settings.prefs')}</span>
@@ -478,20 +483,24 @@
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>
                 </div>
-              </h:panelGroup>
-              <h:panelGroup rendered="#{thesaurusViewBean.maintenanceVisible}" layout="block" styleClass="boc">
-                <div class="boc-h">
+              </details>
+              </ui:fragment>
+              <ui:fragment rendered="#{thesaurusViewBean.maintenanceVisible}">
+              <details class="boc boc-fold">
+                <summary class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2-2 2.7-2.7z"/></svg></div>
                   <div class="boc-ht">
                     <div class="boc-t">#{localeBean.getMsg('home.maint')}</div>
                     <div class="boc-d">#{localeBean.getMsg('home.maint.desc')}</div>
                   </div>
-                </div>
+                  <span class="boc-chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+                </summary>
                 <div class="mc-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>#{localeBean.getMsg('home.maint.note')}</span></div>
                 <div class="mc-list">
                   <ui:include src="/toolbox/includes/maintenance-tools.xhtml"/>
                 </div>
-              </h:panelGroup>
+              </details>
+              </ui:fragment>
             </div>
           </div>
           <ui:include src="/includes/bulk-actions.xhtml"/>

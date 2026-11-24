@@ -42,12 +42,7 @@ import org.springframework.stereotype.Component;
 import fr.cnrs.opentheso.shared.time.Dates;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -687,19 +682,11 @@ public class ThesaurusCsvImportEngine {
         if (StringUtils.isBlank(value)) {
             return null;
         }
-        try {
-            TemporalAccessor parsed = dateFormatter.parse(value);
-            if (parsed.isSupported(ChronoField.INSTANT_SECONDS)) {
-                return Instant.from(parsed);
-            }
-            if (parsed.isSupported(ChronoField.EPOCH_DAY)) {
-                return LocalDate.from(parsed).atStartOfDay(Dates.zone()).toInstant();
-            }
-            return LocalDateTime.from(parsed).atZone(Dates.zone()).toInstant();
-        } catch (DateTimeParseException ex) {
-            Logger.getLogger(ThesaurusCsvImportEngine.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
+        Instant parsed = Dates.parseImportDate(value, dateFormatter);
+        if (parsed == null) {
+            Logger.getLogger(ThesaurusCsvImportEngine.class.getName()).log(Level.WARNING, "Date ignorée à l''import, format non reconnu : {0}", value);
         }
+        return parsed;
     }
 
 
