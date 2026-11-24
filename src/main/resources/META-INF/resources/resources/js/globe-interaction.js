@@ -1,240 +1,160 @@
-/** Globe — pointeur, clavier et recherche sur la scène. */
-window.OTGlobeBind = function (shared, loop, canvas, stage, isHyper, initGl, kick, clampPan, draw, hit, localXY, setTip, pick, openNode, resetView, applyDrag, reducedMotion, stop, paintNeighbors, paintPicked, project, resize, uploadGlColors, $) {
-    if (loop.bound) return;
-    const el = canvas();
-    const st = stage();
-    if (!el || !st) return;
-    loop.bound = true;
-    initGl();
-    const onDown = (e) => {
-      if (!isHyper()) return;
-      if (e.target.closest && e.target.closest(".hyper-bar, #hyperCenter, #hyperOpen, #hyperSearch")) return;
-      if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 1 && e.button !== 2) return;
-      e.preventDefault();
-      loop.fly = null;
-      loop.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      st.classList.add("is-grabbing");
-      if (loop.pointers.size >= 2) {
-        const pts = Array.from(loop.pointers.values());
-        loop.pinch = {
-          dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1,
-          zoom: loop.zoom,
-          panX: loop.panX,
-          panY: loop.panY,
-          mx: (pts[0].x + pts[1].x) / 2,
-          my: (pts[0].y + pts[1].y) / 2
-        };
-        loop.drag = null;
-        return;
-      }
-      loop.drag = {
-        x: e.clientX, y: e.clientY,
-        rotX: loop.rotX, rotY: loop.rotY,
-        panX: loop.panX, panY: loop.panY,
-        pan: e.shiftKey || e.button === 1 || e.button === 2,
-        pointerId: e.pointerId
-      };
-      loop.moved = false;
-      loop.velX = 0;
-      loop.velY = 0;
-      kick();
-    };
-    const onMove = (e) => {
-      if (!isHyper()) return;
-      if (loop.pointers.has(e.pointerId)) loop.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (loop.pinch && loop.pointers.size >= 2) {
-        const pts = Array.from(loop.pointers.values());
-        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
-        loop.zoom = Math.max(0.4, Math.min(6, loop.pinch.zoom * (dist / loop.pinch.dist)));
-        loop.panX = loop.pinch.panX + ((pts[0].x + pts[1].x) / 2 - loop.pinch.mx);
-        loop.panY = loop.pinch.panY + ((pts[0].y + pts[1].y) / 2 - loop.pinch.my);
-        clampPan();
-        setTip(-1);
-        draw();
-        return;
-      }
-      if (loop.drag && (loop.drag.pointerId == null || e.pointerId === loop.drag.pointerId)) {
-        applyDrag(e);
-        return;
-      }
-      if (loop.drag || loop.pinch) return;
-      const box = st.getBoundingClientRect();
-      if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) {
-        if (loop.hover >= 0) {
-          loop.hover = -1;
-          setTip(-1);
-          draw();
-        }
-        return;
-      }
-      if (!loop.hash) project();
-      const local = localXY(e.clientX, e.clientY);
-      const next = hit(local.x, local.y);
-      if (next !== loop.hover) {
-        loop.hover = next;
-        setTip(next, e.clientX, e.clientY);
-        draw();
-      } else if (next >= 0) {
-        setTip(next, e.clientX, e.clientY);
-      }
-    };
-    const onUp = (e) => {
-      if (!loop.drag && !loop.pinch && loop.pointers.size === 0) return;
-      loop.pointers.delete(e.pointerId);
-      if (loop.pointers.size < 2) loop.pinch = null;
-      if (loop.drag && loop.drag.pointerId === e.pointerId && !loop.moved) {
-        if (!loop.hash) project();
-        const local = localXY(e.clientX, e.clientY);
-        const found = hit(local.x, local.y);
-        if (found >= 0) pick(found);
-        else {
-          loop.selected = -1;
-          shared.neighborhood = { id: "", edges: [], neighbor: {} };
-          paintPicked();
-          paintNeighbors();
-          uploadGlColors();
-          draw();
-        }
-      }
-      if (loop.drag && loop.drag.pointerId === e.pointerId) loop.drag = null;
-      if (loop.pointers.size === 0) {
-        loop.drag = null;
-        loop.pinch = null;
-        st.classList.remove("is-grabbing");
-        kick();
-      }
-    };
-    st.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", (e) => {
-      loop.pointers.delete(e.pointerId);
-      if (e.pointerType === "touch") {
-        loop.pinch = null;
-        if (loop.drag && loop.drag.pointerId === e.pointerId) loop.drag = null;
-        if (loop.pointers.size === 0) st.classList.remove("is-grabbing");
-      }
-    });
-    st.addEventListener("dblclick", (e) => {
-      if (!loop.hash) project();
-      const local = localXY(e.clientX, e.clientY);
-      const found = hit(local.x, local.y);
-      openNode(found >= 0 ? found : loop.selected);
-    });
-    st.addEventListener("contextmenu", (e) => e.preventDefault());
-    st.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      loop.fly = null;
-      if (e.ctrlKey || e.metaKey) {
-        const prev = loop.zoom;
-        const next = Math.max(0.4, Math.min(6, prev * Math.exp(-e.deltaY * 0.01)));
-        const local = localXY(e.clientX, e.clientY);
-        const k = next / prev;
-        loop.panX += (local.x - loop.w * 0.5 - loop.panX) * (1 - k);
-        loop.panY += (local.y - loop.h * 0.5 - loop.panY) * (1 - k);
-        loop.zoom = next;
-        clampPan();
-        draw();
-        return;
-      }
-      if (e.shiftKey) {
-        loop.panX -= e.deltaX || e.deltaY;
-        loop.panY -= e.deltaY;
-        clampPan();
-        draw();
-        return;
-      }
-      if (e.deltaMode === 0) {
-        loop.rotY += e.deltaX * 0.005;
-        loop.rotX = Math.max(-1.45, Math.min(1.45, loop.rotX + e.deltaY * 0.005));
-        if (!reducedMotion()) {
-          loop.velY = e.deltaX * 0.00014;
-          loop.velX = e.deltaY * 0.00014;
-          kick();
-        }
-        draw();
-        return;
-      }
-      const prev = loop.zoom;
-      const next = Math.max(0.4, Math.min(6, prev * (e.deltaY > 0 ? 0.9 : 1.12)));
-      const local = localXY(e.clientX, e.clientY);
-      const k = next / prev;
-      loop.panX += (local.x - loop.w * 0.5 - loop.panX) * (1 - k);
-      loop.panY += (local.y - loop.h * 0.5 - loop.panY) * (1 - k);
-      loop.zoom = next;
-      clampPan();
-      draw();
-    }, { passive: false });
-    el.addEventListener("keydown", (e) => {
-      const step = e.shiftKey ? 0.16 : 0.08;
-      if (e.key === "ArrowLeft") { loop.rotY -= step; e.preventDefault(); }
-      else if (e.key === "ArrowRight") { loop.rotY += step; e.preventDefault(); }
-      else if (e.key === "ArrowUp") { loop.rotX = Math.max(-1.45, loop.rotX - step); e.preventDefault(); }
-      else if (e.key === "ArrowDown") { loop.rotX = Math.min(1.45, loop.rotX + step); e.preventDefault(); }
-      else if (e.key === "+" || e.key === "=") { loop.zoom = Math.min(6, loop.zoom * 1.12); e.preventDefault(); }
-      else if (e.key === "-") { loop.zoom = Math.max(0.4, loop.zoom * 0.9); e.preventDefault(); }
-      else if (e.key === "0") { resetView(); e.preventDefault(); return; }
-      else if (e.key === "Enter") { openNode(loop.selected); e.preventDefault(); return; }
-      else if (e.key === "Escape") {
-        if (loop.selected >= 0) {
-          loop.selected = -1;
-          shared.neighborhood = { id: "", edges: [], neighbor: {} };
-          paintPicked();
-          paintNeighbors();
-          uploadGlColors();
-        } else resetView();
-        e.preventDefault();
-      } else return;
-      loop.fly = null;
-      loop.velX = 0;
-      loop.velY = 0;
-      draw();
-    });
-    const center = $("#hyperCenter");
-    if (center) center.addEventListener("click", resetView);
-    const openBtn = $("#hyperOpen");
-    if (openBtn) openBtn.addEventListener("click", () => openNode(loop.selected));
-    const search = $("#hyperSearch");
-    if (search) {
-      search.addEventListener("input", () => {
-        shared.matchQuery = (search.value || "").trim().toLowerCase();
-        uploadGlColors();
-        if (!shared.matchQuery) {
-          draw();
-          return;
-        }
-        for (let i = 0; i < loop.n; i++) {
-          if ((loop.labels[i] || "").toLowerCase().indexOf(shared.matchQuery) >= 0) {
-            loop.hover = i;
-            break;
-          }
-        }
-        draw();
-      });
-      search.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        const q = (search.value || "").trim().toLowerCase();
-        if (!q) return;
-        for (let i = 0; i < loop.n; i++) {
-          if ((loop.labels[i] || "").toLowerCase().indexOf(q) >= 0) {
-            pick(i);
-            return;
-          }
-        }
-      });
-    }
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stop();
-      else if (isHyper()) draw();
-    });
-    if (window.ResizeObserver) {
-      new ResizeObserver(() => {
-        if (isHyper()) {
-          resize();
-          draw();
-        }
-      }).observe(st);
-    }
+/** Sphère de voisinage — pointeur, molette et clavier. */
+window.OTGlobeBind = function (api) {
+  const loop = api.loop;
+  const canvas = document.getElementById("hyperGlobe");
+  const stage = document.getElementById("hyperStage");
+  /* Le changement de langue réécrit la page : on rebranche la nouvelle scène. */
+  if (!canvas || !stage || loop.stage === stage) return;
+  const first = !loop.stage;
+  loop.stage = stage;
+  loop.pointers.clear();
+  loop.drag = null;
+  loop.pinch = null;
+
+  const ROT_MAX = 1.3;
+  const tilt = (value) => Math.max(-ROT_MAX, Math.min(ROT_MAX, value));
+  const bound = (value) => Math.max(0.5, Math.min(4, value));
+
+  function local(e) {
+    const box = stage.getBoundingClientRect();
+    return { x: e.clientX - box.left, y: e.clientY - box.top };
   }
-;
+
+  function clampPan() {
+    const max = Math.min(loop.w || 1, loop.h || 1) * 0.5 * Math.max(1, loop.zoom);
+    loop.panX = Math.max(-max, Math.min(max, loop.panX));
+    loop.panY = Math.max(-max, Math.min(max, loop.panY));
+  }
+
+  function zoomAt(e, factor) {
+    const p = local(e);
+    const next = bound(loop.zoom * factor);
+    const k = next / loop.zoom;
+    loop.panX += (p.x - loop.w / 2 - loop.panX) * (1 - k);
+    loop.panY += (p.y - loop.h / 2 - loop.panY) * (1 - k);
+    loop.zoom = next;
+    clampPan();
+    api.draw();
+  }
+
+  function setHover(i) {
+    if (loop.hover === i) return;
+    loop.hover = i;
+    canvas.classList.toggle("is-hover", i > 0);
+    api.draw();
+  }
+
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button > 2) return;
+    e.preventDefault();
+    canvas.focus({ preventScroll: true });
+    if (stage.setPointerCapture) stage.setPointerCapture(e.pointerId);
+    loop.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    stage.classList.add("is-grabbing");
+    if (loop.pointers.size === 2) {
+      const p = Array.from(loop.pointers.values());
+      loop.pinch = { dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, zoom: loop.zoom };
+      loop.drag = null;
+      return;
+    }
+    loop.moved = false;
+    loop.drag = {
+      id: e.pointerId, x: e.clientX, y: e.clientY,
+      rotX: loop.rotX, rotY: loop.rotY, panX: loop.panX, panY: loop.panY,
+      pan: e.shiftKey || e.button === 1 || e.button === 2
+    };
+  });
+
+  stage.addEventListener("pointermove", (e) => {
+    if (loop.pointers.has(e.pointerId)) loop.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (loop.pinch) {
+      const p = Array.from(loop.pointers.values());
+      if (p.length < 2) return;
+      loop.zoom = bound(loop.pinch.zoom * Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) / loop.pinch.dist);
+      api.draw();
+      return;
+    }
+    if (loop.drag) {
+      if (e.pointerId !== loop.drag.id) return;
+      const dx = e.clientX - loop.drag.x;
+      const dy = e.clientY - loop.drag.y;
+      if (Math.hypot(dx, dy) > 4) loop.moved = true;
+      if (!loop.moved) return;
+      if (loop.drag.pan) {
+        loop.panX = loop.drag.panX + dx;
+        loop.panY = loop.drag.panY + dy;
+        clampPan();
+      } else {
+        loop.rotY = loop.drag.rotY + dx * 0.008;
+        loop.rotX = tilt(loop.drag.rotX + dy * 0.008);
+      }
+      loop.hover = -1;
+      api.draw();
+      return;
+    }
+    const p = local(e);
+    setHover(api.hit(p.x, p.y));
+  });
+
+  function release(e, pick) {
+    const drag = loop.drag;
+    loop.pointers.delete(e.pointerId);
+    if (loop.pointers.size < 2) loop.pinch = null;
+    if (drag && drag.id === e.pointerId) {
+      loop.drag = null;
+      if (pick && !loop.moved && !drag.pan) {
+        const p = local(e);
+        api.pick(api.hit(p.x, p.y));
+      }
+    }
+    if (!loop.pointers.size) stage.classList.remove("is-grabbing");
+  }
+
+  stage.addEventListener("pointerup", (e) => release(e, true));
+  stage.addEventListener("pointercancel", (e) => release(e, false));
+  stage.addEventListener("pointerleave", () => { if (!loop.drag) setHover(-1); });
+  stage.addEventListener("contextmenu", (e) => e.preventDefault());
+  stage.addEventListener("dblclick", (e) => {
+    const p = local(e);
+    if (api.hit(p.x, p.y) === 0) api.openCenter();
+  });
+  stage.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoomAt(e, Math.exp(-Math.max(-60, Math.min(60, e.deltaY)) * (e.ctrlKey ? 0.01 : 0.003)));
+  }, { passive: false });
+
+  canvas.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 0.24 : 0.12;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "ArrowLeft") loop.rotY -= step;
+    else if (e.key === "ArrowRight") loop.rotY += step;
+    else if (e.key === "ArrowUp") loop.rotX = tilt(loop.rotX - step);
+    else if (e.key === "ArrowDown") loop.rotX = tilt(loop.rotX + step);
+    else if (e.key === "+" || e.key === "=") loop.zoom = bound(loop.zoom * 1.12);
+    else if (e.key === "-") loop.zoom = bound(loop.zoom * 0.9);
+    else if (e.key === "0" || e.key === "Escape") api.resetView();
+    else if (e.key === "Enter") api.openCenter();
+    else return;
+    e.preventDefault();
+    api.draw();
+  });
+
+  document.getElementById("hyperCenter").addEventListener("click", api.resetView);
+  document.getElementById("hyperOpen").addEventListener("click", api.openCenter);
+
+  if (loop.observer) loop.observer.disconnect();
+  if (window.ResizeObserver) {
+    loop.observer = new ResizeObserver(() => {
+      if (!api.isHyper()) return;
+      api.resize();
+      api.draw();
+    });
+    loop.observer.observe(stage);
+  }
+  if (first) {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) api.stop();
+      else if (api.isHyper()) api.draw();
+    });
+  }
+};

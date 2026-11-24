@@ -44,14 +44,22 @@ public class GraphGlobeApiController {
     public ResponseEntity<GraphNeighborhoodResponse> neighborhood(
             @RequestParam(required = false) String thesaurusId,
             @RequestParam(required = false) String lang,
-            @RequestParam(required = false) String conceptId
+            @RequestParam(required = false) String conceptId,
+            @RequestParam(defaultValue = "0") int broaderOffset,
+            @RequestParam(defaultValue = "0") int narrowerOffset,
+            @RequestParam(defaultValue = "0") int relatedOffset
     ) {
         GraphNeighborhoodResponse body = graphGlobeConsultationService.loadNeighborhood(
                 thesaurusId,
                 StringUtils.firstNonBlank(lang, "fr"),
-                StringUtils.trimToEmpty(conceptId)
+                StringUtils.trimToEmpty(conceptId),
+                broaderOffset,
+                narrowerOffset,
+                relatedOffset
         );
-        return cached(body);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(body);
     }
 
     private static <T> ResponseEntity<T> cached(T body) {

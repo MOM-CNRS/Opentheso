@@ -1,33 +1,68 @@
 /**
- * OpenTheso — pont vers le globe WebGL.
+ * OpenTheso — pont vers la sphère de voisinage.
  */
 "use strict";
 
+/* Graphe choisi : vue Graphe, ou liste de résultats d'une recherche lancée depuis le graphe. */
+function graphMode() {
+  return state.view === "hyper" || (state.view === "recherche" && !!state.graphSearch);
+}
+
+/* La sphère occupe le panneau principal (sinon c'est la fiche, avec « Retour au graphe »). */
+function graphOnScreen() {
+  return graphMode() && state.graphFront && !!$("#viewHyper");
+}
+
+/* Concept à mettre au centre ; une facette n'a pas de voisinage. */
+function graphConceptId() {
+  const live = liveDetailState();
+  if (live && live.getAttribute("data-kind") === "facet"
+      && live.getAttribute("data-id") === state.conceptId) return "";
+  return state.conceptId || "";
+}
+
+function graphPageUrl() {
+  const id = graphConceptId();
+  return "graph/graphe.xhtml" + (id ? "?id=" + encodeURIComponent(id) : "");
+}
+
+/* Ouvre un concept sans quitter le graphe : sphère recentrée, fiche chargée à côté. */
+function openGraphConcept(id, nodeType, label) {
+  state.home = false;
+  state.draft = false;
+  state.conceptDraft = false;
+  state.facetDraft = false;
+  state.collectionDraft = false;
+  state.conceptId = id;
+  openLiveDetail(id, nodeType || "concept", label);
+  syncConceptUrl(id, "");
+  highlightConcept(id);
+  paint();
+}
+
 function globeHost() {
   return {
-    isHyper: () => state.view === "hyper",
+    isHyper: graphOnScreen,
     thesaurusId: thesaurusId,
     thesaurusLang: thesaurusLang,
-    conceptId: () => state.conceptId,
+    conceptId: graphConceptId,
     ctx: () => document.body.getAttribute("data-ctx") || "",
     toast: toast,
-    onPick: (id) => {
-      state.conceptId = id;
-      highlightConcept(id);
-      revealTreeConcept(id);
-    },
+    onPick: (id, label) => openGraphConcept(id, "concept", label),
     onOpen: (id) => {
-      state.home = false;
-      state.draft = false;
-      state.conceptId = id;
       state.graphFront = false;
-      highlightConcept(id);
-      revealTreeConcept(id);
-      if (openLiveDetail(id, "concept")) {
-        paintGraphBack();
+      const live = liveDetailState();
+      const ready = live && live.getAttribute("data-requested") === "1" && live.getAttribute("data-id") === id;
+      if (ready) {
+        paint();
+        showLiveDetail();
         return;
       }
-      paint();
+      if (state.pendingOpenId === id) {
+        beginLiveOpen();
+        return;
+      }
+      openGraphConcept(id, "concept");
     }
   };
 }
@@ -45,11 +80,11 @@ function ensureGlobe() {
   if (document.querySelector("script[data-globe]")) return;
   const ctx = document.body.getAttribute("data-ctx") || "";
   const prep = document.createElement("script");
-  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261118-split";
+  prep.src = ctx + "/resources/js/globe-interaction.js?v=20261124-voisins";
   prep.dataset.globe = "1";
   prep.onload = () => {
     const script = document.createElement("script");
-    script.src = ctx + "/resources/js/globe.js?v=20261118-split";
+    script.src = ctx + "/resources/js/globe.js?v=20261124-voisins";
     script.onload = () => {
       if (window.OTGlobe) window.OTGlobe.attach(globeHost()).ensure();
     };
@@ -66,8 +101,8 @@ function invalidateGlobe() {
   if (window.OTGlobe) window.OTGlobe.invalidate();
 }
 
-function globeSelectId(id, draw) {
-  if (window.OTGlobe) window.OTGlobe.selectId(id, draw);
+function globeSelectId(id) {
+  if (window.OTGlobe) window.OTGlobe.selectId(id);
 }
 
 function onThesaurusLangChanged() {
@@ -78,7 +113,11 @@ function onThesaurusLangChanged() {
     loadCollectionRoots();
     if (state.colId) loadCollectionDetail(state.colId);
   }
-  if (state.view === "hyper" && window.OTGlobe) window.OTGlobe.reload();
+  if (graphOnScreen()) {
+    /* La réponse a remplacé le panneau : il faut le réafficher avant de recharger la sphère. */
+    paintMain();
+    if (window.OTGlobe) window.OTGlobe.reload();
+  }
   if (state.view !== "tableau") {
     invalidateTableRows();
     return;

@@ -1,845 +1,614 @@
 /**
- * Globe — module autonome (WebGL points, overlay 2D, rAF idle, voisinage).
+ * Sphère de voisinage : un concept au centre, ses génériques (pôle haut), spécifiques (pôle bas)
+ * et associés (côtés). Le thésaurus n'est jamais chargé en entier.
  * API : window.OTGlobe.attach(host).ensure() / stop() / invalidate() / selectId() / reload()
  */
 (function (global) {
   "use strict";
 
-  const COLORS = {
-    valide: [31, 122, 92],
-    insere: [31, 122, 92],
-    candidat: [224, 138, 76],
-    deprecie: [154, 160, 166],
-    rejete: [194, 69, 58]
-  };
+  const ROLES = ["TG", "TS", "TA"];
+  const COLOR = { TG: "#1f7a5c", TS: "#2f6cb0", TA: "#a06e24", center: "#17382c" };
+  const FOCAL = 2.35;
   const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-  const EDGE_COLOR = {
-    TG: "rgba(31,122,92,0.72)",
-    TS: "rgba(47,108,176,0.72)",
-    TA: "rgba(180,120,40,0.72)"
-  };
-  const VS = [
-    "attribute vec3 aPos;",
-    "attribute vec3 aColor;",
-    "uniform float uRotY,uRotX,uZoom,uPanX,uPanY,uDpr;",
-    "uniform vec2 uRes;",
-    "varying vec3 vColor;",
-    "void main(){",
-    " float cy=cos(uRotY),sy=sin(uRotY),cx=cos(uRotX),sx=sin(uRotX);",
-    " float x1=aPos.x*cy-aPos.z*sy;",
-    " float z1=aPos.x*sy+aPos.z*cy;",
-    " float y2=aPos.y*cx-z1*sx;",
-    " float z2=aPos.y*sx+z1*cx;",
-    " float radius=min(uRes.x,uRes.y)*0.42*uZoom;",
-    " float scale=radius*(2.35/(2.35+1.0-z2));",
-    " vec2 scr=vec2(uRes.x*0.5+uPanX+x1*scale,uRes.y*0.5+uPanY+y2*scale);",
-    " gl_Position=vec4((scr.x/uRes.x)*2.0-1.0,1.0-(scr.y/uRes.y)*2.0,(1.0-z2)*0.5,1.0);",
-    " float t=(z2+1.0)*0.5;",
-    " gl_PointSize=mix(2.2,6.2,t)*uDpr;",
-    " if(z2<-0.18) gl_PointSize=0.0;",
-    " vColor=aColor*mix(0.28,1.0,t);",
-    "}"
-  ].join("\n");
-  const FS = [
-    "precision mediump float;",
-    "varying vec3 vColor;",
-    "void main(){",
-    " vec2 c=gl_PointCoord-vec2(0.5);",
-    " if(dot(c,c)>0.25) discard;",
-    " gl_FragColor=vec4(vColor,1.0);",
-    "}"
-  ].join("\n");
+  const LABEL_MAX = 30;
 
   let host = null;
-  let cache = { key: "", loading: false, nodes: [], truncated: false };
-  let loop = resetLoop();
-  let gl = null;
-  let glProg = null;
-  let glBufPos = null;
-  let glBufCol = null;
-  let glLoc = null;
-  let neighborhood = { id: "", edges: [], neighbor: {} };
-  let matchQuery = "";
+  let data = null;
+  let wanted = { id: "", key: "", offsets: { TG: 0, TS: 0, TA: 0 } };
+  let request = null;
+  let refocus = "";
+  const loop = {
+    rotX: 0.1, rotY: 0, zoom: 1, panX: 0, panY: 0,
+    shown: false, hover: -1, drag: null, pinch: null, moved: false, pointers: new Map(),
+    nodes: [], w: 0, h: 0, dpr: 1
+  };
 
-  function $(s, r) {
-    return (r || document).querySelector(s);
+  function el(id) {
+    return document.getElementById(id);
   }
 
-  function resetLoop() {
-    return {
-      raf: 0,
-      running: false,
-      rotX: 0.22,
-      rotY: 0.35,
-      velX: 0,
-      velY: 0,
-      zoom: 1,
-      panX: 0,
-      panY: 0,
-      hover: -1,
-      selected: -1,
-      drag: null,
-      pinch: null,
-      pointers: new Map(),
-      fly: null,
-      moved: false,
-      px: null,
-      py: null,
-      pz: null,
-      sx: null,
-      sy: null,
-      sz: null,
-      colors: null,
-      ids: [],
-      labels: [],
-      n: 0,
-      w: 0,
-      h: 0,
-      dpr: 1,
-      bound: false,
-      hash: null,
-      cell: 48
-    };
+  function msg(name) {
+    const root = el("hyperRoot");
+    return (root && root.getAttribute("data-" + name)) || "";
   }
 
-  function reducedMotion() {
-    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }
-
-  function canvas() {
-    return document.getElementById("hyperGlobe");
-  }
-
-  function overlay() {
-    return document.getElementById("hyperGlobeFx");
-  }
-
-  function stage() {
-    return document.getElementById("hyperStage");
-  }
-
-  function cacheKey() {
-    return host.thesaurusId() + "|" + host.thesaurusLang();
+  function fill(pattern, values) {
+    return pattern.replace(/\{(\d)\}/g, (all, i) => (values[i] == null ? all : String(values[i])));
   }
 
   function isHyper() {
-    return host && host.isHyper();
+    return !!(host && host.isHyper());
+  }
+
+  function groups() {
+    if (!data || !data.found) return { TG: null, TS: null, TA: null };
+    return { TG: data.broader, TS: data.narrower, TA: data.related };
+  }
+
+  /* ── Données ── */
+
+  function keyOf(id) {
+    return host.thesaurusId() + "|" + host.thesaurusLang() + "|" + (id || "");
   }
 
   function setLoading(on) {
-    const view = $("#viewHyper");
-    const spin = $("#hyperLoading");
-    if (view) view.classList.toggle("is-loading", !!on);
-    if (spin) {
-      if (on) spin.removeAttribute("hidden");
-      else spin.setAttribute("hidden", "hidden");
-      spin.hidden = !on;
-    }
-    const empty = $("#hyperEmpty");
-    if (on && empty) empty.hidden = true;
+    const spin = el("hyperLoading");
+    if (spin) spin.hidden = !on;
+    if (on) setEmpty("");
   }
 
-  function paintCount() {
-    const el = $("#hyperCount");
-    if (!el) return;
-    const n = cache.nodes.length;
-    el.textContent = n
-      ? (n.toLocaleString("fr-FR") + " concept" + (n > 1 ? "s" : "") + (cache.truncated ? " (aperçu)" : ""))
-      : "";
-  }
-
-  function paintPicked() {
-    const el = $("#hyperPicked");
-    const btn = $("#hyperOpen");
-    const i = loop.selected;
-    if (el) el.textContent = i >= 0 ? (loop.labels[i] || "") : "";
-    if (btn) btn.disabled = i < 0;
-  }
-
-  function paintNeighbors() {
-    const box = $("#hyperNeighbors");
+  function setEmpty(text) {
+    const box = el("hyperEmpty");
     if (!box) return;
-    const n = neighborhood;
-    if (!n.id || loop.selected < 0) {
-      box.hidden = true;
-      box.innerHTML = "";
-      return;
-    }
-    const chips = [];
-    function add(list, role) {
-      list.forEach((item) => {
-        chips.push("<span class=\"hyper-chip hyper-chip-" + role + "\">" + role + " "
-          + escape(item.label || item.id) + "</span>");
-      });
-    }
-    add(n.broader || [], "TG");
-    add(n.narrower || [], "TS");
-    add(n.related || [], "TA");
-    box.hidden = chips.length === 0;
-    box.innerHTML = chips.slice(0, 12).join("");
+    box.textContent = text;
+    box.hidden = !text;
   }
 
-  function escape(value) {
-    return String(value == null ? "" : value)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
-
-  function layout(nodes) {
-    const n = nodes.length;
-    loop.n = n;
-    loop.ids = new Array(n);
-    loop.labels = new Array(n);
-    loop.px = new Float32Array(n);
-    loop.py = new Float32Array(n);
-    loop.pz = new Float32Array(n);
-    loop.sx = new Float32Array(n);
-    loop.sy = new Float32Array(n);
-    loop.sz = new Float32Array(n);
-    loop.colors = new Float32Array(n * 3);
-    const denom = Math.max(1, n - 1);
-    for (let i = 0; i < n; i++) {
-      const node = nodes[i];
-      loop.ids[i] = node.id;
-      loop.labels[i] = node.label || node.id;
-      const y = 1 - (i / denom) * 2;
-      const r = Math.sqrt(Math.max(0, 1 - y * y));
-      const theta = GOLDEN * i;
-      loop.px[i] = Math.cos(theta) * r;
-      loop.py[i] = y;
-      loop.pz[i] = Math.sin(theta) * r;
-      const rgb = COLORS[node.status] || COLORS.valide;
-      loop.colors[i * 3] = rgb[0] / 255;
-      loop.colors[i * 3 + 1] = rgb[1] / 255;
-      loop.colors[i * 3 + 2] = rgb[2] / 255;
-    }
+  function clear(text) {
+    if (request) request.abort();
+    request = null;
+    data = null;
+    loop.nodes = [];
     loop.hover = -1;
-    loop.selected = -1;
-    uploadGl();
-    if (host.conceptId()) selectId(host.conceptId(), false);
-    paintPicked();
+    setLoading(false);
+    setEmpty(text);
+    paintPanels();
+    draw();
   }
 
-  function initGl() {
-    const el = canvas();
-    if (!el || gl) return;
-    try {
-      gl = el.getContext("webgl", { antialias: false, alpha: true, premultipliedAlpha: false })
-        || el.getContext("experimental-webgl", { antialias: false, alpha: true, premultipliedAlpha: false });
-    } catch (ex) {
-      gl = null;
-    }
-    if (!gl) return;
-    const vs = compile(gl.VERTEX_SHADER, VS);
-    const fs = compile(gl.FRAGMENT_SHADER, FS);
-    if (!vs || !fs) {
-      gl = null;
+  /* Recentre sur un concept. Sans changement de concept ni de langue, ne relance rien. */
+  function selectId(id) {
+    if (!host || !el("hyperGlobe")) return;
+    if (!id || !host.thesaurusId()) {
+      wanted = { id: "", key: "", offsets: { TG: 0, TS: 0, TA: 0 } };
+      clear(msg("pick"));
       return;
     }
-    glProg = gl.createProgram();
-    gl.attachShader(glProg, vs);
-    gl.attachShader(glProg, fs);
-    gl.linkProgram(glProg);
-    if (!gl.getProgramParameter(glProg, gl.LINK_STATUS)) {
-      gl = null;
-      return;
-    }
-    glLoc = {
-      aPos: gl.getAttribLocation(glProg, "aPos"),
-      aColor: gl.getAttribLocation(glProg, "aColor"),
-      uRotY: gl.getUniformLocation(glProg, "uRotY"),
-      uRotX: gl.getUniformLocation(glProg, "uRotX"),
-      uZoom: gl.getUniformLocation(glProg, "uZoom"),
-      uPanX: gl.getUniformLocation(glProg, "uPanX"),
-      uPanY: gl.getUniformLocation(glProg, "uPanY"),
-      uDpr: gl.getUniformLocation(glProg, "uDpr"),
-      uRes: gl.getUniformLocation(glProg, "uRes")
-    };
-    glBufPos = gl.createBuffer();
-    glBufCol = gl.createBuffer();
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const key = keyOf(id);
+    if (wanted.key === key && (data || request)) return;
+    wanted = { id: id, key: key, offsets: { TG: 0, TS: 0, TA: 0 } };
+    fetchNeighborhood(true);
   }
 
-  function compile(type, src) {
-    const sh = gl.createShader(type);
-    gl.shaderSource(sh, src);
-    gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) return null;
-    return sh;
+  function fetchNeighborhood(recenter) {
+    const key = wanted.key;
+    if (request) request.abort();
+    const ctl = new AbortController();
+    request = ctl;
+    const spinner = setTimeout(() => {
+      if (request === ctl) setLoading(true);
+    }, 150);
+    const query = new URLSearchParams({
+      thesaurusId: host.thesaurusId(),
+      lang: host.thesaurusLang(),
+      conceptId: wanted.id,
+      broaderOffset: wanted.offsets.TG,
+      narrowerOffset: wanted.offsets.TS,
+      relatedOffset: wanted.offsets.TA
+    });
+    fetch(host.ctx() + "/api/graph-neighborhood?" + query.toString(), {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      signal: ctl.signal
+    }).then((res) => {
+      if (!res.ok) throw new Error("http");
+      return res.json();
+    }).then((body) => {
+      if (request !== ctl || wanted.key !== key) return;
+      request = null;
+      setLoading(false);
+      data = body;
+      if (!body.found) {
+        data = null;
+        wanted.key = "";
+        clear(msg("hidden"));
+        return;
+      }
+      /* Voisins supprimés entre-temps : la page demandée n'existe plus. */
+      const stale = ROLES.filter((role) => wanted.offsets[role] > 0 && !groups()[role].items.length);
+      if (stale.length) {
+        stale.forEach((role) => { wanted.offsets[role] = 0; });
+        fetchNeighborhood(recenter);
+        return;
+      }
+      setEmpty("");
+      if (recenter) resetView();
+      layout();
+      paintPanels();
+      resize();
+      draw();
+    }).catch((err) => {
+      if (err && err.name === "AbortError") return;
+      if (request !== ctl) return;
+      wanted.key = "";
+      clear(msg("error"));
+      if (host.toast) host.toast(msg("error"));
+    }).finally(() => clearTimeout(spinner));
   }
 
-  function uploadGl() {
-    if (!gl || !glProg || !loop.n) return;
-    const pos = new Float32Array(loop.n * 3);
-    for (let i = 0; i < loop.n; i++) {
-      pos[i * 3] = loop.px[i];
-      pos[i * 3 + 1] = loop.py[i];
-      pos[i * 3 + 2] = loop.pz[i];
-    }
-    gl.bindBuffer(gl.ARRAY_BUFFER, glBufPos);
-    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
-    uploadGlColors();
+  function turnPage(role, step) {
+    const group = groups()[role];
+    if (!group) return;
+    const next = group.offset + step * data.pageSize;
+    if (next < 0 || next >= group.total) return;
+    wanted.offsets[role] = next;
+    refocus = role + (step > 0 ? ":next" : ":prev");
+    fetchNeighborhood(false);
   }
 
-  function uploadGlColors() {
-    if (!gl || !glBufCol || !loop.n) return;
-    const col = new Float32Array(loop.n * 3);
-    const focused = !!neighborhood.id;
-    const q = matchQuery;
-    for (let i = 0; i < loop.n; i++) {
-      let f = 1;
-      if (focused && i !== loop.selected && !neighborhood.neighbor[loop.ids[i]]) f = 0.22;
-      if (q && (loop.labels[i] || "").toLowerCase().indexOf(q) < 0) f *= 0.35;
-      col[i * 3] = loop.colors[i * 3] * f;
-      col[i * 3 + 1] = loop.colors[i * 3 + 1] * f;
-      col[i * 3 + 2] = loop.colors[i * 3 + 2] * f;
-    }
-    gl.bindBuffer(gl.ARRAY_BUFFER, glBufCol);
-    gl.bufferData(gl.ARRAY_BUFFER, col, gl.DYNAMIC_DRAW);
+  /* ── Disposition sur la sphère unité (y vers le bas) ── */
+
+  function point(y, lon) {
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    return { x: Math.sin(lon) * r, y: y, z: Math.cos(lon) * r };
   }
+
+  /* Peu de voisins : éventail face au lecteur. Beaucoup : spirale sur la calotte. */
+  function cap(n, i, sign) {
+    if (n <= 7) {
+      const t = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
+      return point(sign * (0.86 - Math.abs(t) * 0.3), t * 1.25);
+    }
+    const t = (i + 0.5) / n;
+    return point(sign * (0.36 + 0.6 * t), i * GOLDEN);
+  }
+
+  function side(n, i) {
+    const dir = i % 2 === 0 ? 1 : -1;
+    const rows = Math.ceil(n / 2);
+    const row = Math.floor(i / 2);
+    const t = rows === 1 ? 0 : (row / (rows - 1)) * 2 - 1;
+    const depth = rows <= 4 ? 0 : ((row % 3) - 1) * 0.5;
+    return point(t * 0.26, dir * (1.35 + depth));
+  }
+
+  function layout() {
+    const nodes = [{
+      id: data.id, label: data.label, role: "center", status: data.status, x: 0, y: 0, z: 0
+    }];
+    const g = groups();
+    ROLES.forEach((role) => {
+      const items = g[role].items;
+      items.forEach((item, i) => {
+        const p = role === "TG" ? cap(items.length, i, -1)
+          : role === "TS" ? cap(items.length, i, 1)
+          : side(items.length, i);
+        nodes.push({
+          id: item.id, label: item.label, role: role, status: item.status, type: item.type,
+          x: p.x, y: p.y, z: p.z
+        });
+      });
+    });
+    loop.nodes = nodes;
+    loop.hover = -1;
+  }
+
+  /* ── Dessin ── */
 
   function resize() {
-    const el = canvas();
-    const fx = overlay();
-    const st = stage();
-    if (!el || !st) return;
+    const cv = el("hyperGlobe");
+    const st = el("hyperStage");
+    if (!cv || !st) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = Math.max(1, st.clientWidth);
     const h = Math.max(1, st.clientHeight);
-    const pw = Math.round(w * dpr);
-    const ph = Math.round(h * dpr);
-    [el, fx].forEach((c) => {
-      if (!c) return;
-      if (c.width !== pw || c.height !== ph) {
-        c.width = pw;
-        c.height = ph;
-        c.style.width = w + "px";
-        c.style.height = h + "px";
-      }
-    });
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+      cv.style.width = w + "px";
+      cv.style.height = h + "px";
+    }
     loop.w = w;
     loop.h = h;
     loop.dpr = dpr;
-    if (gl) gl.viewport(0, 0, pw, ph);
+  }
+
+  function radius() {
+    return Math.min(loop.w, loop.h) * 0.4 * loop.zoom;
   }
 
   function project() {
-    const n = loop.n;
     const cosY = Math.cos(loop.rotY);
     const sinY = Math.sin(loop.rotY);
     const cosX = Math.cos(loop.rotX);
     const sinX = Math.sin(loop.rotX);
-    const cx = loop.w * 0.5 + loop.panX;
-    const cy = loop.h * 0.5 + loop.panY;
-    const radius = Math.min(loop.w, loop.h) * 0.42 * loop.zoom;
-    const focal = 2.35;
-    const hash = Object.create(null);
-    const cell = loop.cell;
-    for (let i = 0; i < n; i++) {
-      const x1 = loop.px[i] * cosY - loop.pz[i] * sinY;
-      const z1 = loop.px[i] * sinY + loop.pz[i] * cosY;
-      const y2 = loop.py[i] * cosX - z1 * sinX;
-      const z2 = loop.py[i] * sinX + z1 * cosX;
-      const scale = radius * (focal / (focal + 1 - z2));
-      const sx = cx + x1 * scale;
-      const sy = cy + y2 * scale;
-      loop.sx[i] = sx;
-      loop.sy[i] = sy;
-      loop.sz[i] = z2;
-      if (z2 < -0.02) continue;
-      const kx = Math.floor(sx / cell);
-      const ky = Math.floor(sy / cell);
-      const key = kx + ":" + ky;
-      const bucket = hash[key] || (hash[key] = []);
-      bucket.push(i);
-    }
-    loop.hash = hash;
-  }
-
-  function hit(mx, my) {
-    if (!loop.n || !loop.hash) return -1;
-    const hitR = 12 + loop.zoom * 6;
-    const maxD = hitR * hitR;
-    const cell = loop.cell;
-    const kx = Math.floor(mx / cell);
-    const ky = Math.floor(my / cell);
-    let best = -1;
-    let bestD = maxD;
-    for (let ox = -1; ox <= 1; ox++) {
-      for (let oy = -1; oy <= 1; oy++) {
-        const bucket = loop.hash[(kx + ox) + ":" + (ky + oy)];
-        if (!bucket) continue;
-        for (let b = 0; b < bucket.length; b++) {
-          const i = bucket[b];
-          if (loop.sz[i] < -0.02) continue;
-          const dx = loop.sx[i] - mx;
-          const dy = loop.sy[i] - my;
-          const d = dx * dx + dy * dy;
-          if (d < bestD) {
-            bestD = d;
-            best = i;
-          }
-        }
-      }
-    }
-    return best;
-  }
-
-  function drawGl() {
-    if (!gl || !glProg || !loop.n) return false;
-    gl.viewport(0, 0, canvas().width, canvas().height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(glProg);
-    gl.uniform1f(glLoc.uRotY, loop.rotY);
-    gl.uniform1f(glLoc.uRotX, loop.rotX);
-    gl.uniform1f(glLoc.uZoom, loop.zoom);
-    gl.uniform1f(glLoc.uPanX, loop.panX);
-    gl.uniform1f(glLoc.uPanY, loop.panY);
-    gl.uniform1f(glLoc.uDpr, loop.dpr);
-    gl.uniform2f(glLoc.uRes, loop.w, loop.h);
-    gl.bindBuffer(gl.ARRAY_BUFFER, glBufPos);
-    gl.enableVertexAttribArray(glLoc.aPos);
-    gl.vertexAttribPointer(glLoc.aPos, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, glBufCol);
-    gl.enableVertexAttribArray(glLoc.aColor);
-    gl.vertexAttribPointer(glLoc.aColor, 3, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.POINTS, 0, loop.n);
-    return true;
-  }
-
-  function pointsContext() {
-    const el = canvas();
-    if (!gl && el) {
-      try {
-        const ctx = el.getContext("2d");
-        if (ctx) return ctx;
-      } catch (ex) { /* canvas already WebGL */ }
-    }
-    const fx = overlay();
-    return fx ? fx.getContext("2d") : null;
-  }
-
-  function drawCanvasPoints(ctx) {
-    const n = loop.n;
-    const buckets = [ [], [], [], [], [], [], [], [] ];
-    for (let i = 0; i < n; i++) {
-      const z = loop.sz[i];
-      if (z < -0.18) continue;
-      buckets[Math.min(7, Math.max(0, (z + 1) * 4 | 0))].push(i);
-    }
-    const baseR = n > 8000 ? 1.15 : n > 3000 ? 1.45 : 1.85;
-    const q = matchQuery;
-    for (let b = 0; b < 8; b++) {
-      const list = buckets[b];
-      for (let k = 0; k < list.length; k++) {
-        const i = list[k];
-        const z = loop.sz[i];
-        const t = (z + 1) * 0.5;
-        const r = baseR * (0.7 + t * 0.7);
-        const o = i * 3;
-        const dim = neighborhood.id && !neighborhood.neighbor[loop.ids[i]] && i !== loop.selected;
-        const a = (dim ? 0.12 : 0.2 + t * 0.8);
-        ctx.fillStyle = "rgba(" + Math.round(loop.colors[o] * 255) + ","
-          + Math.round(loop.colors[o + 1] * 255) + ","
-          + Math.round(loop.colors[o + 2] * 255) + "," + a + ")";
-        const x = loop.sx[i];
-        const y = loop.sy[i];
-        if (i === loop.selected || i === loop.hover || (q && loop.labels[i].toLowerCase().indexOf(q) >= 0)) {
-          ctx.beginPath();
-          ctx.arc(x, y, r + 2.2, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          const s = Math.max(1.2, r * 1.6);
-          ctx.fillRect(x - s * 0.5, y - s * 0.5, s, s);
-        }
-      }
-    }
-  }
-
-  function drawOverlay(ctx, skipClear) {
-    const w = loop.w;
-    const h = loop.h;
-    ctx.setTransform(loop.dpr, 0, 0, loop.dpr, 0, 0);
-    if (!skipClear) ctx.clearRect(0, 0, w, h);
-    const cx = w * 0.5 + loop.panX;
-    const cy = h * 0.5 + loop.panY;
-    const radius = Math.min(w, h) * 0.42 * loop.zoom;
-    const disc = ctx.createRadialGradient(cx - radius * 0.25, cy - radius * 0.3, radius * 0.1, cx, cy, radius);
-    disc.addColorStop(0, "rgba(31,122,92,0.10)");
-    disc.addColorStop(0.72, "rgba(31,122,92,0.04)");
-    disc.addColorStop(1, "rgba(31,122,92,0)");
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fillStyle = disc;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(31,122,92,0.22)";
-    ctx.lineWidth = 1.25;
-    ctx.stroke();
-    const edges = neighborhood.edges || [];
-    for (let e = 0; e < edges.length; e++) {
-      const a = edges[e].a;
-      const b = edges[e].b;
-      if (loop.sz[a] < -0.05 || loop.sz[b] < -0.05) continue;
-      ctx.beginPath();
-      ctx.moveTo(loop.sx[a], loop.sy[a]);
-      ctx.lineTo(loop.sx[b], loop.sy[b]);
-      ctx.strokeStyle = EDGE_COLOR[edges[e].role] || EDGE_COLOR.TG;
-      ctx.lineWidth = 1.35;
-      ctx.stroke();
-    }
-    const mark = loop.hover >= 0 ? loop.hover : loop.selected;
-    if (mark >= 0 && loop.sz[mark] > -0.05) {
-      ctx.beginPath();
-      ctx.arc(loop.sx[mark], loop.sy[mark], 6, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(31,122,92,0.95)";
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-    }
-    let labelI = mark;
-    if (labelI < 0) {
-      let bestZ = 0.55;
-      for (let i = 0; i < loop.n; i++) {
-        if (loop.sz[i] > bestZ) {
-          bestZ = loop.sz[i];
-          labelI = i;
-        }
-      }
-    }
-    if (labelI >= 0 && loop.sz[labelI] > 0.12) {
-      const label = loop.labels[labelI];
-      ctx.font = "600 13px IBM Plex Sans, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "rgba(255,255,255,0.92)";
-      ctx.fillStyle = "#17382c";
-      ctx.strokeText(label, loop.sx[labelI], loop.sy[labelI] - 8);
-      ctx.fillText(label, loop.sx[labelI], loop.sy[labelI] - 8);
-    }
-  }
-
-  function draw() {
-    const el = canvas();
-    if (!el || !isHyper()) return;
-    if (!loop.n) {
-      const fx = overlay();
-      if (fx) {
-        const ctx = fx.getContext("2d");
-        if (ctx) {
-          ctx.setTransform(loop.dpr, 0, 0, loop.dpr, 0, 0);
-          ctx.clearRect(0, 0, loop.w, loop.h);
-        }
-      }
-      return;
-    }
-    project();
-    const usedGl = drawGl();
-    const pts = usedGl ? null : pointsContext();
-    const fx = overlay();
-    const ptsOnFx = !!(pts && fx && pts.canvas === fx);
-    if (pts && !ptsOnFx) {
-      pts.setTransform(loop.dpr, 0, 0, loop.dpr, 0, 0);
-      pts.clearRect(0, 0, loop.w, loop.h);
-      drawCanvasPoints(pts);
-    }
-    if (fx) {
-      const ctx = fx.getContext("2d");
-      if (ctx) {
-        if (ptsOnFx) {
-          ctx.setTransform(loop.dpr, 0, 0, loop.dpr, 0, 0);
-          ctx.clearRect(0, 0, loop.w, loop.h);
-          drawCanvasPoints(ctx);
-          drawOverlay(ctx, true);
-        } else {
-          drawOverlay(ctx, false);
-        }
-      }
-    }
-  }
-
-  function needsTick() {
-    return !!(loop.drag || loop.pinch || loop.fly
-      || Math.abs(loop.velX) > 0.00006 || Math.abs(loop.velY) > 0.00006);
-  }
-
-  function tick() {
-    if (!loop.running) return;
-    if (!isHyper()) {
-      stop();
-      return;
-    }
-    if (loop.fly) {
-      loop.fly.t = Math.min(1, loop.fly.t + (reducedMotion() ? 1 : 0.08));
-      const ease = 1 - Math.pow(1 - loop.fly.t, 3);
-      loop.rotX = loop.fly.fromX + loop.fly.dx * ease;
-      loop.rotY = loop.fly.fromY + loop.fly.dy * ease;
-      if (loop.fly.t >= 1) loop.fly = null;
-    } else if (!loop.drag && !loop.pinch) {
-      loop.rotY += loop.velY;
-      loop.rotX += loop.velX;
-      loop.velY *= 0.92;
-      loop.velX *= 0.92;
-      if (Math.abs(loop.velY) < 0.00006) loop.velY = 0;
-      if (Math.abs(loop.velX) < 0.00006) loop.velX = 0;
-      loop.rotX = Math.max(-1.45, Math.min(1.45, loop.rotX));
-    }
-    draw();
-    if (needsTick()) loop.raf = requestAnimationFrame(tick);
-    else loop.running = false;
-  }
-
-  function kick() {
-    if (!isHyper()) return;
-    if (loop.running) return;
-    loop.running = true;
-    loop.raf = requestAnimationFrame(tick);
-  }
-
-  function stop() {
-    loop.running = false;
-    if (loop.raf) cancelAnimationFrame(loop.raf);
-    loop.raf = 0;
-  }
-
-  function clampPan() {
-    const max = Math.min(loop.w || 1, loop.h || 1) * 0.55 * Math.max(1, loop.zoom);
-    loop.panX = Math.max(-max, Math.min(max, loop.panX));
-    loop.panY = Math.max(-max, Math.min(max, loop.panY));
-  }
-
-  function aimAt(i) {
-    if (i < 0 || !loop.px) return;
-    const toY = Math.atan2(loop.px[i], loop.pz[i]);
-    const z1 = loop.px[i] * Math.sin(toY) + loop.pz[i] * Math.cos(toY);
-    const toX = Math.max(-1.45, Math.min(1.45, Math.atan2(loop.py[i], z1)));
-    let dy = toY - loop.rotY;
-    while (dy > Math.PI) dy -= Math.PI * 2;
-    while (dy < -Math.PI) dy += Math.PI * 2;
-    if (reducedMotion()) {
-      loop.rotX = toX;
-      loop.rotY = toY;
-      loop.fly = null;
-      return;
-    }
-    loop.fly = { fromX: loop.rotX, fromY: loop.rotY, dx: toX - loop.rotX, dy: dy, t: 0 };
-    loop.velX = 0;
-    loop.velY = 0;
-    kick();
-  }
-
-  function selectId(id, doDraw) {
-    loop.selected = -1;
-    if (id) {
-      for (let i = 0; i < loop.n; i++) {
-        if (loop.ids[i] === id) {
-          loop.selected = i;
-          break;
-        }
-      }
-    }
-    paintPicked();
-    if (loop.selected >= 0) loadNeighborhood(id);
-    else {
-      neighborhood = { id: "", edges: [], neighbor: {}, broader: [], narrower: [], related: [] };
-      paintNeighbors();
-      uploadGlColors();
-    }
-    if (doDraw) draw();
-  }
-
-  function loadNeighborhood(id) {
-    if (!host || !id) return;
-    const theso = host.thesaurusId();
-    const lang = host.thesaurusLang();
-    const params = new URLSearchParams({ thesaurusId: theso, lang: lang, conceptId: id });
-    fetch(host.ctx() + "/api/graph-neighborhood?" + params.toString(), {
-      headers: { Accept: "application/json" }
-    }).then((res) => res.ok ? res.json() : Promise.reject()).then((data) => {
-      if (loop.selected < 0 || loop.ids[loop.selected] !== id) return;
-      const neighbor = {};
-      const edges = [];
-      const indexOf = Object.create(null);
-      for (let i = 0; i < loop.n; i++) indexOf[loop.ids[i]] = i;
-      const from = loop.selected;
-      function ingest(list, role) {
-        (list || []).forEach((item) => {
-          neighbor[item.id] = role;
-          const to = indexOf[item.id];
-          if (to == null) return;
-          edges.push({ a: from, b: to, role: role });
-        });
-      }
-      ingest(data.broader, "TG");
-      ingest(data.narrower, "TS");
-      ingest(data.related, "TA");
-      neighborhood = {
-        id: id,
-        edges: edges,
-        neighbor: neighbor,
-        broader: data.broader || [],
-        narrower: data.narrower || [],
-        related: data.related || []
-      };
-      paintNeighbors();
-      uploadGlColors();
-      draw();
-    }).catch(() => {});
-  }
-
-  function setTip(i, clientX, clientY) {
-    const tip = $("#hyperTip");
-    const el = canvas();
-    if (!tip || !el) return;
-    if (i < 0) {
-      tip.hidden = true;
-      el.classList.remove("is-hover");
-      return;
-    }
-    tip.hidden = false;
-    tip.textContent = loop.labels[i] || "";
-    const box = el.getBoundingClientRect();
-    tip.style.left = (clientX - box.left) + "px";
-    tip.style.top = (clientY - box.top) + "px";
-    el.classList.add("is-hover");
-  }
-
-  function localXY(clientX, clientY) {
-    const st = stage() || canvas();
-    const box = st.getBoundingClientRect();
-    return { x: clientX - box.left, y: clientY - box.top };
-  }
-
-  function pick(i) {
-    if (i < 0) return;
-    loop.selected = i;
-    aimAt(i);
-    paintPicked();
-    const id = loop.ids[i];
-    if (!id) return;
-    loadNeighborhood(id);
-    if (host.onPick) host.onPick(id);
-    draw();
-  }
-
-  function openNode(i) {
-    if (i < 0) i = loop.selected;
-    if (i < 0) return;
-    const id = loop.ids[i];
-    if (!id) return;
-    loop.selected = i;
-    paintPicked();
-    if (host.onOpen) host.onOpen(id);
-  }
-
-  function resetView() {
-    loop.rotX = 0.22;
-    loop.rotY = 0.35;
-    loop.velX = 0;
-    loop.velY = 0;
-    loop.zoom = 1;
-    loop.panX = 0;
-    loop.panY = 0;
-    loop.fly = null;
-    draw();
-  }
-
-  function applyDrag(e) {
-    if (!loop.drag) return;
-    const dx = e.clientX - loop.drag.x;
-    const dy = e.clientY - loop.drag.y;
-    if (Math.hypot(dx, dy) > 2) loop.moved = true;
-    if (loop.drag.pan) {
-      loop.panX = loop.drag.panX + dx;
-      loop.panY = loop.drag.panY + dy;
-      clampPan();
-      loop.velX = 0;
-      loop.velY = 0;
-    } else {
-      loop.rotY = loop.drag.rotY + dx * 0.01;
-      loop.rotX = Math.max(-1.45, Math.min(1.45, loop.drag.rotX + dy * 0.01));
-      loop.velY = reducedMotion() ? 0 : dx * 0.00045;
-      loop.velX = reducedMotion() ? 0 : dy * 0.00045;
-    }
-    setTip(-1);
-    draw();
-  }
-
-  const shared = {
-    get neighborhood() { return neighborhood; },
-    set neighborhood(value) { neighborhood = value; },
-    get matchQuery() { return matchQuery; },
-    set matchQuery(value) { matchQuery = value; }
-  };
-  function bindOnce() {
-    window.OTGlobeBind(shared, loop, canvas, stage, isHyper, initGl, kick, clampPan, draw, hit, localXY, setTip, pick, openNode, resetView, applyDrag, reducedMotion, stop, paintNeighbors, paintPicked, project, resize, uploadGlColors, $);
-  }
-
-  function load() {
-    const el = canvas();
-    if (!el || !host) return;
-    const theso = host.thesaurusId();
-    const lang = host.thesaurusLang();
-    const key = theso + "|" + lang;
-    const empty = $("#hyperEmpty");
-    if (!theso) {
-      cache = { key: key, loading: false, nodes: [], truncated: false };
-      setLoading(false);
-      if (empty) empty.hidden = false;
-      paintCount();
-      return;
-    }
-    cache.loading = true;
-    cache.key = "";
-    setLoading(true);
-    if (empty) empty.hidden = true;
-    const params = new URLSearchParams({ thesaurusId: theso, lang: lang });
-    fetch(host.ctx() + "/api/graph-globe?" + params.toString(), {
-      headers: { Accept: "application/json" }
-    }).then((res) => {
-      if (!res.ok) throw new Error("http");
-      return res.json();
-    }).then((data) => {
-      if (cacheKey() !== key) return;
-      const nodes = data && Array.isArray(data.nodes) ? data.nodes : [];
-      cache = { key: key, loading: false, nodes: nodes, truncated: !!(data && data.truncated) };
-      layout(nodes);
-      setLoading(false);
-      if (empty) empty.hidden = nodes.length === 0;
-      paintCount();
-      resize();
-      draw();
-    }).catch(() => {
-      if (cacheKey() !== key) return;
-      cache = { key: "", loading: false, nodes: [], truncated: false };
-      setLoading(false);
-      if (empty) {
-        empty.hidden = false;
-        empty.textContent = "Impossible de charger le globe.";
-      }
-      if (host.toast) host.toast("Impossible de charger le globe.");
+    const cx = loop.w / 2 + loop.panX;
+    const cy = loop.h / 2 + loop.panY;
+    const r = radius();
+    loop.nodes.forEach((n) => {
+      const x1 = n.x * cosY + n.z * sinY;
+      const z1 = n.z * cosY - n.x * sinY;
+      const y2 = n.y * cosX + z1 * sinX;
+      const z2 = z1 * cosX - n.y * sinX;
+      const scale = r * (FOCAL / (FOCAL + 0.35 - z2 * 0.6));
+      n.sx = cx + x1 * scale;
+      n.sy = cy + y2 * scale;
+      n.sz = z2;
     });
   }
 
+  function shape(ctx, n, size) {
+    const x = n.sx;
+    const y = n.sy;
+    ctx.beginPath();
+    if (n.role === "TG") {
+      ctx.moveTo(x, y - size * 1.1);
+      ctx.lineTo(x + size, y + size * 0.8);
+      ctx.lineTo(x - size, y + size * 0.8);
+    } else if (n.role === "TS") {
+      ctx.moveTo(x, y + size * 1.1);
+      ctx.lineTo(x + size, y - size * 0.8);
+      ctx.lineTo(x - size, y - size * 0.8);
+    } else if (n.role === "TA") {
+      ctx.moveTo(x, y - size * 1.1);
+      ctx.lineTo(x + size * 1.1, y);
+      ctx.lineTo(x, y + size * 1.1);
+      ctx.lineTo(x - size * 1.1, y);
+    } else {
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+    }
+    ctx.closePath();
+  }
+
+  function drawSphere(ctx) {
+    const cx = loop.w / 2 + loop.panX;
+    const cy = loop.h / 2 + loop.panY;
+    const r = radius();
+    const disc = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
+    disc.addColorStop(0, "rgba(31,122,92,0.10)");
+    disc.addColorStop(0.72, "rgba(31,122,92,0.04)");
+    disc.addColorStop(1, "rgba(31,122,92,0.02)");
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = disc;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(31,122,92,0.22)";
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+  }
+
+  function fade(n) {
+    return n.role === "center" ? 1 : 0.4 + 0.6 * Math.min(1, Math.max(0, (n.sz + 0.8) / 1.2));
+  }
+
+  function drawNode(ctx, n, active) {
+    const size = n.role === "center" ? 13 : (n.sz > 0 ? 8 : 6.5) + (active ? 2 : 0);
+    ctx.globalAlpha = active ? 1 : fade(n);
+    shape(ctx, n, size);
+    const ghost = n.status === "candidat" || n.status === "deprecie";
+    ctx.fillStyle = ghost ? "#ffffff" : COLOR[n.role];
+    ctx.fill();
+    ctx.strokeStyle = COLOR[n.role];
+    ctx.lineWidth = active ? 3 : 2;
+    ctx.setLineDash(n.status === "candidat" ? [3, 2.5] : []);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+
+  function shorten(label, full) {
+    return full || label.length <= LABEL_MAX ? label : label.slice(0, LABEL_MAX - 1).trim() + "…";
+  }
+
+  /* Étiquettes : centre et survol toujours, puis de l'avant vers l'arrière sans recouvrement. */
+  function drawLabels(ctx) {
+    const boxes = loop.nodes.map((n) => ({
+      x: n.sx - 9, y: n.sy - 9, w: 18, h: 18, owner: n
+    }));
+    const order = loop.nodes.slice().sort((a, b) => rank(b) - rank(a));
+    order.forEach((n) => {
+      const strong = n.role === "center" || loop.nodes[loop.hover] === n;
+      if (!strong && n.sz < -0.35 && loop.nodes.length > 12) return;
+      const text = shorten(n.label, strong);
+      const size = n.role === "center" ? 15 : 12.5;
+      ctx.font = (strong ? "700 " : "600 ") + size + "px 'IBM Plex Sans', sans-serif";
+      const w = ctx.measureText(text).width + 6;
+      const h = size + 5;
+      const gap = n.role === "center" ? 18 : 13;
+      const above = { x: n.sx - w / 2, y: n.sy - gap - h };
+      const below = { x: n.sx - w / 2, y: n.sy + gap };
+      const right = { x: n.sx + gap, y: n.sy - h / 2 };
+      const left = { x: n.sx - gap - w, y: n.sy - h / 2 };
+      const spots = n.role === "TG" ? [above, right, left, below]
+        : n.role === "TA" ? (n.sx >= loop.w / 2 + loop.panX ? [right, below, above, left] : [left, below, above, right])
+        : [below, right, left, above];
+      const inside = n.sx >= 0 && n.sx <= loop.w && n.sy >= 0 && n.sy <= loop.h;
+      const tries = inside ? spots.concat(spots.map((s) => clamp(s, w, h))) : spots;
+      let spot = tries.find((s) => free(boxes, s, w, h, n));
+      if (!spot && strong) spot = clamp(spots[0], w, h);
+      if (!spot) return;
+      boxes.push({ x: spot.x, y: spot.y, w: w, h: h, owner: null });
+      ctx.globalAlpha = strong ? 1 : Math.max(0.72, fade(n));
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 4;
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "rgba(255,255,255,0.94)";
+      ctx.fillStyle = COLOR[n.role];
+      const tx = spot.x + w / 2;
+      const ty = spot.y + h / 2;
+      ctx.strokeText(text, tx, ty);
+      ctx.fillText(text, tx, ty);
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  function rank(n) {
+    if (loop.nodes[loop.hover] === n) return 10;
+    return n.role === "center" ? 9 : n.sz;
+  }
+
+  function clamp(spot, w, h) {
+    return {
+      x: Math.max(2, Math.min(loop.w - w - 2, spot.x)),
+      y: Math.max(2, Math.min(loop.h - h - 2, spot.y))
+    };
+  }
+
+  function free(boxes, s, w, h, owner) {
+    if (s.x < 0 || s.y < 0 || s.x + w > loop.w || s.y + h > loop.h) return false;
+    return !boxes.some((b) => b.owner !== owner
+      && s.x < b.x + b.w && s.x + w > b.x && s.y < b.y + b.h && s.y + h > b.y);
+  }
+
+  function draw() {
+    const cv = el("hyperGlobe");
+    const ctx = cv && isHyper() ? cv.getContext("2d") : null;
+    if (!ctx || !loop.w) return;
+    ctx.setTransform(loop.dpr, 0, 0, loop.dpr, 0, 0);
+    ctx.clearRect(0, 0, loop.w, loop.h);
+    if (!loop.nodes.length) return;
+    project();
+    drawSphere(ctx);
+    const center = loop.nodes[0];
+    loop.nodes.forEach((n, i) => {
+      if (!i) return;
+      const active = i === loop.hover;
+      ctx.globalAlpha = active ? 1 : fade(n) * 0.6;
+      ctx.strokeStyle = COLOR[n.role];
+      ctx.lineWidth = active ? 2.4 : 1.4;
+      ctx.setLineDash(n.role === "TA" ? [5, 4] : []);
+      ctx.beginPath();
+      ctx.moveTo(center.sx, center.sy);
+      ctx.lineTo(n.sx, n.sy);
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    loop.nodes.slice().sort((a, b) => a.sz - b.sz)
+      .forEach((n) => drawNode(ctx, n, loop.nodes[loop.hover] === n));
+    drawLabels(ctx);
+  }
+
+  /* ── Panneau latéral : légende, liste au clavier, pages ── */
+
+  function node(tag, cls, text) {
+    const out = document.createElement(tag);
+    if (cls) out.className = cls;
+    if (text != null) out.textContent = text;
+    return out;
+  }
+
+  function badge(status) {
+    if (status !== "candidat" && status !== "deprecie") return null;
+    return node("span", "hyper-badge is-" + status, msg(status === "candidat" ? "candidate" : "deprecated"));
+  }
+
+  function paintPanels() {
+    const picked = el("hyperPicked");
+    const open = el("hyperOpen");
+    const status = el("hyperStatus");
+    const on = !!(data && data.found);
+    if (picked) picked.textContent = on ? data.label : "";
+    if (open) open.disabled = !on;
+    if (status) {
+      const chip = on ? badge(data.status) : null;
+      status.hidden = !chip;
+      status.className = chip ? chip.className : "hyper-badge";
+      status.textContent = chip ? chip.textContent : "";
+    }
+    paintCap(on);
+    paintList(on);
+  }
+
+  function paintCap(on) {
+    const box = el("hyperCap");
+    if (!box) return;
+    const g = groups();
+    const over = on ? ROLES.filter((role) => g[role].total > data.pageSize) : [];
+    box.hidden = !over.length;
+    box.textContent = over.length ? fill(msg("cap"), [data.pageSize]) : "";
+  }
+
+  function paintList(on) {
+    const list = el("hyperNeighbors");
+    if (!list) return;
+    const inside = list.contains(document.activeElement);
+    list.textContent = "";
+    list.hidden = !on;
+    if (!on) return;
+    const g = groups();
+    ROLES.forEach((role) => {
+      const group = g[role];
+      const code = role.toLowerCase();
+      const section = node("section", "hyper-sec hyper-sec-" + role);
+      const head = node("h3", "hyper-sec-h");
+      const mark = node("span", "hyper-mark");
+      mark.setAttribute("aria-hidden", "true");
+      head.append(mark, node("span", "hyper-code", msg("code-" + code)),
+        node("span", "hyper-sec-l", msg("label-" + code)),
+        node("span", "hyper-sec-n", String(group.total)));
+      section.append(head);
+      if (group.items.length) {
+        const ul = node("ul", "hyper-items");
+        group.items.forEach((item) => ul.append(listItem(item, role)));
+        section.append(ul);
+      }
+      if (group.total > data.pageSize) section.append(pager(group, role));
+      list.append(section);
+    });
+    if (!g.TG.total && !g.TS.total && !g.TA.total) {
+      list.prepend(node("p", "hyper-none", msg("none")));
+    }
+    restoreFocus(list, inside);
+  }
+
+  function listItem(item, role) {
+    const li = node("li");
+    const btn = node("button", "hyper-item");
+    btn.type = "button";
+    btn.dataset.id = item.id;
+    btn.title = item.label;
+    const label = node("bdi", "hyper-item-l", item.label);
+    btn.append(label);
+    const kind = (item.type || "").length > 2 ? item.type.slice(2) : "";
+    if (kind) btn.append(node("span", "hyper-kind", msg("code-" + role.toLowerCase()) + kind));
+    const chip = badge(item.status);
+    if (chip) btn.append(chip);
+    btn.addEventListener("click", () => pickId(item.id, item.label));
+    const light = (on) => () => {
+      loop.hover = on ? loop.nodes.findIndex((n) => n.id === item.id && n.role === role) : -1;
+      draw();
+    };
+    btn.addEventListener("mouseenter", light(true));
+    btn.addEventListener("focus", light(true));
+    btn.addEventListener("mouseleave", light(false));
+    btn.addEventListener("blur", light(false));
+    li.append(btn);
+    return li;
+  }
+
+  function pager(group, role) {
+    const bar = node("div", "hyper-pager");
+    const first = group.offset + 1;
+    const last = group.offset + group.items.length;
+    const make = (step, name, sign, off) => {
+      const btn = node("button", "hyper-page", sign);
+      btn.type = "button";
+      btn.disabled = off;
+      btn.dataset.page = role + ":" + name;
+      btn.title = msg(name);
+      btn.setAttribute("aria-label", msg(name) + " — " + msg("label-" + role.toLowerCase()));
+      btn.addEventListener("click", () => turnPage(role, step));
+      return btn;
+    };
+    bar.append(make(-1, "prev", "‹", group.offset === 0),
+      node("span", "hyper-range", fill(msg("range"), [first, last, group.total])),
+      make(1, "next", "›", last >= group.total));
+    return bar;
+  }
+
+  function restoreFocus(list, inside) {
+    const want = refocus;
+    refocus = "";
+    if (!want && !inside) return;
+    const btn = want && want !== "center" ? list.querySelector('[data-page="' + want + '"]') : null;
+    const other = want && want !== "center"
+      ? list.querySelector('[data-page^="' + want.split(":")[0] + '"]:not(:disabled)') : null;
+    const target = btn && !btn.disabled ? btn : other || el("hyperPicked");
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  /* ── Choix et ouverture ── */
+
+  function pickId(id, label) {
+    if (!id || !data || id === data.id) return;
+    if (host.onPick) host.onPick(id, label);
+  }
+
+  function pick(i) {
+    const n = loop.nodes[i];
+    if (n && i > 0) pickId(n.id, n.label);
+  }
+
+  function openCenter() {
+    if (data && data.found && host.onOpen) host.onOpen(data.id);
+  }
+
+  function hit(x, y) {
+    let best = -1;
+    let bestD = 16 * 16;
+    let bestZ = -2;
+    loop.nodes.forEach((n, i) => {
+      const d = (n.sx - x) * (n.sx - x) + (n.sy - y) * (n.sy - y);
+      if (d < bestD || (d < 100 && n.sz > bestZ && d <= bestD + 40)) {
+        best = i;
+        bestD = d;
+        bestZ = n.sz;
+      }
+    });
+    return best;
+  }
+
+  /* ── Cycle de vie ── */
+
+  function stop() {
+    loop.shown = false;
+    loop.hover = -1;
+  }
+
+  function resetView() {
+    loop.rotX = 0.1;
+    loop.rotY = 0;
+    loop.zoom = 1;
+    loop.panX = 0;
+    loop.panY = 0;
+  }
+
   function ensure() {
-    if (!canvas()) return;
-    bindOnce();
+    if (!el("hyperGlobe") || !host) return;
+    window.OTGlobeBind({
+      loop: loop, isHyper: isHyper, draw: draw, stop: stop, hit: hit, pick: pick,
+      openCenter: openCenter, resize: resize,
+      resetView: () => { resetView(); draw(); }
+    });
     resize();
-    draw();
-    const key = cacheKey();
-    if (cache.key === key || cache.loading) {
-      if (cache.key === key) draw();
+    const id = host.conceptId();
+    const same = id && wanted.key === keyOf(id) && data;
+    const back = !loop.shown;
+    loop.shown = true;
+    if (same && !request) {
+      /* Retour au graphe : les relations ont pu être modifiées dans la fiche. */
+      if (el("hyperPicked").textContent !== data.label || el("hyperNeighbors").hidden) paintPanels();
+      draw();
+      if (back) fetchNeighborhood(false);
       return;
     }
-    load();
+    selectId(id);
+    draw();
   }
 
   function invalidate() {
-    cache = { key: "", loading: false, nodes: [], truncated: false };
-    loop.n = 0;
-    paintCount();
+    wanted.key = "";
+    if (request) request.abort();
+    request = null;
+    data = null;
+    loop.nodes = [];
+  }
+
+  function reload() {
+    invalidate();
+    ensure();
   }
 
   global.OTGlobe = {
@@ -851,6 +620,6 @@
     stop: stop,
     invalidate: invalidate,
     selectId: selectId,
-    reload: load
+    reload: reload
   };
 })(window);

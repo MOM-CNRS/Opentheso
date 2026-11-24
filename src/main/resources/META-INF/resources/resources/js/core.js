@@ -127,7 +127,10 @@ var state = {
   moveTarget: null,
   xferTarget: null,
   xferParent: null,
-  graphFront: true
+  graphFront: true,
+  graphSearch: false,
+  pendingOpenId: "",
+  pendingOpenAt: 0
 };
 
 function toast(msg, opts) {

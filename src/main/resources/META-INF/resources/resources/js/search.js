@@ -453,6 +453,11 @@ function openSearchHit(hit, stay) {
     return;
   }
   const nodeType = hit.kind === "facet" ? "facet" : "concept";
+  if (nodeType === "concept" && typeof graphMode === "function" && graphMode()) {
+    openGraphConcept(hit.id, nodeType);
+    closeSearchUi();
+    return;
+  }
   if (typeof openLiveDetail === "function" && openLiveDetail(hit.id, nodeType)) {
     state.home = false;
     state.draft = false;
@@ -478,6 +483,7 @@ function applySearchPayload(data, append) {
     state.searchTitle = "";
     state.searchKind = "";
   }
+  state.graphSearch = typeof graphOnScreen === "function" && graphOnScreen();
   state.view = "recherche";
   state.home = false;
   closeSearchUi();

@@ -83,10 +83,9 @@ html{height:100%}
   .cv-head-bar{flex-direction:column;align-items:stretch;gap:10px}
   .cv-head-bar .th-create{margin-top:0;align-self:flex-end}
   .hyper-bar{gap:8px}
-  .hyper-search-wrap{flex:1 1 160px;min-width:0}
-  .hyper-search{width:100%}
-  .hyper-count,.hyper-picked{margin-left:0}
-  .hyper-picked{max-width:none;flex:1 1 120px}
+  .hyper-picked{flex:1 1 120px}
+  .hyper-body{flex-direction:column}
+  .hyper-list{flex:0 0 auto;max-height:34vh}
   .mg-kpis,.mg-kpis.card,.cs-metrics{grid-template-columns:1fr 1fr}
   .mg-bar-l{flex:0 0 120px}
   .cs-2col{grid-template-columns:1fr}
@@ -192,7 +191,6 @@ html{height:100%}
   .cand-banner-actions{width:100%}
   .cand-banner-actions .bo-btn{flex:1 1 auto;justify-content:center}
   .hyper-bar{padding-bottom:8px}
-  .hyper-search-wrap{flex:1 1 100%}
   .hyper-stage{min-height:48vh;border-radius:var(--r)}
   .mg-kpis,.mg-kpis.card,.cs-metrics{grid-template-columns:1fr}
   .mg-bar-row{flex-wrap:wrap;gap:6px 10px}

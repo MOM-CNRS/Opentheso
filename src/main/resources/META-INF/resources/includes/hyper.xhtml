@@ -2,30 +2,46 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
           <div class="view-panel" id="viewHyper">
-            <div class="hyper">
+            <div class="hyper" id="hyperRoot"
+                 data-code-tg="#{localeBean.getMsg('concept.rel.code.bt')}"
+                 data-code-ts="#{localeBean.getMsg('concept.rel.code.nt')}"
+                 data-code-ta="#{localeBean.getMsg('concept.rel.code.rt')}"
+                 data-label-tg="#{localeBean.getMsg('concept.rel.label.bt')}"
+                 data-label-ts="#{localeBean.getMsg('concept.rel.label.nt')}"
+                 data-label-ta="#{localeBean.getMsg('concept.rel.label.rt')}"
+                 data-candidate="#{localeBean.getMsg('concept.badge.candidate')}"
+                 data-deprecated="#{localeBean.getMsg('concept.badge.deprecated')}"
+                 data-none="#{localeBean.getMsg('graph.sphere.none')}"
+                 data-pick="#{localeBean.getMsg('graph.sphere.pick')}"
+                 data-hidden="#{localeBean.getMsg('graph.sphere.hidden')}"
+                 data-error="#{localeBean.getMsg('graph.sphere.error')}"
+                 data-range="#{localeBean.getMsg('graph.sphere.range')}"
+                 data-cap="#{localeBean.getMsg('graph.sphere.cap')}"
+                 data-prev="#{localeBean.getMsg('graph.sphere.prev')}"
+                 data-next="#{localeBean.getMsg('graph.sphere.next')}">
               <div class="hyper-bar">
-                <button type="button" class="hyper-up" id="hyperCenter">⊙ Recentrer</button>
-                <button type="button" class="hyper-up" id="hyperOpen" disabled="disabled">Ouvrir la fiche</button>
-                <label class="hyper-search-wrap">
-                  <input type="search" class="hyper-search" id="hyperSearch" placeholder="Rechercher…"
-                         autocomplete="off" spellcheck="false" aria-label="Rechercher un concept sur le globe"/>
-                </label>
-                <span class="hyper-picked" id="hyperPicked"></span>
-                <span class="hyper-count" id="hyperCount"></span>
+                <bdi class="hyper-picked" id="hyperPicked" tabindex="-1" aria-live="polite"></bdi>
+                <span class="hyper-badge" id="hyperStatus" hidden="hidden"></span>
+                <span class="hyper-bar-end">
+                  <button type="button" class="hyper-up" id="hyperCenter">#{localeBean.getMsg('graph.sphere.reset')}</button>
+                  <button type="button" class="hyper-up" id="hyperOpen" disabled="disabled">#{localeBean.getMsg('graph.sphere.open')}</button>
+                </span>
               </div>
-              <div class="hyper-neighbors" id="hyperNeighbors" hidden="hidden" aria-live="polite"></div>
-              <div class="hyper-stage" id="hyperStage">
-                <div class="flat-loading" id="hyperLoading" hidden="hidden" aria-live="polite">
-                  <div class="mg-bars-loading">
-                    <span class="mg-kpi-spin" aria-hidden="true"></span>
-                    <span class="flat-loading-lbl">Chargement du globe…</span>
+              <div class="hyper-cap" id="hyperCap" hidden="hidden" role="status"></div>
+              <div class="hyper-body">
+                <div class="hyper-stage" id="hyperStage">
+                  <div class="flat-loading" id="hyperLoading" hidden="hidden" aria-live="polite">
+                    <div class="mg-bars-loading">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                      <span class="flat-loading-lbl">#{localeBean.getMsg('graph.sphere.loading')}</span>
+                    </div>
                   </div>
+                  <canvas class="hyper-globe" id="hyperGlobe" tabindex="0" role="img"
+                          aria-label="#{localeBean.getMsg('graph.sphere.aria')}"></canvas>
+                  <div class="hyper-empty" id="hyperEmpty" hidden="hidden" aria-live="polite"></div>
                 </div>
-                <canvas class="hyper-globe" id="hyperGlobe" tabindex="0"
-                        aria-label="Globe des concepts du thésaurus. Flèches pour tourner, Entrée pour ouvrir, recherche ci-dessus."></canvas>
-                <canvas class="hyper-globe-fx" id="hyperGlobeFx" aria-hidden="true"></canvas>
-                <div class="hyper-tip" id="hyperTip" hidden="hidden"></div>
-                <div class="hyper-empty" id="hyperEmpty" hidden="hidden">Aucun concept à afficher dans cette langue.</div>
+                <nav class="hyper-list" id="hyperNeighbors" hidden="hidden"
+                     aria-label="#{localeBean.getMsg('graph.sphere.list')}"></nav>
               </div>
             </div>
           </div>

@@ -64,12 +64,12 @@ class GraphGlobeApiControllerTest {
 
     @Test
     void neighborhood_delegatesToService() {
-        var expected = new GraphNeighborhoodResponse("C1", List.of(), List.of(), List.of());
-        when(graphGlobeConsultationService.loadNeighborhood("TH1", "fr", "C1")).thenReturn(expected);
+        var expected = GraphNeighborhoodResponse.notFound("C1", 30);
+        when(graphGlobeConsultationService.loadNeighborhood("TH1", "fr", "C1", 0, 30, 0)).thenReturn(expected);
 
-        var response = controller.neighborhood("TH1", null, "C1");
+        var response = controller.neighborhood("TH1", null, " C1 ", 0, 30, 0);
 
         assertEquals(expected, response.getBody());
-        verify(graphGlobeConsultationService).loadNeighborhood("TH1", "fr", "C1");
+        assertEquals("no-store", response.getHeaders().getCacheControl());
     }
 }
