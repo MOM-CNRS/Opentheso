@@ -498,4 +498,15 @@
           <ui:include src="/includes/candidate-draft.xhtml"/>
           <ui:include src="/includes/concept-draft.xhtml"/>
           <ui:include src="/includes/facet-draft.xhtml"/>
+          <div class="view-panel" id="viewCollection">
+            <div class="empty" id="collectionEmpty">
+              <div class="empty-ico" aria-hidden="true">▦</div>
+              <p class="empty-t">Sélectionnez une collection</p>
+              <p class="empty-s">Choisissez une collection pour afficher sa fiche.</p>
+            </div>
+            <div class="flat-loading" id="collectionLoading" hidden="hidden" aria-live="polite">Chargement…</div>
+            <div id="collectionDetail" hidden="hidden"></div>
+          </div>
+          <ui:include src="/includes/collection-draft.xhtml"/>
+          <ui:include src="/includes/collection-fiche.xhtml"/>
 </ui:composition>

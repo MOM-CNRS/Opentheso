@@ -8,10 +8,10 @@ var collectionTreeState = { key: "", loading: false };
 var collectionFiche = null;
 var collectionNotesAllLangs = false;
 var collectionNotesGroupId = "";
-var collectionMembersVisible = 10;
-var collectionMembersFreshFrom = 10;
+var collectionMembersVisible = 20;
+var collectionMembersFreshFrom = 20;
 var collectionMembersGroupId = "";
-var COLL_MEMBER_PAGE = 10;
+var COLL_MEMBER_PAGE = 20;
 var COLL_TREE_PAGE = 40;
 var collectionTreePages = new WeakMap();
 
@@ -412,7 +412,7 @@ function collectionMembersHtml(members) {
   });
   if (all.length > shown.length) {
     html += '<button type="button" class="rel-more" data-act="coll-mem-more"'
-      + ' aria-label="Afficher 10 de plus" title="Afficher 10 de plus">'
+      + ' aria-label="Afficher ' + COLL_MEMBER_PAGE + ' de plus" title="Afficher ' + COLL_MEMBER_PAGE + ' de plus">'
       + '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>'
       + "</button>";
   }
