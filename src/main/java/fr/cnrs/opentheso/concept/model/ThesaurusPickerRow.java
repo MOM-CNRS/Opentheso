@@ -21,7 +21,8 @@ public record ThesaurusPickerRow(
         String chronology,
         List<String> languages,
         boolean privateThesaurus,
-        boolean master
+        boolean master,
+        boolean canExport
 ) implements Serializable {
 
     public boolean isMember() {
@@ -144,6 +145,11 @@ public record ThesaurusPickerRow(
 
     public boolean isMaster() {
         return master;
+    }
+
+    /** Export réservé au super-admin et à l'admin du projet qui porte ce thésaurus. */
+    public boolean isCanExport() {
+        return canExport;
     }
 
     public String syncBadgeClass() {

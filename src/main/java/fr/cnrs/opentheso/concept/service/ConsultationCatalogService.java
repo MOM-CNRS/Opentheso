@@ -119,7 +119,8 @@ public class ConsultationCatalogService {
                 row[10] != null ? String.valueOf(row[10]) : "",
                 languages,
                 toBoolean(row[2]),
-                row.length > 12 && toBoolean(row[12])
+                row.length > 12 && toBoolean(row[12]),
+                row.length > 13 && toBoolean(row[13])
         );
     }
 

@@ -174,11 +174,38 @@ class ThesaurusPickerBeanTest {
     }
 
     @Test
-    void openExportThesaurus_delegatesToExportBean() {
+    void openExportThesaurus_delegatesWhenTheRowCanBeExported() {
+        bean.setRows(List.of(row("th-a", "admin", true)));
+
         bean.openExportThesaurus("th-a");
 
         verify(thesaurusPickerExportBean).open("th-a", "Alpha", 10L);
         verify(thesaurusPickerImportBean).cancel();
+    }
+
+    @Test
+    void openExportThesaurus_deniedWhenTheUserIsNotAdminOfTheThesaurus() {
+        bean.setRows(List.of(row("th-a", "manager", false)));
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.openExportThesaurus("th-a");
+            messages.verify(() -> MessageUtils.showErrorMessage("picker.export.denied"));
+        }
+        verify(thesaurusPickerExportBean, never()).open(anyString(), anyString(), org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void canExportRow_superAdminSeesEveryThesaurus() {
+        when(userSession.isSuperAdmin()).thenReturn(true);
+
+        assertTrue(bean.canExportRow(row("th-c", "", false)));
+    }
+
+    @Test
+    void canExportRow_projectAdminOnlySeesProjectThesauri() {
+        assertTrue(bean.canExportRow(row("th-a", "admin", true)));
+        assertFalse(bean.canExportRow(row("th-c", "", false)));
+        assertFalse(bean.canExportRow(row("th-b", "manager", false)));
     }
 
     @Test
@@ -236,21 +263,25 @@ class ThesaurusPickerBeanTest {
 
     private static List<ThesaurusPickerRow> sampleRows() {
         return List.of(
-                new ThesaurusPickerRow(
-                        "th-a", "Alpha", "member", "Manager", "manager",
-                        10, LocalDate.of(2024, 1, 1), "P1", "Org", "Dom", "2020",
-                        List.of("fr"), false, true
-                ),
+                row("th-a", "manager", false),
                 new ThesaurusPickerRow(
                         "th-b", "Beta", "member", "Viewer", "viewer",
                         5, LocalDate.of(2024, 2, 1), "P1", "Org", "Dom", "2021",
-                        List.of("en"), true, false
+                        List.of("en"), true, false, false
                 ),
                 new ThesaurusPickerRow(
                         "th-c", "Gamma", "public", "—", "",
                         20, LocalDate.of(2023, 1, 1), "", "Org", "Dom", "",
-                        List.of("fr", "en"), false, false
+                        List.of("fr", "en"), false, false, false
                 )
+        );
+    }
+
+    private static ThesaurusPickerRow row(String id, String roleKey, boolean canExport) {
+        return new ThesaurusPickerRow(
+                id, "Alpha", "member", roleKey, roleKey,
+                10, LocalDate.of(2024, 1, 1), "P1", "Org", "Dom", "2020",
+                List.of("fr"), false, true, canExport
         );
     }
 }

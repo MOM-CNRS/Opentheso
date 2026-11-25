@@ -336,6 +336,20 @@ public class ThesaurusPickerBean implements Serializable {
         return row.canManage();
     }
 
+    /**
+     * Export du tableau : super-admin sur toutes les lignes, admin de projet
+     * seulement pour un thésaurus rattaché à son projet.
+     */
+    public boolean canExportRow(ThesaurusPickerRow row) {
+        if (row == null || !userSession.isLoggedIn()) {
+            return false;
+        }
+        if (userSession.isSuperAdmin()) {
+            return true;
+        }
+        return row.canExport();
+    }
+
     private boolean assertCanManage(String thesaurusId) {
         if (StringUtils.isBlank(thesaurusId)) {
             return false;
@@ -381,6 +395,10 @@ public class ThesaurusPickerBean implements Serializable {
                 .filter(row -> Strings.CS.equals(row.id(), id))
                 .findFirst()
                 .orElse(null);
+        if (!userSession.isSuperAdmin() && (match == null || !match.canExport())) {
+            MessageUtils.showErrorMessage(localeBean.getMsg("picker.export.denied"));
+            return;
+        }
         String title = match != null ? match.name() : id;
         long terms = match != null ? match.terms() : 0L;
         cancelCreateThesaurus();

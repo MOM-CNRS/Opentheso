@@ -562,7 +562,8 @@
                         <div class="tp-row-acts">
                           <h:commandLink styleClass="tp-act tp-act--export"
                                          title="#{localeBean.getMsg('picker.export')}"
-                                         action="#{thesaurusPickerBean.openExportThesaurus}">
+                                         action="#{thesaurusPickerBean.openExportThesaurus}"
+                                         rendered="#{thesaurusPickerBean.canExportRow(row)}">
                             <f:param name="exportThesaurusId" value="#{row.id}"/>
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

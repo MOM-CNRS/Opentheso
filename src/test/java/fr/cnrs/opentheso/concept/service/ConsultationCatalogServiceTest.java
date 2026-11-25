@@ -87,6 +87,21 @@ class ConsultationCatalogServiceTest {
         assertFalse(result.get(1).master());
         assertEquals("tp-sync-ico--master", result.get(0).syncBadgeClass());
         assertEquals("tp-sync-ico--copy", result.get(1).syncBadgeClass());
+        assertFalse(result.get(0).canExport());
+    }
+
+    @Test
+    void listPickerThesauri_mapsExportRight() {
+        Object[] exportable = new Object[]{
+                "th-a", "Alpha", false, null, "member", 3L, "Projet", "fr", "", "", "", 2, false, true
+        };
+        when(consultationCatalogQueryRepository.findPickerThesaurusRows(1, false, "fr"))
+                .thenReturn(List.<Object[]>of(exportable));
+
+        ThesaurusPickerRow row = service.listPickerThesauri(1, false, "fr").get(0);
+
+        assertTrue(row.canExport());
+        assertEquals("admin", row.roleKey());
     }
 
     @Test
