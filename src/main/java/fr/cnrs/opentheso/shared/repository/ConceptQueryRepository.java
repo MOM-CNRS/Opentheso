@@ -775,6 +775,41 @@ public class ConceptQueryRepository {
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 
+    /**
+     * Facettes liées à un identifiant de l'arbre : la facette elle-même, ou celles dont le concept est membre.
+     */
+    @SuppressWarnings("unchecked")
+    public List<FacetParentRow> findFacetParents(String thesaurusId, String id) {
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT ta.id_facet,
+                   COALESCE(
+                       (SELECT c.id_concept FROM concept c
+                        WHERE c.id_thesaurus = ta.id_thesaurus
+                          AND c.id_concept = ta.id_concept_parent
+                        LIMIT 1),
+                       (SELECT c.id_concept FROM concept c
+                        WHERE c.id_thesaurus = ta.id_thesaurus
+                          AND c.id_ark = ta.id_concept_parent
+                        LIMIT 1),
+                       ta.id_concept_parent) AS parent_id
+            FROM thesaurus_array ta
+            WHERE ta.id_thesaurus = :thesaurusId
+              AND ta.id_facet IN (
+                  SELECT :id
+                  UNION
+                  SELECT cf.id_facet
+                  FROM concept_facet cf
+                  WHERE cf.id_thesaurus = :thesaurusId
+                    AND cf.id_concept = :id
+              )
+            ORDER BY ta.id_facet
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("id", id)
+                .getResultList();
+        return rows.stream().map(r -> new FacetParentRow(str(r[0]), str(r[1]))).toList();
+    }
+
     public Optional<Object[]> findFacetHeader(String facetId, String thesaurusId, String lang) {
         List<Object[]> rows = em.createNativeQuery("""
             SELECT ta.id_facet,

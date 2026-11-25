@@ -18,7 +18,7 @@ class PublicApiGateTest {
         assertFalse(PublicApiGate.isOpenthesoApi("/api/v2/thesaurus-import/progress"));
         assertFalse(PublicApiGate.isOpenthesoApi("/api/concepts/search"));
         assertFalse(PublicApiGate.isOpenthesoApi("/api/account/tree-status"));
-        assertFalse(PublicApiGate.isOpenthesoApi("/api/graph-globe"));
+        assertFalse(PublicApiGate.isOpenthesoApi("/api/graph-neighborhood"));
         assertFalse(PublicApiGate.isOpenthesoApi("/openapi/v2/thesauri/th60/concepts"));
         assertFalse(PublicApiGate.isOpenthesoApi("/graphql"));
     }

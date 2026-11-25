@@ -48,7 +48,8 @@ if (SCREEN === "candidats" && (params.get("new") === "1" || params.get("pref") |
     }
   });
 }
-if (IS_CONSULT || SCREEN === "accueil") {
+if (IS_CONSULT && pageParam("view") === "hyper") state.view = "hyper";
+if (IS_CONSULT || SCREEN === "accueil" || SCREEN === "graphe") {
   const q = pageParam("q");
   const id = pageParam("id") || pageParam("idc");
   const view = pageParam("view");
@@ -62,6 +63,8 @@ if (IS_CONSULT || SCREEN === "accueil") {
   } else if (id) {
     if (!openLiveDetail(id, pageParam("type") || "")) {
       openConcept(id);
+    } else if (graphMode()) {
+      paint();
     }
   } else if (IS_CONSULT && view) {
     setView(view);

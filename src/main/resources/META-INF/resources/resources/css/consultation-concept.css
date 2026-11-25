@@ -921,3 +921,43 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
   padding:2px 8px;font-size:12.5px;font-weight:500;line-height:1.4;color:var(--ink-2);
   background:var(--surface-2)}
 
+/* ── Relations sémantiques : rail vertical (TG en haut, concept et TA au milieu, TS en bas) ── */
+#viewLive [data-card-id="relations"]{--rel-bt:#1f7a5c;--rel-nt:#2f6cb0;--rel-rt:#8a5c17}
+#viewLive [data-card-id="relations"] .rel-code.rel-bt{background:var(--rel-bt)}
+#viewLive [data-card-id="relations"] .rel-code.rel-nt{background:var(--rel-nt)}
+#viewLive [data-card-id="relations"] .rel-code.rel-rt{background:var(--rel-rt)}
+#viewLive [data-card-id="relations"]:not(.is-editing) .rel-stack{position:relative}
+#viewLive [data-card-id="relations"]:not(.is-editing) .rel-stack::before{
+  content:"";position:absolute;inset-block:22px;inset-inline-start:8px;width:2px;background:var(--line)}
+#viewLive [data-card-id="relations"]:not(.is-editing) :is(.crow-bt,.crow-nt,.rel-mid){
+  position:relative;border:0;padding-block:9px;padding-inline-start:30px}
+#viewLive [data-card-id="relations"]:not(.is-editing) :is(.crow-bt,.crow-nt,.rel-self)::before{
+  content:"";position:absolute;inset-inline-start:2px;width:14px;height:13px}
+#viewLive [data-card-id="relations"]:not(.is-editing) :is(.crow-bt,.crow-nt)::before{top:14px}
+#viewLive [data-card-id="relations"]:not(.is-editing) .crow-bt::before{background:var(--rel-bt);clip-path:polygon(50% 0,100% 100%,0 100%)}
+#viewLive [data-card-id="relations"]:not(.is-editing) .crow-nt::before{background:var(--rel-nt);clip-path:polygon(0 0,100% 0,50% 100%)}
+/* Le rail s'arrête à la pointe ▼, même quand les spécifiques tiennent sur plusieurs lignes. */
+#viewLive [data-card-id="relations"]:not(.is-editing) .crow-nt::after{
+  content:"";position:absolute;inset-inline-start:7px;top:27px;bottom:0;width:4px;background:var(--surface)}
+#viewLive [data-card-id="relations"] .rel-mid{display:grid;grid-template-columns:minmax(210px,240px) minmax(0,1fr);gap:12px;align-items:center}
+#viewLive [data-card-id="relations"] .rel-self{font-size:15px;font-weight:700;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+#viewLive [data-card-id="relations"] .rel-mid .rel-self::before{top:calc(50% - 7px);height:14px;width:14px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--surface)}
+#viewLive [data-card-id="relations"] .rel-mid .crow-rt{position:relative;display:flex;flex-direction:column;gap:7px;align-items:stretch;border:0;padding:0}
+#viewLive [data-card-id="relations"] .rel-mid .crow-rt::before{
+  content:"↔";content:"↔" / "";position:absolute;inset-inline-start:-36px;top:50%;width:28px;
+  transform:translateY(-50%);text-align:center;font-size:22px;line-height:1;color:var(--rel-rt)}
+#viewLive [data-card-id="relations"] .crow-rt .crow-lbl .cblock-gear{margin-inline-start:4px}
+#viewLive [data-card-id="relations"] .crow-bt .rel-term{border-color:color-mix(in srgb,var(--rel-bt) 45%,var(--line))}
+#viewLive [data-card-id="relations"] .crow-nt .rel-term{border-color:color-mix(in srgb,var(--rel-nt) 45%,var(--line))}
+#viewLive [data-card-id="relations"] .crow-rt .rel-term{border-color:color-mix(in srgb,var(--rel-rt) 45%,var(--line))}
+#viewLive [data-card-id="relations"] .rel-term:hover{border-color:currentColor}
+#viewLive [data-card-id="relations"].is-editing .rel-mid{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:8px 12px 10px}
+#viewLive [data-card-id="relations"].is-editing .rel-mid:not(:has(.crow-rt)){border:0;padding:2px 12px}
+#viewLive [data-card-id="relations"].is-editing :is(.rel-self,.rel-mid .crow-rt)::before{display:none}
+@media (max-width:760px){
+  #viewLive [data-card-id="relations"] .rel-mid{grid-template-columns:minmax(0,1fr);gap:8px}
+  #viewLive [data-card-id="relations"]:not(.is-editing) .rel-self::before{top:13px}
+  #viewLive [data-card-id="relations"] .crow-rel{grid-template-columns:minmax(0,1fr);gap:7px}
+  #viewLive [data-card-id="relations"] .rel-mid .crow-rt{padding-inline-start:26px}
+  #viewLive [data-card-id="relations"] .rel-mid .crow-rt::before{inset-inline-start:0;width:20px;top:10px;font-size:18px}
+}

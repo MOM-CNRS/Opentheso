@@ -260,7 +260,7 @@ function markCandRowOpen(id) {
 }
 
 function syncConceptUrl(id, nodeType) {
-  if (SCREEN !== "accueil" && SCREEN !== "consultation") return;
+  if (SCREEN !== "accueil" && SCREEN !== "consultation" && SCREEN !== "graphe") return;
   try {
     const url = new URL(location.href);
     if (SCREEN === "accueil") {
@@ -397,7 +397,9 @@ function openLiveDetail(id, nodeType, label) {
   idEl.value = id;
   if (typeEl) typeEl.value = nodeType || "";
   sanitizeFacesFormAction(btn.form);
-  if (!(state.view === "hyper" && state.graphFront)) {
+  state.pendingOpenId = id;
+  state.pendingOpenAt = Date.now();
+  if (!graphOnScreen()) {
     paintOptimisticFiche(id, label);
     beginLiveOpen();
   }
@@ -465,15 +467,21 @@ function showLiveDetail() {
   if (state.view === "collection" && state.colId) return false;
   const el = liveDetailState();
   if (!el || el.getAttribute("data-requested") !== "1") return false;
+  const shownId = el.getAttribute("data-id") || "";
+  const superseded = graphOnScreen() && state.pendingOpenId && shownId !== state.pendingOpenId
+      && Date.now() - state.pendingOpenAt < 10000;
+  /* Réponse d'un clic antérieur : la sphère est déjà sur le concept suivant. */
+  if (superseded) return false;
+  state.pendingOpenId = "";
   state.home = false;
   state.draft = false;
-  state.conceptId = el.getAttribute("data-id") || state.conceptId;
+  state.conceptId = shownId || state.conceptId;
   syncConceptUrl(state.conceptId, el.getAttribute("data-kind") || "");
   highlightConcept(state.conceptId);
   selectOpenedInTree(state.conceptId);
   paintGraphBack();
   paintListBack();
-  if (state.view === "hyper" && state.graphFront) {
+  if (graphOnScreen()) {
     return false;
   }
   showPanel(".view-panel", "viewLive");
@@ -488,7 +496,7 @@ function showLiveDetail() {
 function paintGraphBack() {
   const btn = $("#liveBackGraph");
   if (!btn) return;
-  const show = state.view === "hyper" && !state.graphFront;
+  const show = graphMode() && !state.graphFront;
   btn.hidden = !show;
 }
 
@@ -543,7 +551,7 @@ function paintMain() {
     if (state.colId) id = "viewCollection";
     else if (liveDetailRequested() && !state.home && !state.draft && state.conceptId) id = "viewLive";
     else id = "viewCollection";
-  } else if (v === "hyper" && state.graphFront && $("#viewHyper")) {
+  } else if (graphOnScreen()) {
     id = "viewHyper";
   } else if (liveDetailRequested() && !state.home && !state.draft) {
     id = "viewLive";
@@ -586,7 +594,7 @@ function paintSidebar() {
     }
     ensureCollectionTree();
   }
-  if (state.view === "hyper" && state.graphFront) ensureGlobe();
+  if (graphOnScreen()) ensureGlobe();
   else stopGlobe();
 }
 
@@ -643,7 +651,7 @@ function paint() {
 function setView(view) {
   if (!view) return;
   if (view === "hyper" && !$("#viewHyper")) {
-    go("graph/graphe.xhtml");
+    go(graphPageUrl());
     return;
   }
   if (!IS_CONSULT && view !== "arbo" && view !== "hyper" && view !== "recherche") {
@@ -651,9 +659,11 @@ function setView(view) {
     return;
   }
   if (!IS_CONSULT && view === "arbo" && !$("#viewHome")) {
-    go("index.xhtml");
+    const cid = SCREEN === "graphe" ? state.conceptId : "";
+    go("index.xhtml" + (cid ? "?idc=" + encodeURIComponent(cid) + (graphConceptKind() === "facet" ? "&type=facet" : "") : ""));
     return;
   }
+  state.graphSearch = false;
   state.collectionDraft = false;
   state.view = view;
   if (view === "hyper") state.graphFront = true;
@@ -733,7 +743,7 @@ function highlightConcept(id) {
     }
   }
   if (state.view === "tableau") revealTableConcept(id);
-  if (state.view === "hyper") globeSelectId(id, true);
+  if (graphOnScreen()) globeSelectId(graphConceptId(), graphConceptKind());
   const tr = $(`#panelTable tr[data-id="${CSS.escape(id)}"]`);
   if (tr) tr.classList.add("is-active");
   const rl = Array.from(document.querySelectorAll(".rl-item[data-id]")).find(el => el.getAttribute("data-id") === id);
