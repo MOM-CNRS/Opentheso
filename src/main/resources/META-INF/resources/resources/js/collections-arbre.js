@@ -438,9 +438,10 @@ function collectionFicheGear(block) {
     + block + '" title="' + escapeHtml(label) + '" aria-label="' + escapeHtml(label) + '">✎</button>';
 }
 
-function collectionBlockHead(title, block, extra) {
+function collectionBlockHead(title, block, extra, count) {
   const tools = (extra || "") + (block ? collectionFicheGear(block) : "");
   return '<div class="cblock-head"><span class="cblock-title">' + escapeHtml(title) + "</span>"
+    + (count == null ? "" : '<span class="cblock-count">' + escapeHtml(String(count)) + "</span>")
     + (tools ? '<div class="cblock-tools">' + tools + "</div>" : "") + "</div>";
 }
 
@@ -548,6 +549,8 @@ function renderCollectionDetail(data) {
   const translations = Array.isArray(data.translations) ? data.translations : [];
   const notes = Array.isArray(data.notes) ? data.notes : [];
   const members = Array.isArray(data.members) ? data.members : [];
+  // La liste est plafonnée par le serveur : memberCount est le total réel.
+  const memberTotal = Number.isInteger(data.memberCount) ? data.memberCount : members.length;
   let html = '<div class="cv is-on is-collection" data-id="' + escapeHtml(data.groupId) + '">';
   html += '<div class="cv-head"><h1 class="cv-pref"><span>'
     + escapeHtml(dashText(data.label)) + '</span>'
@@ -559,7 +562,7 @@ function renderCollectionDetail(data) {
     '<span class="val-strong">' + escapeHtml(dashText(data.label)) + "</span>"
     + ' <span class="val-lang">(' + escapeHtml(dashText(data.lang)) + ")</span>");
   html += "</div></section>";
-  html += '<section class="cblock" data-coll-block="members">' + collectionBlockHead("Membres", "members") + '<div class="cblock-body">';
+  html += '<section class="cblock" data-coll-block="members">' + collectionBlockHead("Membres", "members", "", memberTotal) + '<div class="cblock-body">';
   html += collectionMembersHtml(members);
   html += "</div></section>";
   html += '<section class="cblock" data-coll-block="translations">'

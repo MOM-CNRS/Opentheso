@@ -58,6 +58,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -71,6 +72,7 @@ public class ThesaurusEditionSkosImportEngine {
 
     private static final String SEPERATEUR = "##";
     private static final String SOUS_SEPERATEUR = "@@";
+    private static final String ARK_MARKER = "ark:/";
     private static final String IDENTIFIER_HANDLE = "handle";
     private static final String NOTE_DEFINITION = "definition";
     private static final String NOTE_SCOPE = "scopeNote";
@@ -99,7 +101,6 @@ public class ThesaurusEditionSkosImportEngine {
     private final ConceptReplacedByRepository conceptReplacedByRepository;
 
 
-    private final Set<String> idGroups = new HashSet<>();
     private int idUser;
     private int idGroupUser;
     private final Set<String> idLangsFound = new HashSet<>();
@@ -112,9 +113,13 @@ public class ThesaurusEditionSkosImportEngine {
     private Preferences nodePreference;
     private StringBuilder message = new StringBuilder();
     private HashMap<String, String> memberHashMap = new HashMap<>();
-    private HashMap<String, String> groupSubGroup = new HashMap<>(); // pour garder en mémoire les relations de types (member) pour détecter ce qui est groupe ou concept
-    private final List<ConceptGroupConcept> pendingGroupConcepts = new ArrayList<>();
+    // Ensembles : un même lien peut être déclaré plusieurs fois (subGroup + superGroup, member répété)
+    private final Set<GroupLink> pendingGroupConcepts = new LinkedHashSet<>();
+    private final Set<GroupLink> pendingSubGroups = new LinkedHashSet<>();
     private SKOSXmlDocument skosXmlDocument;
+    private SkosResourceIndex resourceIndex = new SkosResourceIndex(null, this::getIdFromUri);
+    /** Vrai seulement quand l'import crée le thésaurus : ses préférences peuvent alors être initialisées. */
+    private boolean creatingThesaurus;
     private DateTimeFormatter dateFormatter;
     boolean isFirst = true;
     /** Rôle à appliquer à l'import (false = esclave par défaut). */
@@ -127,12 +132,12 @@ public class ThesaurusEditionSkosImportEngine {
         this.idGroupUser = idGroupUser;
         this.langueSource = langueSource;
         this.isFirst = true;
-        this.idGroups.clear();
         this.idLangsFound.clear();
         this.hasTopConcceptList.clear();
         this.memberHashMap.clear();
-        this.groupSubGroup.clear();
         this.pendingGroupConcepts.clear();
+        this.pendingSubGroups.clear();
+        this.creatingThesaurus = false;
         this.message = new StringBuilder();
         this.dateFormatter = DateTimeFormatter.ofPattern(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
         this.importAsMaster = false;
@@ -145,6 +150,14 @@ public class ThesaurusEditionSkosImportEngine {
             message.append("Erreur SKOS !!! manque balise conceptSheme");
             return null;
         }
+
+        var duplicateGroupId = resourceIndex.duplicateGroupId();
+        if (duplicateGroupId.isPresent()) {
+            message.append("Erreur SKOS : plusieurs collections ont le même identifiant : ")
+                    .append(duplicateGroupId.get());
+            return null;
+        }
+        creatingThesaurus = true;
 
         Thesaurus thesaurus = conceptScheme.getThesaurus();
         applyConceptSchemeAgents(conceptScheme, thesaurus);
@@ -179,13 +192,16 @@ public class ThesaurusEditionSkosImportEngine {
         }
 
         for (SKOSRelation relation : skosXmlDocument.getConceptScheme().getRelationsList()) {
-            hasTopConcceptList.add(relation.getTargetUri());
+            if (relation.getProperty() == SKOSProperty.HAS_TOP_CONCEPT) {
+                hasTopConcceptList.add(relation.getTargetUri());
+            }
         }
         String preferredTitle = displayTitle;
         if (nodePreference != null && StringUtils.isNotBlank(nodePreference.getPreferredName())) {
             preferredTitle = nodePreference.getPreferredName();
         }
         initPreferencesThesaurus(idTheso1, preferredTitle);
+        restoreThesaurusArk(conceptScheme, idTheso1);
         captureMasterLinkFromConceptScheme(conceptScheme, idTheso1);
         return idTheso1;
     }
@@ -272,6 +288,25 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private record TitlePersistState(boolean titlePersisted, boolean sourceLangTitlePersisted, String displayTitle) {
+    }
+
+    /**
+     * Conserve l'ARK du ConceptScheme. Un ARK déjà porté par un autre thésaurus n'est pas réattribué :
+     * le résolveur ne saurait plus lequel désigner.
+     */
+    private void restoreThesaurusArk(SKOSResource conceptScheme, String idTheso) {
+        if (!"ark".equalsIgnoreCase(selectedIdentifier) || conceptScheme.getUri() == null) {
+            return;
+        }
+        String idArk = getIdArkFromUri(conceptScheme.getUri());
+        if (StringUtils.isBlank(idArk)) {
+            return;
+        }
+        if (toolboxThesaurusPersistence.arkExists(idArk)) {
+            log.warn("ARK {} déjà attribué à un autre thésaurus, non repris pour {}", idArk, idTheso);
+            return;
+        }
+        toolboxThesaurusPersistence.updateArkId(idTheso, idArk);
     }
 
     private void captureMasterLinkFromConceptScheme(SKOSResource conceptScheme, String localThesaurusId) {
@@ -515,19 +550,36 @@ public class ThesaurusEditionSkosImportEngine {
         preferencesRepository.save(nodePreference);
     }
 
+    /**
+     * L'export ajoute "/" + idArk (NAAN compris) : l'URI d'origine s'arrête donc à "ark:".
+     * Le chemin du site n'est pas modifié, un résolveur ARK n'étant pas l'adresse d'un Opentheso.
+     */
+    private void setOriginalArkUri(String conceptUri) {
+        if (nodePreference == null) {
+            return;
+        }
+        int markerIndex = conceptUri.indexOf(ARK_MARKER);
+        String originalUri = conceptUri.substring(0, markerIndex + ARK_MARKER.length() - 1);
+        String idArk = getIdArkFromUri(conceptUri);
+        nodePreference.setOriginalUri(originalUri);
+        nodePreference.setUriArk(originalUri + "/");
+        String naan = StringUtils.substringBefore(idArk, "/");
+        if (StringUtils.isNotBlank(naan)) {
+            nodePreference.setIdNaan(naan);
+        }
+        preferencesRepository.save(nodePreference);
+    }
+
     public void addGroups(List<SKOSResource> groupResource, String idTheso) {
         for (SKOSResource group : groupResource) {
             addOneGroup(group, idTheso);
         }
-        addGroupConceptGroup(idTheso);
-        flushPendingGroupConcepts();
+        flushPendingSubGroups(idTheso);
+        flushPendingGroupConcepts(idTheso);
     }
 
     private void addOneGroup(SKOSResource group, String idTheso) {
-        var idGroup = getIdFromUri(group.getUri());
-        if (idGroup == null || idGroup.isEmpty()) {
-            idGroup = group.getUri();
-        }
+        String idGroup = resourceIndex.idOf(group, SkosResourceIndex.Kind.GROUP);
         String notationValue = firstNotationValue(group);
         String type = groupTypeCode(group.getProperty());
         String idArkHandle = resolveSelectedIdentifier(group.getUri());
@@ -538,8 +590,7 @@ public class ThesaurusEditionSkosImportEngine {
             log.error(ex.getMessage());
             insertGroup(idGroup, idTheso, idArkHandle, type, notationValue, dates.created(), dates.modified());
         }
-        idGroups.add(idGroup);
-        addGroupRelations(group, idGroup, idTheso);
+        addGroupRelations(group, idGroup);
         addGroupLabels(group, idGroup, idTheso);
         addGroupNotesFromResource(group, idGroup, idTheso);
     }
@@ -579,20 +630,55 @@ public class ThesaurusEditionSkosImportEngine {
         return idArkHandle == null ? "" : idArkHandle;
     }
 
-    private void addGroupRelations(SKOSResource group, String idGroup, String idTheso) {
+    private void addGroupRelations(SKOSResource group, String idGroup) {
         for (SKOSRelation relation : group.getRelationsList()) {
-            addOneGroupRelation(relation, idGroup, idTheso);
+            String targetUri = relation.getTargetUri();
+            switch (relation.getProperty()) {
+                case SKOSProperty.SUBGROUP -> queueSubGroup(idGroup, resolveGroupId(targetUri));
+                case SKOSProperty.SUPERGROUP -> {
+                    // Un parent absent du fichier ferait disparaître la collection des racines
+                    String parentId = resolveGroupId(targetUri);
+                    if (resourceIndex.containsGroup(parentId)) {
+                        queueSubGroup(parentId, idGroup);
+                    }
+                }
+                case SKOSProperty.MEMBER -> addGroupMember(idGroup, targetUri);
+                default -> {
+                    // relation sans effet sur les collections
+                }
+            }
         }
     }
 
-    private void addOneGroupRelation(SKOSRelation relation, String idGroup, String idTheso) {
-        int prop = relation.getProperty();
-        if (prop == SKOSProperty.SUBGROUP) {
-            addSubGroup(idGroup, getIdFromUri(relation.getTargetUri()), idTheso);
+    private void addGroupMember(String idGroup, String targetUri) {
+        var target = resourceIndex.find(targetUri);
+        if (target.isPresent()) {
+            switch (target.get().kind()) {
+                case CONCEPT -> pendingGroupConcepts.add(new GroupLink(idGroup, target.get().id()));
+                case GROUP -> queueSubGroup(idGroup, target.get().id());
+                default -> log.warn("Membre ignoré dans la collection {} : {}", idGroup, targetUri);
+            }
             return;
         }
-        if (prop == SKOSProperty.MEMBER) {
-            groupSubGroup.put(getOriginalId(relation.getTargetUri()), idGroup);
+        String groupId = resolveGroupId(targetUri);
+        if (resourceIndex.containsGroup(groupId)) {
+            queueSubGroup(idGroup, groupId);
+            return;
+        }
+        log.warn("Membre de la collection {} absent du fichier : {}", idGroup, targetUri);
+        pendingGroupConcepts.add(new GroupLink(idGroup, getOriginalId(targetUri)));
+    }
+
+    private String resolveGroupId(String uri) {
+        return resourceIndex.find(uri)
+                .filter(ref -> ref.kind() == SkosResourceIndex.Kind.GROUP)
+                .map(SkosResourceIndex.Ref::id)
+                .orElseGet(() -> SkosResourceIndex.normalizeGroupId(getIdFromUri(uri)));
+    }
+
+    private void queueSubGroup(String parentId, String childId) {
+        if (!parentId.equals(childId)) {
+            pendingSubGroups.add(new GroupLink(parentId, childId));
         }
     }
 
@@ -639,20 +725,6 @@ public class ThesaurusEditionSkosImportEngine {
         }
     }
 
-    private void addGroupConceptGroup(String idTheso) {
-        // groupSubGroup : compositon du HashMap = idSubGroup(ou idConcept) -> idGroup
-        // c'est pour séparer les concepts des groupes
-        for (var entry : groupSubGroup.entrySet()) {
-            String idSubGroup = entry.getKey();
-            if (idGroups.contains(idSubGroup)) {
-                // si la relation member est vers un sous groupe, alors on créé une relation groupe/sousGroupe
-                addSubGroup(entry.getValue(), idSubGroup, idTheso);
-            } else {
-                queueConceptGroupConcept(entry.getValue(), idSubGroup, idTheso);
-            }
-        }
-    }
-
     public void addConceptV2(SKOSResource conceptResource, String idTheso) {
         addConceptV2(conceptResource, idTheso, null);
     }
@@ -666,10 +738,7 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     public String resolveConceptId(SKOSResource conceptResource) {
-        if (StringUtils.isEmpty(conceptResource.getIdentifier())) {
-            return getOriginalId(conceptResource.getUri());
-        }
-        return conceptResource.getIdentifier();
+        return resourceIndex.idOf(conceptResource, SkosResourceIndex.Kind.CONCEPT);
     }
 
     private void addConceptV2(SKOSResource conceptResource, String idTheso, String forcedStatus) {
@@ -719,6 +788,11 @@ public class ThesaurusEditionSkosImportEngine {
             return;
         }
         isFirst = false;
+        if (creatingThesaurus && "ark".equalsIgnoreCase(selectedIdentifier)
+                && conceptResource.getUri().contains(ARK_MARKER)) {
+            setOriginalArkUri(conceptResource.getUri());
+            return;
+        }
         String uri = conceptResource.getUri().substring(0, conceptResource.getUri().lastIndexOf("/"));
         if (uri == null || uri.isEmpty()) {
             uri = conceptResource.getUri();
@@ -1024,7 +1098,7 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private void addOneFacet(SKOSResource facetSKOSResource, String idTheso) {
-        String idFacet = getIdFromUri(facetSKOSResource.getUri());
+        String idFacet = resourceIndex.idOf(facetSKOSResource, SkosResourceIndex.Kind.FACET);
         if (idFacet == null) {
             return;
         }
@@ -1130,23 +1204,12 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private String getOriginalId(String uri) {
-        String originalId;
-        if (skosXmlDocument.getEquivalenceUriArkHandle().isEmpty()
-                || skosXmlDocument.getEquivalenceUriArkHandle().get(uri) == null) {
-            return getIdFromUri(uri);
-        }
-
-        originalId = skosXmlDocument.getEquivalenceUriArkHandle().get(uri);
-        if (originalId == null) {
-            if (!message.isEmpty()) {
-                message.append(System.lineSeparator());
-            }
-            message.append("Identifiant (DC:Identifier) non détecté pour l'URL:");
-            message.append(uri);
-            originalId = getIdFromUri(uri);
-            return originalId;
-        }
-        return originalId;
+        return resourceIndex.find(uri)
+                .map(SkosResourceIndex.Ref::id)
+                .orElseGet(() -> {
+                    String originalId = skosXmlDocument.getEquivalenceUriArkHandle().get(uri);
+                    return originalId == null ? getIdFromUri(uri) : originalId;
+                });
     }
 
     private String getIdArkFromUri(String uri) {
@@ -1228,6 +1291,7 @@ public class ThesaurusEditionSkosImportEngine {
 
     public void setRdf4jThesaurus(SKOSXmlDocument rdf4jThesaurus) {
         this.skosXmlDocument = rdf4jThesaurus;
+        this.resourceIndex = new SkosResourceIndex(rdf4jThesaurus, this::getIdFromUri);
     }
 
     private void insertGroup(String idGroup, String idThesaurus, String idArk, String typeCode, String notation,
@@ -1247,19 +1311,26 @@ public class ThesaurusEditionSkosImportEngine {
                 .build());
     }
 
-    private void queueConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
-        pendingGroupConcepts.add(ConceptGroupConcept.builder()
-                .idGroup(idGroup)
-                .idThesaurus(idThesaurus)
-                .idConcept(idConcept)
-                .build());
+    private void flushPendingSubGroups(String idThesaurus) {
+        for (GroupLink link : pendingSubGroups) {
+            addSubGroup(link.groupId(), link.memberId(), idThesaurus);
+        }
+        pendingSubGroups.clear();
     }
 
-    private void flushPendingGroupConcepts() {
+    private void flushPendingGroupConcepts(String idThesaurus) {
         if (pendingGroupConcepts.isEmpty()) {
             return;
         }
-        conceptGroupConceptRepository.saveAll(pendingGroupConcepts);
+        List<ConceptGroupConcept> links = new ArrayList<>(pendingGroupConcepts.size());
+        for (GroupLink link : pendingGroupConcepts) {
+            links.add(ConceptGroupConcept.builder()
+                    .idGroup(link.groupId())
+                    .idThesaurus(idThesaurus)
+                    .idConcept(link.memberId())
+                    .build());
+        }
+        conceptGroupConceptRepository.saveAll(links);
         pendingGroupConcepts.clear();
     }
 
@@ -1355,6 +1426,9 @@ public class ThesaurusEditionSkosImportEngine {
 
 
     /** PostgreSQL attend des {@code date} ; {@link Instant} est converti en type date. */
+
+    private record GroupLink(String groupId, String memberId) {
+    }
 
     private record ParsedDates(Instant created, Instant modified) {
     }

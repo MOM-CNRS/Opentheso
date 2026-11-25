@@ -136,6 +136,10 @@ public class ToolboxThesaurusPersistence {
                 .orElse("");
     }
 
+    public boolean arkExists(String arkId) {
+        return thesaurusRepository.findIdThesaurusByArkId(arkId).isPresent();
+    }
+
     public boolean updateArkId(String thesaurusId, String arkId) {
         var thesaurus = thesaurusRepository.findById(thesaurusId);
         if (thesaurus.isEmpty()) {

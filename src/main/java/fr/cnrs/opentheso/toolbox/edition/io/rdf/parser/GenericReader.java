@@ -20,6 +20,9 @@ public class GenericReader {
             case "prefLabel":
                 skosConcept.addLabel(literal.getLabel(), lang, SKOSProperty.PREF_LABEL);
                 break;
+            case "identifier":
+                skosConcept.setIdentifier(literal.getLabel());
+                break;
             case "title":
                 skosConcept.getThesaurus().setTitle(literal.getLabel());
                 break;
