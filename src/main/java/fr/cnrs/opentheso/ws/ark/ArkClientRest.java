@@ -84,11 +84,9 @@ public final class ArkClientRest {
         String password = propertiesArk.getProperty("password");
         String idNaan = propertiesArk.getProperty("idNaan");
 
-        // Construction de l'URL avec les paramètres
-        String url = String.format("%s/rest/login/username=%s&password=%s&naan=%s",
-                serverHost, user, password, idNaan);
-
         try {
+            URI uri = arkEndpoint(serverHost, "/rest/login/username=" + user + "&password=" + password + "&naan=" + idNaan);
+
             // Création de l'instance HttpClient
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(10)) // Timeout de connexion
@@ -96,7 +94,7 @@ public final class ArkClientRest {
 
             // Création de la requête GET
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(uri)
                     .timeout(Duration.ofSeconds(10)) // Timeout pour la requête
                     .header("Accept", "application/json")
                     .GET()
@@ -120,10 +118,11 @@ public final class ArkClientRest {
             // Retourne true si le token est valide
             return token != null;
 
+        } catch (IllegalArgumentException e) {
+            message = "L'adresse du serveur ARK est invalide. Elle doit commencer par http:// ou https://.";
+            return false;
         } catch (Exception e) {
-            // Gestion des exceptions (timeout, erreurs réseau, etc.)
-            message = "Erreur de connexion: " + e.getMessage();
-            e.printStackTrace();
+            message = "Impossible de joindre le serveur ARK.";
             return false;
         }
 
@@ -304,7 +303,7 @@ public final class ArkClientRest {
 
             // Création de la requête PUT avec JSON
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(propertiesArk.getProperty("serverHost") + "/rest/v1/ark/add"))
+                    .uri(arkEndpoint(propertiesArk.getProperty("serverHost"), "/rest/v1/ark/add"))
                     .timeout(Duration.ofSeconds(10)) // Timeout de la requête
                     .header("Content-Type", "application/json") // Définition du type de contenu
                     .PUT(BodyPublishers.ofString(arkString)) // Données à envoyer (corps de la requête)
@@ -374,14 +373,14 @@ public final class ArkClientRest {
         String naan = ark.substring(0, ark.indexOf("/"));
 
         // Construction de l'URL pour l'appel API
-        String url = propertiesArk.getProperty("serverHost") + "/rest/v1/ark/exist=" + naan + "&id=" + idArk1;
         try {
+            URI uri = arkEndpoint(propertiesArk.getProperty("serverHost"), "/rest/v1/ark/exist=" + naan + "&id=" + idArk1);
             // Création du HttpClient
             HttpClient client = HttpClient.newBuilder().build();
 
             // Construction de la requête HTTP GET
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(uri)
                     .header("Accept", "application/json")
                     .build();
 
@@ -460,17 +459,13 @@ public final class ArkClientRest {
         // Il faut se connecter avant
         if (loginJson == null) return false;
 
-        // Création du client HttpClient
-        HttpClient client = HttpClient.newBuilder().build();
-
-        // Construction de la requête PUT
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(propertiesArk.getProperty("serverHost") + "/rest/v1/ark/update"))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(arkString))
-                .build();
-
         try {
+            HttpClient client = HttpClient.newBuilder().build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(arkEndpoint(propertiesArk.getProperty("serverHost"), "/rest/v1/ark/update"))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(arkString))
+                    .build();
             // Envoi de la requête PUT et récupération de la réponse
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -787,6 +782,36 @@ public final class ArkClientRest {
 
     public String getUri() {
         return Uri;
+    }
+
+    /**
+     * Adresse absolue du serveur ARK. Un hôte sans schéma reçoit {@code https://}.
+     */
+    static URI arkEndpoint(String serverHost, String suffix) {
+        if (serverHost == null || serverHost.isBlank()) {
+            throw new IllegalArgumentException("Adresse du serveur ARK absente");
+        }
+        String host = serverHost.trim();
+        if (!host.regionMatches(true, 0, "http://", 0, "http://".length())
+                && !host.regionMatches(true, 0, "https://", 0, "https://".length())) {
+            host = "https://" + host;
+        }
+        while (host.endsWith("/")) {
+            host = host.substring(0, host.length() - 1);
+        }
+        String path = suffix == null ? "" : suffix.trim();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        URI uri = URI.create(host + path);
+        if (uri.getScheme() == null || uri.getHost() == null) {
+            throw new IllegalArgumentException("Adresse du serveur ARK invalide");
+        }
+        String scheme = uri.getScheme().toLowerCase();
+        if (!"http".equals(scheme) && !"https".equals(scheme)) {
+            throw new IllegalArgumentException("Adresse du serveur ARK invalide");
+        }
+        return uri;
     }
 
     public String getMessage() {

@@ -92,6 +92,6 @@ public class ImageService {
     public void updateThesaurusId(String oldIdThesaurus, String newIdThesaurus) {
 
         log.debug("Mise à jour du thésaurus id de toutes les images présentes dans le thésaurus id {}", oldIdThesaurus);
-        imagesRepository.updateThesaurusId(newIdThesaurus, newIdThesaurus);
+        imagesRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
     }
 }

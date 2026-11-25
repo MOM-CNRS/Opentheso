@@ -20,6 +20,74 @@ public class ConceptFullQueryRepository {
     @PersistenceContext
     private EntityManager em;
 
+    /**
+     * Fils NT du concept, plus les concepts d'une facette fille qui n'ont pas déjà
+     * de lien NT vers ce parent. Le rôle réel est conservé quand le lien existe.
+     */
+    private static final String NARROWER_ROWS = """
+            SELECT COALESCE(t.lexical_value, c.id_concept) AS label,
+                   c.id_concept,
+                   hr.role,
+                   c.id_ark, c.id_handle, c.id_doi,
+                   COALESCE(c.notation, '') AS notation
+            FROM hierarchical_relationship hr
+            JOIN concept c
+                ON c.id_concept = hr.id_concept2
+                AND c.id_thesaurus = hr.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = c.id_thesaurus
+                AND t.lang = :lang
+            WHERE hr.id_thesaurus = :thesaurusId
+              AND hr.id_concept1 = :conceptId
+              AND hr.role LIKE 'NT%'
+              AND (:includeNarrowerCandidates = true OR UPPER(TRIM(c.status)) <> 'CA')
+            UNION
+            SELECT COALESCE(t.lexical_value, c.id_concept),
+                   c.id_concept,
+                   'NT',
+                   c.id_ark, c.id_handle, c.id_doi,
+                   COALESCE(c.notation, '')
+            FROM concept_facet cf
+            JOIN thesaurus_array ta
+                ON cf.id_facet = ta.id_facet
+                AND cf.id_thesaurus = ta.id_thesaurus
+            JOIN concept c
+                ON c.id_concept = cf.id_concept
+                AND c.id_thesaurus = cf.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = c.id_thesaurus
+                AND t.lang = :lang
+            WHERE ta.id_thesaurus = :thesaurusId
+              AND (
+                  ta.id_concept_parent = :conceptId
+                  OR ta.id_concept_parent = (
+                      SELECT parent_concept.id_ark
+                      FROM concept parent_concept
+                      WHERE parent_concept.id_concept = :conceptId
+                        AND parent_concept.id_thesaurus = :thesaurusId
+                        AND parent_concept.id_ark IS NOT NULL
+                        AND btrim(parent_concept.id_ark) <> ''
+                  )
+              )
+              AND (:includeNarrowerCandidates = true OR UPPER(TRIM(c.status)) <> 'CA')
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM hierarchical_relationship existing
+                  WHERE existing.id_thesaurus = :thesaurusId
+                    AND existing.id_concept1 = :conceptId
+                    AND existing.id_concept2 = c.id_concept
+                    AND existing.role LIKE 'NT%'
+              )
+            """;
+
     /** {@code null} tant que le sondage des notes en URI n'a pas été fait. */
     private volatile Boolean uriShapedNotes;
 
@@ -301,9 +369,9 @@ public class ConceptFullQueryRepository {
     }
 
     /**
-     * Fils directs affichés dans l'arbre : mêmes filtres que {@code findTreeChildConcepts}
-     * (candidats selon le visiteur, concepts sans libellé conservés, membres de facette exclus).
-     * Le plafond de 4000 est celui de l'arbre. Le tri final est fait ensuite comme l'arbre.
+     * Termes spécifiques de la fiche : fils directs, plus les concepts membres
+     * d'une facette dont ce concept est le parent. L'arbre continue de ranger
+     * ces membres sous la facette.
      */
     public List<Object[]> findNarrowerRelations(
             String conceptId,
@@ -312,44 +380,17 @@ public class ConceptFullQueryRepository {
             boolean includeCandidates
     ) {
         return em.createNativeQuery("""
-            SELECT COALESCE(t.lexical_value, c.id_concept) AS label,
-                   c.id_concept,
-                   hr.role,
-                   c.id_ark, c.id_handle, c.id_doi,
-                   COALESCE(c.notation, '') AS notation
-            FROM hierarchical_relationship hr
-            JOIN concept c
-                ON c.id_concept = hr.id_concept2
-                AND c.id_thesaurus = hr.id_thesaurus
-            LEFT JOIN preferred_term pt
-                ON pt.id_concept = c.id_concept
-                AND pt.id_thesaurus = c.id_thesaurus
-            LEFT JOIN term t
-                ON t.id_term = pt.id_term
-                AND t.id_thesaurus = c.id_thesaurus
-                AND t.lang = :lang
-            WHERE hr.id_thesaurus = :thesaurusId
-              AND hr.id_concept1 = :conceptId
-              AND hr.role LIKE 'NT%'
-              AND (:includeCandidates = true OR UPPER(TRIM(c.status)) <> 'CA')
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM concept_facet cf
-                  JOIN thesaurus_array ta
-                      ON cf.id_facet = ta.id_facet
-                      AND cf.id_thesaurus = ta.id_thesaurus
-                  WHERE cf.id_concept = c.id_concept
-                    AND cf.id_thesaurus = c.id_thesaurus
-                    AND ta.id_concept_parent = :conceptId
-                    AND ta.id_thesaurus = :thesaurusId
-              )
-            ORDER BY c.notation, label
+            SELECT label, id_concept, role, id_ark, id_handle, id_doi, notation
+            FROM (
+            """ + NARROWER_ROWS + """
+            ) narrower
+            ORDER BY notation, label
             LIMIT 4000
             """)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("includeCandidates", includeCandidates)
+                .setParameter("includeNarrowerCandidates", includeCandidates)
                 .getResultList();
     }
 
@@ -850,21 +891,11 @@ public class ConceptFullQueryRepository {
                   'narrowers', (
                     SELECT COALESCE(jsonb_agg(jsonb_build_array(label, id_concept, role, id_ark, id_handle, id_doi, notation)), '[]'::jsonb)
                     FROM (
-                      SELECT COALESCE(t.lexical_value, c.id_concept) AS label, c.id_concept, hr.role,
-                             c.id_ark, c.id_handle, c.id_doi, COALESCE(c.notation, '') AS notation
-                      FROM hierarchical_relationship hr
-                      JOIN concept c ON c.id_concept = hr.id_concept2 AND c.id_thesaurus = hr.id_thesaurus
-                      LEFT JOIN preferred_term pt ON pt.id_concept = c.id_concept AND pt.id_thesaurus = c.id_thesaurus
-                      LEFT JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = c.id_thesaurus AND t.lang = :lang
-                      WHERE hr.id_thesaurus = :thesaurusId AND hr.id_concept1 = :conceptId AND hr.role LIKE 'NT%'
-                        AND (:includeNarrowerCandidates = true OR UPPER(TRIM(c.status)) <> 'CA')
-                        AND NOT EXISTS (
-                          SELECT 1 FROM concept_facet cf
-                          JOIN thesaurus_array ta ON cf.id_facet = ta.id_facet AND cf.id_thesaurus = ta.id_thesaurus
-                          WHERE cf.id_concept = c.id_concept AND cf.id_thesaurus = c.id_thesaurus
-                            AND ta.id_concept_parent = :conceptId AND ta.id_thesaurus = :thesaurusId
-                        )
-                      ORDER BY c.notation, label
+                      SELECT label, id_concept, role, id_ark, id_handle, id_doi, notation
+                      FROM (
+                      """ + NARROWER_ROWS + """
+                      ) narrower_rows
+                      ORDER BY notation, label
                       LIMIT 4000
                     ) narrowers
                   ),

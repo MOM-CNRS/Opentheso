@@ -48,7 +48,9 @@ public class ArkHelper2 {
         try {
             boolean ok = arkClientRest.login();
             if (!ok) {
-                message = "Échec de la connexion au serveur Ark";
+                message = isBlank(arkClientRest.getMessage())
+                        ? "Échec de la connexion au serveur Ark"
+                        : arkClientRest.getMessage();
             }
             return ok;
         } catch (Exception e) {

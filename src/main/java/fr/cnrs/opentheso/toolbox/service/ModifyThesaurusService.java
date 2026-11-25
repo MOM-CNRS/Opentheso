@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.repositories.TermRepository;
+import fr.cnrs.opentheso.services.ThesaurusService;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.toolbox.persistence.ThesaurusLifecyclePersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxPreferencePersistence;
@@ -52,6 +53,9 @@ public class ModifyThesaurusService {
     private final ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
     private final TermRepository termRepository;
+    private final ThesaurusService thesaurusService;
+
+    private static final java.util.regex.Pattern THESAURUS_ID = java.util.regex.Pattern.compile("[A-Za-z0-9][A-Za-z0-9_-]{0,63}");
 
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
@@ -170,6 +174,23 @@ public class ModifyThesaurusService {
         }
         if (!toolboxPreferencePersistence.setWorkLanguage(languageCode, thesaurusId)) {
             throw new InvalidToolboxDataException("Erreur pendant la modification de la langue source");
+        }
+    }
+
+    @Transactional
+    public void changeIdentifier(String currentId, String requestedId) {
+        String next = fr.cnrs.opentheso.utils.StringUtils.convertString(StringUtils.trimToEmpty(requestedId));
+        if (StringUtils.isBlank(next)) {
+            throw new InvalidToolboxDataException("L'identifiant du thésaurus est obligatoire.");
+        }
+        if (next.equals(currentId)) {
+            return;
+        }
+        if (!THESAURUS_ID.matcher(next).matches()) {
+            throw new InvalidToolboxDataException("L'identifiant ne peut contenir que des lettres, des chiffres, « _ » et « - ».");
+        }
+        if (!thesaurusService.changeIdOfThesaurus(currentId, next)) {
+            throw new InvalidToolboxDataException("Un thésaurus porte déjà cet identifiant.");
         }
     }
 
