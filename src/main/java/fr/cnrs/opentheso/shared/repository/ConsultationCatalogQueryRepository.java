@@ -185,11 +185,15 @@ public class ConsultationCatalogQueryRepository {
                 member_roles AS (
                     SELECT
                         roles.id_thesaurus,
-                        MIN(roles.id_role) AS id_role
+                        MIN(roles.id_role) AS id_role,
+                        BOOL_OR(roles.id_role < 3 AND roles.export_grant) AS can_export,
+                        BOOL_OR(roles.in_project) AS in_project
                     FROM (
                         SELECT
                             ugt.id_thesaurus,
-                            urg.id_role
+                            urg.id_role,
+                            true AS export_grant,
+                            true AS in_project
                         FROM user_role_group urg
                         JOIN user_group_thesaurus ugt ON ugt.id_group = urg.id_group
                         WHERE urg.id_user = CAST(:userId AS integer)
@@ -198,7 +202,9 @@ public class ConsultationCatalogQueryRepository {
 
                         SELECT
                             ugt.id_thesaurus,
-                            uro.id_role
+                            uro.id_role,
+                            false AS export_grant,
+                            true AS in_project
                         FROM user_role_only_on uro
                         JOIN user_group_thesaurus ugt ON ugt.id_group = uro.id_group
                         WHERE uro.id_user = CAST(:userId AS integer)
@@ -207,7 +213,9 @@ public class ConsultationCatalogQueryRepository {
 
                         SELECT
                             uro.id_theso AS id_thesaurus,
-                            uro.id_role
+                            uro.id_role,
+                            true AS export_grant,
+                            true AS in_project
                         FROM user_role_only_on uro
                         WHERE uro.id_user = CAST(:userId AS integer)
                           AND uro.id_theso IS NOT NULL
@@ -215,10 +223,12 @@ public class ConsultationCatalogQueryRepository {
 
                         UNION ALL
 
-                        -- Créateur (ex. super-admin sans ligne user_role_*)
+                        -- Créateur (ex. super-admin sans ligne user_role_*) : visible, mais pas « Mes thésaurus »
                         SELECT
                             tl.id_thesaurus,
-                            2 AS id_role
+                            2 AS id_role,
+                            false AS export_grant,
+                            false AS in_project
                         FROM thesaurus_label tl
                         JOIN users u ON LOWER(BTRIM(u.username)) = LOWER(BTRIM(tl.creator))
                         WHERE u.id_user = CAST(:userId AS integer)
@@ -234,7 +244,7 @@ public class ConsultationCatalogQueryRepository {
                     titled.is_private,
                     titled.created,
                     CASE
-                        WHEN member_roles.id_thesaurus IS NOT NULL THEN 'member'
+                        WHEN COALESCE(member_roles.in_project, false) THEN 'member'
                         ELSE 'public'
                     END AS access_kind,
                     COALESCE((
@@ -260,7 +270,8 @@ public class ConsultationCatalogQueryRepository {
                     titled.organization,
                     titled.chronology,
                     member_roles.id_role,
-                    titled.is_master
+                    titled.is_master,
+                    COALESCE(member_roles.can_export, false) AS can_export
                 FROM titled
                 LEFT JOIN member_roles ON member_roles.id_thesaurus = titled.id_thesaurus
                 WHERE

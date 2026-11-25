@@ -327,7 +327,7 @@
                       </h:commandLink>
                     </th>
                   </ui:repeat>
-                  <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
+                  <ui:fragment rendered="#{thesaurusPickerBean.actionsColumnVisible}">
                     <th class="tp-th tp-th--edit"/>
                   </ui:fragment>
                 </tr>
@@ -408,7 +408,7 @@
                       </ui:fragment>
                     </th>
                   </ui:repeat>
-                  <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
+                  <ui:fragment rendered="#{thesaurusPickerBean.actionsColumnVisible}">
                     <th class="tp-th--edit" title="#{localeBean.getMsg('picker.actions')}"/>
                   </ui:fragment>
                 </tr>
@@ -557,12 +557,13 @@
                         </td>
                       </ui:fragment>
                     </ui:repeat>
-                    <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
+                    <ui:fragment rendered="#{thesaurusPickerBean.actionsColumnVisible}">
                       <td class="tp-c-edit" data-label="#{localeBean.getMsg('picker.actions')}">
                         <div class="tp-row-acts">
                           <h:commandLink styleClass="tp-act tp-act--export"
                                          title="#{localeBean.getMsg('picker.export')}"
-                                         action="#{thesaurusPickerBean.openExportThesaurus}">
+                                         action="#{thesaurusPickerBean.openExportThesaurus}"
+                                         rendered="#{thesaurusPickerBean.canExportRow(row)}">
                             <f:param name="exportThesaurusId" value="#{row.id}"/>
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
