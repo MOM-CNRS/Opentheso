@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.service;
 
+import fr.cnrs.opentheso.shared.repository.FacetParentRow;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.concept.model.ConceptFullSnapshot;
@@ -243,6 +244,14 @@ public class ConceptReadService {
             ));
         }
         return withSourceLabels(thesaurusId, lang, conceptTreeConsultationService.sortNodes(nodes, sortByNotation));
+    }
+
+    @Transactional(readOnly = true)
+    public List<FacetParentRow> findFacetParents(String thesaurusId, String id) {
+        if (StringUtils.isAnyBlank(thesaurusId, id)) {
+            return List.of();
+        }
+        return conceptQueryRepository.findFacetParents(thesaurusId, id);
     }
 
     @Transactional(readOnly = true)

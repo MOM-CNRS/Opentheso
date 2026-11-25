@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.ui;
 
+import fr.cnrs.opentheso.shared.repository.FacetParentRow;
 import fr.cnrs.opentheso.config.JsfPrettyUrlFilter;
 import fr.cnrs.opentheso.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.concept.model.BreadcrumbStep;
@@ -553,6 +554,23 @@ public class ThesaurusViewBean implements Serializable {
         for (List<BreadcrumbStep> path : breadcrumbPathsForReveal(id)) {
             if (expandTreePath(idsOfPath(path, id))) {
                 return;
+            }
+        }
+        revealThroughFacets(id);
+    }
+
+    /** L'identifiant est une facette, ou un concept que seule une facette rattache à l'arbre. */
+    private void revealThroughFacets(String id) {
+        for (FacetParentRow link : conceptReadService.findFacetParents(getId(), id)) {
+            for (List<BreadcrumbStep> path : breadcrumbPathsForReveal(link.parentId())) {
+                List<String> ids = new ArrayList<>(idsOfPath(path, link.parentId()));
+                ids.add(link.facetId());
+                if (!id.equalsIgnoreCase(link.facetId())) {
+                    ids.add(id);
+                }
+                if (expandTreePath(ids)) {
+                    return;
+                }
             }
         }
     }
@@ -1887,6 +1905,26 @@ public class ThesaurusViewBean implements Serializable {
                 return expandTreePathFrom(node.getChildren(), ids, index + 1);
             }
             return last;
+        }
+        return expandThroughFacet(siblings, ids, index);
+    }
+
+    /** Les membres d'une facette ne sont pas sous le concept parent dans l'arbre, mais sous la facette. */
+    private boolean expandThroughFacet(List<ThesaurusTreeNode> siblings, List<String> ids, int index) {
+        String targetId = ids.get(index);
+        for (ThesaurusTreeNode facet : siblings) {
+            if (!ConceptTreeNodeKinds.FACET.equalsIgnoreCase(facet.getNodeType()) || !facet.isHasChildren()) {
+                continue;
+            }
+            if (!facet.isChildrenLoaded()) {
+                loadTreeChildren(facet);
+            }
+            boolean holdsTarget = facet.getChildren().stream()
+                    .anyMatch(child -> targetId.equalsIgnoreCase(child.getId()));
+            if (holdsTarget && expandTreePathFrom(facet.getChildren(), ids, index)) {
+                facet.setExpanded(true);
+                return true;
+            }
         }
         return false;
     }

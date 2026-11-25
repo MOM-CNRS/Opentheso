@@ -60,8 +60,7 @@ body .ui-widget,
 .view-panel{display:none;height:100%;overflow:auto}
 .view-panel.is-on{display:block}
 .view-panel.is-on.hyper,
-#viewHyper.is-on,
-body[data-page="graphe"] #viewHyper{display:flex;flex-direction:column;min-height:0;overflow:hidden;height:100%}
+#viewHyper.is-on{display:flex;flex-direction:column;min-height:0;overflow:hidden;height:100%}
 
 .sidebar-panel{display:none}
 .sidebar-panel.is-on{display:block}
