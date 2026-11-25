@@ -327,7 +327,7 @@
                       </h:commandLink>
                     </th>
                   </ui:repeat>
-                  <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
+                  <ui:fragment rendered="#{thesaurusPickerBean.actionsColumnVisible}">
                     <th class="tp-th tp-th--edit"/>
                   </ui:fragment>
                 </tr>
@@ -408,7 +408,7 @@
                       </ui:fragment>
                     </th>
                   </ui:repeat>
-                  <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
+                  <ui:fragment rendered="#{thesaurusPickerBean.actionsColumnVisible}">
                     <th class="tp-th--edit" title="#{localeBean.getMsg('picker.actions')}"/>
                   </ui:fragment>
                 </tr>
@@ -557,7 +557,7 @@
                         </td>
                       </ui:fragment>
                     </ui:repeat>
-                    <ui:fragment rendered="#{thesaurusPickerBean.loggedIn}">
+                    <ui:fragment rendered="#{thesaurusPickerBean.actionsColumnVisible}">
                       <td class="tp-c-edit" data-label="#{localeBean.getMsg('picker.actions')}">
                         <div class="tp-row-acts">
                           <h:commandLink styleClass="tp-act tp-act--export"

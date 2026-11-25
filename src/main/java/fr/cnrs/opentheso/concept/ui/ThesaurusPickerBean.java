@@ -133,6 +133,8 @@ public class ThesaurusPickerBean implements Serializable {
         if (!userSession.isLoggedIn()) {
             activeTab = TAB_PUBLIC;
             applyGuestColumnDefaults();
+        } else if (!userSession.isSuperAdmin()) {
+            activeTab = TAB_MEMBER;
         }
         load();
     }
@@ -287,8 +289,19 @@ public class ThesaurusPickerBean implements Serializable {
     }
 
     public int getEmptyColspan() {
-        // cfg + colonnes visibles + actions (connecté uniquement)
-        return getColumnCfg().size() + 1 + (isLoggedIn() ? 1 : 0);
+        // cfg + colonnes + actions, seulement si au moins une ligne a un bouton
+        return getColumnCfg().size() + 1 + (isActionsColumnVisible() ? 1 : 0);
+    }
+
+    /** Colonne des actions : absente quand aucune ligne n'a de bouton pour cet utilisateur. */
+    public boolean isActionsColumnVisible() {
+        if (!isLoggedIn() || rows == null || rows.isEmpty()) {
+            return false;
+        }
+        if (userSession.isSuperAdmin()) {
+            return true;
+        }
+        return rows.stream().anyMatch(row -> row.canManage() || row.canExport());
     }
 
     public String getAriaSort(String column) {

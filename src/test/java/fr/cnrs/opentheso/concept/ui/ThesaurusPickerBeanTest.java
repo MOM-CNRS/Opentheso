@@ -92,6 +92,23 @@ class ThesaurusPickerBeanTest {
     }
 
     @Test
+    void init_selectsMyThesauriForAProjectMember() {
+        bean.init();
+
+        assertEquals(ThesaurusPickerBean.TAB_MEMBER, bean.getActiveTab());
+        assertTrue(bean.getFilteredRows().stream().allMatch(ThesaurusPickerRow::isMember));
+    }
+
+    @Test
+    void init_keepsAllThesauriForASuperAdmin() {
+        when(userSession.isSuperAdmin()).thenReturn(true);
+
+        bean.init();
+
+        assertEquals(ThesaurusPickerBean.TAB_ALL, bean.getActiveTab());
+    }
+
+    @Test
     void load_fetchesPickerRows() {
         verify(consultationCatalogService).listPickerThesauri(1, false, "fr");
         assertEquals(3, bean.getRows().size());
@@ -199,6 +216,23 @@ class ThesaurusPickerBeanTest {
         when(userSession.isSuperAdmin()).thenReturn(true);
 
         assertTrue(bean.canExportRow(row("th-c", "", false)));
+    }
+
+    @Test
+    void actionsColumn_hiddenWhenNoRowHasAButton() {
+        bean.setRows(List.of(row("th-c", "contributor", false)));
+
+        assertFalse(bean.isActionsColumnVisible());
+    }
+
+    @Test
+    void actionsColumn_shownWhenOneRowCanBeManagedOrExported() {
+        bean.setRows(List.of(
+                row("th-c", "contributor", false),
+                row("th-a", "manager", false)
+        ));
+
+        assertTrue(bean.isActionsColumnVisible());
     }
 
     @Test
