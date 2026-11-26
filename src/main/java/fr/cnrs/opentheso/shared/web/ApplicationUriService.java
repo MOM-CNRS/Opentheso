@@ -41,6 +41,10 @@ public class ApplicationUriService {
         return resolveUrl("/openapi/v1");
     }
 
+    public String resolveOpenApiV2Url() {
+        return resolveUrl("/openapi/v2/public");
+    }
+
     public String resolveGraphQlUrl() {
         return resolveUrl("/graphql");
     }

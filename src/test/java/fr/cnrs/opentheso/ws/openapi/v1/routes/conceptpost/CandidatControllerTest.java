@@ -40,6 +40,9 @@ class CandidatControllerTest {
     @Mock
     private CandidatAuthSupport candidatAuthSupport;
 
+    @Mock
+    private fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch thesaurusApiSwitch;
+
     @InjectMocks
     private CandidatController controller;
 

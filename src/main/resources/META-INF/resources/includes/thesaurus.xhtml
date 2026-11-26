@@ -251,8 +251,8 @@
         <p class="menu-desc">#{localeBean.getMsg('nav.apiRestDesc')}</p>
         <div class="api-endpoint-k">#{localeBean.getMsg('nav.apiBase')}</div>
         <div class="api-endpoint">
-          <code title="#{navigationBean.openApiUrl}">#{navigationBean.openApiUrl}</code>
-          <button type="button" class="api-copy" data-act="copy" data-copy="#{navigationBean.openApiUrl}" title="#{localeBean.getMsg('ui.copy')}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="api-copied"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+          <code title="#{instanceFeatureBean.apiV1Enabled ? navigationBean.openApiUrl : navigationBean.openApiV2Url}">#{instanceFeatureBean.apiV1Enabled ? navigationBean.openApiUrl : navigationBean.openApiV2Url}</code>
+          <button type="button" class="api-copy" data-act="copy" data-copy="#{instanceFeatureBean.apiV1Enabled ? navigationBean.openApiUrl : navigationBean.openApiV2Url}" title="#{localeBean.getMsg('ui.copy')}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="api-copied"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
         </div>
         <a class="menu-foot" href="#{navigationBean.swaggerUrl}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>#{localeBean.getMsg('nav.apiDocs')}</a></div>
       </div>

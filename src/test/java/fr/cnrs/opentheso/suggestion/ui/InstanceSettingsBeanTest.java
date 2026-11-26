@@ -41,7 +41,7 @@ class InstanceSettingsBeanTest {
         service = mock(InstanceFeatureService.class);
         mailer = mock(FeatureSuggestionMailer.class);
         when(localeBean.getMsg(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(service.current()).thenReturn(new InstanceFeatures(true, false, true, false));
+        when(service.current()).thenReturn(new InstanceFeatures(true, false, true, false, true));
         bean = new InstanceSettingsBean(userSession, localeBean, service, mailer);
     }
 
@@ -64,12 +64,13 @@ class InstanceSettingsBeanTest {
         bean.setLanguageVisible(true);
         bean.setRestApiVisible(false);
         bean.setGraphApiVisible(true);
+        bean.setApiV1Enabled(false);
 
         bean.save();
 
         assertFalse(bean.isMessageError());
         assertEquals("admin.prefs.saved", bean.getMessage());
-        verify(service).save(new InstanceFeatures(false, true, false, true));
+        verify(service).save(new InstanceFeatures(false, true, false, true, false));
     }
 
     @Test

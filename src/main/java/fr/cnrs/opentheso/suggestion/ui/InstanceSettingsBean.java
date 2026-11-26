@@ -32,6 +32,7 @@ public class InstanceSettingsBean implements Serializable {
     private boolean languageVisible = true;
     private boolean restApiVisible = true;
     private boolean graphApiVisible = true;
+    private boolean apiV1Enabled = true;
     private boolean loaded;
     private String message;
     private boolean messageError;
@@ -56,6 +57,11 @@ public class InstanceSettingsBean implements Serializable {
         return graphApiVisible;
     }
 
+    public boolean isApiV1Enabled() {
+        ensureLoaded();
+        return apiV1Enabled;
+    }
+
     public boolean isMailConfigured() {
         return featureSuggestionMailer.isConfigured();
     }
@@ -77,7 +83,7 @@ public class InstanceSettingsBean implements Serializable {
         }
         try {
             instanceFeatureService.save(new InstanceFeatures(
-                    suggestionEnabled, languageVisible, restApiVisible, graphApiVisible));
+                    suggestionEnabled, languageVisible, restApiVisible, graphApiVisible, apiV1Enabled));
             loaded = true;
             messageError = false;
             message = localeBean.getMsg("admin.prefs.saved");
@@ -113,6 +119,7 @@ public class InstanceSettingsBean implements Serializable {
         languageVisible = features.languageVisible();
         restApiVisible = features.restApiVisible();
         graphApiVisible = features.graphApiVisible();
+        apiV1Enabled = features.apiV1Enabled();
         loaded = true;
     }
 }

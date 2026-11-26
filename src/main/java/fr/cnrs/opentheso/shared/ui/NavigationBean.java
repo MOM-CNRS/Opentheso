@@ -160,6 +160,10 @@ public class NavigationBean implements Serializable {
         return applicationUriService.resolveOpenApiUrl();
     }
 
+    public String getOpenApiV2Url() {
+        return applicationUriService.resolveOpenApiV2Url();
+    }
+
     public String getGraphQlUrl() {
         return applicationUriService.resolveGraphQlUrl();
     }

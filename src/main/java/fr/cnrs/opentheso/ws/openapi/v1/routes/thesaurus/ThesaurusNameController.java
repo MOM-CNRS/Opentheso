@@ -33,6 +33,9 @@ public class ThesaurusNameController {
     @Autowired
     private RestThesaurusVisibility restThesaurusVisibility;
 
+    @Autowired
+    private fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch thesaurusApiSwitch;
+
 
     /**
      * permet de récupérer l'Id du thésaurus d'après son Nom Pérenne
@@ -60,6 +63,12 @@ public class ThesaurusNameController {
                     .status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(error.toString());
+        }
+        if (thesaurusApiSwitch.isDisabled(idTheso)) {
+            return ResponseEntity
+                    .status(RestThesaurusAccess.API_DISABLED.status())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(RestThesaurusAccess.API_DISABLED.body());
         }
         RestThesaurusAccess access = restThesaurusVisibility.explain(restThesaurusVisibility.currentUserId(), idTheso);
         if (access != RestThesaurusAccess.ALLOWED) {

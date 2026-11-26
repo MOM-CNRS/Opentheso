@@ -6,6 +6,7 @@ package fr.cnrs.opentheso.ws.api;
 public enum RestThesaurusAccess {
 
     ALLOWED(200, null),
+    API_DISABLED(403, "L'API est désactivée pour ce thésaurus."),
     NOT_FOUND(404, "Thésaurus introuvable."),
     PRIVATE(403, "Vous n'avez pas accès à ce thésaurus : il est privé."),
     FOREIGN_PROJECT(403, "Vous n'avez pas accès à ce thésaurus : il appartient à un projet auquel vous n'avez pas droit.");
@@ -20,6 +21,10 @@ public enum RestThesaurusAccess {
 
     public int status() {
         return status;
+    }
+
+    public String message() {
+        return message;
     }
 
     public String body() {

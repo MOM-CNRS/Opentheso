@@ -37,6 +37,9 @@ public interface PreferencesRepository extends JpaRepository<Preferences, Intege
 
     Optional<Preferences> findByIdThesaurus(String idThesaurus);
 
+    @Query("SELECT p.idThesaurus FROM Preferences p WHERE p.webservices = false")
+    java.util.List<String> findIdsWithApiDisabled();
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("""

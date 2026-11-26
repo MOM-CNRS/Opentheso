@@ -1510,12 +1510,17 @@
       <section class="cblock" data-card-id="exportSkos">
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg></span><span class="cblock-title">#{localeBean.getMsg('block.exportSkos')}</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{localeBean.getMsg('block.collapse')}" aria-expanded="true" aria-label="#{localeBean.getMsg('block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
+          <ui:fragment rendered="#{instanceFeatureBean.thesaurusApiOpen(thesaurusViewBean.id)}">
           <div class="skos-links">
-            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('rdf')}" target="_blank" rel="noopener">RDF/XML</a>
-            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('json')}" target="_blank" rel="noopener">JSON</a>
-            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('jsonld')}" target="_blank" rel="noopener">JSON-LD</a>
-            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('turtle')}" target="_blank" rel="noopener">Turtle</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('rdf', instanceFeatureBean.apiV1Enabled)}" target="_blank" rel="noopener">RDF/XML</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('json', instanceFeatureBean.apiV1Enabled)}" target="_blank" rel="noopener">JSON</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('jsonld', instanceFeatureBean.apiV1Enabled)}" target="_blank" rel="noopener">JSON-LD</a>
+            <a class="skos-link" href="#{thesaurusViewBean.skosExportUrl('turtle', instanceFeatureBean.apiV1Enabled)}" target="_blank" rel="noopener">Turtle</a>
           </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not instanceFeatureBean.thesaurusApiOpen(thesaurusViewBean.id)}">
+            <div class="muted">#{localeBean.getMsg('concept.apiDisabled')}</div>
+          </ui:fragment>
         </div>
       </section>
 

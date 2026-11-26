@@ -1545,6 +1545,17 @@
                   </div>
                   <div class="st-toggle-row">
                     <div class="st-toggle-main">
+                      <div class="st-toggle-l">#{localeBean.getMsg('admin.prefs.apiV1')}</div>
+                      <div class="st-toggle-d">#{localeBean.getMsg('admin.prefs.apiV1.desc')}</div>
+                    </div>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="iaPrefsApiV1"
+                                               styleClass="st-sw-input"
+                                               value="#{instanceSettingsBean.apiV1Enabled}"/>
+                    </label>
+                  </div>
+                  <div class="st-toggle-row">
+                    <div class="st-toggle-main">
                       <div class="st-toggle-l">#{localeBean.getMsg('admin.prefs.graph')}</div>
                       <div class="st-toggle-d">#{localeBean.getMsg('admin.prefs.graph.desc')}</div>
                     </div>
@@ -1563,7 +1574,7 @@
                                    styleClass="bo-btn primary st-save"
                                    value="#{localeBean.getMsg('admin.prefs.save')}"
                                    action="#{instanceSettingsBean.save}">
-                    <f:ajax execute="iaPrefsSuggestion iaPrefsLanguage iaPrefsRest iaPrefsGraph @this"
+                    <f:ajax execute="iaPrefsSuggestion iaPrefsLanguage iaPrefsRest iaPrefsApiV1 iaPrefsGraph @this"
                             render="iaPrefs :previewRailTools"/>
                   </h:commandButton>
                 </div>

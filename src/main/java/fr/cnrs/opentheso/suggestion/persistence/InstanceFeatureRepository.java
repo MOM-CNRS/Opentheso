@@ -11,20 +11,21 @@ import java.util.Optional;
 public class InstanceFeatureRepository {
 
     private static final String SELECT_SQL = """
-            SELECT suggestion_enabled, language_visible, rest_api_visible, graph_api_visible
+            SELECT suggestion_enabled, language_visible, rest_api_visible, graph_api_visible, api_v1_enabled
             FROM instance_feature
             WHERE id = 1
             """;
 
     private static final String UPSERT_SQL = """
             INSERT INTO instance_feature (
-                id, suggestion_enabled, language_visible, rest_api_visible, graph_api_visible, updated_at
-            ) VALUES (1, ?, ?, ?, ?, now())
+                id, suggestion_enabled, language_visible, rest_api_visible, graph_api_visible, api_v1_enabled, updated_at
+            ) VALUES (1, ?, ?, ?, ?, ?, now())
             ON CONFLICT (id) DO UPDATE SET
                 suggestion_enabled = EXCLUDED.suggestion_enabled,
                 language_visible = EXCLUDED.language_visible,
                 rest_api_visible = EXCLUDED.rest_api_visible,
                 graph_api_visible = EXCLUDED.graph_api_visible,
+                api_v1_enabled = EXCLUDED.api_v1_enabled,
                 updated_at = now()
             """;
 
@@ -39,7 +40,8 @@ public class InstanceFeatureRepository {
                 rs.getBoolean("suggestion_enabled"),
                 rs.getBoolean("language_visible"),
                 rs.getBoolean("rest_api_visible"),
-                rs.getBoolean("graph_api_visible")));
+                rs.getBoolean("graph_api_visible"),
+                rs.getBoolean("api_v1_enabled")));
         return rows.stream().findFirst();
     }
 
@@ -49,6 +51,7 @@ public class InstanceFeatureRepository {
                 features.suggestionEnabled(),
                 features.languageVisible(),
                 features.restApiVisible(),
-                features.graphApiVisible());
+                features.graphApiVisible(),
+                features.apiV1Enabled());
     }
 }

@@ -19,7 +19,7 @@ class InstanceFeatureServiceTest {
     @Test
     void currentReadsTheRowOnce() {
         InstanceFeatureRepository repository = mock(InstanceFeatureRepository.class);
-        when(repository.find()).thenReturn(Optional.of(new InstanceFeatures(false, true, false, true)));
+        when(repository.find()).thenReturn(Optional.of(new InstanceFeatures(false, true, false, true, true)));
         InstanceFeatureService service = new InstanceFeatureService(repository);
 
         InstanceFeatures first = service.current();
@@ -52,13 +52,13 @@ class InstanceFeatureServiceTest {
         InstanceFeatureService service = new InstanceFeatureService(repository);
         service.current();
 
-        service.save(new InstanceFeatures(false, false, true, false));
+        service.save(new InstanceFeatures(false, false, true, false, true));
 
         assertFalse(service.current().suggestionEnabled());
         assertFalse(service.current().languageVisible());
         assertTrue(service.current().restApiVisible());
         assertFalse(service.current().graphApiVisible());
-        verify(repository).save(new InstanceFeatures(false, false, true, false));
+        verify(repository).save(new InstanceFeatures(false, false, true, false, true));
         verify(repository, times(1)).find();
     }
 

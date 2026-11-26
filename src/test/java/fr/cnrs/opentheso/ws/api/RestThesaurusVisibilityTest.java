@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.repositories.ThesaurusRepository;
 import fr.cnrs.opentheso.rights.RightsService;
 import fr.cnrs.opentheso.services.ApiKeyService;
+import fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch;
 import fr.cnrs.opentheso.ws.api.RestThesaurusVisibilityRepository.ThesaurusAccessFacts;
 import fr.cnrs.opentheso.shared.session.SessionUser;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,13 +42,15 @@ class RestThesaurusVisibilityTest {
     @Mock
     private ApiKeyService apiKeyService;
     @Mock
+    private ThesaurusApiSwitch thesaurusApiSwitch;
+    @Mock
     private HttpServletRequest request;
 
     private RestThesaurusVisibility visibility;
 
     @BeforeEach
     void setUp() {
-        visibility = new RestThesaurusVisibility(repository, thesaurusRepository, rightsService, apiKeyService);
+        visibility = new RestThesaurusVisibility(repository, thesaurusRepository, rightsService, apiKeyService, thesaurusApiSwitch);
     }
 
     @Test
@@ -96,6 +99,14 @@ class RestThesaurusVisibilityTest {
         assertTrue(visibility.canSee(1, "th17"));
         assertEquals(List.of("th17", "th60"), visibility.visibleIds(1));
         verifyNoInteractions(repository);
+    }
+
+    @Test
+    void thesaurusWithApiDisabledIsNotListed() {
+        when(repository.visibleIds(-1)).thenReturn(List.of("TH17", "th60"));
+        when(thesaurusApiSwitch.disabledIds()).thenReturn(java.util.Set.of("th17"));
+
+        assertEquals(List.of("th60"), visibility.visibleIds(null));
     }
 
     @Test

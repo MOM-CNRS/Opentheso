@@ -24,6 +24,12 @@ class PublicConceptGraphQlControllerTest {
     private GraphQlTester graphQlTester;
 
     @MockitoBean
+    private fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch thesaurusApiSwitch;
+
+    @MockitoBean
+    private fr.cnrs.opentheso.ws.api.RestThesaurusVisibility restThesaurusVisibility;
+
+    @MockitoBean
     private PublicGraphQlConceptService publicGraphQlConceptService;
 
     @Test
@@ -91,5 +97,37 @@ class PublicConceptGraphQlControllerTest {
                 .execute()
                 .path("publicConceptSearch[0].conceptId").entity(String.class).get();
         assertEquals("C1", conceptId);
+    }
+
+    @org.junit.jupiter.api.BeforeEach
+    void allowVisibility() {
+        org.mockito.Mockito.when(restThesaurusVisibility.explain(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(fr.cnrs.opentheso.ws.api.RestThesaurusAccess.ALLOWED);
+    }
+
+    @Test
+    void publicConcept_isRefusedForPrivateThesaurusWithoutKey() {
+        // Sans clé : Mockito renvoie 0 pour un Integer, d'où any()
+        org.mockito.Mockito.when(restThesaurusVisibility.explain(any(), org.mockito.ArgumentMatchers.eq("th5")))
+                .thenReturn(fr.cnrs.opentheso.ws.api.RestThesaurusAccess.PRIVATE);
+
+        graphQlTester.document("{ publicConcept(thesaurusId: \"th5\", conceptId: \"1\") { __typename } }")
+                .execute()
+                .errors()
+                .satisfy(errors -> org.junit.jupiter.api.Assertions.assertEquals(
+                        fr.cnrs.opentheso.ws.api.RestThesaurusAccess.PRIVATE.message(), errors.get(0).getMessage()));
+        org.mockito.Mockito.verifyNoInteractions(publicGraphQlConceptService);
+    }
+
+    @Test
+    void publicConcept_isRefusedWhenThesaurusApiIsDisabled() {
+        org.mockito.Mockito.when(thesaurusApiSwitch.anyDisabled(java.util.List.of("th17"))).thenReturn(true);
+
+        graphQlTester.document("{ publicConcept(thesaurusId: \"th17\", conceptId: \"1\") { __typename } }")
+                .execute()
+                .errors()
+                .satisfy(errors -> org.junit.jupiter.api.Assertions.assertEquals(
+                        "L'API est désactivée pour ce thésaurus.", errors.get(0).getMessage()));
+        org.mockito.Mockito.verifyNoInteractions(publicGraphQlConceptService);
     }
 }

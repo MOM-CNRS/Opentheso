@@ -7,9 +7,13 @@
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-head">
           <div class="th-id-row">
-            <a class="th-id#{page eq 'accueil' ? ' is-active' : ''}" id="thIdBtn" href="index.xhtml" title="#{thesaurusViewBean.title}">
-              <h:panelGroup id="previewThTitle" styleClass="th-id-name">#{thesaurusViewBean.title}</h:panelGroup>
-              <span class="th-id-meta">#{thesaurusViewBean.conceptCountLabel}</span>
+            <a class="th-id#{page eq 'accueil' ? ' is-active' : ''}" id="thIdBtn" href="index.xhtml">
+              <!-- Infobulle dans le bloc rafraîchi en ajax : le titre suit la langue de travail -->
+              <h:panelGroup id="previewThTitle" style="display:contents"
+                            pt:title="#{thesaurusViewBean.title}#{empty thesaurusViewBean.id ? '' : ' ('.concat(thesaurusViewBean.id).concat(')')}">
+                <span class="th-id-name">#{thesaurusViewBean.title}</span>
+                <span class="th-id-meta">#{thesaurusViewBean.conceptCountNumber}</span>
+              </h:panelGroup>
             </a>
             <h:form id="previewLangForm" prependId="false" styleClass="tree-lang-form">
               <h:inputHidden id="termLang" value="#{thesaurusViewBean.selectedLang}"/>

@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.ws.openapi.v1.routes.conceptpost;
 
-import fr.cnrs.opentheso.candidat.api.CandidatAuthSupport;
+
+import fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch;
+import fr.cnrs.opentheso.ws.api.RestThesaurusAccess;import fr.cnrs.opentheso.candidat.api.CandidatAuthSupport;
 import fr.cnrs.opentheso.services.CandidatService;
 import fr.cnrs.opentheso.services.UserService;
 
@@ -34,6 +36,7 @@ public class CandidatController {
     private final CandidatService candidatService;
     private final UserService userService;
     private final CandidatAuthSupport candidatAuthSupport;
+    private final ThesaurusApiSwitch thesaurusApiSwitch;
 
 
     /**
@@ -51,6 +54,10 @@ public class CandidatController {
         var user = userService.getUserByApiKeyBcrypt(apiKey);
         if (user == null) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Clé d'API invalide");
+        }
+        if (candidate != null && thesaurusApiSwitch.isDisabled(candidate.getThesoId())) {
+            return ResponseEntity.status(RestThesaurusAccess.API_DISABLED.status())
+                    .contentType(MediaType.APPLICATION_JSON).body(RestThesaurusAccess.API_DISABLED.body());
         }
         candidatAuthSupport.requireContributor(user.getId(), candidate.getThesoId());
         String unknownNoteType = candidatService.unsupportedNoteType(candidate);

@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.ws.openapi.v1.routes.concept;
 
-import fr.cnrs.opentheso.models.propositions.PropositionFromApi;
+
+import fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch;
+import fr.cnrs.opentheso.ws.api.RestThesaurusAccess;import fr.cnrs.opentheso.models.propositions.PropositionFromApi;
 import fr.cnrs.opentheso.services.PropositionService;
 import fr.cnrs.opentheso.services.UserService;
 import fr.cnrs.opentheso.services.ApiKeyService;
@@ -33,6 +35,7 @@ public class PropositionsController {
     private final ApiKeyService apiKeyService;
     private final UserService userService;
     private final PropositionService propositionService;
+    private final ThesaurusApiSwitch thesaurusApiSwitch;
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON)
@@ -43,6 +46,11 @@ public class PropositionsController {
 
         if (keyState != ApiKeyState.VALID) {
             return apiKeyService.errorResponse(keyState);
+        }
+
+        if (thesaurusApiSwitch.isDisabled(proposition.getIdTheso())) {
+            return ResponseEntity.status(RestThesaurusAccess.API_DISABLED.status())
+                    .body(RestThesaurusAccess.API_DISABLED.body());
         }
 
         var user = userService.getUserByApiKey(MD5Password.getEncodedPassword(apiKey));

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.suggestion.ui;
 
+import fr.cnrs.opentheso.setting.service.ThesaurusApiSwitch;
 import fr.cnrs.opentheso.suggestion.service.InstanceFeatureService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
@@ -17,6 +18,7 @@ import java.io.Serializable;
 public class InstanceFeatureBean implements Serializable {
 
     private final transient InstanceFeatureService instanceFeatureService;
+    private final transient ThesaurusApiSwitch thesaurusApiSwitch;
 
     public boolean isSuggestionEnabled() {
         return instanceFeatureService.current().suggestionEnabled();
@@ -28,6 +30,15 @@ public class InstanceFeatureBean implements Serializable {
 
     public boolean isRestApiVisible() {
         return instanceFeatureService.current().restApiVisible();
+    }
+
+    /** API ouverte pour l'instance et pour ce thésaurus. */
+    public boolean thesaurusApiOpen(String thesaurusId) {
+        return isRestApiVisible() && !thesaurusApiSwitch.isDisabled(thesaurusId);
+    }
+
+    public boolean isApiV1Enabled() {
+        return instanceFeatureService.current().apiV1Enabled();
     }
 
     public boolean isGraphApiVisible() {

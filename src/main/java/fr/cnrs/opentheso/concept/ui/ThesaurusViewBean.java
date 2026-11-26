@@ -222,6 +222,10 @@ public class ThesaurusViewBean implements Serializable {
         return home().conceptCount();
     }
 
+    public String getConceptCountNumber() {
+        return formatCount(getConceptCount());
+    }
+
     public String getConceptCountLabel() {
         int count = getConceptCount();
         return formatCount(count) + (count > 1 ? " concepts" : " concept");
@@ -1200,6 +1204,11 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public String skosExportUrl(String format) {
+        return skosExportUrl(format, true);
+    }
+
+    /** Lien d'export SKOS : ancienne adresse /api tant que l'API V1 est active, sinon API V2. */
+    public String skosExportUrl(String format, boolean apiV1Enabled) {
         if (selectedConcept == null || selectedConcept.getSummary() == null) {
             return "#";
         }
@@ -1210,7 +1219,18 @@ public class ThesaurusViewBean implements Serializable {
             default -> "rdf";
         };
         String contextPath = requestContextPath();
-        return contextPath + "/api/" + getId() + "." + selectedConcept.getSummary().getConceptId() + "." + extension;
+        String conceptId = selectedConcept.getSummary().getConceptId();
+        if (!apiV1Enabled) {
+            String v2Format = switch (extension) {
+                case "json" -> "json";
+                case "jsonld" -> "jsonld";
+                case "ttl" -> "turtle";
+                default -> "skos";
+            };
+            return contextPath + "/openapi/v2/public/thesauri/" + org.springframework.web.util.UriUtils.encodePathSegment(getId(), java.nio.charset.StandardCharsets.UTF_8)
+                    + "/concepts/" + org.springframework.web.util.UriUtils.encodePathSegment(conceptId, java.nio.charset.StandardCharsets.UTF_8) + "/export?format=" + v2Format;
+        }
+        return contextPath + "/api/" + getId() + "." + conceptId + "." + extension;
     }
 
     public boolean isDetailVisible() {

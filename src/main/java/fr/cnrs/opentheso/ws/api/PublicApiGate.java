@@ -9,8 +9,12 @@ import java.util.regex.Pattern;
  */
 public final class PublicApiGate {
 
+    // /api/th1.10 (RDF par défaut) et /api/preflabel.fr/{naan}/{ark}.json sont aussi des exports
     private static final Pattern EXPORT = Pattern.compile(
-            "^/api/(?:[^/]+\\.(?:rdf|json|jsonld|ttl|labels)|[^/]+/[^/]+\\.(?:rdf|json|jsonld|ttl))$");
+            "^/api/(?:[^/]+\\.[^/]+|[^/]+/[^/]+\\.(?:rdf|json|jsonld|ttl)|preflabel\\.[^/]+/[^/]+/[^/]+\\.json)$");
+    private static final Pattern V2_SYNC = Pattern.compile("^/api/v2/thesaurus/[^/]+/sync(?:/.*)?$");
+    private static final Pattern REDIRECT = Pattern.compile(
+            "^/(?:openapi/v1/redirect|api/theso|api/concept|api/ark:)(?:/.*)?$|^/api/ark:[^/].*");
 
     private PublicApiGate() {
     }
@@ -49,6 +53,23 @@ public final class PublicApiGate {
             return true;
         }
         return EXPORT.matcher(value).matches();
+    }
+
+    /**
+     * API V1, obsolète : {@code /openapi/v1}, l'ancienne API {@code /api} et l'ancien {@code /api/v2},
+     * comme le groupe « V1 » de la documentation. Restent ouverts : les redirections ARK et permaliens
+     * (identifiants pérennes), la synchronisation entre instances et l'import de l'interface.
+     */
+    public static boolean isApiV1(String path) {
+        String value = normalize(path);
+        if (REDIRECT.matcher(value).matches() || V2_SYNC.matcher(value).matches()) {
+            return false;
+        }
+        if (startsWithSegment(value, "/openapi/v1") || "/Auth".equals(value)
+                || startsWithSegment(value, "/v3/api-docs/V1")) {
+            return true;
+        }
+        return value.startsWith("/api/") && isOpenthesoApi(value);
     }
 
     public static boolean isGraphApi(String path) {

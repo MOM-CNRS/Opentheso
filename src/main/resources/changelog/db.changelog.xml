@@ -397,4 +397,9 @@
         <sqlFile path="v26/26-11_09.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.10" author="Miled">
+        <comment>Instance feature: switch for the deprecated API V1</comment>
+        <sqlFile path="v26/26-11_10.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>
