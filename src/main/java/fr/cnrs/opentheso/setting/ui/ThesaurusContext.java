@@ -4,6 +4,8 @@ import fr.cnrs.opentheso.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.shared.session.ThesaurusSelection;
 import fr.cnrs.opentheso.shared.session.ThesaurusSelectionService;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.component.UIViewRoot;
+import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +15,15 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 
 import java.io.Serializable;
+import java.util.Map;
 
+/**
+ * Thésaurus courant.
+ * <p>
+ * La session ne garde que le dernier thésaurus choisi : c'est la valeur de départ d'une nouvelle page.
+ * Chaque vue JSF (donc chaque onglet) épingle son propre thésaurus dans son état de vue : un autre onglet
+ * qui change de thésaurus ne fait plus basculer celui-ci (arbre, fiche, actions).
+ */
 @Getter
 @Setter
 @SessionScoped
@@ -32,9 +42,13 @@ public class ThesaurusContext implements Serializable {
     private String idFacetFromUri;
     private String idThesoFromUri;
 
+    /** Dernier thésaurus choisi dans la session (valeur de départ des nouvelles vues). */
     private String currentThesaurusId;
     private String currentThesaurusTitle;
     private String currentLanguage;
+
+    /** Clé, dans l'état de la vue JSF, du thésaurus épinglé par l'onglet. */
+    static final String VIEW_KEY = ThesaurusContext.class.getName() + ".tab";
 
     private boolean fromUrl;
 
@@ -61,14 +75,73 @@ public class ThesaurusContext implements Serializable {
     }
 
     public String resolveThesaurusId() {
-        return StringUtils.isNotBlank(currentThesaurusId) ? currentThesaurusId : null;
+        String id = getCurrentThesaurusId();
+        return StringUtils.isNotBlank(id) ? id : null;
     }
 
     public String resolveWorkLanguage() {
-        if (StringUtils.isNotBlank(currentLanguage)) {
-            return currentLanguage;
+        String language = getCurrentLanguage();
+        if (StringUtils.isNotBlank(language)) {
+            return language;
         }
         return thesaurusWorkLanguageService.resolveForThesaurus(resolveThesaurusId());
+    }
+
+    public String getCurrentThesaurusId() {
+        return tab().id();
+    }
+
+    public String getCurrentThesaurusTitle() {
+        return tab().title();
+    }
+
+    public String getCurrentLanguage() {
+        return tab().language();
+    }
+
+    /** Thésaurus de l'onglet : celui de sa vue JSF, épinglé à la première lecture ; hors JSF, celui de la session. */
+    private TabSelection tab() {
+        Map<String, Object> viewMap = viewMap();
+        if (viewMap == null) {
+            return sessionSelection();
+        }
+        Object pinned = viewMap.get(VIEW_KEY);
+        if (pinned instanceof TabSelection selection) {
+            return selection;
+        }
+        TabSelection selection = sessionSelection();
+        if (selection.id() != null) {
+            viewMap.put(VIEW_KEY, selection);
+        }
+        return selection;
+    }
+
+    private TabSelection sessionSelection() {
+        return new TabSelection(currentThesaurusId, currentThesaurusTitle, currentLanguage);
+    }
+
+    /** Enregistre la sélection pour la session (nouvelles pages) et pour l'onglet courant. */
+    private void store(String id, String title, String language) {
+        currentThesaurusId = id;
+        currentThesaurusTitle = title;
+        currentLanguage = language;
+        Map<String, Object> viewMap = viewMap();
+        if (viewMap != null) {
+            viewMap.put(VIEW_KEY, new TabSelection(id, title, language));
+        }
+    }
+
+    private static Map<String, Object> viewMap() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return null;
+        }
+        UIViewRoot root = faces.getViewRoot();
+        return root == null ? null : root.getViewMap(true);
+    }
+
+    /** Thésaurus épinglé par une vue (sérialisable avec l'état de la vue). */
+    record TabSelection(String id, String title, String language) implements Serializable {
     }
 
     public boolean matchesCurrentThesaurus(String thesaurusId) {
@@ -77,9 +150,7 @@ public class ThesaurusContext implements Serializable {
     }
 
     public void clearSelection() {
-        currentThesaurusId = null;
-        currentThesaurusTitle = null;
-        currentLanguage = null;
+        store(null, null, null);
         fromUrl = false;
     }
 
@@ -87,7 +158,8 @@ public class ThesaurusContext implements Serializable {
         if (StringUtils.isBlank(language)) {
             return;
         }
-        currentLanguage = language;
+        TabSelection tab = tab();
+        store(tab.id(), tab.title(), language);
     }
 
     public void selectThesaurus(String thesaurusId) {
@@ -108,18 +180,14 @@ public class ThesaurusContext implements Serializable {
         }
         String id = thesaurusId.trim();
         if (StringUtils.isNotBlank(title) && StringUtils.isNotBlank(workLanguage)) {
-            currentThesaurusId = id;
-            currentThesaurusTitle = title.trim();
-            currentLanguage = workLanguage.trim();
+            store(id, title.trim(), workLanguage.trim());
             return;
         }
         applyThesaurus(id);
-        if (StringUtils.isNotBlank(title)) {
-            currentThesaurusTitle = title.trim();
-        }
-        if (StringUtils.isNotBlank(workLanguage)) {
-            currentLanguage = workLanguage.trim();
-        }
+        TabSelection tab = tab();
+        store(tab.id(),
+                StringUtils.isNotBlank(title) ? title.trim() : tab.title(),
+                StringUtils.isNotBlank(workLanguage) ? workLanguage.trim() : tab.language());
     }
 
     private void applyThesaurus(String thesaurusId) {
@@ -127,8 +195,7 @@ public class ThesaurusContext implements Serializable {
         if (selection == null) {
             return;
         }
-        currentThesaurusId = selection.thesaurusId();
-        currentThesaurusTitle = selection.title();
-        currentLanguage = thesaurusWorkLanguageService.resolveForThesaurus(selection.thesaurusId());
+        store(selection.thesaurusId(), selection.title(),
+                thesaurusWorkLanguageService.resolveForThesaurus(selection.thesaurusId()));
     }
 }

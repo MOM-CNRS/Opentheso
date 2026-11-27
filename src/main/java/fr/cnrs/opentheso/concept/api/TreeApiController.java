@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.concept.api.dto.TreeStatusForestNode;
 import fr.cnrs.opentheso.concept.model.ConceptPrefLabel;
 import fr.cnrs.opentheso.concept.model.ConceptSubtreeMember;
@@ -26,6 +27,7 @@ public class TreeApiController {
     private final ConceptReadService conceptReadService;
     private final TreeStatusForestService treeStatusForestService;
     private final ThesaurusContext thesaurusContext;
+    private final ThesaurusReadAccess thesaurusReadAccess;
 
     @GetMapping(value = "/subtree-size", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> subtreeSize(
@@ -34,6 +36,7 @@ public class TreeApiController {
             @RequestParam(required = false) String thesaurusId
     ) {
         String resolvedThesaurusId = StringUtils.firstNonBlank(thesaurusId, thesaurusContext.resolveThesaurusId());
+        thesaurusReadAccess.require(resolvedThesaurusId);
         int size = StringUtils.isAnyBlank(resolvedThesaurusId, id)
                 ? 0
                 : conceptReadService.countSubtreeConcepts(resolvedThesaurusId, id, nodeType);
@@ -48,6 +51,7 @@ public class TreeApiController {
             @RequestParam(required = false, defaultValue = "false") boolean all
     ) {
         String resolvedThesaurusId = StringUtils.firstNonBlank(thesaurusId, thesaurusContext.resolveThesaurusId());
+        thesaurusReadAccess.require(resolvedThesaurusId);
         if (StringUtils.isBlank(resolvedThesaurusId)) {
             return List.of();
         }
@@ -72,6 +76,7 @@ public class TreeApiController {
             @RequestParam(required = false) String lang
     ) {
         String resolvedThesaurusId = StringUtils.firstNonBlank(thesaurusId, thesaurusContext.resolveThesaurusId());
+        thesaurusReadAccess.require(resolvedThesaurusId);
         if (StringUtils.isBlank(resolvedThesaurusId) || StringUtils.isBlank(ids)) {
             return List.of();
         }
@@ -93,6 +98,7 @@ public class TreeApiController {
             @RequestParam(required = false) String statuses
     ) {
         String resolvedThesaurusId = StringUtils.firstNonBlank(thesaurusId, thesaurusContext.resolveThesaurusId());
+        thesaurusReadAccess.require(resolvedThesaurusId);
         if (StringUtils.isBlank(resolvedThesaurusId) || StringUtils.isBlank(statuses)) {
             return List.of();
         }

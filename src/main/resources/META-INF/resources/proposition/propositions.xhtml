@@ -7,12 +7,10 @@
                 template="/includes/layout.xhtml">
   <ui:param name="page" value="propositions"/>
   <ui:define name="title">OpenTheso — #{localeBean.getMsg('proposition.board.title')}</ui:define>
-  <ui:define name="viewActions">
-    <f:viewAction action="#{propositionBean.refresh(thesaurusViewBean.id)}" onPostback="false"/>
-  </ui:define>
   <ui:define name="sidebar"/>
   <ui:define name="detail"/>
   <ui:define name="main">
+    <f:event type="preRenderView" listener="#{propositionBean.loadBoardForRender}"/>
     <h:form id="propAccessForm" prependId="false" rendered="#{not propositionBean.boardLinkVisible}">
       <ui:include src="/includes/access-denied.xhtml">
         <ui:param name="deniedKicker" value="#{localeBean.getMsg('proposition.board.accessDenied.kicker')}"/>
@@ -121,6 +119,12 @@
                   </div>
                 </div>
 
+                <!-- Bouton « marquer non lue » des lignes : identifiant posé par app-session.js -->
+                <h:inputHidden id="propUnreadId" value="#{propositionBean.unreadRequestId}"/>
+                <h:commandButton id="propUnreadGo" value="unread" styleClass="st-jsf-go" style="display:none"
+                                 action="#{propositionBean.markUnreadRequested}">
+                  <f:ajax execute="propUnreadId @this" render="propTabs propPanes" onevent="onPropBoardAjax"/>
+                </h:commandButton>
                 <h:panelGroup id="propPanes" layout="block">
                   <ui:fragment rendered="#{empty propositionBean.propositions}">
                     <div class="prop-state is-inset" role="status">
@@ -154,6 +158,7 @@
                     </div>
                     <div class="prop-list" id="propList" role="list">
                       <ui:repeat value="#{propositionBean.propositions}" var="item">
+                        <div class="prop-line">
                         <a class="prop-item #{item.statusCss}"
                            role="listitem"
                            href="#{propositionBean.consultationHref(item)}"
@@ -197,6 +202,14 @@
                             <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
                           </span>
                         </a>
+                        <ui:fragment rendered="#{item.lu}">
+                          <button type="button" class="prop-unread" data-unread-id="#{item.id}"
+                                  title="#{localeBean.getMsg('proposition.markUnread')}"
+                                  aria-label="#{localeBean.getMsg('proposition.markUnread')} · #{item.conceptLabel}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+                          </button>
+                        </ui:fragment>
+                        </div>
                       </ui:repeat>
                     </div>
                     <div class="prop-state is-inset prop-filter-empty" id="propFilterEmpty" hidden="hidden" role="status">

@@ -1,19 +1,16 @@
 package fr.cnrs.opentheso.toolbox.workshop.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.ConceptDcTerm;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
-import fr.cnrs.opentheso.entites.ConceptHistorique;
 import fr.cnrs.opentheso.entites.ConceptReplacedBy;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
-import fr.cnrs.opentheso.entites.HierarchicalRelationshipHistorique;
 import fr.cnrs.opentheso.entites.ImageExterne;
 import fr.cnrs.opentheso.entites.LanguageIso639;
 import fr.cnrs.opentheso.entites.Note;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
-import fr.cnrs.opentheso.entites.NonPreferredTermHistorique;
 import fr.cnrs.opentheso.entites.PreferredTerm;
-import fr.cnrs.opentheso.entites.TermHistorique;
 import fr.cnrs.opentheso.entites.UserGroupLabel;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.alignment.NodeAlignmentSmall;
@@ -27,18 +24,14 @@ import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupRepository;
-import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptReplacedByRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
-import fr.cnrs.opentheso.repositories.HierarchicalRelationshipHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
 import fr.cnrs.opentheso.repositories.LanguageRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
-import fr.cnrs.opentheso.repositories.NonPreferredTermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
-import fr.cnrs.opentheso.repositories.TermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.UserGroupLabelRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
@@ -74,22 +67,19 @@ public class WorkshopBulkImportPersistence {
     private final UserGroupLabelRepository userGroupLabelRepository;
     private final UserRepository userRepository;
     private final ConceptRepository conceptRepository;
-    private final ConceptHistoriqueRepository conceptHistoriqueRepository;
     private final ConceptReplacedByRepository conceptReplacedByRepository;
     private final ConceptDcTermRepository conceptDcTermRepository;
     private final ConceptGroupRepository conceptGroupRepository;
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
     private final PreferredTermRepository preferredTermRepository;
     private final TermRepository termRepository;
-    private final TermHistoriqueRepository termHistoriqueRepository;
     private final NonPreferredTermRepository nonPreferredTermRepository;
-    private final NonPreferredTermHistoriqueRepository nonPreferredTermHistoriqueRepository;
     private final NoteRepository noteRepository;
+    private final ConceptChangeLog changeLog;
     private final AlignementRepository alignementRepository;
     private final AlignementTypeRepository alignementTypeRepository;
     private final AlignementSourceRepository alignementSourceRepository;
     private final HierarchicalRelationshipRepository hierarchicalRelationshipRepository;
-    private final HierarchicalRelationshipHistoriqueRepository hierarchicalRelationshipHistoriqueRepository;
     private final ImagesRepository imagesRepository;
     private final ConceptSearchEngine conceptSearchEngine;
     private final ThesaurusCsvImportEngine thesaurusCsvImportEngine;
@@ -309,10 +299,12 @@ public class WorkshopBulkImportPersistence {
 
     public boolean deprecateConcept(String idConcept, String idThesaurus, int idUser) {
         try {
-            conceptRepository.setStatus("DEP", idConcept, idThesaurus);
             var concept = getConcept(idConcept, idThesaurus);
-            if (concept != null) {
-                addConceptHistorique(concept, idUser);
+            String previous = concept == null ? "" : org.apache.commons.lang3.StringUtils.trimToEmpty(concept.getStatus());
+            conceptRepository.setStatus("DEP", idConcept, idThesaurus);
+            if (concept != null && !"DEP".equals(previous)) {
+                changeLog.record(new ConceptChangeLog.Change(idThesaurus, idConcept, ConceptChangeLog.STATUS, null, null,
+                        "UPDATE", previous, "DEP", null, idUser, "import"));
             }
             return true;
         } catch (Exception ex) {
@@ -322,6 +314,8 @@ public class WorkshopBulkImportPersistence {
     }
 
     public void addReplacedBy(String idConcept, String idThesaurus, String idConceptReplaceBy, int idUser) {
+        changeLog.record(new ConceptChangeLog.Change(idThesaurus, idConcept, ConceptChangeLog.REPLACED_BY,
+                idConceptReplaceBy, null, "ADD", null, idConceptReplaceBy, null, idUser, "import"));
         conceptReplacedByRepository.save(ConceptReplacedBy.builder()
                 .idConcept1(idConcept)
                 .idConcept2(idConceptReplaceBy)
@@ -389,17 +383,8 @@ public class WorkshopBulkImportPersistence {
                 .created(Dates.nowUtilDate())
                 .modified(Dates.nowUtilDate())
                 .build());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(idUser)
-                .modified(Dates.nowDateTime())
-                .action("New")
-                .build());
+        changeLog.recordForTerm(idTerm, new ConceptChangeLog.Change(idThesaurus, null, ConceptChangeLog.LABEL, idTerm,
+                idLang, "ADD", null, termSaved.getLexicalValue(), null, idUser, "import"));
     }
 
     public void updateTermTraduction(String label, String idTerm, String idLang, String idThesaurus, int idUser) {
@@ -407,21 +392,13 @@ public class WorkshopBulkImportPersistence {
         if (term.isEmpty()) {
             return;
         }
+        String previous = term.get().getLexicalValue();
         term.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label));
         term.get().setContributor(idUser);
         term.get().setModified(Dates.nowUtilDate());
         termRepository.save(term.get());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(term.get().getIdTerm())
-                .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label))
-                .lang(idLang)
-                .idThesaurus(idThesaurus)
-                .source("")
-                .status("")
-                .idUser(idUser)
-                .action("UPDATE")
-                .modified(Dates.nowDateTime())
-                .build());
+        changeLog.recordForTerm(idTerm, new ConceptChangeLog.Change(idThesaurus, null, ConceptChangeLog.LABEL, idTerm,
+                idLang, "UPDATE", previous, term.get().getLexicalValue(), null, idUser, "import"));
     }
 
     public boolean addNonPreferredTerm(Term term, int idUser) {
@@ -919,7 +896,6 @@ public class WorkshopBulkImportPersistence {
                 .idDoi("")
                 .idHandle("")
                 .build());
-        addConceptHistorique(concept, idUser);
         return concept.getIdConcept();
     }
 
@@ -955,17 +931,8 @@ public class WorkshopBulkImportPersistence {
                 .created(Dates.nowUtilDate())
                 .modified(Dates.nowUtilDate())
                 .build());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(idUser)
-                .action("ADD")
-                .modified(Dates.nowDateTime())
-                .build());
+        changeLog.record(new ConceptChangeLog.Change(termSaved.getIdThesaurus(), idConcept, ConceptChangeLog.LABEL,
+                termSaved.getIdTerm(), termSaved.getLang(), "ADD", null, termSaved.getLexicalValue(), null, idUser, "import"));
         preferredTermRepository.save(PreferredTerm.builder()
                 .idTerm(termSaved.getIdTerm())
                 .idThesaurus(term.getIdThesaurus())
@@ -981,29 +948,9 @@ public class WorkshopBulkImportPersistence {
                 .role(relationship.getRole())
                 .idThesaurus(relationship.getIdThesaurus())
                 .build());
-        hierarchicalRelationshipHistoriqueRepository.save(HierarchicalRelationshipHistorique.builder()
-                .idConcept1(relationship.getIdConcept1())
-                .idConcept2(relationship.getIdConcept2())
-                .idThesaurus(relationship.getIdThesaurus())
-                .modified(Dates.nowUtilDate())
-                .idUser(idUser)
-                .action("ADD")
-                .role(relationship.getRole())
-                .build());
-    }
-
-    private void addConceptHistorique(Concept concept, int idUser) {
-        conceptHistoriqueRepository.save(ConceptHistorique.builder()
-                .idConcept(concept.getIdConcept())
-                .idThesaurus(concept.getIdThesaurus())
-                .idArk(concept.getIdArk())
-                .status(concept.getStatus())
-                .notation(concept.getNotation())
-                .topConcept(concept.isTopConcept())
-                .idGroup(concept.getIdGroup() == null ? "" : concept.getIdGroup())
-                .idUser(idUser)
-                .modified(Dates.nowUtilDate())
-                .build());
+        changeLog.record(new ConceptChangeLog.Change(relationship.getIdThesaurus(), relationship.getIdConcept1(),
+                ConceptChangeLog.RELATION, relationship.getIdConcept2(), null, "ADD", null, relationship.getIdConcept2(),
+                relationship.getRole(), idUser, "import"));
     }
 
     private void saveNonPreferredTrace(
@@ -1015,18 +962,11 @@ public class WorkshopBulkImportPersistence {
             boolean isHidden,
             String action
     ) {
-        nonPreferredTermHistoriqueRepository.save(NonPreferredTermHistorique.builder()
-                .idTerm(idTerm)
-                .lexicalValue(lexicalValue)
-                .idThesaurus(idThesaurus)
-                .lang(idLang)
-                .idUser(idUser)
-                .hiden(isHidden)
-                .action(action)
-                .modified(Dates.nowUtilDate())
-                .status("")
-                .source("")
-                .build());
+        String normalized = ConceptChangeLog.normalizeActionPublic(action);
+        boolean delete = "DELETE".equals(normalized);
+        changeLog.recordForTerm(idTerm, new ConceptChangeLog.Change(idThesaurus, null, ConceptChangeLog.SYNONYM, idTerm,
+                idLang, normalized, delete ? lexicalValue : null, delete ? null : lexicalValue,
+                isHidden ? "hidden" : null, idUser, "import"));
     }
 
     private String normalizeIdLang(String idLang) {

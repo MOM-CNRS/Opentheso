@@ -1,10 +1,9 @@
 package fr.cnrs.opentheso.services;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
-import fr.cnrs.opentheso.entites.NonPreferredTermHistorique;
 import fr.cnrs.opentheso.models.terms.NodeEM;
 import fr.cnrs.opentheso.models.terms.Term;
-import fr.cnrs.opentheso.repositories.NonPreferredTermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.ws.openapi.exception.LabelAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,11 @@ import java.util.List;
 public class NonPreferredTermService {
 
     private final NonPreferredTermRepository nonPreferredTermRepository;
-    private final NonPreferredTermHistoriqueRepository nonPreferredTermHistoriqueRepository;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConceptChangeLog changeLog;
+
 
     @Transactional
     public boolean addNonPreferredTerm(Term term, int idUser) {
@@ -106,18 +109,11 @@ public class NonPreferredTermService {
 
     private void saveTrace(String idTerm, String lexicalValue, String idThesaurus, String idLang, int idUser, boolean isHidden, String action) {
         log.debug("Enregistrement du trace de l'action du mise à jour");
-        nonPreferredTermHistoriqueRepository.save(NonPreferredTermHistorique.builder()
-                .idTerm(idTerm)
-                .lexicalValue(lexicalValue)
-                .idThesaurus(idThesaurus)
-                .lang(idLang)
-                .idUser(idUser)
-                .hiden(isHidden)
-                .action(action)
-                .modified(new Date())
-                .status("")
-                .source("")
-                .build());
+        String normalized = ConceptChangeLog.normalizeActionPublic(action);
+        boolean delete = "DELETE".equals(normalized);
+        journalForTerm(idTerm, new ConceptChangeLog.Change(idThesaurus, null, ConceptChangeLog.SYNONYM, idTerm, idLang,
+                normalized, delete ? lexicalValue : null, delete ? null : lexicalValue,
+                isHidden ? "hidden" : null, idUser, "legacy"));
     }
 
     public List<NodeEM> getAllNonPreferredTerms(String idConcept, String idThesaurus) {
@@ -152,4 +148,15 @@ public class NonPreferredTermService {
         nonPreferredTermRepository.deleteByIdThesaurusAndIdTermAndLang(idThesaurus, idTerm, idLang);
     }
 
+    private void journal(ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.record(change);
+        }
+    }
+
+    private void journalForTerm(String idTerm, ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.recordForTerm(idTerm, change);
+        }
+    }
 }

@@ -84,7 +84,27 @@ public class PropositionAccessPolicy {
         return canAccessBoard(userId, thesaurusId) && isSuggestionEnabled(thesaurusId, workLang);
     }
 
-    /** Approuver / refuser / supprimer : droit board, pas l'auteur. */
+    /**
+     * L'auteur d'une proposition peut la traiter lui-même s'il est super-administrateur
+     * ou administrateur du projet du thésaurus. Un gestionnaire auteur doit laisser décider un autre.
+     */
+    public boolean canDecideOwn(UserSession userSession, String thesaurusId) {
+        return isLoggedIn(userSession) && rightsService.isAdminOfThesaurusProject(userSession, thesaurusId);
+    }
+
+    public boolean canDecideOwn(int userId, String thesaurusId) {
+        if (userId <= 0 || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        if (rightsService.can(userId, Permission.SUPER_ADMIN)) {
+            return true;
+        }
+        return rightsService.roleOnThesaurus(userId, thesaurusId)
+                .map(roleId -> roleId > 0 && roleId <= ProjectAccessPolicy.ROLE_ADMIN)
+                .orElse(false);
+    }
+
+    /** Approuver / refuser / supprimer : droit board, pas l'auteur (sauf admin / super-admin). */
     public boolean canDecide(UserSession userSession, String thesaurusId, String authorEmail) {
         return canDecide(userSession, thesaurusId, authorEmail, null);
     }
@@ -97,7 +117,8 @@ public class PropositionAccessPolicy {
                 userSession.getCurrentUserEmail(),
                 userSession.getCurrentUsername(),
                 authorEmail,
-                authorName);
+                authorName)
+                || canDecideOwn(userSession, thesaurusId);
     }
 
     public boolean canDecide(int userId, String thesaurusId, String userEmail, String authorEmail) {
@@ -110,7 +131,8 @@ public class PropositionAccessPolicy {
         if (userId <= 0 || !canAccessBoard(userId, thesaurusId)) {
             return false;
         }
-        return !isSameAuthor(userEmail, userName, authorEmail, authorName);
+        return !isSameAuthor(userEmail, userName, authorEmail, authorName)
+                || canDecideOwn(userId, thesaurusId);
     }
 
     public boolean isSameAuthor(UserSession userSession, String authorEmail, String authorName) {

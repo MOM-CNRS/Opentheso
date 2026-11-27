@@ -19,11 +19,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,6 +77,36 @@ class InstanceDashboardServiceTest {
         assertEquals("fr", overview.byLanguage().get(0).lang());
         assertEquals(10, overview.kpis().views());
         assertEquals(SearchStats.empty().failed(), overview.searches().failed());
+    }
+
+    @Test
+    void thesaurusOverviewDropsInstanceWideFigures() {
+        when(usageQueryRepository.loadKpis(any(), any(), eq("th1")))
+                .thenReturn(new UsageKpis(10, 2, 55, 7));
+        when(usageQueryRepository.loadTraffic(any(), any(), eq("th1"))).thenReturn(List.of());
+        when(usageQueryRepository.loadByLanguage(any(), any(), eq("th1"))).thenReturn(List.of());
+        when(usageQueryRepository.loadTopConcepts(any(), any(), eq("th1"), anyInt())).thenReturn(List.of());
+        when(usageQueryRepository.loadFailedSearches(any(), any(), eq("th1"), anyInt())).thenReturn(List.of());
+        when(usageQueryRepository.loadSynonymSearches(any(), any(), eq("th1"), anyInt())).thenReturn(List.of());
+        when(usageQueryRepository.loadGlobalSearches(any(), any(), eq("th1"), anyInt())).thenReturn(List.of());
+
+        InstanceDashboardOverview overview = service.thesaurusOverview(DashboardPeriod.LAST_30_DAYS, " th1 ");
+
+        assertEquals("th1", overview.thesaurusId());
+        assertEquals(10, overview.kpis().views());
+        assertEquals(2, overview.kpis().searches());
+        assertEquals(0, overview.kpis().apiCalls());
+        assertEquals(0, overview.kpis().activeThesauri());
+        assertTrue(overview.api().isEmpty());
+        assertTrue(overview.byThesaurus().isEmpty());
+        verify(usageQueryRepository, never()).loadApiUsage(any(), any(), anyInt());
+        verify(usageQueryRepository, never()).loadByThesaurus(any(), any());
+    }
+
+    @Test
+    void thesaurusOverviewRequiresAThesaurus() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.thesaurusOverview(DashboardPeriod.LAST_30_DAYS, " "));
     }
 
     @Test

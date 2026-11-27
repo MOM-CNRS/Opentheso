@@ -398,7 +398,7 @@ function applyOverview(body) {
   const cap = $("[data-stat-collections-cap]");
   if (cap) {
     cap.textContent = overview.collectionsTruncated
-      ? "12 micro-thésaurus les plus peuplés"
+      ? "12 collections les plus peuplées"
       : "";
   }
   fillCandidateLife(overview.candidates);

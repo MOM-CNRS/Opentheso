@@ -27,7 +27,7 @@ class CollectionTreeApiControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new CollectionTreeApiController(collectionTreeConsultationService);
+        controller = new CollectionTreeApiController(collectionTreeConsultationService, org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class));
     }
 
     @Test

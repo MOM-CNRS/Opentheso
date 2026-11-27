@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
 import fr.cnrs.opentheso.shared.repository.NativeQueryParams;
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,10 @@ public class ConceptTranslationWriteRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private ConceptChangeLog changeLog;
 
     @Transactional
     public void insertTranslation(
@@ -76,6 +81,17 @@ public class ConceptTranslationWriteRepository {
 
     @Transactional
     public void deleteTranslation(String idTerm, String thesaurusId, String lang) {
+        @SuppressWarnings("unchecked")
+        java.util.List<String> previous = entityManager.createNativeQuery(
+                        "SELECT lexical_value FROM term WHERE id_term = :idTerm AND lang = :lang AND id_thesaurus = :thesaurusId")
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .getResultList();
+        if (!previous.isEmpty()) {
+            changeLog.recordForTerm(idTerm, ConceptChangeLog.Change.of(thesaurusId, null, ConceptChangeLog.LABEL, idTerm, lang, "DELETE",
+                isDelete("DELETE") ? previous.get(0) : null, isDelete("DELETE") ? null : previous.get(0), null, null));
+        }
         entityManager.createNativeQuery("""
                         DELETE FROM term
                         WHERE id_term = :idTerm
@@ -96,23 +112,11 @@ public class ConceptTranslationWriteRepository {
             int userId,
             String action
     ) {
-        entityManager.createNativeQuery("""
-                        INSERT INTO term_historique (
-                            id_term, lexical_value, lang, id_thesaurus,
-                            id_user, action, modified, source, status
-                        )
-                        VALUES (
-                            :idTerm, :lexicalValue, :lang, :thesaurusId,
-                            :userId, :action, :modified, '', ''
-                        )
-                        """)
-                .setParameter(NativeQueryParams.ID_TERM, idTerm)
-                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
-                .setParameter("lang", lang)
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter("action", action)
-                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
-                .executeUpdate();
+        changeLog.recordForTerm(idTerm, ConceptChangeLog.Change.of(thesaurusId, null, ConceptChangeLog.LABEL, idTerm, lang, action,
+                isDelete(action) ? lexicalValue : null, isDelete(action) ? null : lexicalValue, null, userId));
+    }
+
+    private static boolean isDelete(String action) {
+        return "DELETE".equals(ConceptChangeLog.normalizeActionPublic(action));
     }
 }

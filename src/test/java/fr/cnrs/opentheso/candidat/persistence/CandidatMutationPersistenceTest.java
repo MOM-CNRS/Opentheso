@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.candidat.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.CandidatMessages;
 import fr.cnrs.opentheso.entites.CandidatStatus;
 import fr.cnrs.opentheso.entites.Concept;
@@ -24,13 +25,11 @@ import fr.cnrs.opentheso.repositories.CandidatVoteRepository;
 import fr.cnrs.opentheso.repositories.ConceptCandidatRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
-import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptTermCandidatRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
-import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.repositories.NoteTypeRepository;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
@@ -38,7 +37,6 @@ import fr.cnrs.opentheso.repositories.PreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PropositionRepository;
 import fr.cnrs.opentheso.repositories.SearchRepository;
 import fr.cnrs.opentheso.repositories.StatusRepository;
-import fr.cnrs.opentheso.repositories.TermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.concept.write.persistence.ConceptDeletionWriteRepository;
@@ -70,13 +68,11 @@ class CandidatMutationPersistenceTest {
     @Mock private ConceptDeletionWriteRepository conceptDeletionWriteRepository;
     @Mock private ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     @Mock private ConceptRepository conceptRepository;
-    @Mock private ConceptHistoriqueRepository conceptHistoriqueRepository;
     @Mock private PreferencesRepository preferencesRepository;
     @Mock private CandidatStatusRepository candidatStatusRepository;
     @Mock private StatusRepository statusRepository;
     @Mock private CandidatVoteRepository candidatVoteRepository;
     @Mock private TermRepository termRepository;
-    @Mock private TermHistoriqueRepository termHistoriqueRepository;
     @Mock private PreferredTermRepository preferredTermRepository;
     @Mock private NonPreferredTermRepository nonPreferredTermRepository;
     @Mock private NoteRepository noteRepository;
@@ -93,11 +89,15 @@ class CandidatMutationPersistenceTest {
     @Mock private PropositionRepository propositionRepository;
     @Mock private CandidatReadPersistence candidatReadPersistence;
     @Mock private NoteTypeRepository noteTypeRepository;
-    @Mock private NoteHistoriqueRepository noteHistoriqueRepository;
     @Mock private ImagesRepository imagesRepository;
     @Mock private SystemMailSender systemMailSender;
     @Mock private CandidatVotePersistence candidatVotePersistence;
     @Mock private CandidatLifecyclePersistence candidatLifecyclePersistence;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private CandidatMutationPersistence persistence;
@@ -132,7 +132,7 @@ class CandidatMutationPersistenceTest {
         assertEquals("C1", captor.getValue().getIdentifier());
         assertEquals("fr", captor.getValue().getLang());
         assertEquals("note", captor.getValue().getNoteTypeCode());
-        verify(noteHistoriqueRepository).save(any());
+        verify(changeLog).record(any(ConceptChangeLog.Change.class));
     }
 
     @Test
@@ -165,7 +165,7 @@ class CandidatMutationPersistenceTest {
                 1, "C1", "fr", "TH1", "New", "src", "note", 7)));
         assertEquals("New", note.getLexicalValue());
         verify(noteRepository).save(note);
-        verify(noteHistoriqueRepository).save(any());
+        verify(changeLog).record(any(ConceptChangeLog.Change.class));
     }
 
     @Test
@@ -174,7 +174,7 @@ class CandidatMutationPersistenceTest {
 
         verify(noteRepository).deleteByIdAndIdThesaurus(9, "TH1");
         verify(candidatVoteRepository).deleteAllByIdThesaurusAndIdConceptAndIdNote("TH1", "C1", "9");
-        verify(noteHistoriqueRepository).save(any());
+        verify(changeLog).record(any(ConceptChangeLog.Change.class));
     }
 
     @Test
@@ -200,7 +200,7 @@ class CandidatMutationPersistenceTest {
         persistence.addCandidateTranslation(term, 7);
 
         verify(termRepository).save(any(fr.cnrs.opentheso.entites.Term.class));
-        verify(termHistoriqueRepository).save(any());
+        verify(changeLog).recordForTerm(any(), any(ConceptChangeLog.Change.class));
     }
 
     @Test
@@ -378,10 +378,8 @@ class CandidatMutationPersistenceTest {
         assertTrue(persistence.saveNewCandidat(candidat, "TH1", "fr", 7, "admin", "fr", "Une définition"));
 
         verify(conceptRepository).save(any(Concept.class));
-        ArgumentCaptor<fr.cnrs.opentheso.entites.ConceptHistorique> historyCaptor =
-                ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.ConceptHistorique.class);
-        verify(conceptHistoriqueRepository).save(historyCaptor.capture());
-        assertEquals("", historyCaptor.getValue().getIdGroup());
+        // la création est journalisée par son libellé (et sa définition)
+        verify(changeLog, org.mockito.Mockito.atLeastOnce()).record(any(ConceptChangeLog.Change.class));
         verify(termRepository, org.mockito.Mockito.atLeastOnce()).save(any(fr.cnrs.opentheso.entites.Term.class));
         verify(preferredTermRepository).save(any());
         ArgumentCaptor<fr.cnrs.opentheso.entites.Note> noteCaptor = ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.Note.class);

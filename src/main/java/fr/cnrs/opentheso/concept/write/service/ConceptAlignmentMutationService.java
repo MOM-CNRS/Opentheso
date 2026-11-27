@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.service;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.models.NodeAlignmentProjection;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
@@ -41,6 +42,7 @@ public class ConceptAlignmentMutationService {
     private final NoteRepository noteRepository;
     private final ImagesRepository imagesRepository;
     private final GpsRepository gpsRepository;
+    private final ConceptChangeLog changeLog;
 
     @Transactional(readOnly = true)
     public List<ConceptWriteAlignmentType> listAlignmentTypes() {
@@ -96,7 +98,9 @@ public class ConceptAlignmentMutationService {
         } catch (DataIntegrityViolationException e) {
             return MutationResult.duplicate(URI_ALREADY_ALIGNED);
         }
-
+        changeLog.record(ConceptChangeLog.Change.of(command.thesaurusId(), command.conceptId(),
+                ConceptChangeLog.ALIGNMENT, uri, null, "ADD", null, uri,
+                alignementType.get().getLabelSkos(), command.userId()));
         return finalizeMutation(
                 command.thesaurusId(),
                 command.conceptId(),
@@ -134,6 +138,7 @@ public class ConceptAlignmentMutationService {
 
         var entity = alignement.get();
         String previousUri = StringUtils.defaultString(entity.getUriTarget());
+        String previousType = entity.getAlignementType() == null ? null : entity.getAlignementType().getLabelSkos();
         if (!uri.equals(previousUri)
                 && alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
                 command.thesaurusId(), command.conceptId(), uri)) {
@@ -150,7 +155,12 @@ public class ConceptAlignmentMutationService {
         } catch (DataIntegrityViolationException e) {
             return MutationResult.duplicate(URI_ALREADY_ALIGNED);
         }
-
+        String newType = alignementType.get().getLabelSkos();
+        if (!uri.equals(previousUri) || !StringUtils.equals(previousType, newType)) {
+            changeLog.record(ConceptChangeLog.Change.of(command.thesaurusId(), command.conceptId(),
+                    ConceptChangeLog.ALIGNMENT, String.valueOf(command.alignmentId()), null, "UPDATE",
+                    typed(previousType, previousUri), typed(newType, uri), newType, command.userId()));
+        }
         return finalizeMutation(
                 command.thesaurusId(),
                 command.conceptId(),
@@ -170,6 +180,10 @@ public class ConceptAlignmentMutationService {
         Alignement entity = alignement.get();
         String source = StringUtils.trimToEmpty(entity.getThesaurusTarget());
         alignementRepository.delete(entity);
+        changeLog.record(ConceptChangeLog.Change.of(command.thesaurusId(), command.conceptId(),
+                ConceptChangeLog.ALIGNMENT, entity.getUriTarget(), null, "DELETE", entity.getUriTarget(), null,
+                entity.getAlignementType() == null ? null : entity.getAlignementType().getLabelSkos(),
+                command.userId()));
         if (StringUtils.isNotBlank(source)
                 && !hasOtherAlignmentOfSource(command.thesaurusId(), command.conceptId(), source)) {
             removeRelatedEnrichments(command.thesaurusId(), command.conceptId(), source);
@@ -202,6 +216,11 @@ public class ConceptAlignmentMutationService {
         if ("GeoNames".equalsIgnoreCase(source)) {
             gpsRepository.deleteByIdConceptAndIdTheso(conceptId, thesaurusId);
         }
+    }
+
+    /** « exactMatch · uri » : un changement de type seul reste visible dans le journal. */
+    private static String typed(String type, String uri) {
+        return StringUtils.isBlank(type) ? uri : type + " · " + uri;
     }
 
     private MutationResult finalizeMutation(

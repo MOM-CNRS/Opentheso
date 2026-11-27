@@ -498,6 +498,12 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         flashToken = String.valueOf(System.currentTimeMillis());
         thesaurusViewBean.reloadSelectedConcept();
         conceptSelectionContext.update(thesaurusViewBean.getId(), thesaurusViewBean.getSelectedConcept());
+        if (branchOnly) {
+            ConceptDetail detail = thesaurusViewBean.getSelectedConcept();
+            if (detail != null && detail.getSummary() != null) {
+                thesaurusViewBean.reloadTreeRevealing(detail.getSummary().getConceptId());
+            }
+        }
     }
 
     private void reloadIfDirty(boolean dirty) {

@@ -62,6 +62,9 @@ public interface ThesaurusArrayRepository extends JpaRepository<ThesaurusArray, 
     """, nativeQuery = true)
     Optional<String> findConceptParentInGroups(@Param("idFacet") String idFacet, @Param("idTheso") String idTheso, @Param("groupIds") List<String> groupIds);
 
+    @Query(value = "SELECT id_facet FROM thesaurus_array WHERE id_concept_parent = :concept AND id_thesaurus = :from", nativeQuery = true)
+    List<String> findFacetIdsByParent(@Param("concept") String concept, @Param("from") String from);
+
     @Modifying
     @Query(value = "UPDATE thesaurus_array SET id_thesaurus = :target WHERE id_concept_parent = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurusByParent(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);

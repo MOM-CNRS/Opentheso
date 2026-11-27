@@ -116,6 +116,7 @@ public class ThesaurusLifecyclePersistence {
             "DELETE FROM corpus_link WHERE id_theso = :id",
             "DELETE FROM concept_dcterms WHERE id_thesaurus = :id",
             "DELETE FROM concept_historique WHERE id_thesaurus = :id",
+            "DELETE FROM concept_change_log WHERE id_thesaurus = :id",
             "DELETE FROM concept_type WHERE id_theso = :id",
             "DELETE FROM concept_facet WHERE id_thesaurus = :id",
             "DELETE FROM concept WHERE id_thesaurus = :id",

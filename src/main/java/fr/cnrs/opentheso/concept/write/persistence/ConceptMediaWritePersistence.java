@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ExternalResource;
 import fr.cnrs.opentheso.entites.Gps;
 import fr.cnrs.opentheso.entites.ImageExterne;
@@ -33,9 +34,15 @@ public class ConceptMediaWritePersistence {
     private final ImagesRepository imagesRepository;
     private final ExternalResourcesRepository externalResourcesRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    private final ConceptChangeLog changeLog;
 
     public MutationResult replaceGpsCoordinates(ReplaceGpsCoordinatesCommand command) {
+        String before = gpsText(gpsRepository.findByIdConceptAndIdThesoOrderByPosition(
+                command.conceptId(), command.thesaurusId()));
         if (org.apache.commons.lang3.StringUtils.isBlank(command.coordinatesText())) {
+            if (!before.isEmpty()) {
+                logGps(command, "DELETE", before, null);
+            }
             gpsRepository.deleteByIdConceptAndIdTheso(command.conceptId(), command.thesaurusId());
             touchConcept(command);
             return MutationResult.ok("Coordonnée GPS modifiés !");
@@ -54,6 +61,10 @@ public class ConceptMediaWritePersistence {
         for (Gps gps : parsed) {
             gpsRepository.save(gps);
         }
+        String after = gpsText(parsed);
+        if (!after.equals(before)) {
+            logGps(command, before.isEmpty() ? "ADD" : "UPDATE", before.isEmpty() ? null : before, after);
+        }
         touchConcept(command);
         return MutationResult.ok("Coordonnée GPS modifiés !");
     }
@@ -71,6 +82,8 @@ public class ConceptMediaWritePersistence {
                 .imageCopyright(command.copyright())
                 .externalUri(command.uri().trim())
                 .build());
+        logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.IMAGE, command.uri().trim(),
+                "ADD", null, command.uri().trim(), command.userId());
         touchConcept(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Image ajoutée avec succès");
     }
@@ -88,6 +101,10 @@ public class ConceptMediaWritePersistence {
                 || !org.apache.commons.lang3.Strings.CS.equals(existing.getIdThesaurus(), command.thesaurusId())) {
             return MutationResult.validationError(NO_IMAGE_SELECTED);
         }
+        if (!org.apache.commons.lang3.Strings.CS.equals(existing.getExternalUri(), command.uri())) {
+            logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.IMAGE, String.valueOf(command.imageId()),
+                    "UPDATE", existing.getExternalUri(), command.uri(), command.userId());
+        }
         existing.setImageCreator(command.creator());
         existing.setExternalUri(command.uri());
         existing.setImageName(command.name());
@@ -101,6 +118,8 @@ public class ConceptMediaWritePersistence {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Aucune sélection !");
         }
+        logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.IMAGE, command.uri(),
+                "DELETE", command.uri(), null, command.userId());
         imagesRepository.deleteByIdThesaurusAndIdConceptAndExternalUri(
                 command.thesaurusId(), command.conceptId(), command.uri());
         touchConcept(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
@@ -120,6 +139,8 @@ public class ConceptMediaWritePersistence {
                 .description(command.description())
                 .externalUri(command.uri())
                 .build());
+        logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.RESOURCE, command.uri(),
+                "ADD", null, command.uri(), command.userId());
         touchConcept(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Ressource ajoutée avec succès");
     }
@@ -130,6 +151,10 @@ public class ConceptMediaWritePersistence {
         }
         if (!StringUtils.urlValidator(command.uri())) {
             return MutationResult.validationError("L'URL n'est pas valide !");
+        }
+        if (!org.apache.commons.lang3.Strings.CS.equals(command.oldUri(), command.uri())) {
+            logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.RESOURCE, command.oldUri(),
+                    "UPDATE", command.oldUri(), command.uri(), command.userId());
         }
         externalResourcesRepository.updateExternalResource(
                 command.uri(),
@@ -147,6 +172,8 @@ public class ConceptMediaWritePersistence {
         if (ObjectUtils.isEmpty(command.uri())) {
             return MutationResult.validationError("Aucune resource n'est sélectionnée !");
         }
+        logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.RESOURCE, command.uri(),
+                "DELETE", command.uri(), null, command.userId());
         externalResourcesRepository.deleteExternalResource(
                 command.thesaurusId(),
                 command.conceptId(),
@@ -154,6 +181,28 @@ public class ConceptMediaWritePersistence {
         );
         touchConcept(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Ressource supprimée avec succès");
+    }
+
+    private void logGps(ReplaceGpsCoordinatesCommand command, String action, String oldValue, String newValue) {
+        logMedia(command.thesaurusId(), command.conceptId(), ConceptChangeLog.GPS, null,
+                action, oldValue, newValue, command.userId());
+    }
+
+    private void logMedia(String thesaurusId, String conceptId, String element, String itemKey,
+                          String action, String oldValue, String newValue, int userId) {
+        changeLog.record(ConceptChangeLog.Change.of(thesaurusId, conceptId, element, itemKey, null,
+                action, oldValue, newValue, null, userId));
+    }
+
+    /** « lat, long » par point, séparés par « ; », dans l'ordre des positions. */
+    static String gpsText(List<Gps> points) {
+        if (points == null) {
+            return "";
+        }
+        return points.stream()
+                .filter(p -> p.getLatitude() != null && p.getLongitude() != null)
+                .map(p -> p.getLatitude() + ", " + p.getLongitude())
+                .collect(java.util.stream.Collectors.joining(" ; "));
     }
 
     private void touchConcept(ReplaceGpsCoordinatesCommand command) {

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.concept.model.ConceptTableRowsResponse;
 import fr.cnrs.opentheso.concept.service.ConceptTableConsultationService;
 import org.apache.commons.lang3.StringUtils;
@@ -15,9 +16,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class TableApiController {
 
+    private final ThesaurusReadAccess thesaurusReadAccess;
+
     private final ConceptTableConsultationService conceptTableConsultationService;
 
-    public TableApiController(ConceptTableConsultationService conceptTableConsultationService) {
+    public TableApiController(ConceptTableConsultationService conceptTableConsultationService, ThesaurusReadAccess thesaurusReadAccess) {
+        this.thesaurusReadAccess = thesaurusReadAccess;
         this.conceptTableConsultationService = conceptTableConsultationService;
     }
 
@@ -26,6 +30,7 @@ public class TableApiController {
             @RequestParam(required = false) String thesaurusId,
             @RequestParam(required = false) String lang
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isBlank(thesaurusId)) {
             return new ConceptTableRowsResponse(List.of(), false);
         }

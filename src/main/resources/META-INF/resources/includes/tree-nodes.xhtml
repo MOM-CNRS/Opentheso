@@ -15,10 +15,6 @@
          data-cand-by="#{node.candidateBy}"
          data-cand-on="#{node.candidateOn}">
       <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.rejected ? ' is-rejected' : ''}#{node.deprecated ? ' is-deprecated' : ''}#{node.facet ? ' is-facet' : ''}#{thesaurusViewBean.revealedConceptId eq node.id ? ' is-active' : ''}">
-        <ui:fragment rendered="#{consultationShellBean.adminOnCurrentThesaurus}">
-          <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
-                title="Sélectionner (avec ses enfants)"></span>
-        </ui:fragment>
         <div class="tn-rowmain" style="padding-left:#{node.pad}">
           <h:commandLink styleClass="tn-caret#{node.hasChildren ? '' : ' is-empty'}"
                          action="#{thesaurusViewBean.toggleTreeNode(node.path)}"
@@ -27,6 +23,11 @@
             <f:ajax execute="@this" render=":previewTree"/>
             <span class="caret-open">▾</span><span class="caret-shut">▸</span>
           </h:commandLink>
+          <!-- Case dans le bloc décalé : elle suit le niveau du concept, juste avant son libellé -->
+          <ui:fragment rendered="#{consultationShellBean.adminOnCurrentThesaurus}">
+            <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
+                  title="Sélectionner (avec ses enfants)"></span>
+          </ui:fragment>
           <span class="tn-label" data-act="open" data-id="#{node.id}" data-type="#{node.nodeType}"
                 role="button" tabindex="0">
             <ui:fragment rendered="#{node.facet}">
@@ -38,7 +39,7 @@
               <span class="tn-nota">#{node.notation}</span>
             </ui:fragment>
             <span class="tn-textwrap"><span class="tn-line"><span class="tn-text#{node.sourceLabel ? ' is-source' : ''}"
-                  title="#{node.sourceLabel ? localeBean.getMsg('concept.label.source') : ''}">#{node.label}</span><ui:fragment rendered="#{node.sourceLabel and not empty thesaurusViewBean.treeSourceLanguageCode}"><span class="tn-lang" title="#{localeBean.getMsg('concept.label.source')}">#{thesaurusViewBean.treeSourceLanguageCode}</span></ui:fragment></span></span>
+                  title="#{node.sourceLabel ? localeBean.getMsg('concept.label.source') : ''}#{node.sourceLabel ? ' · ' : ''}ID : #{node.id}">#{node.label}</span><ui:fragment rendered="#{node.sourceLabel and not empty thesaurusViewBean.treeSourceLanguageCode}"><span class="tn-lang" title="#{localeBean.getMsg('concept.label.source')}">#{thesaurusViewBean.treeSourceLanguageCode}</span></ui:fragment></span></span>
             <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="#{localeBean.getMsg('concept.badge.candidate')}"></span></ui:fragment>
             <ui:fragment rendered="#{node.rejected}"><span class="tn-tag">#{localeBean.getMsg('concept.badge.rejected')}</span></ui:fragment>
             <ui:fragment rendered="#{node.deprecated}"><span class="tn-tag is-dep">#{localeBean.getMsg('concept.badge.deprecated')}</span></ui:fragment>

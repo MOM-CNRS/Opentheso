@@ -1780,6 +1780,16 @@ public class ThesaurusViewBean implements Serializable {
         invalidateTree();
     }
 
+    /** Recharge l'arbre et déplie le chemin du concept, comme après un glisser-déposer. */
+    public void reloadTreeRevealing(String conceptId) {
+        invalidateTree();
+        if (StringUtils.isBlank(conceptId)) {
+            return;
+        }
+        setRevealId(conceptId);
+        revealInTree();
+    }
+
     private void ensureTreeLoaded() {
         if (treeRoots != null) {
             return;

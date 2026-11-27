@@ -1,12 +1,10 @@
 package fr.cnrs.opentheso.toolbox.workshop.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
-import fr.cnrs.opentheso.entites.HierarchicalRelationshipHistorique;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
-import fr.cnrs.opentheso.entites.NonPreferredTermHistorique;
 import fr.cnrs.opentheso.entites.PreferredTerm;
 import fr.cnrs.opentheso.entites.Term;
-import fr.cnrs.opentheso.entites.TermHistorique;
 import fr.cnrs.opentheso.models.relations.NodeReplaceValueByValue;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
@@ -15,15 +13,11 @@ import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
 import fr.cnrs.opentheso.repositories.GpsRepository;
-import fr.cnrs.opentheso.repositories.HierarchicalRelationshipHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
-import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
-import fr.cnrs.opentheso.repositories.NonPreferredTermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
-import fr.cnrs.opentheso.repositories.TermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptLabel;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptObject;
@@ -53,16 +47,13 @@ class WorkshopCsvConceptUpdaterTest {
     private PreferredTermRepository preferredTermRepository;
     @Mock
     private TermRepository termRepository;
-    @Mock
-    private TermHistoriqueRepository termHistoriqueRepository;
+
     @Mock
     private NonPreferredTermRepository nonPreferredTermRepository;
-    @Mock
-    private NonPreferredTermHistoriqueRepository nonPreferredTermHistoriqueRepository;
+
     @Mock
     private NoteRepository noteRepository;
-    @Mock
-    private NoteHistoriqueRepository noteHistoriqueRepository;
+
     @Mock
     private AlignementRepository alignementRepository;
     @Mock
@@ -77,10 +68,14 @@ class WorkshopCsvConceptUpdaterTest {
     private ImagesRepository imagesRepository;
     @Mock
     private HierarchicalRelationshipRepository hierarchicalRelationshipRepository;
-    @Mock
-    private HierarchicalRelationshipHistoriqueRepository hierarchicalRelationshipHistoriqueRepository;
+
     @Mock
     private ConceptRepository conceptRepository;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private WorkshopCsvConceptUpdater updater;
@@ -108,13 +103,13 @@ class WorkshopCsvConceptUpdaterTest {
         assertEquals("Nouveau Label", existingTerm.getLexicalValue());
         assertEquals(7, existingTerm.getContributor());
 
-        ArgumentCaptor<TermHistorique> historiqueCaptor = ArgumentCaptor.forClass(TermHistorique.class);
-        verify(termHistoriqueRepository).save(historiqueCaptor.capture());
-        TermHistorique historique = historiqueCaptor.getValue();
-        assertEquals("UPDATE", historique.getAction());
-        assertEquals("Nouveau Label", historique.getLexicalValue());
-        assertEquals("T1", historique.getIdTerm());
-        assertEquals("TH1", historique.getIdThesaurus());
+        ArgumentCaptor<ConceptChangeLog.Change> changeCaptor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog).recordForTerm(org.mockito.ArgumentMatchers.eq("T1"), changeCaptor.capture());
+        ConceptChangeLog.Change historique = changeCaptor.getValue();
+        assertEquals("UPDATE", historique.action());
+        assertEquals("Nouveau Label", historique.newValue());
+        assertEquals("T1", historique.itemKey());
+        assertEquals("TH1", historique.thesaurusId());
         assertTrue(updater.getMessage().isEmpty());
     }
 
@@ -143,10 +138,10 @@ class WorkshopCsvConceptUpdaterTest {
         assertEquals("en", saved.getLang());
         assertEquals("TH1", saved.getIdThesaurus());
 
-        ArgumentCaptor<TermHistorique> historiqueCaptor = ArgumentCaptor.forClass(TermHistorique.class);
-        verify(termHistoriqueRepository).save(historiqueCaptor.capture());
-        assertEquals("New", historiqueCaptor.getValue().getAction());
-        assertEquals("New Label", historiqueCaptor.getValue().getLexicalValue());
+        ArgumentCaptor<ConceptChangeLog.Change> changeCaptor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog).recordForTerm(any(), changeCaptor.capture());
+        assertEquals("ADD", changeCaptor.getValue().action());
+        assertEquals("New Label", changeCaptor.getValue().newValue());
     }
 
     @Test
@@ -189,10 +184,10 @@ class WorkshopCsvConceptUpdaterTest {
         verify(nonPreferredTermRepository).save(existingSynonym);
         assertEquals("NouveauSyn", existingSynonym.getLexicalValue());
 
-        ArgumentCaptor<NonPreferredTermHistorique> historiqueCaptor = ArgumentCaptor.forClass(NonPreferredTermHistorique.class);
-        verify(nonPreferredTermHistoriqueRepository).save(historiqueCaptor.capture());
-        assertEquals("update", historiqueCaptor.getValue().getAction());
-        assertEquals("NouveauSyn", historiqueCaptor.getValue().getLexicalValue());
+        ArgumentCaptor<ConceptChangeLog.Change> changeCaptor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog).recordForTerm(any(), changeCaptor.capture());
+        assertEquals("update", changeCaptor.getValue().action());
+        assertEquals("NouveauSyn", changeCaptor.getValue().newValue());
     }
 
     @Test
@@ -219,7 +214,7 @@ class WorkshopCsvConceptUpdaterTest {
         assertEquals("fr", saved.getLang());
         assertFalse(saved.isHiden());
 
-        verify(nonPreferredTermHistoriqueRepository).save(any(NonPreferredTermHistorique.class));
+        verify(changeLog).recordForTerm(any(), any(ConceptChangeLog.Change.class));
     }
 
     // ---- updateConceptValueByNewValue : BROADER ----
@@ -250,11 +245,10 @@ class WorkshopCsvConceptUpdaterTest {
         assertEquals("C1", savedRelations.get(1).getIdConcept2());
         assertEquals("NT", savedRelations.get(1).getRole());
 
-        ArgumentCaptor<HierarchicalRelationshipHistorique> historiqueCaptor =
-                ArgumentCaptor.forClass(HierarchicalRelationshipHistorique.class);
-        verify(hierarchicalRelationshipHistoriqueRepository, times(2)).save(historiqueCaptor.capture());
-        assertEquals("DEL", historiqueCaptor.getAllValues().get(0).getAction());
-        assertEquals("ADD", historiqueCaptor.getAllValues().get(1).getAction());
+        ArgumentCaptor<ConceptChangeLog.Change> historiqueCaptor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog, times(2)).record(historiqueCaptor.capture());
+        assertEquals("DELETE", historiqueCaptor.getAllValues().get(0).action());
+        assertEquals("ADD", historiqueCaptor.getAllValues().get(1).action());
 
         verify(conceptRepository).updateTopConcept("C1", "TH1", false);
     }
@@ -310,10 +304,10 @@ class WorkshopCsvConceptUpdaterTest {
         assertEquals("", saved.getSource());
         assertEquals(7, saved.getContributor());
 
-        ArgumentCaptor<TermHistorique> historiqueCaptor = ArgumentCaptor.forClass(TermHistorique.class);
-        verify(termHistoriqueRepository).save(historiqueCaptor.capture());
-        assertEquals("New", historiqueCaptor.getValue().getAction());
-        assertEquals("Label EN", historiqueCaptor.getValue().getLexicalValue());
+        ArgumentCaptor<ConceptChangeLog.Change> changeCaptor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog).recordForTerm(any(), changeCaptor.capture());
+        assertEquals("ADD", changeCaptor.getValue().action());
+        assertEquals("Label EN", changeCaptor.getValue().newValue());
 
         verify(nonPreferredTermRepository, never()).save(any());
         verify(noteRepository, never()).save(any());

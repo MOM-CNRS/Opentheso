@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -48,12 +47,15 @@ public class ApiKeyInterceptor implements HandlerInterceptor {
                 throw new ApiKeyMissingException();
             }
 
-            Optional<User> userOpt = apiKeyService.findUserByApiKey(apiKey);
-            if (userOpt.isEmpty()) {
-                throw new ApiKeyInvalidException(ApiKeyState.INVALID);
+            var match = apiKeyService.lookup(apiKey)
+                    .orElseThrow(() -> new ApiKeyInvalidException(ApiKeyState.INVALID));
+            if (!match.valid()) {
+                throw new ApiKeyInvalidException(match.state()); // clé expirée : 401
             }
-
-            request.setAttribute("authenticatedUser", userOpt.get());
+            User user = new User();
+            user.setId(match.userId());
+            user.setUsername(match.username());
+            request.setAttribute("authenticatedUser", user);
         }
 
         return true;
@@ -66,6 +68,8 @@ public class ApiKeyInterceptor implements HandlerInterceptor {
         return uri.contains("/api/selection-export")
                 || uri.endsWith("/api/account/tree-status")
                 || uri.endsWith("/api/account/table-cols")
-                || uri.endsWith("/api/account/concept-blocks");
+                || uri.endsWith("/api/account/concept-blocks")
+                // Purge du journal : admin du thésaurus vérifié par le contrôleur sur la session
+                || uri.endsWith("/api/concepts/history/thesaurus/purge");
     }
 }

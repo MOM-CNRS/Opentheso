@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.proposition.model.PropositionFieldAction;
 import fr.cnrs.opentheso.proposition.model.PropositionFieldCategory;
 import fr.cnrs.opentheso.proposition.model.PropositionFieldChange;
 import fr.cnrs.opentheso.proposition.model.PropositionReviewField;
+import fr.cnrs.opentheso.models.propositions.PropositionStatusEnum;
 import fr.cnrs.opentheso.proposition.model.PropositionSummary;
 import fr.cnrs.opentheso.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.proposition.service.PropositionMutationService;
@@ -95,6 +96,22 @@ public class PropositionBean implements Serializable {
 
     public void refresh() {
         refresh(currentThesaurusId());
+    }
+
+    public void loadBoard() {
+        refresh(currentThesaurusId());
+    }
+
+    /**
+     * Pré-rendu de la boîte, à l'ouverture de la page seulement. Le viewAction de la page n'était pas
+     * exécuté : la liste restait celle de la session (vide ou d'un autre thésaurus) alors que les
+     * compteurs étaient justes, et un bouton de ligne ne retrouvait pas sa proposition.
+     */
+    public void loadBoardForRender() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null || !faces.isPostback()) {
+            loadBoard();
+        }
     }
 
     public void refresh(String thesaurusId) {
@@ -605,9 +622,10 @@ public class PropositionBean implements Serializable {
 
     /**
      * Super-utilisateur / admin / gestionnaire autre que l'auteur : peut décider.
+     * L'auteur le peut aussi s'il est admin du projet ou super-admin.
      */
     public boolean isCanMakeAction() {
-        if (selectedProposition == null || isSameUser()) {
+        if (selectedProposition == null) {
             return false;
         }
         return propositionAccessPolicy.canDecide(
@@ -632,7 +650,7 @@ public class PropositionBean implements Serializable {
     }
 
     public boolean isShowAuthorCannotDecide() {
-        return isSameUser() && isShowButtonDecision();
+        return isSameUser() && isShowButtonDecision() && !isCanMakeAction();
     }
 
     public List<PropositionFieldCategory> getAddableCategories() {
@@ -774,7 +792,7 @@ public class PropositionBean implements Serializable {
     }
 
     private boolean rejectOwnDecision() {
-        if (!isSameUser()) {
+        if (!isSameUser() || isCanMakeAction()) {
             return false;
         }
         MessageUtils.showErrorMessage(localeBean.getMsg("proposition.alertSameUser"));
@@ -837,6 +855,53 @@ public class PropositionBean implements Serializable {
         );
         MessageUtils.showInformationMessage("Proposition refusée");
         flashMessage = "Proposition refusée";
+        flashToken = System.currentTimeMillis();
+        finishReview();
+    }
+
+    /** Identifiant posé par le bouton de ligne, lu par {@link #markUnreadRequested()}. */
+    private String unreadRequestId;
+
+    public String getUnreadRequestId() {
+        return unreadRequestId;
+    }
+
+    public void setUnreadRequestId(String unreadRequestId) {
+        this.unreadRequestId = unreadRequestId;
+    }
+
+    /**
+     * Bouton de ligne. Il passe par un champ caché plutôt que par une commande dans la liste répétée :
+     * une liste affichée après coup (onglet, rafraîchissement) ne retrouvait pas la ligne cliquée.
+     */
+    public void markUnreadRequested() {
+        String raw = StringUtils.trimToEmpty(unreadRequestId);
+        unreadRequestId = null;
+        if (!StringUtils.isNumeric(raw)) {
+            return;
+        }
+        PropositionDetail detail = propositionReadService.findDetail(Integer.parseInt(raw));
+        if (detail == null || !PropositionStatusEnum.LU.name().equals(detail.status())
+                || !propositionAccessPolicy.canAccessBoard(userSession, detail.thesaurusId())) {
+            return;
+        }
+        propositionMutationService.markUnread(detail.id());
+        refresh(detail.thesaurusId());
+    }
+
+    /** Fiche de relecture : la rouvrir la marquerait lue à nouveau, on revient donc à la boîte. */
+    public boolean isCanMarkUnread() {
+        return selectedProposition != null
+                && PropositionStatusEnum.LU.name().equals(selectedProposition.status())
+                && propositionAccessPolicy.canAccessBoard(userSession, selectedProposition.thesaurusId());
+    }
+
+    public void markSelectedUnread() {
+        if (!isCanMarkUnread()) {
+            return;
+        }
+        propositionMutationService.markUnread(selectedProposition.id());
+        flashMessage = localeBean.getMsg("proposition.markedUnread");
         flashToken = System.currentTimeMillis();
         finishReview();
     }

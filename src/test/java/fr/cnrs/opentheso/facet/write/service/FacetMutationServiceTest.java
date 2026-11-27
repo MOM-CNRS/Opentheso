@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.facet.write.service;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ConceptFacet;
 import fr.cnrs.opentheso.entites.NodeLabel;
 import fr.cnrs.opentheso.entites.ThesaurusArray;
@@ -47,6 +48,11 @@ class FacetMutationServiceTest {
     private NodeLabelRepository nodeLabelRepository;
     @Mock
     private BranchConceptSupport branchConceptSupport;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private FacetMutationService service;

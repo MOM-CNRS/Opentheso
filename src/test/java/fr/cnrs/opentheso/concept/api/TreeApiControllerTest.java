@@ -32,7 +32,7 @@ class TreeApiControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new TreeApiController(conceptReadService, treeStatusForestService, thesaurusContext);
+        controller = new TreeApiController(conceptReadService, treeStatusForestService, thesaurusContext, org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class));
     }
 
     @Test

@@ -27,7 +27,7 @@ class TableApiControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new TableApiController(conceptTableConsultationService);
+        controller = new TableApiController(conceptTableConsultationService, org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class));
     }
 
     @Test

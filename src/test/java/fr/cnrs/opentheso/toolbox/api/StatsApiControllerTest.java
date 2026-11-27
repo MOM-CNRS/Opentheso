@@ -30,7 +30,7 @@ class StatsApiControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new StatsApiController(thesaurusStatisticsService, thesaurusContext);
+        controller = new StatsApiController(thesaurusStatisticsService, thesaurusContext, org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class));
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("th17");
     }
 

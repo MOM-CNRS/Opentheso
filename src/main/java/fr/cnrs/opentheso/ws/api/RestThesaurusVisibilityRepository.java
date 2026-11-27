@@ -78,12 +78,10 @@ class RestThesaurusVisibilityRepository {
 
     @SuppressWarnings("unchecked")
     List<String> visibleIds(int userId) {
-        return entityManager.createNativeQuery("""
-                SELECT t.id_thesaurus
-                FROM thesaurus t
-                WHERE """ + VISIBLE + """
-                ORDER BY t.created DESC NULLS LAST, t.id_thesaurus
-                """)
+        // Chaînes classiques : un bloc de texte retire l'espace final de « WHERE », d'où « WHERECOALESCE »
+        return entityManager.createNativeQuery(
+                "SELECT t.id_thesaurus FROM thesaurus t WHERE (" + VISIBLE + ") "
+                        + "ORDER BY t.created DESC NULLS LAST, t.id_thesaurus")
                 .setParameter("userId", userId)
                 .getResultList();
     }

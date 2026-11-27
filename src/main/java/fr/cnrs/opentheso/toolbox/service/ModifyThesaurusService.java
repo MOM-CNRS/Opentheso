@@ -5,8 +5,8 @@ import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.repositories.TermRepository;
-import fr.cnrs.opentheso.services.ThesaurusService;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
+import fr.cnrs.opentheso.toolbox.persistence.ThesaurusIdentifierPersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ThesaurusLifecyclePersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxThesaurusArkPersistence;
@@ -53,7 +53,7 @@ public class ModifyThesaurusService {
     private final ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
     private final TermRepository termRepository;
-    private final ThesaurusService thesaurusService;
+    private final ThesaurusIdentifierPersistence thesaurusIdentifierPersistence;
 
     private static final java.util.regex.Pattern THESAURUS_ID = java.util.regex.Pattern.compile("[A-Za-z0-9][A-Za-z0-9_-]{0,63}");
 
@@ -189,7 +189,7 @@ public class ModifyThesaurusService {
         if (!THESAURUS_ID.matcher(next).matches()) {
             throw new InvalidToolboxDataException("L'identifiant ne peut contenir que des lettres, des chiffres, « _ » et « - ».");
         }
-        if (!thesaurusService.changeIdOfThesaurus(currentId, next)) {
+        if (!thesaurusIdentifierPersistence.changeIdentifier(currentId, next)) {
             throw new InvalidToolboxDataException("Un thésaurus porte déjà cet identifiant.");
         }
     }

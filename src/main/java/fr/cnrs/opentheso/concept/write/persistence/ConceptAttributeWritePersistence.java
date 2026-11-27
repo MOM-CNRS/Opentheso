@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.concept.write.model.command.UpdateConceptTypeCommand;
 import fr.cnrs.opentheso.concept.write.model.command.UpdateNotationCommand;
@@ -17,6 +18,7 @@ public class ConceptAttributeWritePersistence {
     private final ConceptAttributeWriteRepository conceptAttributeWriteRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
     private final BranchConceptSupport branchConceptSupport;
+    private final ConceptChangeLog changeLog;
 
     public MutationResult updateNotation(UpdateNotationCommand command) {
         String notation = StringUtils.trimToEmpty(command.notation());
@@ -25,8 +27,16 @@ public class ConceptAttributeWritePersistence {
                 command.thesaurusId(), notation, command.conceptId())) {
             return MutationResult.validationError("La notation existe déjà dans le thésaurus !!");
         }
+        String previous = StringUtils.trimToEmpty(
+                conceptAttributeWriteRepository.findNotation(command.thesaurusId(), command.conceptId()));
         if (!conceptAttributeWriteRepository.updateNotation(command.thesaurusId(), command.conceptId(), notation)) {
             return MutationResult.failure("Erreur de cohérence de BDD !!");
+        }
+        if (!previous.equals(notation)) {
+            String action = previous.isEmpty() ? "ADD" : notation.isEmpty() ? "DELETE" : "UPDATE";
+            changeLog.record(ConceptChangeLog.Change.of(command.thesaurusId(), command.conceptId(),
+                    ConceptChangeLog.NOTATION, null, null, action,
+                    previous.isEmpty() ? null : previous, notation.isEmpty() ? null : notation, null, command.userId()));
         }
         touchConcept(command);
         return MutationResult.ok("La notation a bien été modifiée");

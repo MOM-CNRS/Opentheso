@@ -777,6 +777,7 @@ if (typeof window !== "undefined") {
 
 function showHomePanel(panel) {
   if (panel === "viewStats") go("toolbox/statistiques.xhtml");
+  else if (panel === "viewJournal") go("toolbox/journal.xhtml");
   else if (panel === "viewSettings") go("setting/parametres.xhtml");
   else if (panel === "viewBatch") go("toolbox/atelier.xhtml");
   else if (panel === "viewMaintenance") go("toolbox/maintenance.xhtml");

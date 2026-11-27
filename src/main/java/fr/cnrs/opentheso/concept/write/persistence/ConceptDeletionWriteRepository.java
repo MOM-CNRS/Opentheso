@@ -1,8 +1,11 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
+import fr.cnrs.opentheso.concept.history.ConceptDeletionSnapshot;
 import fr.cnrs.opentheso.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +16,13 @@ public class ConceptDeletionWriteRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /** Garde une trace du concept supprimé (libellé, statut, auteur) ; absent dans certains tests. */
+    @Autowired(required = false)
+    private ConceptChangeLog changeLog;
+
+    @Autowired(required = false)
+    private ConceptDeletionSnapshot deletionSnapshot;
 
     public Optional<String> findPreferredTermId(String thesaurusId, String conceptId) {
         return entityManager.createNativeQuery("""
@@ -31,6 +41,10 @@ public class ConceptDeletionWriteRepository {
 
     @Transactional
     public void deleteConcept(String thesaurusId, String conceptId) {
+        if (changeLog != null) {
+            String skos = deletionSnapshot == null ? null : deletionSnapshot.skos(thesaurusId, conceptId);
+            changeLog.recordConceptDeletion(thesaurusId, conceptId, null, skos);
+        }
         deleteCandidateRows(thesaurusId, conceptId);
         findPreferredTermId(thesaurusId, conceptId).ifPresent(idTerm -> deleteTerm(thesaurusId, idTerm));
         deleteAllRelations(thesaurusId, conceptId);

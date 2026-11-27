@@ -449,11 +449,29 @@ class PropositionBeanTest {
         bean.openReview(proposition);
 
         when(propositionAccessPolicy.isSameAuthor(userSession, "a@b.fr", "Author")).thenReturn(true);
+        // Gestionnaire auteur : la règle d'accès lui refuse la décision
+        when(propositionAccessPolicy.canDecide(any(UserSession.class), any(), any(), any())).thenReturn(false);
 
         assertTrue(bean.isSameUser());
         assertTrue(bean.isShowAuthorCannotDecide());
         assertFalse(bean.isShowDecisionButtons());
         assertFalse(bean.isCanMakeAction());
+    }
+
+    @Test
+    void authorAdmin_seesDecisionButtons() {
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr", false);
+        when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        stubManagerRights();
+        when(propositionDraftService.loadDraftChanges(5)).thenReturn(new PropositionDraft());
+        bean.openReview(proposition);
+
+        when(propositionAccessPolicy.isSameAuthor(userSession, "a@b.fr", "Author")).thenReturn(true);
+
+        assertTrue(bean.isSameUser());
+        assertTrue(bean.isCanMakeAction());
+        assertFalse(bean.isShowAuthorCannotDecide());
     }
 
     @Test
@@ -466,6 +484,8 @@ class PropositionBeanTest {
         bean.openReview(proposition);
 
         when(propositionAccessPolicy.isSameAuthor(userSession, "a@b.fr", "Author")).thenReturn(true);
+        // Gestionnaire auteur : la règle d'accès lui refuse la décision
+        when(propositionAccessPolicy.canDecide(any(UserSession.class), any(), any(), any())).thenReturn(false);
         when(localeBean.getMsg("proposition.alertSameUser")).thenReturn("Vous ne pouvez pas valider votre propre proposition");
 
         bean.approveSelected();
@@ -529,6 +549,61 @@ class PropositionBeanTest {
         assertTrue(bean.isShowButtonDecision());
         assertTrue(bean.isShowDecisionButtons());
         assertFalse(bean.isShowAuthorCannotDecide());
+    }
+
+    @Test
+    void loadBoard_listsTheOpenThesaurusPropositions() {
+        stubManagerRights();
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        var fresh = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
+        when(propositionReadService.listPending("TH1")).thenReturn(java.util.List.of(fresh));
+
+        bean.loadBoard();
+
+        assertEquals(1, bean.getPropositions().size());
+    }
+
+    @Test
+    void markUnreadRequested_putsAReadPropositionBack() {
+        stubManagerRights();
+        when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
+        bean.setUnreadRequestId("5");
+
+        bean.markUnreadRequested();
+
+        verify(propositionMutationService).markUnread(5);
+        assertNull(bean.getUnreadRequestId());
+    }
+
+    @Test
+    void markUnreadRequested_ignoresANewProposition() {
+        stubManagerRights();
+        when(propositionReadService.findDetail(5)).thenReturn(DETAIL);
+        bean.setUnreadRequestId("5");
+
+        bean.markUnreadRequested();
+
+        verify(propositionMutationService, never()).markUnread(org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void markUnreadRequested_requiresBoardAccess() {
+        lenient().when(propositionAccessPolicy.canAccessBoard(any(UserSession.class), any())).thenReturn(false);
+        lenient().when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
+        bean.setUnreadRequestId("5");
+
+        bean.markUnreadRequested();
+
+        verify(propositionMutationService, never()).markUnread(org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void markUnreadRequested_ignoresAMalformedId() {
+        bean.setUnreadRequestId("abc");
+
+        bean.markUnreadRequested();
+
+        verify(propositionReadService, never()).findDetail(org.mockito.ArgumentMatchers.anyInt());
     }
 
     private void stubManagerRights() {

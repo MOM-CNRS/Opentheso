@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.toolbox.service;
 import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.repositories.TermRepository;
-import fr.cnrs.opentheso.services.ThesaurusService;
+import fr.cnrs.opentheso.toolbox.persistence.ThesaurusIdentifierPersistence;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.toolbox.persistence.ThesaurusLifecyclePersistence;
 import fr.cnrs.opentheso.toolbox.persistence.ToolboxPreferencePersistence;
@@ -59,7 +59,7 @@ class ModifyThesaurusServiceTest {
     @Mock
     private TermRepository termRepository;
     @Mock
-    private ThesaurusService thesaurusService;
+    private ThesaurusIdentifierPersistence thesaurusIdentifierPersistence;
 
     private ModifyThesaurusService service;
 
@@ -74,23 +74,23 @@ class ModifyThesaurusServiceTest {
                 thesaurusLifecyclePersistence,
                 thesaurusDcTermRepository,
                 termRepository,
-                thesaurusService
+                thesaurusIdentifierPersistence
         );
         ReflectionTestUtils.setField(service, "workLanguage", "fr");
     }
 
     @Test
     void changeIdentifier_renamesWhenTheNewIdIsFree() {
-        when(thesaurusService.changeIdOfThesaurus("th60", "pactols")).thenReturn(true);
+        when(thesaurusIdentifierPersistence.changeIdentifier("th60", "pactols")).thenReturn(true);
 
         service.changeIdentifier("th60", " pactols ");
 
-        verify(thesaurusService).changeIdOfThesaurus("th60", "pactols");
+        verify(thesaurusIdentifierPersistence).changeIdentifier("th60", "pactols");
     }
 
     @Test
     void changeIdentifier_refusesAnIdAlreadyUsed() {
-        when(thesaurusService.changeIdOfThesaurus("th60", "th17")).thenReturn(false);
+        when(thesaurusIdentifierPersistence.changeIdentifier("th60", "th17")).thenReturn(false);
 
         assertThrows(InvalidToolboxDataException.class, () -> service.changeIdentifier("th60", "th17"));
     }
@@ -99,7 +99,7 @@ class ModifyThesaurusServiceTest {
     void changeIdentifier_keepsTheCurrentId() {
         service.changeIdentifier("th60", "th60");
 
-        verify(thesaurusService, never()).changeIdOfThesaurus(any(), any());
+        verify(thesaurusIdentifierPersistence, never()).changeIdentifier(any(), any());
     }
 
     @Test

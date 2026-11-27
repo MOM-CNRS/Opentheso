@@ -152,6 +152,30 @@ class PropositionMutationServiceTest {
     }
 
     @Test
+    void markUnread_putsReadPropositionBackToNew() {
+        PropositionModification proposition = new PropositionModification();
+        proposition.setStatus("LU");
+        when(repository.findById(1)).thenReturn(Optional.of(proposition));
+
+        assertTrue(service.markUnread(1));
+
+        assertEquals("ENVOYER", proposition.getStatus());
+        verify(repository).save(proposition);
+    }
+
+    @Test
+    void markUnread_keepsReviewedProposition() {
+        PropositionModification proposition = new PropositionModification();
+        proposition.setStatus("APPROUVER");
+        when(repository.findById(1)).thenReturn(Optional.of(proposition));
+
+        assertFalse(service.markUnread(1));
+
+        assertEquals("APPROUVER", proposition.getStatus());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
     void markRead_keepsAlreadyReviewedStatus() {
         PropositionModification proposition = new PropositionModification();
         proposition.setStatus("APPROUVER");

@@ -21,7 +21,6 @@ public class ConceptStructureNativeWriteService {
 
     private final ConceptCreationWriteRepository conceptCreationWriteRepository;
     private final ConceptDeletionWriteRepository conceptDeletionWriteRepository;
-    private final ConceptLifecycleWriteRepository conceptLifecycleWriteRepository;
     private final ConceptLexicalWriteRepository conceptLexicalWriteRepository;
     private final ConceptRenameWriteRepository conceptRenameWriteRepository;
     private final ConceptRelationWriteRepository conceptRelationWriteRepository;
@@ -120,10 +119,6 @@ public class ConceptStructureNativeWriteService {
                 normalizedNotation,
                 options.topConcept(),
                 fields.userId());
-        var snapshot = new ConceptSnapshot(
-                conceptId, fields.thesaurusId(), "", DEFAULT_STATUS, normalizedNotation, options.topConcept());
-        conceptLifecycleWriteRepository.insertConceptHistory(
-                snapshot, fields.userId(), StringUtils.defaultString(options.groupId()));
         conceptRenameWriteRepository.createPreferredTermForConcept(
                 conceptId,
                 fields.thesaurusId(),

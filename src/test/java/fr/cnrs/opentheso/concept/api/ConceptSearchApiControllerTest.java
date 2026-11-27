@@ -27,7 +27,7 @@ class ConceptSearchApiControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new ConceptSearchApiController(conceptWriteSearchService);
+        controller = new ConceptSearchApiController(conceptWriteSearchService, org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class));
     }
 
     @Test

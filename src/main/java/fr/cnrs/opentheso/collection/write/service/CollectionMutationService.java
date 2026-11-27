@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.collection.write.service;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ConceptGroup;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.entites.ConceptGroupLabel;
@@ -51,6 +52,7 @@ public class CollectionMutationService {
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
     private final RelationGroupRepository relationGroupRepository;
     private final BranchConceptSupport branchConceptSupport;
+    private final ConceptChangeLog changeLog;
     private final CollectionIdentifierAssignmentService collectionIdentifierAssignmentService;
 
     @Transactional
@@ -184,6 +186,8 @@ public class CollectionMutationService {
         if (CollectionUtils.isEmpty(conceptIds)) {
             return MutationResult.validationError("Aucun concept sélectionné !");
         }
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.COLLECTION,
+                command.collectionId().toLowerCase(), conceptIds, "ADD", null);
         for (String conceptId : conceptIds) {
             conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
                     .idGroup(command.collectionId().toLowerCase())
@@ -224,6 +228,7 @@ public class CollectionMutationService {
                 already.add(link.getIdConcept());
             }
         }
+        changeLog.recordMembership(thesaurusId, ConceptChangeLog.COLLECTION, groupId, wanted, "ADD", null);
         int added = 0;
         for (String conceptId : wanted) {
             if (already.contains(conceptId)) {
@@ -267,6 +272,8 @@ public class CollectionMutationService {
         if (CollectionUtils.isEmpty(conceptIds)) {
             return MutationResult.validationError("Aucun concept sélectionné !");
         }
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.COLLECTION,
+                command.collectionId(), conceptIds, "DELETE", null);
         for (String conceptId : conceptIds) {
             conceptGroupConceptRepository.deleteByIdGroupAndIdConceptAndIdThesaurus(
                     command.collectionId(), conceptId, command.thesaurusId());
@@ -279,6 +286,8 @@ public class CollectionMutationService {
 
     @Transactional
     public MutationResult removeAllMembers(RemoveAllMembersFromCollectionCommand command) {
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.COLLECTION,
+                command.collectionId(), null, "DELETE", null);
         conceptGroupConceptRepository.deleteAllByIdGroupAndIdThesaurus(
                 command.collectionId(), command.thesaurusId());
         touchCollection(command.thesaurusId(), command.collectionId());

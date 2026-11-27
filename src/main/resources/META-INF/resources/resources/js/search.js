@@ -732,17 +732,18 @@ function statusForestNodeHtml(node, path) {
     + ' data-cand-on="' + escapeHtml(node.candidateOn || "") + '"'
     + ' data-key="' + escapeHtml(path || node.label || node.id) + '">'
     + '<div class="' + rowCls + '">'
-    + (typeof canTreeSelect === "function" && canTreeSelect()
-      ? (inactive ? '<span class="tn-check is-off"></span>'
-        : '<span class="tn-check" data-act="sel-node" data-id="' + escapeHtml(node.id) + '"></span>')
-      : "")
     + '<div class="tn-rowmain" style="padding-left:' + pad + 'px">'
     + '<button type="button" class="tn-caret' + (node.hasChildren ? "" : " is-empty") + '"'
     + ' data-act="sf-toggle" aria-label="Déplier">'
     + '<span class="caret-open">▾</span><span class="caret-shut">▸</span></button>'
+    // Case après la flèche, comme dans l'arbre de la page : elle suit le niveau du concept
+    + (typeof canTreeSelect === "function" && canTreeSelect()
+      ? (inactive ? '<span class="tn-check is-off"></span>'
+        : '<span class="tn-check" data-act="sel-node" data-id="' + escapeHtml(node.id) + '"></span>')
+      : "")
     + '<button type="button" class="tn-label" data-act="open" data-id="' + escapeHtml(node.id)
     + '" data-type="' + escapeHtml(type) + '">'
-    + '<span class="tn-textwrap"><span class="tn-text">' + escapeHtml(node.label || node.id) + "</span></span>"
+    + '<span class="tn-textwrap"><span class="tn-text" title="ID : ' + escapeHtml(node.id) + '">' + escapeHtml(node.label || node.id) + "</span></span>"
     + tags
     + "</button></div></div></div>";
 }

@@ -1,14 +1,13 @@
 package fr.cnrs.opentheso.toolbox.workshop.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.AlignementType;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
-import fr.cnrs.opentheso.entites.ConceptHistorique;
 import fr.cnrs.opentheso.entites.ConceptReplacedBy;
 import fr.cnrs.opentheso.entites.Note;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
-import fr.cnrs.opentheso.entites.NonPreferredTermHistorique;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.terms.Term;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
@@ -17,18 +16,14 @@ import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupRepository;
-import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptReplacedByRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
-import fr.cnrs.opentheso.repositories.HierarchicalRelationshipHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
 import fr.cnrs.opentheso.repositories.LanguageRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
-import fr.cnrs.opentheso.repositories.NonPreferredTermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
-import fr.cnrs.opentheso.repositories.TermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.UserGroupLabelRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
@@ -66,8 +61,7 @@ class WorkshopBulkImportPersistenceTest {
     private UserRepository userRepository;
     @Mock
     private ConceptRepository conceptRepository;
-    @Mock
-    private ConceptHistoriqueRepository conceptHistoriqueRepository;
+
     @Mock
     private ConceptReplacedByRepository conceptReplacedByRepository;
     @Mock
@@ -80,12 +74,10 @@ class WorkshopBulkImportPersistenceTest {
     private PreferredTermRepository preferredTermRepository;
     @Mock
     private TermRepository termRepository;
-    @Mock
-    private TermHistoriqueRepository termHistoriqueRepository;
+
     @Mock
     private NonPreferredTermRepository nonPreferredTermRepository;
-    @Mock
-    private NonPreferredTermHistoriqueRepository nonPreferredTermHistoriqueRepository;
+
     @Mock
     private NoteRepository noteRepository;
     @Mock
@@ -96,8 +88,7 @@ class WorkshopBulkImportPersistenceTest {
     private AlignementSourceRepository alignementSourceRepository;
     @Mock
     private HierarchicalRelationshipRepository hierarchicalRelationshipRepository;
-    @Mock
-    private HierarchicalRelationshipHistoriqueRepository hierarchicalRelationshipHistoriqueRepository;
+
     @Mock
     private ImagesRepository imagesRepository;
     @Mock
@@ -106,6 +97,11 @@ class WorkshopBulkImportPersistenceTest {
     private ThesaurusCsvImportEngine thesaurusCsvImportEngine;
     @Mock
     private WorkshopCsvConceptUpdater workshopCsvConceptUpdater;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private WorkshopBulkImportPersistence persistence;
@@ -254,10 +250,10 @@ class WorkshopBulkImportPersistenceTest {
         assertEquals("TH1", saved.getIdThesaurus());
         assertFalse(saved.isHiden());
 
-        ArgumentCaptor<NonPreferredTermHistorique> historiqueCaptor = ArgumentCaptor.forClass(NonPreferredTermHistorique.class);
-        verify(nonPreferredTermHistoriqueRepository).save(historiqueCaptor.capture());
-        assertEquals("ADD", historiqueCaptor.getValue().getAction());
-        assertEquals("T1", historiqueCaptor.getValue().getIdTerm());
+        ArgumentCaptor<ConceptChangeLog.Change> changeCaptor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog).recordForTerm(org.mockito.ArgumentMatchers.eq("T1"), changeCaptor.capture());
+        assertEquals("ADD", changeCaptor.getValue().action());
+        assertEquals(ConceptChangeLog.SYNONYM, changeCaptor.getValue().element());
     }
 
     @Test
@@ -274,7 +270,7 @@ class WorkshopBulkImportPersistenceTest {
 
         assertFalse(result);
         verify(nonPreferredTermRepository, never()).save(any());
-        verify(nonPreferredTermHistoriqueRepository, never()).save(any());
+        verify(changeLog, never()).recordForTerm(any(), any());
     }
 
     // ---- deprecateConcept ----
@@ -299,12 +295,14 @@ class WorkshopBulkImportPersistenceTest {
 
         assertTrue(result);
         verify(conceptRepository).setStatus("DEP", "C1", "TH1");
-        ArgumentCaptor<ConceptHistorique> captor = ArgumentCaptor.forClass(ConceptHistorique.class);
-        verify(conceptHistoriqueRepository).save(captor.capture());
-        ConceptHistorique saved = captor.getValue();
-        assertEquals("C1", saved.getIdConcept());
-        assertEquals("TH1", saved.getIdThesaurus());
-        assertEquals(7, saved.getIdUser());
+        ArgumentCaptor<ConceptChangeLog.Change> captor = ArgumentCaptor.forClass(ConceptChangeLog.Change.class);
+        verify(changeLog).record(captor.capture());
+        ConceptChangeLog.Change saved = captor.getValue();
+        assertEquals("C1", saved.conceptId());
+        assertEquals("TH1", saved.thesaurusId());
+        assertEquals(7, saved.userId());
+        assertEquals("VA", saved.oldValue());
+        assertEquals("DEP", saved.newValue());
     }
 
     // ---- addReplacedBy ----

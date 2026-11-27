@@ -455,6 +455,19 @@
                 </div>
               </div>
               </ui:fragment>
+              <!-- Journal des modifications du thésaurus : administrateurs, page dédiée comme les statistiques -->
+              <ui:fragment rendered="#{consultationShellBean.adminOnCurrentThesaurus}">
+              <div class="boc boc-clickable" data-act="show" data-panel="viewJournal" role="link" tabindex="0">
+                <div class="boc-h">
+                  <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 4v5h5"/></svg></div>
+                  <div class="boc-ht">
+                    <div class="boc-t">#{localeBean.getMsg('home.journal')}</div>
+                    <div class="boc-d">#{localeBean.getMsg('home.journal.desc')}</div>
+                  </div>
+                  <span class="boc-go static"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                </div>
+              </div>
+              </ui:fragment>
               <ui:fragment rendered="#{thesaurusViewBean.settingsVisible}">
               <details class="boc boc-fold">
                 <summary class="boc-h">

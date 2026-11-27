@@ -207,6 +207,20 @@
   box-shadow:inset 3px 0 0 transparent;transition:background .14s ease,box-shadow .14s ease}
 .prop-item[hidden]{display:none !important}
 .prop-item:last-child{border-bottom:0}
+/* Ligne : la proposition et son bouton « marquer non lue » (un bouton ne peut pas être dans le lien) */
+.prop-line{display:flex;align-items:stretch;border-bottom:1px solid var(--line-2)}
+.prop-line:last-child{border-bottom:0}
+.prop-line[hidden]{display:none !important}
+.prop-line > .prop-item{flex:1;min-width:0;border-bottom:0}
+.prop-unread{flex:0 0 auto;display:grid;place-items:center;width:44px;color:var(--ink-4);
+  text-decoration:none;transition:color .14s,background .14s}
+.prop-unread svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.prop-unread:hover{color:#b56d14;background:rgba(217,137,42,.12)}
+.prop-unread:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+button.prop-unread{border:0;background:transparent;cursor:pointer;padding:0;font:inherit}
+.prop-unread.is-busy{opacity:.45;pointer-events:none}
+.prop-footer-act .prop-footer-unread{margin-right:auto}
 .prop-item:hover{background:color-mix(in srgb, var(--accent-soft) 70%, var(--surface))}
 .prop-item:active{background:var(--accent-soft)}
 .prop-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}

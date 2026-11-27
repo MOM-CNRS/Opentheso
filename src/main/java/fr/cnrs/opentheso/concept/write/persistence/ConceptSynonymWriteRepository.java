@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
 import fr.cnrs.opentheso.shared.repository.NativeQueryParams;
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,10 @@ public class ConceptSynonymWriteRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private ConceptChangeLog changeLog;
 
     @Transactional
     public boolean insertSynonym(
@@ -45,7 +50,7 @@ public class ConceptSynonymWriteRepository {
                 .setParameter("created", Instant.now())
                 .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .executeUpdate();
-        insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, hidden, "ADD");
+        insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, hidden, "ADD", null);
         return true;
     }
 
@@ -80,7 +85,7 @@ public class ConceptSynonymWriteRepository {
         if (updated <= 0) {
             return false;
         }
-        insertHistory(idTerm, newValue, thesaurusId, lang, userId, hidden, "update");
+        insertHistory(idTerm, newValue, thesaurusId, lang, userId, hidden, "update", oldValue);
         return true;
     }
 
@@ -112,7 +117,7 @@ public class ConceptSynonymWriteRepository {
         if (updated <= 0) {
             return false;
         }
-        insertHistory(idTerm, value, thesaurusId, lang, userId, hidden, "update");
+        insertHistory(idTerm, value, thesaurusId, lang, userId, hidden, "update", value);
         return true;
     }
 
@@ -136,7 +141,7 @@ public class ConceptSynonymWriteRepository {
                 .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
                 .executeUpdate();
-        insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, false, "delete");
+        insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, false, "delete", null);
     }
 
     private boolean existsAltLabel(String value, String lang, String thesaurusId) {
@@ -160,26 +165,14 @@ public class ConceptSynonymWriteRepository {
             String lang,
             int userId,
             boolean hidden,
-            String action
+            String action,
+            String oldValue
     ) {
-        entityManager.createNativeQuery("""
-                        INSERT INTO non_preferred_term_historique (
-                            id_term, lexical_value, lang, id_thesaurus,
-                            id_user, hiden, action, modified, source, status
-                        )
-                        VALUES (
-                            :idTerm, :lexicalValue, :lang, :thesaurusId,
-                            :userId, :hidden, :action, :modified, '', ''
-                        )
-                        """)
-                .setParameter(NativeQueryParams.ID_TERM, idTerm)
-                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
-                .setParameter("lang", lang)
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter(NativeQueryParams.HIDDEN, hidden)
-                .setParameter("action", action)
-                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
-                .executeUpdate();
+        changeLog.recordForTerm(idTerm, ConceptChangeLog.Change.of(thesaurusId, null, ConceptChangeLog.SYNONYM, idTerm, lang, action,
+                isDelete(action) ? lexicalValue : oldValue, isDelete(action) ? null : lexicalValue, hidden ? "hidden" : null, userId));
+    }
+
+    private static boolean isDelete(String action) {
+        return "DELETE".equals(ConceptChangeLog.normalizeActionPublic(action));
     }
 }

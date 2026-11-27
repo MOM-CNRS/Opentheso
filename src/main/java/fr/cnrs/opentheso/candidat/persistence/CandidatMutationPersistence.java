@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.candidat.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.CandidatMessages;
 import fr.cnrs.opentheso.entites.CandidatStatus;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
@@ -7,11 +8,9 @@ import fr.cnrs.opentheso.entites.HierarchicalRelationship;
 import fr.cnrs.opentheso.entites.ImageExterne;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
 import fr.cnrs.opentheso.entites.Note;
-import fr.cnrs.opentheso.entites.NoteHistorique;
 import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.PreferredTerm;
-import fr.cnrs.opentheso.entites.TermHistorique;
 import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.models.alignment.AlignementElement;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
@@ -37,13 +36,11 @@ import fr.cnrs.opentheso.repositories.CandidatVoteRepository;
 import fr.cnrs.opentheso.repositories.ConceptCandidatRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
-import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptTermCandidatRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
-import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.repositories.NoteTypeRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
@@ -51,7 +48,6 @@ import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.repositories.PropositionRepository;
 import fr.cnrs.opentheso.repositories.SearchRepository;
 import fr.cnrs.opentheso.repositories.StatusRepository;
-import fr.cnrs.opentheso.repositories.TermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.utils.MessageUtils;
@@ -84,16 +80,15 @@ public class CandidatMutationPersistence {
     private final ConceptDeletionWriteRepository conceptDeletionWriteRepository;
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ConceptRepository conceptRepository;
-    private final ConceptHistoriqueRepository conceptHistoriqueRepository;
     private final PreferencesRepository preferencesRepository;
     private final CandidatStatusRepository candidatStatusRepository;
     private final StatusRepository statusRepository;
     private final CandidatVoteRepository candidatVoteRepository;
     private final TermRepository termRepository;
-    private final TermHistoriqueRepository termHistoriqueRepository;
     private final PreferredTermRepository preferredTermRepository;
     private final NonPreferredTermRepository nonPreferredTermRepository;
     private final NoteRepository noteRepository;
+    private final ConceptChangeLog changeLog;
     private final AlignementRepository alignementRepository;
     private final AlignementTypeRepository alignementTypeRepository;
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
@@ -107,7 +102,6 @@ public class CandidatMutationPersistence {
     private final PropositionRepository propositionRepository;
     private final CandidatReadPersistence candidatReadPersistence;
     private final NoteTypeRepository noteTypeRepository;
-    private final NoteHistoriqueRepository noteHistoriqueRepository;
     private final ImagesRepository imagesRepository;
     private final SystemMailSender systemMailSender;
     private final CandidatVotePersistence candidatVotePersistence;
@@ -559,7 +553,7 @@ public class CandidatMutationPersistence {
                     .modified(Dates.nowUtilDate())
                     .build());
         }
-        addNoteHistorique(identifier, idLang, idThesaurus, note, noteTypeCode, "add", idUser);
+        addNoteHistorique(identifier, idLang, idThesaurus, null, note, noteTypeCode, "add", idUser);
     }
 
     public boolean updateCandidateNote(UpdateCandidateNoteRequest request) {
@@ -567,6 +561,7 @@ public class CandidatMutationPersistence {
         if (noteValue.isEmpty()) {
             return false;
         }
+        String previous = noteValue.get().getLexicalValue();
         noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(request.note()));
         noteValue.get().setNoteSource(request.noteSource());
         noteValue.get().setModified(Dates.nowUtilDate());
@@ -575,7 +570,8 @@ public class CandidatMutationPersistence {
                 request.idConcept(),
                 normalizeIdLang(request.idLang()),
                 request.idThesaurus(),
-                request.note(),
+                previous,
+                noteValue.get().getLexicalValue(),
                 request.noteTypeCode(),
                 "update",
                 request.idUser()
@@ -598,7 +594,7 @@ public class CandidatMutationPersistence {
     public void deleteCandidateNote(int idNote, String identifier, String idLang, String idThesaurus,
                                      String noteTypeCode, String oldNote, int idUser) {
         noteRepository.deleteByIdAndIdThesaurus(idNote, idThesaurus);
-        addNoteHistorique(identifier, normalizeIdLang(idLang), idThesaurus, oldNote, noteTypeCode, "delete", idUser);
+        addNoteHistorique(identifier, normalizeIdLang(idLang), idThesaurus, oldNote, null, noteTypeCode, "delete", idUser);
         candidatVoteRepository.deleteAllByIdThesaurusAndIdConceptAndIdNote(idThesaurus, identifier, String.valueOf(idNote));
     }
 
@@ -719,18 +715,10 @@ public class CandidatMutationPersistence {
         return true;
     }
 
-    private void addNoteHistorique(String idConcept, String idLang, String idThesaurus, String note,
+    private void addNoteHistorique(String idConcept, String idLang, String idThesaurus, String oldNote, String newNote,
                                     String noteTypeCode, String action, int idUser) {
-        noteHistoriqueRepository.save(NoteHistorique.builder()
-                .idThesaurus(idThesaurus)
-                .idConcept(idConcept)
-                .lang(idLang)
-                .lexicalvalue(fr.cnrs.opentheso.utils.StringUtils.convertString(note))
-                .actionPerformed(action)
-                .idUser(idUser)
-                .notetypecode(noteTypeCode)
-                .modified(Dates.nowUtilDate())
-                .build());
+        changeLog.record(ConceptChangeLog.Change.of(idThesaurus, idConcept, ConceptChangeLog.NOTE, noteTypeCode, idLang,
+                action, oldNote, newNote, noteTypeCode, idUser));
     }
 
     private String normalizeIdLang(String idLang) {
@@ -787,17 +775,6 @@ public class CandidatMutationPersistence {
                 .idDoi("")
                 .idHandle("")
                 .build());
-        conceptHistoriqueRepository.save(fr.cnrs.opentheso.entites.ConceptHistorique.builder()
-                .idConcept(concept.getIdConcept())
-                .idThesaurus(concept.getIdThesaurus())
-                .idArk(concept.getIdArk())
-                .status(concept.getStatus())
-                .notation(concept.getNotation())
-                .topConcept(concept.isTopConcept())
-                .idGroup(concept.getIdGroup() == null ? "" : concept.getIdGroup())
-                .idUser(concept.getIdUser())
-                .modified(Dates.nowUtilDate())
-                .build());
         candidatStatusRepository.save(CandidatStatus.builder()
                 .idConcept(concept.getIdConcept())
                 .idThesaurus(concept.getIdThesaurus())
@@ -822,17 +799,8 @@ public class CandidatMutationPersistence {
                 .created(Dates.nowUtilDate())
                 .modified(Dates.nowUtilDate())
                 .build());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(userId)
-                .action("ADD")
-                .modified(Dates.nowDateTime())
-                .build());
+        changeLog.record(ConceptChangeLog.Change.of(termSaved.getIdThesaurus(), conceptId, ConceptChangeLog.LABEL,
+                termSaved.getIdTerm(), termSaved.getLang(), "ADD", null, termSaved.getLexicalValue(), null, userId));
         preferredTermRepository.save(PreferredTerm.builder()
                 .idConcept(conceptId)
                 .idThesaurus(term.getIdThesaurus())
@@ -854,17 +822,9 @@ public class CandidatMutationPersistence {
                 .created(Dates.nowUtilDate())
                 .modified(Dates.nowUtilDate())
                 .build());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(term.getIdTerm())
-                .lexicalValue(term.getLexicalValue())
-                .lang(term.getLang())
-                .idThesaurus(term.getIdThesaurus())
-                .source(term.getSource())
-                .status(term.getStatus())
-                .idUser(userId)
-                .modified(Dates.nowDateTime())
-                .action("New")
-                .build());
+        changeLog.recordForTerm(term.getIdTerm(), ConceptChangeLog.Change.of(term.getIdThesaurus(), null,
+                ConceptChangeLog.LABEL, term.getIdTerm(), term.getLang(), "ADD", null,
+                fr.cnrs.opentheso.utils.StringUtils.convertString(term.getLexicalValue()), null, userId));
     }
 
     private void addNote(String identifier, String idLang, String thesaurusId, String note, String noteTypeCode,

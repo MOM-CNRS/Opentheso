@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.facet.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.concept.write.model.ConceptWriteFacet;
 import fr.cnrs.opentheso.concept.write.service.ConceptWriteSearchService;
 import org.apache.commons.lang3.StringUtils;
@@ -15,9 +16,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class FacetSearchApiController {
 
+    private final ThesaurusReadAccess thesaurusReadAccess;
+
     private final ConceptWriteSearchService conceptWriteSearchService;
 
-    public FacetSearchApiController(ConceptWriteSearchService conceptWriteSearchService) {
+    public FacetSearchApiController(ConceptWriteSearchService conceptWriteSearchService, ThesaurusReadAccess thesaurusReadAccess) {
+        this.thesaurusReadAccess = thesaurusReadAccess;
         this.conceptWriteSearchService = conceptWriteSearchService;
     }
 
@@ -26,6 +30,7 @@ public class FacetSearchApiController {
             @RequestParam(required = false) String thesaurusId,
             @RequestParam(required = false) String lang
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }

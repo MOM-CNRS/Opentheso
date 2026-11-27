@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.collection.write.service;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ConceptGroup;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.entites.ConceptGroupLabel;
@@ -57,6 +58,11 @@ class CollectionMutationServiceTest {
     private BranchConceptSupport branchConceptSupport;
     @Mock
     private CollectionIdentifierAssignmentService collectionIdentifierAssignmentService;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private CollectionMutationService service;

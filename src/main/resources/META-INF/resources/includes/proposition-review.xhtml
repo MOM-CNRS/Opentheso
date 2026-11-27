@@ -130,6 +130,11 @@
       </div>
       <div class="cblock-body">
         <div class="prop-footer-act">
+          <ui:fragment rendered="#{propositionBean.canMarkUnread}">
+            <h:commandLink styleClass="bo-btn ghost sm prop-footer-unread" action="#{propositionBean.markSelectedUnread}">
+              #{localeBean.getMsg('proposition.markUnread')}
+            </h:commandLink>
+          </ui:fragment>
           <button type="button" class="bo-btn ghost danger sm" data-act="prop-delete-ask">
             #{localeBean.getMsg('btnDelete')}
           </button>

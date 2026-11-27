@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
-<ui:fragment rendered="#{instanceAdminBean.statsSection}">
-              <div class="ia-pane ia-dash is-need"
+<!--
+  Tableau de bord des statistiques, partagé :
+  - page d'instance (SuperAdmin) : sans paramètre, sélecteur de thésaurus et données d'instance ;
+  - page Statistiques d'un thésaurus : ui:param dashThesaurusId (thésaurus fixé), dashQuality et
+    dashUsage (blocs Qualité / Audience autorisés), servis par /api/thesaurus-stats.
+-->
+<ui:fragment rendered="#{empty dashThesaurusId ? instanceAdminBean.statsSection : (dashQuality or dashUsage)}">
+              <div class="ia-pane ia-dash#{empty dashThesaurusId ? ' is-need' : ' is-scoped'}"
                    id="iaDash"
                    data-ctx="#{request.contextPath}"
+                   data-api="#{empty dashThesaurusId ? 'instance-stats' : 'thesaurus-stats'}"
+                   data-thesaurus-id="#{dashThesaurusId}"
                    data-msg-empty-title="#{localeBean.getMsg('admin.stats.empty.title')}"
                    data-msg-empty-sub="#{localeBean.getMsg('admin.stats.empty.sub')}"
                    data-msg-load-title="#{localeBean.getMsg('admin.stats.load.title')}"
@@ -36,6 +44,7 @@
                    data-msg-fs-exit="#{localeBean.getMsg('admin.stats.fs.exit')}"
                    data-msg-fs-esc="#{localeBean.getMsg('admin.stats.fs.esc')}">
 
+                <ui:fragment rendered="#{empty dashThesaurusId or dashUsage}">
                 <div class="ia-dash-toolbar">
                   <div class="ia-dash-toolbar-l">
                     <span class="ia-dash-toolbar-k">#{localeBean.getMsg('admin.stats.period')}</span>
@@ -46,6 +55,7 @@
                       <button type="button" class="ia-dash-chip" data-days="365">#{localeBean.getMsg('admin.stats.period.365')}</button>
                     </div>
                   </div>
+                  <ui:fragment rendered="#{empty dashThesaurusId}">
                   <div class="ia-dash-th" id="iaDashThesaurus">
                     <span class="ia-dash-toolbar-k" id="iaDashThesaurusLbl">#{localeBean.getMsg('admin.stats.thesaurus')}</span>
                     <button type="button"
@@ -78,8 +88,11 @@
                       <div class="ia-dash-th-list" id="iaDashThesaurusList" role="listbox"></div>
                     </div>
                   </div>
+                  </ui:fragment>
                 </div>
+                </ui:fragment>
 
+                <ui:fragment rendered="#{empty dashThesaurusId}">
                 <div class="ia-dash-need" id="iaDashNeed">
                   <span class="ia-dash-need-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
@@ -92,7 +105,9 @@
                     #{localeBean.getMsg('admin.stats.need.cta')}
                   </button>
                 </div>
+                </ui:fragment>
 
+                <ui:fragment rendered="#{empty dashThesaurusId or dashUsage}">
                 <div class="ia-dash-kpis" id="iaDashKpis">
                   <div class="ia-dash-kpi">
                     <span class="ia-dash-kpi-ico" aria-hidden="true">
@@ -112,6 +127,7 @@
                       <div class="ia-dash-kpi-l">#{localeBean.getMsg('admin.stats.kpi.searches')}</div>
                     </div>
                   </div>
+                  <ui:fragment rendered="#{empty dashThesaurusId}">
                   <div class="ia-dash-kpi">
                     <span class="ia-dash-kpi-ico" aria-hidden="true">
                       <svg viewBox="0 0 24 24"><path d="M4 17 10 11 4 5"/><path d="M12 19h8"/></svg>
@@ -130,6 +146,7 @@
                       <div class="ia-dash-kpi-l">#{localeBean.getMsg('admin.stats.kpi.thesauri')}</div>
                     </div>
                   </div>
+                  </ui:fragment>
                 </div>
 
                 <div class="ia-dash-empty" id="iaDashEmpty" hidden="hidden">
@@ -141,7 +158,9 @@
                     <div class="ia-empty-d">#{localeBean.getMsg('admin.stats.empty.sub')}</div>
                   </div>
                 </div>
+                </ui:fragment>
 
+                <ui:fragment rendered="#{empty dashThesaurusId or dashQuality}">
                 <article class="ia-dash-card ia-dash-quality" id="iaDashQuality" hidden="hidden">
                   <header class="ia-dash-h">
                     <span class="ia-dash-ico" aria-hidden="true">
@@ -188,7 +207,9 @@
                     </div>
                   </div>
                 </article>
+                </ui:fragment>
 
+                <ui:fragment rendered="#{empty dashThesaurusId or dashUsage}">
                 <div class="ia-dash-activity">
                   <article class="ia-dash-card" id="iaDashTrafficCard">
                     <header class="ia-dash-h">
@@ -265,7 +286,9 @@
                     </div>
                   </article>
                 </div>
+                </ui:fragment>
 
+                <ui:fragment rendered="#{empty dashThesaurusId}">
                 <article class="ia-dash-card" id="iaDashApiCard">
                   <header class="ia-dash-h">
                     <span class="ia-dash-ico" aria-hidden="true">
@@ -282,8 +305,10 @@
                     </div>
                   </div>
                 </article>
+                </ui:fragment>
               </div>
 
+              <ui:fragment rendered="#{empty dashThesaurusId or dashQuality}">
               <div class="ia-dash-drawer" id="iaDashDrawer" hidden="hidden" role="dialog" aria-modal="true" aria-labelledby="iaDashDrawerTitle">
                 <div class="ia-dash-drawer-scrim" data-dash-close="1"></div>
                 <div class="ia-dash-drawer-panel">
@@ -303,5 +328,6 @@
                   </div>
                 </div>
               </div>
+              </ui:fragment>
 </ui:fragment>
 </ui:composition>

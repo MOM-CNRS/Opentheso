@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.collection.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.collection.model.CollectionDetail;
 import fr.cnrs.opentheso.collection.model.CollectionTreeNode;
 import fr.cnrs.opentheso.collection.read.CollectionTreeConsultationService;
@@ -16,9 +17,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class CollectionTreeApiController {
 
+    private final ThesaurusReadAccess thesaurusReadAccess;
+
     private final CollectionTreeConsultationService collectionTreeConsultationService;
 
-    public CollectionTreeApiController(CollectionTreeConsultationService collectionTreeConsultationService) {
+    public CollectionTreeApiController(CollectionTreeConsultationService collectionTreeConsultationService, ThesaurusReadAccess thesaurusReadAccess) {
+        this.thesaurusReadAccess = thesaurusReadAccess;
         this.collectionTreeConsultationService = collectionTreeConsultationService;
     }
 
@@ -28,6 +32,7 @@ public class CollectionTreeApiController {
             @RequestParam(required = false) String lang,
             @RequestParam(required = false, defaultValue = "false") boolean sortByNotation
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }
@@ -44,6 +49,7 @@ public class CollectionTreeApiController {
             @RequestParam(required = false) String lang,
             @RequestParam(required = false, defaultValue = "false") boolean sortByNotation
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }
@@ -61,6 +67,7 @@ public class CollectionTreeApiController {
             @RequestParam(required = false) String lang,
             @RequestParam(required = false, defaultValue = "false") boolean sortByNotation
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isAnyBlank(parentId, thesaurusId)) {
             return List.of();
         }
@@ -78,6 +85,7 @@ public class CollectionTreeApiController {
             @RequestParam(required = false) String thesaurusId,
             @RequestParam(required = false) String lang
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isAnyBlank(groupId, thesaurusId)) {
             return CollectionDetail.empty();
         }

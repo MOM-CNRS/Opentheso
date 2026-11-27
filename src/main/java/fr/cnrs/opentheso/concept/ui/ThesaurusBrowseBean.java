@@ -76,7 +76,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final transient FacetReadService facetReadService;
     private final transient ConceptFullReadService conceptFullReadService;
     private final transient ThesaurusHomeReadService thesaurusHomeReadService;
-    private final transient ConceptHistoryBean conceptHistoryBean;
     private final transient ThesaurusPreferenceService thesaurusPreferenceService;
     private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
     private final transient UserSession userSession;
@@ -1004,17 +1003,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         activeLeftTreeMode = LeftTreeMode.CONCEPT;
         leftTabIndex = 0;
         openFacet(facetId);
-    }
-
-    public void openConceptHistory() {
-        if (selectedConcept == null || StringUtils.isBlank(selectedConcept.preferredTermId())) {
-            return;
-        }
-        conceptHistoryBean.load(
-                thesaurusContext.resolveThesaurusId(),
-                selectedConcept.summary().conceptId(),
-                selectedConcept.preferredTermId()
-        );
     }
 
     public boolean isLoggedIn() {

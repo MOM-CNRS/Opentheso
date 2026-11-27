@@ -98,6 +98,18 @@ public class PropositionMutationService {
         });
     }
 
+    /** Remet une proposition lue dans les nouvelles ; une proposition traitée ne change pas. */
+    @Transactional
+    public boolean markUnread(int propositionId) {
+        Optional<PropositionModification> found = propositionModificationRepository.findById(propositionId);
+        if (found.isEmpty() || !PropositionStatusEnum.LU.name().equals(found.get().getStatus())) {
+            return false;
+        }
+        found.get().setStatus(PropositionStatusEnum.ENVOYER.name());
+        propositionModificationRepository.save(found.get());
+        return true;
+    }
+
     @Transactional
     public void approve(int propositionId, String reviewerName, String adminComment,
                         String conceptLabel, String thesaurusTitle) {

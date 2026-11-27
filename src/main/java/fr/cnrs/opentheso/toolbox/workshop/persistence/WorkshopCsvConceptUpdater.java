@@ -1,15 +1,13 @@
 package fr.cnrs.opentheso.toolbox.workshop.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.ExternalResource;
 import fr.cnrs.opentheso.entites.Gps;
 import fr.cnrs.opentheso.entites.ImageExterne;
 import fr.cnrs.opentheso.entites.Note;
-import fr.cnrs.opentheso.entites.NoteHistorique;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
-import fr.cnrs.opentheso.entites.NonPreferredTermHistorique;
 import fr.cnrs.opentheso.entites.PreferredTerm;
-import fr.cnrs.opentheso.entites.TermHistorique;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.nodes.NodeGps;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
@@ -21,19 +19,14 @@ import fr.cnrs.opentheso.repositories.AlignementSourceRepository;
 import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
 import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
 import fr.cnrs.opentheso.repositories.GpsRepository;
-import fr.cnrs.opentheso.repositories.HierarchicalRelationshipHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.ImagesRepository;
-import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
-import fr.cnrs.opentheso.repositories.NonPreferredTermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
-import fr.cnrs.opentheso.repositories.TermHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
-import fr.cnrs.opentheso.entites.HierarchicalRelationshipHistorique;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptLabel;
 import fr.cnrs.opentheso.toolbox.edition.model.ThesaurusCsvConceptObject;
 import fr.cnrs.opentheso.toolbox.edition.support.ThesaurusCsvGpsParser;
@@ -58,11 +51,9 @@ public class WorkshopCsvConceptUpdater {
 
     private final PreferredTermRepository preferredTermRepository;
     private final TermRepository termRepository;
-    private final TermHistoriqueRepository termHistoriqueRepository;
     private final NonPreferredTermRepository nonPreferredTermRepository;
-    private final NonPreferredTermHistoriqueRepository nonPreferredTermHistoriqueRepository;
     private final NoteRepository noteRepository;
-    private final NoteHistoriqueRepository noteHistoriqueRepository;
+    private final ConceptChangeLog changeLog;
     private final AlignementRepository alignementRepository;
     private final AlignementTypeRepository alignementTypeRepository;
     private final AlignementSourceRepository alignementSourceRepository;
@@ -70,7 +61,6 @@ public class WorkshopCsvConceptUpdater {
     private final GpsRepository gpsRepository;
     private final ImagesRepository imagesRepository;
     private final HierarchicalRelationshipRepository hierarchicalRelationshipRepository;
-    private final HierarchicalRelationshipHistoriqueRepository hierarchicalRelationshipHistoriqueRepository;
     private final ConceptRepository conceptRepository;
 
     @Getter
@@ -534,21 +524,13 @@ public class WorkshopCsvConceptUpdater {
         if (term.isEmpty()) {
             return;
         }
+        String previous = term.get().getLexicalValue();
         term.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label));
         term.get().setContributor(idUser);
         term.get().setModified(Dates.nowUtilDate());
         termRepository.save(term.get());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(term.get().getIdTerm())
-                .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label))
-                .lang(idLang)
-                .idThesaurus(idTheso)
-                .source("")
-                .status("")
-                .idUser(idUser)
-                .action("UPDATE")
-                .modified(Dates.nowDateTime())
-                .build());
+        changeLog.recordForTerm(idTerm, ConceptChangeLog.Change.of(idTheso, null, ConceptChangeLog.LABEL, idTerm, idLang,
+                "UPDATE", previous, term.get().getLexicalValue(), null, idUser));
     }
 
     private void addTermTraduction(String label, String idTerm, String idLang, String idTheso, int idUser) {
@@ -565,17 +547,8 @@ public class WorkshopCsvConceptUpdater {
                 .created(Dates.nowUtilDate())
                 .modified(Dates.nowUtilDate())
                 .build());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(idUser)
-                .modified(Dates.nowDateTime())
-                .action("New")
-                .build());
+        changeLog.recordForTerm(idTerm, ConceptChangeLog.Change.of(idTheso, null, ConceptChangeLog.LABEL, idTerm, idLang,
+                "ADD", null, termSaved.getLexicalValue(), null, idUser));
     }
 
     private void addTermTraduction(Term term, int idUser) {
@@ -597,13 +570,13 @@ public class WorkshopCsvConceptUpdater {
                 .created(Dates.nowUtilDate())
                 .modified(Dates.nowUtilDate())
                 .build());
-        saveNonPreferredTrace(term.getIdTerm(), term.getLexicalValue(), term.getIdThesaurus(), term.getLang(), idUser, term.isHidden(), "ADD");
+        saveNonPreferredTrace(term.getIdTerm(), null, term.getLexicalValue(), term.getIdThesaurus(), term.getLang(), idUser, term.isHidden(), "ADD");
         return true;
     }
 
     private void deleteNonPreferredTerm(String idTerm, String idLang, String lexicalValue, String idTheso, int idUser) {
         nonPreferredTermRepository.deleteByIdThesaurusAndIdTermAndLexicalValueAndLang(idTheso, idTerm, lexicalValue, idLang);
-        saveNonPreferredTrace(idTerm, lexicalValue, idTheso, idLang, idUser, false, "delete");
+        saveNonPreferredTrace(idTerm, lexicalValue, null, idTheso, idLang, idUser, false, "delete");
     }
 
     private List<String> getNonPreferredTermValues(String idThesaurus, String idTerm, String lang) {
@@ -633,31 +606,22 @@ public class WorkshopCsvConceptUpdater {
         nonPreferredTerm.get().setHiden(isHidden);
         nonPreferredTerm.get().setModified(Dates.nowUtilDate());
         nonPreferredTermRepository.save(nonPreferredTerm.get());
-        saveNonPreferredTrace(idTerm, newValue, idTheso, idLang, idUser, isHidden, "update");
+        saveNonPreferredTrace(idTerm, oldValue, newValue, idTheso, idLang, idUser, isHidden, "update");
         return true;
     }
 
     private void saveNonPreferredTrace(
             String idTerm,
-            String lexicalValue,
+            String oldValue,
+            String newValue,
             String idThesaurus,
             String idLang,
             int idUser,
             boolean isHidden,
             String action
     ) {
-        nonPreferredTermHistoriqueRepository.save(NonPreferredTermHistorique.builder()
-                .idTerm(idTerm)
-                .lexicalValue(lexicalValue)
-                .idThesaurus(idThesaurus)
-                .lang(idLang)
-                .idUser(idUser)
-                .hiden(isHidden)
-                .action(action)
-                .modified(Dates.nowUtilDate())
-                .status("")
-                .source("")
-                .build());
+        changeLog.recordForTerm(idTerm, ConceptChangeLog.Change.of(idThesaurus, null, ConceptChangeLog.SYNONYM, idTerm,
+                idLang, action, oldValue, newValue, isHidden ? "hidden" : null, idUser));
     }
 
     private void addNote(
@@ -739,6 +703,7 @@ public class WorkshopCsvConceptUpdater {
         if (noteValue.isEmpty()) {
             return false;
         }
+        String previous = noteValue.get().getLexicalValue();
         noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(update.note()));
         noteValue.get().setNoteSource(update.noteSource());
         noteValue.get().setModified(Dates.nowUtilDate());
@@ -747,7 +712,8 @@ public class WorkshopCsvConceptUpdater {
                 idConcept,
                 normalizeIdLang(idLang),
                 idThesaurus,
-                update.note(),
+                previous,
+                noteValue.get().getLexicalValue(),
                 update.noteTypeCode(),
                 "update",
                 update.idUser()
@@ -759,21 +725,14 @@ public class WorkshopCsvConceptUpdater {
             String idConcept,
             String idLang,
             String idThesaurus,
-            String note,
+            String oldNote,
+            String newNote,
             String noteTypeCode,
             String actionPerformed,
             int idUser
     ) {
-        noteHistoriqueRepository.save(NoteHistorique.builder()
-                .idThesaurus(idThesaurus)
-                .idConcept(idConcept)
-                .lang(idLang)
-                .lexicalvalue(fr.cnrs.opentheso.utils.StringUtils.convertString(note))
-                .actionPerformed(actionPerformed)
-                .idUser(idUser)
-                .notetypecode(noteTypeCode)
-                .modified(Dates.nowUtilDate())
-                .build());
+        changeLog.record(ConceptChangeLog.Change.of(idThesaurus, idConcept, ConceptChangeLog.NOTE, noteTypeCode, idLang,
+                actionPerformed, oldNote, newNote, noteTypeCode, idUser));
     }
 
     private boolean addNewAlignment(NodeAlignment nodeAlignment) {
@@ -831,7 +790,7 @@ public class WorkshopCsvConceptUpdater {
     }
 
     private void deleteRelationBT(String idConceptNt, String idThesaurus, String idConceptBt, int idUser) {
-        addRelationHistorique(idConceptNt, idThesaurus, idConceptBt, "BT", idUser, "DEL");
+        addRelationHistorique(idConceptNt, idThesaurus, idConceptBt, "BT", idUser, "DELETE");
         hierarchicalRelationshipRepository.deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
                 idThesaurus, idConceptNt, idConceptBt, "BT");
         hierarchicalRelationshipRepository.deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
@@ -862,15 +821,9 @@ public class WorkshopCsvConceptUpdater {
             int idUser,
             String action
     ) {
-        hierarchicalRelationshipHistoriqueRepository.save(HierarchicalRelationshipHistorique.builder()
-                .idConcept1(idConcept1)
-                .idConcept2(idConcept2)
-                .idThesaurus(idThesaurus)
-                .modified(Dates.nowUtilDate())
-                .idUser(idUser)
-                .action(action)
-                .role(role)
-                .build());
+        boolean delete = "DELETE".equals(action);
+        changeLog.record(ConceptChangeLog.Change.of(idThesaurus, idConcept1, ConceptChangeLog.RELATION, idConcept2, null,
+                action, delete ? idConcept2 : null, delete ? null : idConcept2, role, idUser));
     }
 
     private String normalizeIdLang(String idLang) {

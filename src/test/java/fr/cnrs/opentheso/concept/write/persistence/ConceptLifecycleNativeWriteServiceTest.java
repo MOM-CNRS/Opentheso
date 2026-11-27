@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.concept.write.model.command.AddReplacedByCommand;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
@@ -43,6 +44,11 @@ class ConceptLifecycleNativeWriteServiceTest {
     @Mock
     private CandidatLifecyclePersistence candidatLifecyclePersistence;
 
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
+
     @InjectMocks
     private ConceptLifecycleNativeWriteService service;
 
@@ -75,14 +81,15 @@ class ConceptLifecycleNativeWriteServiceTest {
     @Test
     void deprecateConcept_updatesStatusAndRecordsHistory() {
         var command = new DeprecateConceptCommand("TH1", "C1", 7, "admin");
-        var snapshot = new ConceptSnapshot("C1", "TH1", "", "DEP", "", false);
+        var snapshot = new ConceptSnapshot("C1", "TH1", "", "D", "", false);
         when(conceptLifecycleWriteRepository.updateConceptStatus("TH1", "C1", "DEP")).thenReturn(true);
         when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1")).thenReturn(Optional.of(snapshot));
 
         var result = service.deprecateConcept(command);
 
         assertEquals(MutationOutcome.OK, result.outcome());
-        verify(conceptLifecycleWriteRepository).insertConceptHistory(snapshot, 7);
+        verify(changeLog).record(ConceptChangeLog.Change.of("TH1", "C1", ConceptChangeLog.STATUS,
+                null, null, "UPDATE", "D", "DEP", null, 7));
         verify(conceptWritePostMutationRepository).saveContributorDcTerm("TH1", "C1", "admin");
     }
 
@@ -188,5 +195,25 @@ class ConceptLifecycleNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptLifecycleWriteRepository).deleteReplacedBy("C1", "C2", "TH1");
         verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 7);
+    }
+
+    @Test
+    void addReplacedBy_recordsTheTargetInTheJournal() {
+        var result = service.addReplacedBy(new AddReplacedByCommand("TH1", "C1", "C2", 7, "admin"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(changeLog).record(ConceptChangeLog.Change.of("TH1", "C1", ConceptChangeLog.REPLACED_BY, "C2",
+                null, "ADD", null, "C2", null, 7));
+    }
+
+    @Test
+    void deprecateConcept_alreadyDeprecated_isNotJournaledTwice() {
+        var snapshot = new ConceptSnapshot("C1", "TH1", "", "DEP", "", false);
+        when(conceptLifecycleWriteRepository.updateConceptStatus("TH1", "C1", "DEP")).thenReturn(true);
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1")).thenReturn(Optional.of(snapshot));
+
+        service.deprecateConcept(new DeprecateConceptCommand("TH1", "C1", 7, "admin"));
+
+        verify(changeLog, never()).record(org.mockito.ArgumentMatchers.any());
     }
 }

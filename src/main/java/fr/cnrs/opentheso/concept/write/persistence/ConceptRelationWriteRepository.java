@@ -1,12 +1,12 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
 import fr.cnrs.opentheso.shared.repository.NativeQueryParams;
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -14,6 +14,10 @@ public class ConceptRelationWriteRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private ConceptChangeLog changeLog;
 
     @Transactional
     public void addHierarchicalLink(String conceptId1, String conceptId2, String thesaurusId, String role, int userId) {
@@ -278,23 +282,11 @@ public class ConceptRelationWriteRepository {
             int userId,
             String action
     ) {
-        entityManager.createNativeQuery("""
-                        INSERT INTO hierarchical_relationship_historique (
-                            id_concept1, id_concept2, id_thesaurus, role,
-                            modified, id_user, action
-                        )
-                        VALUES (
-                            :conceptId1, :conceptId2, :thesaurusId, :role,
-                            :modified, :userId, :action
-                        )
-                        """)
-                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
-                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter("role", role)
-                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
-                .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter("action", action)
-                .executeUpdate();
+        changeLog.record(ConceptChangeLog.Change.of(thesaurusId, conceptId1, ConceptChangeLog.RELATION, conceptId2, null, action,
+                isDelete(action) ? conceptId2 : null, isDelete(action) ? null : conceptId2, role, userId));
+    }
+
+    private static boolean isDelete(String action) {
+        return "DELETE".equals(ConceptChangeLog.normalizeActionPublic(action));
     }
 }

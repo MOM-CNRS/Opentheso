@@ -1,6 +1,6 @@
 /** Tableau de bord d'instance — branchement des actions. */
 (function () {
-  const { closeDrawer, closeFs, closeThesaurusPicker, downloadCsv, fetchJson, fillThesauri, hasThesaurus, loadOverview, loadQuality, mountFsButtons, openThesaurusPicker, paintThesaurusList, renderSearch, root, setThesaurus, state, syncSearchTabs, thesaurusOpen, toggleFs, toggleThesaurusPicker } = window.IaDashParts;
+  const { scopedThesaurusId, closeDrawer, closeFs, closeThesaurusPicker, downloadCsv, fetchJson, fillThesauri, hasThesaurus, loadOverview, loadQuality, mountFsButtons, openThesaurusPicker, paintThesaurusList, renderSearch, root, setThesaurus, state, syncSearchTabs, thesaurusOpen, toggleFs, toggleThesaurusPicker } = window.IaDashParts;
 function bind() {
   const el = root();
   if (!el || el.getAttribute("data-bound") === "1") return;
@@ -102,6 +102,13 @@ function boot() {
   if (!root()) return;
   bind();
   mountFsButtons();
+  const scoped = scopedThesaurusId();
+  if (scoped) {
+    state.thesaurusId = scoped;
+    loadOverview();
+    loadQuality();
+    return;
+  }
   fetchJson("filters").then((f) => {
     fillThesauri(f && f.thesauri);
     if (hasThesaurus()) {

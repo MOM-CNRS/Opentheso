@@ -61,7 +61,7 @@ function closeThesaurus() {
 function setThesaurusMenu(open) {
   const nav = document.getElementById("navThesaurus");
   const btn = document.getElementById("thesaurusMenuBtn");
-  const narrow = !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+  const narrow = !!(window.matchMedia && window.matchMedia("(max-width: 900px)").matches);
   const on = !!open && narrow;
   if (nav) nav.classList.toggle("is-mobile-open", on);
   if (btn) {
@@ -234,8 +234,11 @@ function applyPropBoardFilter() {
   let visible = 0;
   items.forEach((row) => {
     const hay = norm(row.getAttribute("data-search") || row.textContent);
+    // La ligne regroupe la proposition et son bouton « marquer non lue » : on la masque entière
+    const line = row.closest(".prop-line");
     const on = !q || hay.indexOf(q) >= 0;
     row.hidden = !on;
+    if (line) line.hidden = !on;
     if (on) visible += 1;
   });
   const empty = $("#propFilterEmpty");
@@ -304,6 +307,18 @@ function ensurePropCommentFilled() {
   markPropCommentError();
   return false;
 }
+
+document.addEventListener("click", (e) => {
+  const btn = e.target && e.target.closest ? e.target.closest(".prop-unread[data-unread-id]") : null;
+  if (!btn) return;
+  e.preventDefault();
+  const field = document.getElementById("propUnreadId");
+  const go = document.getElementById("propUnreadGo");
+  if (!field || !go || btn.classList.contains("is-busy")) return;
+  btn.classList.add("is-busy");
+  field.value = btn.getAttribute("data-unread-id") || "";
+  go.click();
+});
 
 function onPropBoardAjax(data) {
   const panes = $("#propPanes");

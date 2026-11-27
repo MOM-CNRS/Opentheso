@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
@@ -56,6 +57,8 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
+    /** Ligne mise en avant à l'ouverture (nouvel alignement ou alignement à modifier) ; -1 si aucune. */
+    private int focusIndex = -1;
 
     public boolean isEditable() {
         return thesaurusViewBean.getSelectedConcept() != null
@@ -87,9 +90,43 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
         errorMessage = "";
         flashMessage = "";
         flashToken = "";
+        focusIndex = -1;
         editing = true;
         thesaurusViewBean.setFicheEditCard(FICHE_CARD);
         conceptSelectionContext.update(thesaurusViewBean.getId(), detail);
+    }
+
+    /** « Ajouter un alignement » : l'éditeur s'ouvre sur une nouvelle ligne vide, placée en dernier. */
+    public void startAdding() {
+        startEditing();
+        if (!editing) {
+            return;
+        }
+        boolean onlyBlank = rows.size() == 1 && !rows.get(0).isExisting();
+        if (!onlyBlank) {
+            rows.add(newRow());
+        }
+        focusIndex = rows.size() - 1;
+    }
+
+    /** Crayon d'un alignement : l'éditeur s'ouvre sur cet alignement, mis en avant. */
+    public void startEditingAlignment(String alignmentId) {
+        startEditing();
+        if (!editing) {
+            return;
+        }
+        focusIndex = -1;
+        int id = NumberUtils.toInt(StringUtils.trimToEmpty(alignmentId), -1);
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).isExisting() && rows.get(i).getAlignmentId() == id) {
+                focusIndex = i;
+                break;
+            }
+        }
+    }
+
+    public boolean isFocused(int index) {
+        return index == focusIndex;
     }
 
     public void cancel() {
@@ -101,6 +138,7 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
             return;
         }
         rows.add(newRow());
+        focusIndex = rows.size() - 1;
     }
 
     public void setRowType(int index, int typeId) {
@@ -117,6 +155,11 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
         rows.remove(index);
         if (rows.isEmpty()) {
             rows.add(newRow());
+        }
+        if (focusIndex == index) {
+            focusIndex = -1;
+        } else if (focusIndex > index) {
+            focusIndex--;
         }
     }
 
@@ -321,6 +364,7 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
             thesaurusViewBean.setFicheEditCard(null);
         }
         editingConceptId = null;
+        focusIndex = -1;
         rows = new ArrayList<>();
         alignmentTypes = new ArrayList<>();
         errorMessage = "";

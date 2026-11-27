@@ -157,11 +157,34 @@ class PropositionAccessPolicyTest {
     }
 
     @Test
-    void canDecide_userIdVariantBlocksAuthor() {
+    void canDecide_userIdVariantBlocksAuthorManager() {
         when(rightsService.can(4, Permission.SUPER_ADMIN)).thenReturn(false);
-        when(rightsService.roleOnThesaurus(4, "TH1")).thenReturn(Optional.of(2));
+        when(rightsService.roleOnThesaurus(4, "TH1")).thenReturn(Optional.of(3));
         assertFalse(policy.canDecide(4, "TH1", "a@b.fr", "a@b.fr"));
         assertTrue(policy.canDecide(4, "TH1", "a@b.fr", "other@b.fr"));
+    }
+
+    @Test
+    void canDecide_userIdVariantLetsAuthorAdminDecide() {
+        when(rightsService.can(4, Permission.SUPER_ADMIN)).thenReturn(false);
+        when(rightsService.roleOnThesaurus(4, "TH1")).thenReturn(Optional.of(2));
+        assertTrue(policy.canDecide(4, "TH1", "a@b.fr", "a@b.fr"));
+    }
+
+    @Test
+    void canDecide_userIdVariantLetsAuthorSuperAdminDecide() {
+        when(rightsService.can(4, Permission.SUPER_ADMIN)).thenReturn(true);
+        assertTrue(policy.canDecide(4, "TH1", "a@b.fr", "a@b.fr"));
+    }
+
+    @Test
+    void canDecide_letsAuthorDecideWhenAdminOfTheProject() {
+        stubLoggedUser(7, false);
+        when(rightsService.roleOnThesaurus(7, "TH1")).thenReturn(Optional.of(2));
+        when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
+        when(rightsService.isAdminOfThesaurusProject(userSession, "TH1")).thenReturn(true);
+
+        assertTrue(policy.canDecide(userSession, "TH1", "a@b.fr"));
     }
 
     @Test

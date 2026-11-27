@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.concept.write.service.ConceptWriteSearchService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.MediaType;
@@ -14,9 +15,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class ConceptSearchApiController {
 
+    private final ThesaurusReadAccess thesaurusReadAccess;
+
     private final ConceptWriteSearchService conceptWriteSearchService;
 
-    public ConceptSearchApiController(ConceptWriteSearchService conceptWriteSearchService) {
+    public ConceptSearchApiController(ConceptWriteSearchService conceptWriteSearchService, ThesaurusReadAccess thesaurusReadAccess) {
+        this.thesaurusReadAccess = thesaurusReadAccess;
         this.conceptWriteSearchService = conceptWriteSearchService;
     }
 
@@ -28,6 +32,7 @@ public class ConceptSearchApiController {
             @RequestParam(required = false) String excludeId,
             @RequestParam(required = false, defaultValue = "false") boolean customOnly
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isAnyBlank(thesaurusId, q)) {
             return List.of();
         }

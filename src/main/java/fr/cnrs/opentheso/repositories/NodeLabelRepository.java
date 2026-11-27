@@ -39,6 +39,10 @@ public interface NodeLabelRepository extends JpaRepository<NodeLabel, Integer> {
     @Query("UPDATE NodeLabel t SET t.idThesaurus = :newIdThesaurus WHERE t.idThesaurus = :oldIdThesaurus")
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 
+    @Modifying
+    @Query(value = "UPDATE node_label SET id_thesaurus = :target WHERE id_facet = :facet AND id_thesaurus = :from", nativeQuery = true)
+    void updateThesaurusByFacet(@Param("facet") String facet, @Param("from") String from, @Param("target") String target);
+
     @Query(value = """
         SELECT nl.idFacet, nl.lexicalValue, nl.lang, nl.created, nl.modified, ta.idConceptParent
         FROM NodeLabel nl JOIN ThesaurusArray ta ON nl.idFacet = ta.idFacet AND nl.idThesaurus = ta.idThesaurus

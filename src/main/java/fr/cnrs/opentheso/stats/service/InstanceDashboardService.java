@@ -52,18 +52,36 @@ public class InstanceDashboardService {
 
     @Transactional(readOnly = true)
     public InstanceDashboardOverview overview(DashboardPeriod period, String thesaurusId) {
+        return buildOverview(period, StringUtils.trimToNull(thesaurusId), true);
+    }
+
+    /**
+     * Audience d'un seul thésaurus, pour sa page de statistiques : mêmes calculs que
+     * {@link #overview}, sans les données propres à l'instance (appels API, nombre de
+     * thésaurus actifs, répartition par thésaurus), qui ne sont pas filtrables par thésaurus.
+     */
+    @Transactional(readOnly = true)
+    public InstanceDashboardOverview thesaurusOverview(DashboardPeriod period, String thesaurusId) {
+        String th = StringUtils.trimToNull(thesaurusId);
+        if (th == null) {
+            throw new IllegalArgumentException("thesaurusId is required");
+        }
+        return buildOverview(period, th, false);
+    }
+
+    private InstanceDashboardOverview buildOverview(DashboardPeriod period, String th, boolean instanceScope) {
         LocalDate from = period.fromDate();
         LocalDate to = period.toDate();
         LocalDateTime fromTs = from.atStartOfDay();
         LocalDateTime toTs = to.plusDays(1).atStartOfDay();
-        String th = StringUtils.trimToNull(thesaurusId);
         try {
             UsageKpis raw = usageQueryRepository.loadKpis(from, to, th);
             if (raw == null) {
                 return emptyOverview(period, from, to, th);
             }
-            InstanceDashboardKpis kpis = new InstanceDashboardKpis(
-                    raw.views(), raw.searches(), raw.apiCalls(), raw.activeThesauri());
+            InstanceDashboardKpis kpis = instanceScope
+                    ? new InstanceDashboardKpis(raw.views(), raw.searches(), raw.apiCalls(), raw.activeThesauri())
+                    : new InstanceDashboardKpis(raw.views(), raw.searches(), 0, 0);
             boolean noActivity = kpis.views() == 0 && kpis.searches() == 0 && kpis.apiCalls() == 0;
             return new InstanceDashboardOverview(
                     period.days(),
@@ -75,7 +93,7 @@ public class InstanceDashboardService {
                     th == null ? usageQueryRepository.loadByThesaurus(from, to) : List.of(),
                     usageQueryRepository.loadByLanguage(fromTs, toTs, th),
                     usageQueryRepository.loadTopConcepts(from, to, th, TOP_CONCEPTS),
-                    usageQueryRepository.loadApiUsage(fromTs, toTs, TOP_API),
+                    instanceScope ? usageQueryRepository.loadApiUsage(fromTs, toTs, TOP_API) : List.of(),
                     new SearchStats(
                             usageQueryRepository.loadFailedSearches(fromTs, toTs, th, TOP_SEARCHES),
                             usageQueryRepository.loadSynonymSearches(fromTs, toTs, th, TOP_SEARCHES),

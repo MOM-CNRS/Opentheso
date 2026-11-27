@@ -19,6 +19,7 @@ import fr.cnrs.opentheso.repositories.HierarchicalRelationshipHistoriqueReposito
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
+import fr.cnrs.opentheso.repositories.NodeLabelRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PropositionRepository;
@@ -56,11 +57,14 @@ public class ConceptTransferWriteRepository {
     private final ExternalResourceRepository externalResourceRepository;
     private final ExternalImageRepository externalImageRepository;
     private final ConceptDcTermRepository conceptDcTermRepository;
+    private final NodeLabelRepository nodeLabelRepository;
+    private final fr.cnrs.opentheso.concept.history.ConceptChangeLog changeLog;
 
     @Transactional
     public void moveConceptToAnotherThesaurus(String conceptId, String sourceThesaurusId, String targetThesaurusId) {
         conceptRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-        thesaurusArrayRepository.updateThesaurusByParent(conceptId, sourceThesaurusId, targetThesaurusId);
+        moveFacetsOfParent(conceptId, sourceThesaurusId, targetThesaurusId);
+        changeLog.moveConcept(conceptId, sourceThesaurusId, targetThesaurusId);
         conceptHistoriqueRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
         termRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
         nonPreferredTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
@@ -87,5 +91,17 @@ public class ConceptTransferWriteRepository {
         externalResourceRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
         externalImageRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
         conceptDcTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+    }
+
+    /**
+     * Facettes dont le concept est le parent : la facette, ses libellés et ses notes suivent le concept.
+     * Sans les libellés (node_label), la facette arrivait dans le thésaurus cible avec son seul identifiant.
+     */
+    private void moveFacetsOfParent(String conceptId, String sourceThesaurusId, String targetThesaurusId) {
+        for (String facetId : thesaurusArrayRepository.findFacetIdsByParent(conceptId, sourceThesaurusId)) {
+            nodeLabelRepository.updateThesaurusByFacet(facetId, sourceThesaurusId, targetThesaurusId);
+            noteRepository.updateThesaurusByConcept(facetId, sourceThesaurusId, targetThesaurusId);
+        }
+        thesaurusArrayRepository.updateThesaurusByParent(conceptId, sourceThesaurusId, targetThesaurusId);
     }
 }

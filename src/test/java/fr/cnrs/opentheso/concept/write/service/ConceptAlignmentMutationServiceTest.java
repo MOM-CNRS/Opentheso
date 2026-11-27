@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.service;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.AlignementType;
 import fr.cnrs.opentheso.models.NodeAlignmentProjection;
@@ -46,6 +47,11 @@ class ConceptAlignmentMutationServiceTest {
     private ImagesRepository imagesRepository;
     @Mock
     private GpsRepository gpsRepository;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private ConceptAlignmentMutationService service;

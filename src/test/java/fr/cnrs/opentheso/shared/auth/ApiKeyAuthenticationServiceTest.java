@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.shared.auth;
 
+import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
+
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyMissingException;
 import org.junit.jupiter.api.Test;
@@ -25,7 +27,8 @@ class ApiKeyAuthenticationServiceTest {
 
     @Test
     void resolveUserId_usesXApiKeyHeader() {
-        when(apiKeyLookupService.findUserIdByApiKey("key-v2")).thenReturn(Optional.of(10));
+        when(apiKeyLookupService.lookup("key-v2")).thenReturn(Optional.of(
+                new ApiKeyLookupService.ApiKeyMatch(10, "u", ApiKeyState.VALID)));
 
         assertEquals(10, apiKeyAuthenticationService.resolveUserId("key-v2", null));
     }
@@ -38,9 +41,19 @@ class ApiKeyAuthenticationServiceTest {
 
     @Test
     void resolveUserId_throwsWhenKeyInvalid() {
-        when(apiKeyLookupService.findUserIdByApiKey("bad-key")).thenReturn(Optional.empty());
+        when(apiKeyLookupService.lookup("bad-key")).thenReturn(Optional.empty());
 
         assertThrows(ApiKeyInvalidException.class,
                 () -> apiKeyAuthenticationService.resolveUserId("bad-key", null));
+    }
+
+    @Test
+    void resolveUserId_refusesAnExpiredKeyAsExpired() {
+        when(apiKeyLookupService.lookup("old-key")).thenReturn(Optional.of(
+                new ApiKeyLookupService.ApiKeyMatch(10, "u", ApiKeyState.EXPIRED)));
+
+        ApiKeyInvalidException e = assertThrows(ApiKeyInvalidException.class,
+                () -> apiKeyAuthenticationService.resolveUserId("old-key", null));
+        assertEquals(ApiKeyState.EXPIRED, e.getState());
     }
 }

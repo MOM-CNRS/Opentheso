@@ -182,26 +182,13 @@ function runBulkMove() {
     showMoveErr("Choisissez une destination.");
     return;
   }
-  ensureBulkMoveConfirm();
-  const text = $("#bulkMoveConfirmText");
-  if (text) {
-    const n = members.length;
-    const s = n > 1 ? "s" : "";
-    const dest = state.moveTarget.id === "__root"
-      ? "à la racine du thésaurus"
-      : "sous « " + state.moveTarget.pref + " »";
-    text.textContent = n + " concept" + s + " seront déplacé" + s + " " + dest
-      + ". La hiérarchie entre les concepts sélectionnés est conservée.";
-  }
-  if (typeof showConfirm === "function") {
-    showConfirm("#bulkMoveConfirm");
-    return;
-  }
+  // Pas de seconde confirmation : le bouton « Déplacer » du formulaire suffit
   confirmBulkMove();
 }
 
 function confirmBulkMove() {
   hideBulkMoveConfirm();
+  const runBtn = $("#bulkMoveRun");
   const members = selectedMoveMembers();
   if (!members.length || !state.moveTarget) {
     runBulkMove();
@@ -211,6 +198,7 @@ function confirmBulkMove() {
     showMoveErr("Déplacement indisponible.");
     return;
   }
+  if (runBtn) runBtn.classList.add("is-off");
   clickPreviewJsf("previewBulkMoveGo", {
     previewBulkMoveTarget: state.moveTarget.id,
     previewBulkMoveIds: members.join("\n")
@@ -516,26 +504,13 @@ function runBulkXfer() {
     showXferErr("Choisissez un emplacement");
     return;
   }
-  ensureBulkXferConfirm();
-  const text = $("#bulkXferConfirmText");
-  if (text) {
-    const n = members.length;
-    const s = n > 1 ? "s" : "";
-    const dest = state.xferParent.id === "__root"
-      ? "à la racine"
-      : "sous « " + state.xferParent.pref + " »";
-    text.textContent = n + " concept" + s + " (et leur branche) seront déplacé" + s
-      + " vers « " + state.xferTarget.name + " », " + dest + ".";
-  }
-  if (typeof showConfirm === "function") {
-    showConfirm("#bulkXferConfirm");
-    return;
-  }
+  // Pas de seconde confirmation : le bouton « Déplacer » du formulaire suffit
   confirmBulkXfer();
 }
 
 function confirmBulkXfer() {
   hideBulkXferConfirm();
+  const runBtn = $("#bulkXferRun");
   const members = selectedMoveMembers();
   if (!members.length || !state.xferTarget || !state.xferParent) {
     runBulkXfer();
@@ -545,6 +520,7 @@ function confirmBulkXfer() {
     showXferErr("Déplacement indisponible.");
     return;
   }
+  if (runBtn) runBtn.classList.add("is-off");
   clickPreviewJsf("previewBulkXferGo", {
     previewBulkXferTarget: state.xferTarget.id,
     previewBulkXferParent: state.xferParent.id,

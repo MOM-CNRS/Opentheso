@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.facet.write.service;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ConceptFacet;
 import fr.cnrs.opentheso.entites.NodeLabel;
 import fr.cnrs.opentheso.entites.ThesaurusArray;
@@ -35,6 +36,7 @@ public class FacetMutationService {
     private final ConceptFacetRepository conceptFacetRepository;
     private final NodeLabelRepository nodeLabelRepository;
     private final BranchConceptSupport branchConceptSupport;
+    private final ConceptChangeLog changeLog;
 
     @Transactional
     public MutationResult renamePreferredLabel(RenameFacetLabelCommand command) {
@@ -85,6 +87,8 @@ public class FacetMutationService {
         if (CollectionUtils.isEmpty(conceptIds)) {
             return MutationResult.validationError("Aucun concept sélectionné !");
         }
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.FACET,
+                command.facetId(), conceptIds, "ADD", null);
         for (String conceptId : conceptIds) {
             conceptFacetRepository.save(ConceptFacet.builder()
                     .idFacet(command.facetId())
@@ -105,6 +109,8 @@ public class FacetMutationService {
         if (CollectionUtils.isEmpty(conceptIds)) {
             return MutationResult.validationError("Aucun concept sélectionné !");
         }
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.FACET,
+                command.facetId(), conceptIds, "DELETE", null);
         for (String conceptId : conceptIds) {
             conceptFacetRepository.deleteAllByIdConceptAndIdThesaurusAndIdFacet(
                     conceptId, command.thesaurusId(), command.facetId());
@@ -116,6 +122,8 @@ public class FacetMutationService {
 
     @Transactional
     public MutationResult removeAllMembers(RemoveAllFacetMembersCommand command) {
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.FACET,
+                command.facetId(), null, "DELETE", null);
         conceptFacetRepository.deleteAllByIdThesaurusAndIdFacet(command.thesaurusId(), command.facetId());
         return MutationResult.ok("Tous les concepts ont été retirés de la facette");
     }

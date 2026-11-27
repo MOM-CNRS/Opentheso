@@ -105,6 +105,47 @@ class ConceptAlignmentBlockEditorBeanTest {
     }
 
     @Test
+    void startAdding_opensOnANewFocusedRowAfterTheExistingOnes() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(
+                group(new ConceptAlignment("12", "https://www.wikidata.org/wiki/Q1", "exactMatch", "Wikidata", true, 1))
+        )));
+
+        bean.startAdding();
+
+        assertEquals(2, bean.getRows().size());
+        assertFalse(bean.getRows().get(1).isExisting());
+        assertTrue(bean.isFocused(1));
+        assertFalse(bean.isFocused(0));
+    }
+
+    @Test
+    void startAdding_withoutAlignmentsKeepsASingleBlankRow() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of()));
+
+        bean.startAdding();
+
+        assertEquals(1, bean.getRows().size());
+        assertTrue(bean.isFocused(0));
+    }
+
+    @Test
+    void startEditingAlignment_focusesThatAlignment() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(
+                group(new ConceptAlignment("12", "https://www.wikidata.org/wiki/Q1", "exactMatch", "Wikidata", true, 1),
+                        new ConceptAlignment("15", "https://id.loc.gov/x", "exactMatch", "LOC", true, 1))
+        )));
+
+        bean.startEditingAlignment("15");
+
+        assertEquals(2, bean.getRows().size());
+        assertTrue(bean.isFocused(1));
+        bean.removeRow(0);
+        assertTrue(bean.isFocused(0));
+        bean.cancel();
+        assertFalse(bean.isFocused(0));
+    }
+
+    @Test
     void setRowType_updatesOnlyWhileEditing() {
         when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of()));
 
@@ -186,8 +227,8 @@ class ConceptAlignmentBlockEditorBeanTest {
         assertFalse(bean.isEditing());
     }
 
-    private static ConceptAlignmentGroup group(ConceptAlignment alignment) {
-        return new ConceptAlignmentGroup("exactMatch", "skos:exactMatch", List.of(alignment));
+    private static ConceptAlignmentGroup group(ConceptAlignment... alignments) {
+        return new ConceptAlignmentGroup("exactMatch", "skos:exactMatch", List.of(alignments));
     }
 
     private static ConceptDetail detail(List<ConceptAlignmentGroup> groups) {

@@ -74,8 +74,6 @@ class ThesaurusBrowseBeanTest {
     @Mock
     private ThesaurusHomeReadService thesaurusHomeReadService;
     @Mock
-    private ConceptHistoryBean conceptHistoryBean;
-    @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
     private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
@@ -115,7 +113,6 @@ class ThesaurusBrowseBeanTest {
                 facetReadService,
                 conceptFullReadService,
                 thesaurusHomeReadService,
-                conceptHistoryBean,
                 thesaurusPreferenceService,
                 thesaurusSearchLanguageSync,
                 userSession,
@@ -359,46 +356,6 @@ class ThesaurusBrowseBeanTest {
 
         assertEquals(1, bean.getIndexResults().size());
         verify(conceptReadService).searchIndex("TH1", "fr", "chat", true, true, 100);
-    }
-
-    @Test
-    void openConceptHistory_loadsHistoryWhenPreferredTermAvailable() {
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        var summary = new ConceptSummary(
-                "C1", "TH1", "Label", "fr", "valid", "ark", "concept", "N1", "2024", "2025", "admin"
-        );
-        var detail = new ConceptDetail(
-                summary,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                null,
-                "",
-                "T1"
-        );
-        stubLoadDetailWithSource("TH1", "C1", "fr", detail);
-
-        bean.openConcept("C1");
-        bean.openConceptHistory();
-
-        verify(conceptHistoryBean).load("TH1", "C1", "T1");
     }
 
     @Test
@@ -899,35 +856,6 @@ class ThesaurusBrowseBeanTest {
 
         assertEquals(LeftTreeMode.ARBRE, bean.getActiveLeftTreeMode());
         assertEquals(3, bean.getLeftTabIndex());
-    }
-
-    @Test
-    void openConceptHistory_skipsWhenPreferredTermMissing() {
-        var summary = new ConceptSummary("C1", "TH1", "Label", "fr", "C", "", "concept", "", "", "", "");
-        bean.setSelectedConcept(new ConceptDetail(
-                summary,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList()
-        ));
-
-        bean.openConceptHistory();
-
-        verify(conceptHistoryBean, never()).load(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.any()
-        );
     }
 
     @Test

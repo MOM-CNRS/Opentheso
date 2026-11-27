@@ -167,7 +167,7 @@ function collectionNodeHtml(node, depth, parentKey) {
     + '<button type="button" class="tn-label"' + openAct
     + ' data-id="' + escapeHtml(id) + '" data-type="' + escapeHtml(type) + '">'
     + icon + nota
-    + '<span class="tn-textwrap"><span class="tn-text">' + escapeHtml(label) + "</span></span>"
+    + '<span class="tn-textwrap"><span class="tn-text" title="ID : ' + escapeHtml(id) + '">' + escapeHtml(label) + "</span></span>"
     + "</button></div></div></div>";
 }
 
@@ -435,7 +435,7 @@ function collectionFicheGear(block) {
   if (!collectionCanEdit()) return "";
   const label = collectionFicheMsg("edit", "Modifier");
   return '<button type="button" class="cblock-gear" data-act="coll-fiche-edit" data-block="'
-    + block + '" title="' + escapeHtml(label) + '" aria-label="' + escapeHtml(label) + '">✎</button>';
+    + block + '" title="' + escapeHtml(label) + '" aria-label="' + escapeHtml(label) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>';
 }
 
 function collectionBlockHead(title, block, extra, count) {

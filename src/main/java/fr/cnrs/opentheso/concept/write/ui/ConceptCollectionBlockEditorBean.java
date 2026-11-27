@@ -121,6 +121,7 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
             if (conceptLabelBlockEditorBean.isBranchEditing()) {
                 conceptLabelBlockEditorBean.closeQuietly();
                 thesaurusViewBean.reloadSelectedConcept();
+                revealEditedConceptInTree();
             }
             return;
         }
@@ -258,6 +259,15 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
         flashToken = String.valueOf(System.currentTimeMillis());
         thesaurusViewBean.reloadSelectedConcept();
         conceptSelectionContext.update(thesaurusViewBean.getId(), thesaurusViewBean.getSelectedConcept());
+        revealEditedConceptInTree();
+    }
+
+    /** Une facette ajoutée ou retirée change la place du concept dans l'arbre. */
+    private void revealEditedConceptInTree() {
+        ConceptDetail detail = thesaurusViewBean.getSelectedConcept();
+        if (detail != null && detail.getSummary() != null) {
+            thesaurusViewBean.reloadTreeRevealing(detail.getSummary().getConceptId());
+        }
     }
 
     private void reloadIfDirty(boolean dirty) {

@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
 import fr.cnrs.opentheso.shared.repository.NativeQueryParams;
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,10 @@ public class ConceptRenameWriteRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private ConceptChangeLog changeLog;
 
     public record TermReference(int internalId, String idTerm, String lexicalValue) {
     }
@@ -108,24 +113,8 @@ public class ConceptRenameWriteRepository {
                 .setParameter("created", now)
                 .setParameter(NativeQueryParams.MODIFIED, now)
                 .executeUpdate();
-        entityManager.createNativeQuery("""
-                        INSERT INTO term_historique (
-                            id_term, lexical_value, lang, id_thesaurus,
-                            id_user, action, modified, source, status
-                        )
-                        VALUES (
-                            :idTerm, :lexicalValue, :lang, :thesaurusId,
-                            :userId, 'ADD', :modified, :source, ''
-                        )
-                        """)
-                .setParameter(NativeQueryParams.ID_TERM, idTerm)
-                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
-                .setParameter("lang", lang)
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter(NativeQueryParams.MODIFIED, now)
-                .setParameter("source", source)
-                .executeUpdate();
+        changeLog.record(ConceptChangeLog.Change.of(thesaurusId, conceptId, ConceptChangeLog.LABEL, idTerm, lang, "ADD",
+                null, lexicalValue, null, userId));
         entityManager.createNativeQuery("""
                         INSERT INTO preferred_term (id_concept, id_term, id_thesaurus)
                         VALUES (:conceptId, :idTerm, :thesaurusId)
@@ -154,5 +143,9 @@ public class ConceptRenameWriteRepository {
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult()));
         return idTerm;
+    }
+
+    private static boolean isDelete(String action) {
+        return "DELETE".equals(ConceptChangeLog.normalizeActionPublic(action));
     }
 }

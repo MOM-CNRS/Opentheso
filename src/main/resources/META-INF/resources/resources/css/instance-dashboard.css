@@ -118,6 +118,8 @@
 .ia-dash-kpis{
   display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0
 }
+/* Page Statistiques d'un thésaurus : vues et recherches seulement. */
+.ia-dash.is-scoped .ia-dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ia-dash-kpi{
   display:flex;align-items:flex-start;gap:12px;
   padding:14px 15px;border:1px solid var(--line);border-radius:var(--r-lg);

@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.user.service;
 
+import fr.cnrs.opentheso.shared.auth.ApiKeyStore;
 import fr.cnrs.opentheso.shared.crypto.ApiKeyCipher;
+import fr.cnrs.opentheso.shared.crypto.ApiKeyFingerprint;
 import fr.cnrs.opentheso.shared.crypto.ApiKeyGenerator;
 import fr.cnrs.opentheso.user.exception.ApiKeyRegenerationException;
 import fr.cnrs.opentheso.user.mapper.UserProfileMapper;
@@ -23,6 +25,8 @@ public class UserApiKeyService {
     private final UserLookupService userLookupService;
     private final UserProfileService userProfileService;
     private final ApiKeyCipher apiKeyCipher;
+    private final ApiKeyStore apiKeyStore;
+    private final ApiKeyFingerprint apiKeyFingerprint;
 
     public boolean canRegenerateApiKey(UserProfile profile) {
         return ApiKeyPolicy.canRegenerate(profile);
@@ -50,6 +54,8 @@ public class UserApiKeyService {
         user.setKeyExpiresAt(keyExpiresAt);
 
         UserProfile savedProfile = userProfileService.saveEntity(user);
+        // Empreinte posée tout de suite : la nouvelle clé est retrouvée sans parcours dès son premier appel
+        apiKeyStore.saveFingerprint(userId, user.getApiKey(), apiKeyFingerprint.of(plainTextKey));
         log.info("Clé API régénérée pour l'utilisateur id={}", userId);
 
         return new ApiKeyGenerationResult(plainTextKey, savedProfile);

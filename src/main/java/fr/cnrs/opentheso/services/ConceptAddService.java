@@ -40,7 +40,6 @@ public class ConceptAddService {
     private final RelationService relationService;
     private final UserRepository userRepository;
     private final ConceptDcTermRepository conceptDcTermRepository;
-    private final ConceptHistoriqueRepository conceptHistoriqueRepository;
     private final HandleConceptService handleConceptService;
     private final FacetService facetService;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
@@ -208,18 +207,7 @@ public class ConceptAddService {
 
     public void addConceptHistorique(Concept concept, int idUser) {
 
-        log.debug("Ajout d'une trace dans la table historique des concepts (concept id {})", concept.getIdThesaurus());
-        conceptHistoriqueRepository.save(ConceptHistorique.builder()
-                .idConcept(concept.getIdConcept())
-                .idThesaurus(concept.getIdThesaurus())
-                .idArk(concept.getIdArk())
-                .status(concept.getStatus())
-                .notation(concept.getNotation())
-                .topConcept(concept.isTopConcept())
-                .idGroup(concept.getIdGroup() == null ? "" : concept.getIdGroup())
-                .idUser(idUser)
-                .modified(new Date())
-                .build());
+        // Plus d'historique à part pour le concept : sa création est tracée par le libellé dans concept_change_log
     }
 
 

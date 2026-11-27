@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.concept.write.model.MutationOutcome;
@@ -29,6 +30,11 @@ class ConceptCollectionWritePersistenceTest {
     private BranchConceptSupport branchConceptSupport;
     @Mock
     private ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+
+    @Mock
+
+    private ConceptChangeLog changeLog;
+
 
     @InjectMocks
     private ConceptCollectionWritePersistence support;

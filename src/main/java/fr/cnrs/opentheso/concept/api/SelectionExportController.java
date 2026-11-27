@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.models.group.NodeGroup;
 import fr.cnrs.opentheso.concept.export.model.SelectionExportJob;
 import fr.cnrs.opentheso.concept.export.model.SelectionExportOptionsResponse;
@@ -39,6 +40,8 @@ import java.util.concurrent.Future;
 @RequestMapping("/api/selection-export")
 public class SelectionExportController {
 
+    private final ThesaurusReadAccess thesaurusReadAccess;
+
     private final SelectionExportService selectionExportService;
     private final SelectionExportJobStore selectionExportJobStore;
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
@@ -52,8 +55,9 @@ public class SelectionExportController {
             ToolboxThesaurusPersistence toolboxThesaurusPersistence,
             ToolboxPreferencePersistence toolboxPreferencePersistence,
             ToolboxExportPersistence toolboxExportPersistence,
-            @Qualifier("selectionExportExecutor") ThreadPoolTaskExecutor selectionExportExecutor
-    ) {
+            @Qualifier("selectionExportExecutor") ThreadPoolTaskExecutor selectionExportExecutor,
+            ThesaurusReadAccess thesaurusReadAccess) {
+        this.thesaurusReadAccess = thesaurusReadAccess;
         this.selectionExportService = selectionExportService;
         this.selectionExportJobStore = selectionExportJobStore;
         this.toolboxThesaurusPersistence = toolboxThesaurusPersistence;
@@ -64,6 +68,7 @@ public class SelectionExportController {
 
     @GetMapping(value = "/options", produces = MediaType.APPLICATION_JSON_VALUE)
     public SelectionExportOptionsResponse options(@RequestParam("thesaurusId") String thesaurusId) {
+        thesaurusReadAccess.require(thesaurusId);
         if (StringUtils.isBlank(thesaurusId)) {
             return new SelectionExportOptionsResponse("", "", List.of(), List.of());
         }
@@ -94,6 +99,11 @@ public class SelectionExportController {
             if (request == null || StringUtils.isBlank(request.thesaurusId())) {
                 job.reset();
                 job.fail("Thésaurus manquant");
+                return job.toStatus();
+            }
+            if (!thesaurusReadAccess.canRead(request.thesaurusId())) {
+                job.reset();
+                job.fail("Vous n'avez pas accès à ce thésaurus.");
                 return job.toStatus();
             }
             if (!request.wholeThesaurus() && (request.conceptIds() == null || request.conceptIds().isEmpty())) {

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.concept.search.model.ConceptSearchMode;
 import fr.cnrs.opentheso.concept.search.model.ThesaurusBarSearchResponse;
 import fr.cnrs.opentheso.concept.search.service.ThesaurusBarSearchService;
@@ -14,9 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class ThesaurusBarSearchApiController {
 
+    private final ThesaurusReadAccess thesaurusReadAccess;
+
     private final ThesaurusBarSearchService thesaurusBarSearchService;
 
-    public ThesaurusBarSearchApiController(ThesaurusBarSearchService thesaurusBarSearchService) {
+    public ThesaurusBarSearchApiController(ThesaurusBarSearchService thesaurusBarSearchService, ThesaurusReadAccess thesaurusReadAccess) {
+        this.thesaurusReadAccess = thesaurusReadAccess;
         this.thesaurusBarSearchService = thesaurusBarSearchService;
     }
 
@@ -27,6 +31,7 @@ public class ThesaurusBarSearchApiController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String mode
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         return thesaurusBarSearchService.suggest(thesaurusId, lang, q, parseMode(mode));
     }
 
@@ -39,6 +44,7 @@ public class ThesaurusBarSearchApiController {
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false, defaultValue = "24") int limit
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         return thesaurusBarSearchService.search(thesaurusId, lang, q, parseMode(mode), offset, limit);
     }
 
@@ -49,6 +55,7 @@ public class ThesaurusBarSearchApiController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String label
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         thesaurusBarSearchService.logSuggestionSelected(thesaurusId, lang, q, label);
     }
 
@@ -60,6 +67,7 @@ public class ThesaurusBarSearchApiController {
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false, defaultValue = "24") int limit
     ) {
+        thesaurusReadAccess.require(thesaurusId);
         return thesaurusBarSearchService.programmed(thesaurusId, lang, kind, offset, limit);
     }
 

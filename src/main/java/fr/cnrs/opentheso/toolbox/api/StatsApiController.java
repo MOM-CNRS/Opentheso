@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.toolbox.api;
 
+import fr.cnrs.opentheso.rights.ThesaurusReadAccess;
 import fr.cnrs.opentheso.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.toolbox.model.StatisticsCompleteness;
 import fr.cnrs.opentheso.toolbox.model.StatisticsKpis;
@@ -19,6 +20,7 @@ public class StatsApiController {
 
     private final ThesaurusStatisticsService thesaurusStatisticsService;
     private final ThesaurusContext thesaurusContext;
+    private final ThesaurusReadAccess thesaurusReadAccess;
 
     @GetMapping(value = "/stats/kpis", produces = MediaType.APPLICATION_JSON_VALUE)
     public StatisticsKpis kpis() {
@@ -36,7 +38,9 @@ public class StatsApiController {
     }
 
     private String thesaurusId() {
-        return thesaurusContext.resolveThesaurusId();
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        thesaurusReadAccess.require(thesaurusId);
+        return thesaurusId;
     }
 
     private String workLang() {

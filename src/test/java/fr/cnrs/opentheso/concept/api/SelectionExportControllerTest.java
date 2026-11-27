@@ -35,6 +35,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SelectionExportControllerTest {
 
+    private final fr.cnrs.opentheso.rights.ThesaurusReadAccess readAccess = org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class, invocation ->
+            invocation.getMethod().getReturnType() == boolean.class ? Boolean.TRUE : null);
+
     @Mock
     private SelectionExportService selectionExportService;
     @Mock
@@ -65,7 +68,8 @@ class SelectionExportControllerTest {
                 toolboxPreferencePersistence,
                 toolboxExportPersistence,
                 executor
-        );
+        ,
+                readAccess);
         job = new SelectionExportJob();
         lenient().when(selectionExportJobStore.current()).thenReturn(job);
     }

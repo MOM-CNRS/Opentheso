@@ -6,6 +6,7 @@ html{height:100%}
 body:is([data-page="accueil"],[data-page="consultation"]){overflow:hidden}
 .view{scroll-behavior:smooth}
 .sb-rail-btn,.sb-scrim{display:none}
+.pane-sw-l{display:none}
 .view-panel.is-nav-in.is-on > .cv,
 .view-panel.is-nav-in.is-on > .bo,
 .view-panel.is-nav-in.is-on > .rv,
@@ -108,8 +109,8 @@ body:is([data-page="accueil"],[data-page="consultation"]){overflow:hidden}
   .st-row-l{flex:none;text-align:left;padding-top:0}
 }
 
-/* MOB-3 maquette : rail vertical → barre fine en haut, repliée derrière un menu (≤640 px) */
-@media (max-width:640px){
+/* MOB-3 maquette : rail vertical → barre fine en haut, repliée derrière un menu (≤900 px : téléphone et tablette) */
+@media (max-width:900px){
   .app{flex-direction:column;overflow:hidden}
   .main{min-height:0}
   .thesaurus{
@@ -167,6 +168,14 @@ body:is([data-page="accueil"],[data-page="consultation"]){overflow:hidden}
   #menu-account:not(.is-open){display:none !important}
   #menu-login.is-open,
   #menu-account.is-open{display:block !important}
+  #viewDraft .fsave,#viewConceptDraft .fsave,#viewFacetDraft .fsave{left:0}
+  /* Bouton retour fixe : sous la barre du haut (57 px), pas dessous. */
+  .bo-back{left:14px;top:69px}
+  .bo-head{padding-left:42px}
+}
+
+/* Téléphone (≤640 px) */
+@media (max-width:640px){
   .view,.content.is-full .view{padding:14px 12px calc(24px + env(safe-area-inset-bottom,0px))}
   .cv-pref{font-size:22px}
   .cblock{padding:4px 14px 12px}
@@ -486,4 +495,21 @@ body[data-page="legal"] .legal-save-go{
   .st-corpus-overlay:has(.st-align-modal){padding:12px;place-items:center}
   .st-align-modal{width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 24px)}
   .st-align-form{max-height:calc(100dvh - 48px)}
+}
+
+/* Écrans étroits (téléphone et tablette) : bascule Arbre / Fiche (#sbOpenBtn + #sbFicheBtn),
+   pastille à deux segments dans la barre du haut. */
+@media (max-width:900px){
+  .thesaurus-top .sb-rail-btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    width:auto;height:38px;min-height:38px;min-width:0;padding:0 14px;margin:0;
+    border-radius:0;background:var(--surface-2);color:var(--ink-2);
+    font-size:13px;font-weight:600;line-height:1;white-space:nowrap
+  }
+  .thesaurus-top .sb-rail-btn svg{width:17px;height:17px}
+  .thesaurus-top #sbOpenBtn{margin-left:auto;border-radius:var(--r-full) 0 0 var(--r-full)}
+  .thesaurus-top #sbFicheBtn{border-radius:0 var(--r-full) var(--r-full) 0}
+  .thesaurus-top .sb-rail-btn.is-on{background:var(--accent);color:#fff}
+  .thesaurus-top .sb-rail-btn:not(.is-on):hover{background:var(--line);color:var(--ink)}
+  .pane-sw-l{display:inline}
 }

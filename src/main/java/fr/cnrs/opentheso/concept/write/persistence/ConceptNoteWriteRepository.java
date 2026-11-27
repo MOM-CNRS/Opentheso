@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
 import fr.cnrs.opentheso.shared.repository.NativeQueryParams;
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,10 @@ public class ConceptNoteWriteRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private ConceptChangeLog changeLog;
 
     public Optional<String> findNoteLexicalValue(
             String conceptId,
@@ -183,34 +188,24 @@ public class ConceptNoteWriteRepository {
                 .executeUpdate();
     }
 
-    @Transactional
+    /**
+     * Journalise une note dans {@code concept_change_log} ; l'ancienne table {@code note_historique} n'est plus alimentée.
+     *
+     * @param oldValue valeur avant modification ou suppression ({@code null} pour un ajout)
+     * @param newValue valeur après ajout ou modification ({@code null} pour une suppression)
+     */
     public void insertNoteHistory(
             String conceptId,
             String thesaurusId,
             String lang,
             String typeCode,
-            String lexicalValue,
+            String oldValue,
+            String newValue,
             String action,
             int userId
     ) {
-        entityManager.createNativeQuery("""
-                        INSERT INTO note_historique (
-                            notetypecode, id_thesaurus, id_concept, lang,
-                            lexicalvalue, action_performed, id_user, modified
-                        )
-                        VALUES (
-                            :typeCode, :thesaurusId, :conceptId, :lang,
-                            :lexicalValue, :action, :userId, :modified
-                        )
-                        """)
-                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
-                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
-                .setParameter("lang", lang)
-                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
-                .setParameter("action", action)
-                .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
-                .executeUpdate();
+        changeLog.record(ConceptChangeLog.Change.of(thesaurusId, conceptId, ConceptChangeLog.NOTE, typeCode, lang,
+                action, oldValue, newValue, typeCode, userId));
     }
+
 }

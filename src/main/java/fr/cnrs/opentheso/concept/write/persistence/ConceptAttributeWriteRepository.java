@@ -30,6 +30,19 @@ public class ConceptAttributeWriteRepository {
                 .getSingleResult());
     }
 
+    public String findNotation(String thesaurusId, String conceptId) {
+        return (String) entityManager.createNativeQuery("""
+                        SELECT notation FROM concept
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
+                        LIMIT 1
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
+
     @Transactional
     public boolean updateNotation(String thesaurusId, String conceptId, String notation) {
         return entityManager.createNativeQuery("""

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.services;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.*;
 import fr.cnrs.opentheso.models.NodeEMProjection;
 import fr.cnrs.opentheso.models.terms.NodeTerm;
@@ -37,6 +38,11 @@ public class TermService {
     private final NonPreferredTermRepository nonPreferredTermRepository;
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
     private final NonPreferredTermHistoriqueRepository nonPreferredTermHistoriqueRepository;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConceptChangeLog changeLog;
+
 
 
     /// new methods #MR
@@ -96,17 +102,8 @@ public class TermService {
                 .build());
 
         log.debug("Ajout d'une trace de création d'un nouveau term {}", term.getLexicalValue());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(idUser)
-                .action("ADD")
-                .modified(LocalDateTime.now())
-                .build());
+        journal(new ConceptChangeLog.Change(termSaved.getIdThesaurus(), idConcept, ConceptChangeLog.LABEL,
+                termSaved.getIdTerm(), termSaved.getLang(), "ADD", null, termSaved.getLexicalValue(), null, idUser, "legacy"));
 
         addLinkTerm(idConcept, term.getIdThesaurus(), termSaved.getIdTerm());
 
@@ -133,23 +130,15 @@ public class TermService {
         log.debug("Mise à jour du term");
         var term = termRepository.findByIdTermAndIdThesaurusAndLang(idTerm, idTheso, idLang);
         if (term.isPresent()) {
+            String previous = term.get().getLexicalValue();
             term.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label));
             term.get().setContributor(idUser);
             term.get().setModified(new Date());
             termRepository.save(term.get());
 
             log.debug("Ajout d'une trace de modification de la traduction {}", term.get().getLexicalValue());
-            termHistoriqueRepository.save(TermHistorique.builder()
-                    .idTerm(term.get().getIdTerm())
-                    .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label))
-                    .lang(idLang)
-                    .idThesaurus(idTheso)
-                    .source("")
-                    .action("")
-                    .idUser(idUser)
-                    .action("UPDATE")
-                    .modified(LocalDateTime.now())
-                    .build());
+            journalForTerm(idTerm, new ConceptChangeLog.Change(idTheso, null, ConceptChangeLog.LABEL, idTerm, idLang,
+                    "UPDATE", previous, term.get().getLexicalValue(), null, idUser, "legacy"));
         }
     }
 
@@ -171,17 +160,9 @@ public class TermService {
                 .build());
 
         log.debug("Ajout d'une trace de création d'un nouveau term {}", label);
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(idUser)
-                .modified(LocalDateTime.now())
-                .action("New")
-                .build());
+        journalForTerm(termSaved.getIdTerm(), new ConceptChangeLog.Change(termSaved.getIdThesaurus(), null,
+                ConceptChangeLog.LABEL, termSaved.getIdTerm(), termSaved.getLang(), "ADD", null,
+                termSaved.getLexicalValue(), null, idUser, "legacy"));
     }
 
     public void addTerms(NodeTerm nodeTerm, int idUser) {
@@ -345,17 +326,9 @@ public class TermService {
                 .build());
 
         log.debug("Ajout d'une trace de création d'un nouveau term {}", term.getLexicalValue());
-        termHistoriqueRepository.save(TermHistorique.builder()
-                .idTerm(termSaved.getIdTerm())
-                .lexicalValue(termSaved.getLexicalValue())
-                .lang(termSaved.getLang())
-                .idThesaurus(termSaved.getIdThesaurus())
-                .source(termSaved.getSource())
-                .status(termSaved.getStatus())
-                .idUser(idUser)
-                .modified(LocalDateTime.now())
-                .action("New")
-                .build());
+        journalForTerm(termSaved.getIdTerm(), new ConceptChangeLog.Change(termSaved.getIdThesaurus(), null,
+                ConceptChangeLog.LABEL, termSaved.getIdTerm(), termSaved.getLang(), "ADD", null,
+                termSaved.getLexicalValue(), null, idUser, "legacy"));
     }
 
     public boolean isTraductionExistOfConcept(String idConcept, String idThesaurus, String idLang) {
@@ -572,4 +545,16 @@ public class TermService {
         return preferredTermRepository.findConceptIdByLabel(label.replace("'", "%"), idThesaurus, lang)
                 .orElse(null);
     }
- }
+
+    private void journal(ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.record(change);
+        }
+    }
+
+    private void journalForTerm(String idTerm, ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.recordForTerm(idTerm, change);
+        }
+    }
+}

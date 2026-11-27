@@ -38,8 +38,19 @@
     return Number.isFinite(v) ? v.toLocaleString("fr-FR") : "—";
   }
 
+  /** Thésaurus imposé par la page (page Statistiques d'un thésaurus) : pas de sélecteur. */
+  function scopedThesaurusId() {
+    const el = root();
+    return ((el && el.getAttribute("data-thesaurus-id")) || "").trim();
+  }
+
+  function apiBase() {
+    const el = root();
+    return (el && el.getAttribute("data-api")) || "instance-stats";
+  }
+
   function fetchJson(path) {
-    return fetch(ctx() + "/api/instance-stats/" + path, {
+    return fetch(ctx() + "/api/" + apiBase() + "/" + path, {
       headers: { Accept: "application/json" },
       credentials: "same-origin"
     }).then((res) => {
@@ -836,6 +847,7 @@
   }
 
   function loadOverview() {
+    if (scopedThesaurusId() && !document.getElementById("iaDashKpis")) return Promise.resolve();
     if (!hasThesaurus()) {
       setNeedState(true);
       return Promise.resolve();
@@ -855,6 +867,7 @@
   }
 
   function loadQuality() {
+    if (scopedThesaurusId() && !document.getElementById("iaDashQuality")) return Promise.resolve();
     if (!state.thesaurusId) {
       state.quality = null;
       hideQuality();
@@ -982,5 +995,5 @@
     setNeedState(!hasThesaurus());
   }
 
-  window.IaDashParts = { closeDrawer, closeFs, closeThesaurusPicker, downloadCsv, fetchJson, fillThesauri, hasThesaurus, loadOverview, loadQuality, mountFsButtons, openThesaurusPicker, paintThesaurusList, renderSearch, root, setThesaurus, state, syncSearchTabs, thesaurusOpen, toggleFs, toggleThesaurusPicker };
+  window.IaDashParts = { scopedThesaurusId, closeDrawer, closeFs, closeThesaurusPicker, downloadCsv, fetchJson, fillThesauri, hasThesaurus, loadOverview, loadQuality, mountFsButtons, openThesaurusPicker, paintThesaurusList, renderSearch, root, setThesaurus, state, syncSearchTabs, thesaurusOpen, toggleFs, toggleThesaurusPicker };
 })();

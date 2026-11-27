@@ -23,6 +23,16 @@ class ApiKeyInterceptorTest {
     private HttpServletResponse response;
 
     @Test
+    void preHandle_allowsTheJournalPurgeFromTheSession() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/concepts/history/thesaurus/purge");
+        ApiKeyInterceptor interceptor = new ApiKeyInterceptor(apiKeyService);
+
+        assertTrue(interceptor.preHandle(request, response, new Object()));
+
+        verifyNoInteractions(apiKeyService);
+    }
+
+    @Test
     void preHandle_allowsPreferenceSaveWithoutApiKey() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/account/tree-status");
         ApiKeyInterceptor interceptor = new ApiKeyInterceptor(apiKeyService);

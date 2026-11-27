@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.candidat.persistence.CandidatLifecyclePersistence;
 import fr.cnrs.opentheso.concept.policy.ConceptStatusPolicy;
@@ -26,6 +27,7 @@ public class ConceptLifecycleNativeWriteService {
     private static final String STATUS_ACTIVE = "D";
 
     private final ConceptLifecycleWriteRepository conceptLifecycleWriteRepository;
+    private final ConceptChangeLog changeLog;
     private final ConceptRenameWriteRepository conceptRenameWriteRepository;
     private final ConceptLexicalWriteRepository conceptLexicalWriteRepository;
     private final ConceptTranslationWriteRepository conceptTranslationWriteRepository;
@@ -124,13 +126,14 @@ public class ConceptLifecycleNativeWriteService {
 
     @Transactional
     public MutationResult approveConcept(ApproveConceptCommand command) {
-        List<String> replacementConceptIds = command.addReplacedByRelations()
-                ? conceptLifecycleWriteRepository.listReplacementConceptIds(
-                        command.conceptId(), command.thesaurusId())
-                : List.of();
+        List<String> replacementConceptIds = conceptLifecycleWriteRepository.listReplacementConceptIds(
+                command.conceptId(), command.thesaurusId());
 
         if (!applyStatusChange(command.thesaurusId(), command.conceptId(), STATUS_ACTIVE, command.userId())) {
             return MutationResult.failure("Le concept n'a pas été approuvé !");
+        }
+        for (String replacementConceptId : replacementConceptIds) {
+            logReplacedBy(command.thesaurusId(), command.conceptId(), replacementConceptId, "DELETE", command.userId());
         }
         conceptLifecycleWriteRepository.deleteAllReplacedByForConcept(
                 command.conceptId(), command.thesaurusId());
@@ -156,6 +159,7 @@ public class ConceptLifecycleNativeWriteService {
                 command.targetConceptId(),
                 command.thesaurusId(),
                 command.userId());
+        logReplacedBy(command.thesaurusId(), command.conceptId(), command.targetConceptId(), "ADD", command.userId());
         finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Relation ajoutée avec succès");
     }
@@ -167,6 +171,7 @@ public class ConceptLifecycleNativeWriteService {
         }
         conceptLifecycleWriteRepository.deleteReplacedBy(
                 command.conceptId(), command.targetConceptId(), command.thesaurusId());
+        logReplacedBy(command.thesaurusId(), command.conceptId(), command.targetConceptId(), "DELETE", command.userId());
         finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Relation supprimée avec succès");
     }
@@ -196,6 +201,8 @@ public class ConceptLifecycleNativeWriteService {
             if (!candidatLifecyclePersistence.rejectIfPending(command.thesaurusId(), conceptId)) {
                 return false;
             }
+            changeLog.record(ConceptChangeLog.Change.of(command.thesaurusId(), conceptId, ConceptChangeLog.STATUS,
+                    null, null, "UPDATE", current, "RJ", null, command.userId()));
             finalizeMutation(command.thesaurusId(), conceptId, command.userId(), command.contributorName());
             return true;
         }
@@ -228,18 +235,26 @@ public class ConceptLifecycleNativeWriteService {
 
     private boolean applyStatusChange(String thesaurusId, String conceptId, String status, int userId) {
         try {
-            if (!conceptLifecycleWriteRepository.updateConceptStatus(thesaurusId, conceptId, status)) {
+            var before = conceptLifecycleWriteRepository.loadConceptSnapshot(thesaurusId, conceptId);
+            if (before.isEmpty()
+                    || !conceptLifecycleWriteRepository.updateConceptStatus(thesaurusId, conceptId, status)) {
                 return false;
             }
-            var snapshot = conceptLifecycleWriteRepository.loadConceptSnapshot(thesaurusId, conceptId);
-            if (snapshot.isEmpty()) {
-                return false;
+            String previous = StringUtils.trimToEmpty(before.get().status());
+            if (!previous.equals(status)) {
+                changeLog.record(ConceptChangeLog.Change.of(thesaurusId, conceptId, ConceptChangeLog.STATUS,
+                        null, null, "UPDATE", previous, status, null, userId));
             }
-            conceptLifecycleWriteRepository.insertConceptHistory(snapshot.get(), userId);
             return true;
         } catch (RuntimeException exception) {
             return false;
         }
+    }
+
+    private void logReplacedBy(String thesaurusId, String conceptId, String targetId, String action, int userId) {
+        boolean delete = "DELETE".equals(action);
+        changeLog.record(ConceptChangeLog.Change.of(thesaurusId, conceptId, ConceptChangeLog.REPLACED_BY, targetId,
+                null, action, delete ? targetId : null, delete ? null : targetId, null, userId));
     }
 
     private boolean isSameConceptTerm(

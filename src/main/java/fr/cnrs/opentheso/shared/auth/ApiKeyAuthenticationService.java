@@ -17,8 +17,12 @@ public class ApiKeyAuthenticationService {
         if (apiKey == null) {
             throw new ApiKeyMissingException();
         }
-        return apiKeyLookupService.findUserIdByApiKey(apiKey)
+        ApiKeyLookupService.ApiKeyMatch match = apiKeyLookupService.lookup(apiKey)
                 .orElseThrow(() -> new ApiKeyInvalidException(ApiKeyState.INVALID));
+        if (!match.valid()) {
+            throw new ApiKeyInvalidException(match.state()); // EXPIRED → 401, INVALID → 403
+        }
+        return match.userId();
     }
 
     private static String firstNonBlank(String primary, String fallback) {

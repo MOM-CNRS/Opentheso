@@ -26,7 +26,7 @@ class FacetSearchApiControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new FacetSearchApiController(conceptWriteSearchService);
+        controller = new FacetSearchApiController(conceptWriteSearchService, org.mockito.Mockito.mock(fr.cnrs.opentheso.rights.ThesaurusReadAccess.class));
     }
 
     @Test

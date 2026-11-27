@@ -3,16 +3,14 @@ package fr.cnrs.opentheso.services;
 import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.utils.MD5Password;
-import fr.cnrs.opentheso.utils.SimpleCrypto;
+import fr.cnrs.opentheso.shared.auth.ApiKeyLookupService;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,48 +23,30 @@ import org.springframework.stereotype.Service;
 public class ApiKeyService {
 
     private final UserRepository userRepository;
-    private final SimpleCrypto simpleCrypto;
+    private final ApiKeyLookupService apiKeyLookupService;
 
-    public ApiKeyService(
-            UserRepository userRepository,
-            @Value("${crypto.key}") String cryptoKey
-    ) {
+    public ApiKeyService(UserRepository userRepository, ApiKeyLookupService apiKeyLookupService) {
         this.userRepository = userRepository;
-        this.simpleCrypto = new SimpleCrypto(cryptoKey); // AES-GCM crypto
+        this.apiKeyLookupService = apiKeyLookupService;
     }
 
     /**
-     * Retourne l'utilisateur associé à la clé API ou Optional.empty() si invalide
+     * Retourne l'utilisateur associé à la clé API, ou Optional.empty() si elle est inconnue ou expirée.
+     * La recherche (empreinte indexée, contrôle d'expiration) est celle de {@link ApiKeyLookupService}.
      */
     public Optional<User> findUserByApiKey(String apiKeyHeader) {
-        if (apiKeyHeader == null || apiKeyHeader.isEmpty()) {
-            return Optional.empty();
-        }
-
-        List<Object[]> users = userRepository.findAllUserIdAndApiKey();
-
-        for (Object[] row : users) {
-            Integer userId = (Integer) row[0];
-            String encryptedKey = (String) row[1];
-
-            try {
-                String decryptedKey = simpleCrypto.decrypt(encryptedKey);
-                if (apiKeyHeader.equals(decryptedKey)) {
-                    User user = new User();
-                    user.setId(userId);
-                    user.setApiKey(encryptedKey);
-                    user.setUsername((String) row[2]);
-                    return Optional.of(user);
-                }
-            } catch (Exception e) {
-                // Ignorer les clés malformées
-            }
-        }
-
-        return Optional.empty();
+        return lookup(apiKeyHeader).filter(ApiKeyLookupService.ApiKeyMatch::valid).map(match -> {
+            User user = new User();
+            user.setId(match.userId());
+            user.setUsername(match.username());
+            return user;
+        });
     }
 
-
+    /** Compte propriétaire de la clé et état de la clé (pour distinguer une clé expirée d'une clé inconnue). */
+    public Optional<ApiKeyLookupService.ApiKeyMatch> lookup(String apiKeyHeader) {
+        return apiKeyLookupService.lookup(apiKeyHeader);
+    }
 
     /**
      * Génère une clé API d'une longueur choisie avec le header voulu
@@ -115,7 +95,8 @@ public class ApiKeyService {
 
         var user = userRepository.findByApiKey(MD5Password.getEncodedPassword(apiKey));
         if (user.isEmpty()) {
-            log.error("Aucun utilisateur n'est trouvé avec l'apiKey {}", apiKey);
+            // Jamais la clé dans le journal : une clé presque juste y serait lisible
+            log.warn("Clé API inconnue ({} caractères)", apiKey.length());
             return ApiKeyState.INVALID;
         }
 

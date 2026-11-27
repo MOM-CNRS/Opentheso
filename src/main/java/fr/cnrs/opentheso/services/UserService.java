@@ -201,7 +201,8 @@ public class UserService {
     public NodeUserComplet getUserByLoginAndPassword(String login, String password) {
 
         log.debug("Tentative de connexion pour l'utilisateur : {}", login);
-        return userRepository.findByUsernameAndPassword(login, password)
+        // Comparaison BCrypt (avec migration du MD5 historique) : la base ne contient que des empreintes
+        return java.util.Optional.ofNullable(findByUsernameAndPasswordMigrated(login, password))
                 .map(user -> {
                     NodeUserComplet nodeUser = new NodeUserComplet();
                     nodeUser.setIdUser(user.getId());

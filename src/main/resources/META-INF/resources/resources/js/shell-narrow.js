@@ -33,6 +33,11 @@ function setSidebarDrawer(open) {
       btn.setAttribute("title", label);
     }
   }
+  const fiche = document.getElementById("sbFicheBtn");
+  if (fiche) {
+    fiche.classList.toggle("is-on", !want);
+    fiche.setAttribute("aria-pressed", want ? "false" : "true");
+  }
   const scrim = document.getElementById("sbScrim");
   if (scrim) scrim.hidden = !want;
 }
@@ -53,7 +58,7 @@ function bindNarrowShell() {
   if (!mq) return;
   if (mq.addEventListener) mq.addEventListener("change", sync);
   else if (mq.addListener) mq.addListener(sync);
-  const rail = window.matchMedia("(max-width: 640px)");
+  const rail = window.matchMedia("(max-width: 900px)");
   const closeRail = () => {
     if (!rail.matches && typeof setThesaurusMenu === "function") setThesaurusMenu(false);
   };

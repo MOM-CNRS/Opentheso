@@ -59,7 +59,6 @@ class NativeQueryRepositorySmokeTest {
                 new ConsultationCatalogQueryRepository(),
                 new GraphGlobeQueryRepository(),
                 new GraphViewQueryRepository(),
-                new HistoryQueryRepository(),
                 new AdminQueryRepository(),
                 new UserRoleQueryRepository(),
                 new UserAuthQueryRepository(),

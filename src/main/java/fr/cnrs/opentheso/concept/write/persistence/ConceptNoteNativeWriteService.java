@@ -30,13 +30,17 @@ public class ConceptNoteNativeWriteService {
         var existingId = conceptNoteWriteRepository.findNoteId(
                 command.conceptId(), command.thesaurusId(), lang, command.typeCode());
         if (existingId.isPresent()) {
+            String previous = conceptNoteWriteRepository.findNoteLexicalValue(
+                    command.conceptId(), command.thesaurusId(), lang, command.typeCode()).orElse(null);
             if (!conceptNoteWriteRepository.updateNote(
                     existingId.get(), command.thesaurusId(), cleanedValue, cleanedSource)) {
                 return MutationResult.failure("Erreur de modification !");
             }
-            conceptNoteWriteRepository.insertNoteHistory(
-                    command.conceptId(), command.thesaurusId(), lang, command.typeCode(),
-                    storedValue, "update", command.userId());
+            if (!org.apache.commons.lang3.Strings.CS.equals(previous, cleanedValue)) {
+                conceptNoteWriteRepository.insertNoteHistory(
+                        command.conceptId(), command.thesaurusId(), lang, command.typeCode(),
+                        previous, cleanedValue, "update", command.userId());
+            }
         } else {
             if (conceptNoteWriteRepository.existsWithValue(
                     command.conceptId(), command.thesaurusId(), lang, command.typeCode(), storedValue)) {
@@ -45,6 +49,9 @@ public class ConceptNoteNativeWriteService {
             conceptNoteWriteRepository.insertNote(
                     command.conceptId(), command.thesaurusId(), lang, command.typeCode(),
                     cleanedValue, cleanedSource, command.userId());
+            conceptNoteWriteRepository.insertNoteHistory(
+                    command.conceptId(), command.thesaurusId(), lang, command.typeCode(),
+                    null, cleanedValue, "ADD", command.userId());
         }
         finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Note enregistrée avec succès");
@@ -62,9 +69,7 @@ public class ConceptNoteNativeWriteService {
         conceptNoteWriteRepository.deleteNote(command.noteId(), command.thesaurusId());
         conceptNoteWriteRepository.insertNoteHistory(
                 command.conceptId(), command.thesaurusId(), lang, command.typeCode(),
-                StringUtils.convertString(oldValue),
-                "delete",
-                command.userId());
+                oldValue, null, "delete", command.userId());
         finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Note supprimée avec succès");
     }

@@ -327,8 +327,22 @@ public class RestExceptionHandler {
         return problem;
     }
 
+    /** Corps JSON illisible ou incomplet : erreur de l'appelant, pas du serveur. */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(Exception ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("Bad Request");
+        problem.setDetail("Corps de la requête invalide ou incomplet");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        return problem;
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex, HttpServletRequest request) {
+        // Réponse générique pour l'appelant ; la cause reste dans le journal pour le diagnostic
+        org.slf4j.LoggerFactory.getLogger(RestExceptionHandler.class)
+                .error("Erreur API non gérée sur {} {}", request.getMethod(), request.getRequestURI(), ex);
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         problem.setTitle("Internal Server Error");
         problem.setDetail("Une erreur interne est survenue");

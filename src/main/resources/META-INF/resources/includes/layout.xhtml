@@ -28,25 +28,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-shell.css?v=20261124-facettes2"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-concept.css?v=20261125-graphe"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-suggest.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-shell.css?v=20261126-sbclip"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-concept.css?v=20261127-aligndesign"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-suggest.css?v=20261126-unread2"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-batch.css?v=20261120-fiche"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/consultation-home.css?v=20261124-fold"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-shell.css?v=20261124-facettes2"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-batch.css?v=20261120-sso"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-editors.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-editors.css?v=20261126-statspad"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-account.css?v=20261118-split"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-layout.css?v=20261124-scroll"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/opentheso-layout.css?v=20261126-tabbar2"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-list.css?v=20261124-ark"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-forms.css?v=20261124-arkbtn"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/thesaurus-transfer.css?v=20261123-tpid"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-hub.css?v=20261119-prefs"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-projects.css?v=20261118-split"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-dashboard.css?v=20261118-split"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/instance-dashboard.css?v=20261126-scoped"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/theme.css?v=20261123-baralign"/>
 </h:head>
 <h:body pt:data-page="#{page}" pt:data-ctx="#{request.contextPath}"
+      pt:data-thesaurus="#{thesaurusContext.currentThesaurusId}"
       pt:data-logged-in="#{userSession.loggedIn ? '1' : '0'}"
       pt:data-tree-select="#{consultationShellBean.adminOnCurrentThesaurus ? '1' : '0'}"
       pt:data-session-timeout="#{navigationBean.sessionTimeoutInMilliseconds}"
@@ -176,6 +177,25 @@
   </div>
 </ui:fragment>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
+<script>
+/* Vue demandée (?view=collection, ?view=tableau) affichée avant le chargement des scripts :
+   sans cela, la vue par défaut apparaissait d'abord, puis basculait. */
+(function () {
+  if (location.pathname.indexOf("/thesaurus/consultation") === -1) return;
+  var p = new URLSearchParams(location.search);
+  if (p.get("id") || p.get("idc") || p.get("q")) return;
+  var view = p.get("view");
+  var side = { collection: "panelCollection", tableau: "panelTable" }[view];
+  var main = { collection: "viewCollection" }[view];
+  function show(selector, id) {
+    var target = id ? document.getElementById(id) : null;
+    if (!target) return;
+    document.querySelectorAll(selector).forEach(function (el) { el.classList.toggle("is-on", el === target); });
+  }
+  show(".sidebar-panel", side);
+  show(".view-panel", main);
+})();
+</script>
 <script src="#{request.contextPath}/resources/js/core.js?v=20261124-facettes2"></script>
 <script src="#{request.contextPath}/resources/js/settings.js?v=20261120-langfix"></script>
 <script src="#{request.contextPath}/resources/js/shell-ouverture.js?v=20261120-fiche"></script>
@@ -183,40 +203,43 @@
 <script src="#{request.contextPath}/resources/js/shell-relations.js?v=20261123-reltype2"></script>
 <script src="#{request.contextPath}/resources/js/shell-media.js?v=20261120-relkind"></script>
 <script src="#{request.contextPath}/resources/js/shell-traductions.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-notes.js?v=20261120-lang"></script>
+<script src="#{request.contextPath}/resources/js/shell-notes.js?v=20261127-aligndesign2"></script>
 <script src="#{request.contextPath}/resources/js/shell-corpus.js?v=20261124-facettes2"></script>
 <script src="#{request.contextPath}/resources/js/shell-creation.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-brouillon.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-brouillon-notes.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-facette.js?v=20261120-lang"></script>
+<script src="#{request.contextPath}/resources/js/shell-facette.js?v=20261127-journal9"></script>
 <script src="#{request.contextPath}/resources/js/shell-lot.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/shell-cartes.js?v=20261120-hist"></script>
-<script src="#{request.contextPath}/resources/js/search.js?v=20261124-facettes2"></script>
+<script src="#{request.contextPath}/resources/js/concept-history.js?v=20261127-journal9"></script>
+<script src="#{request.contextPath}/resources/js/tab-thesaurus.js?v=20261127-tab1"></script>
+<script src="#{request.contextPath}/resources/js/search.js?v=20261126-idtitle"></script>
 <script src="#{request.contextPath}/resources/js/tree.js?v=20261111-caret"></script>
 <script src="#{request.contextPath}/resources/js/table.js"></script>
 <script src="#{request.contextPath}/resources/js/globe-ui.js?v=20261124-facettes2"></script>
-<script src="#{request.contextPath}/resources/js/collections-arbre.js?v=20261125-membrestotal"></script>
+<script src="#{request.contextPath}/resources/js/collections-arbre.js?v=20261127-pencil"></script>
 <script src="#{request.contextPath}/resources/js/collections-fiche.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/collections-selecteur.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/selection-preferences.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/selection-arbre.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/selection-liste.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/selection-collections.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/selection-deplacement.js?v=20261118-split"></script>
+<script src="#{request.contextPath}/resources/js/selection-deplacement.js?v=20261126-noconfirm"></script>
 <script src="#{request.contextPath}/resources/js/export-options.js?v=20261124-zipoff"></script>
 <script src="#{request.contextPath}/resources/js/export-execution.js?v=20261118-split"></script>
 <script src="#{request.contextPath}/resources/js/about.js?v=20261120-langmark"></script>
-<script src="#{request.contextPath}/resources/js/stats.js?v=20261028-gotop"></script>
-<script src="#{request.contextPath}/resources/js/instance-stats.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/instance-stats-bind.js?v=20261118-split"></script>
-<script src="#{request.contextPath}/resources/js/shell-narrow.js?v=20261111-railmenu"></script>
+<script src="#{request.contextPath}/resources/js/stats.js?v=20261126-coll"></script>
+<script src="#{request.contextPath}/resources/js/instance-stats.js?v=20261126-scoped"></script>
+<script src="#{request.contextPath}/resources/js/instance-stats-bind.js?v=20261126-scoped"></script>
+<script src="#{request.contextPath}/resources/js/shell-narrow.js?v=20261126-tabbar"></script>
+<script src="#{request.contextPath}/resources/js/shell-swipe.js?v=20261126-paneswitch"></script>
 <script src="#{request.contextPath}/resources/js/dialogs.js"></script>
 <script src="#{request.contextPath}/resources/js/add-nt.js?v=20261101-cpterr"></script>
 <script src="#{request.contextPath}/resources/js/ark-progress.js"></script>
 <script src="#{request.contextPath}/resources/js/theso-ac.js"></script>
 <script src="#{request.contextPath}/resources/js/session.js"></script>
-<script src="#{request.contextPath}/resources/js/app-session.js?v=20261120-qr"></script>
-<script src="#{request.contextPath}/resources/js/app-actions.js?v=20261124-facettes2"></script>
+<script src="#{request.contextPath}/resources/js/app-session.js?v=20261126-tabbar"></script>
+<script src="#{request.contextPath}/resources/js/app-actions.js?v=20261127-alignsave"></script>
 <script src="#{request.contextPath}/resources/js/app-actions-fiche.js?v=20261120-qr"></script>
 <script src="#{request.contextPath}/resources/js/app-bind.js?v=20261117-sectionopen"></script>
 <script src="#{request.contextPath}/resources/js/app-boot.js?v=20261124-facettes2"></script>

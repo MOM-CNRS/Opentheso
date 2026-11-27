@@ -51,6 +51,8 @@ class ConceptNoteNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptNoteWriteRepository).insertNote(
                 "C1", "TH1", "fr", "note", "Hello", "src", 7);
+        verify(conceptNoteWriteRepository).insertNoteHistory(
+                "C1", "TH1", "fr", "note", null, "Hello", "ADD", 7);
         verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 7);
         verify(conceptWritePostMutationRepository).saveContributorDcTerm("TH1", "C1", "admin");
     }
@@ -60,12 +62,13 @@ class ConceptNoteNativeWriteServiceTest {
         var command = new UpsertNoteCommand("TH1", "C1", "fr", "note", "Updated", "src", 7, "admin");
         when(conceptNoteWriteRepository.findNoteId("C1", "TH1", "fr", "note")).thenReturn(Optional.of(42));
         when(conceptNoteWriteRepository.updateNote(42, "TH1", "Updated", "src")).thenReturn(true);
+        when(conceptNoteWriteRepository.findNoteLexicalValue("C1", "TH1", "fr", "note")).thenReturn(Optional.of("Before"));
 
         var result = service.upsertNote(command);
 
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptNoteWriteRepository).insertNoteHistory(
-                "C1", "TH1", "fr", "note", "Updated", "update", 7);
+                "C1", "TH1", "fr", "note", "Before", "Updated", "update", 7);
         verify(conceptNoteWriteRepository, never()).insertNote(
                 anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
     }
@@ -91,6 +94,6 @@ class ConceptNoteNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptNoteWriteRepository).deleteNote(42, "TH1");
         verify(conceptNoteWriteRepository).insertNoteHistory(
-                "C1", "TH1", "fr", "note", "Old note", "delete", 7);
+                "C1", "TH1", "fr", "note", "Old note", null, "delete", 7);
     }
 }

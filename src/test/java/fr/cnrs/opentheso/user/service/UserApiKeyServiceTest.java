@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.user.service;
 
+import fr.cnrs.opentheso.shared.auth.ApiKeyStore;
+import fr.cnrs.opentheso.shared.crypto.ApiKeyFingerprint;
 import fr.cnrs.opentheso.shared.crypto.ApiKeyCipher;
 import fr.cnrs.opentheso.user.exception.ApiKeyRegenerationException;
 import fr.cnrs.opentheso.user.exception.UserNotFoundException;
@@ -35,6 +37,10 @@ class UserApiKeyServiceTest {
     @Mock
     private UserRoleOverviewService userRoleOverviewService;
 
+    @Mock
+    private ApiKeyStore apiKeyStore;
+
+    private final ApiKeyFingerprint apiKeyFingerprint = new ApiKeyFingerprint("test-secret-key-for-unit-tests");
     private ApiKeyCipher apiKeyCipher;
     private UserLookupService userLookupService;
     private UserProfileService userProfileService;
@@ -49,7 +55,8 @@ class UserApiKeyServiceTest {
                 userLookupService,
                 userRoleOverviewService
         );
-        userApiKeyService = new UserApiKeyService(userLookupService, userProfileService, apiKeyCipher);
+        userApiKeyService = new UserApiKeyService(userLookupService, userProfileService, apiKeyCipher,
+                apiKeyStore, apiKeyFingerprint);
     }
 
     @Test
@@ -65,6 +72,8 @@ class UserApiKeyServiceTest {
         assertTrue(result.profile().keyNeverExpire());
         assertTrue(result.profile().hasApiKey());
         assertEqualsPlainKeyStored(user, result.plainTextKey());
+        // La nouvelle clé est indexée tout de suite
+        verify(apiKeyStore).saveFingerprint(7, user.getApiKey(), apiKeyFingerprint.of(result.plainTextKey()));
     }
 
     @Test

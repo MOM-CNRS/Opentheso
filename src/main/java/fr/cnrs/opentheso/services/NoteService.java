@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.services;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.Note;
-import fr.cnrs.opentheso.entites.NoteHistorique;
 import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.models.notes.NodeNote;
 import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
@@ -29,6 +29,11 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final NoteTypeRepository noteTypeRepository;
     private final NoteHistoriqueRepository noteHistoriqueRepository;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConceptChangeLog changeLog;
+
 
 
     public NodeNote getNodeNote(String idConcept, String idThesaurus, String idLang, String noteType) {
@@ -79,16 +84,10 @@ public class NoteService {
                                          String noteTypeCode, String actionPerformed, int idUser) {
 
         log.debug("Ajout de l'historique des actions sur les notes");
-        noteHistoriqueRepository.save(NoteHistorique.builder()
-                .idThesaurus(idThesausus)
-                .idConcept(idConcept)
-                .lang(idLang)
-                .lexicalvalue(fr.cnrs.opentheso.utils.StringUtils.convertString(note))
-                .actionPerformed(actionPerformed)
-                .idUser(idUser)
-                .notetypecode(noteTypeCode)
-                .modified(new Date())
-                .build());
+        String normalized = ConceptChangeLog.normalizeActionPublic(actionPerformed);
+        boolean delete = "DELETE".equals(normalized);
+        journal(new ConceptChangeLog.Change(idThesausus, idConcept, ConceptChangeLog.NOTE, noteTypeCode, idLang,
+                normalized, delete ? note : null, delete ? null : note, noteTypeCode, idUser, "legacy"));
     }
 
     public void deleteByThesaurus(String idThesaurus) {
@@ -361,4 +360,15 @@ public class NoteService {
         return sorted;
     }
 
+    private void journal(ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.record(change);
+        }
+    }
+
+    private void journalForTerm(String idTerm, ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.recordForTerm(idTerm, change);
+        }
+    }
 }

@@ -56,9 +56,12 @@
 #viewConcept.view-panel,
 #viewSettings.view-panel,
 #viewBatch.view-panel,
-#viewBulk.view-panel{
+#viewBulk.view-panel,
+#viewStats.view-panel{
   height:auto;min-height:100%;overflow:visible
 }
+/* Grand écran : .view n'a pas de marge basse ; les dernières cartes ne doivent pas coller au bord. */
+#viewStats.view-panel{padding-bottom:48px}
 body[data-page="atelier"] #previewView,
 #previewView:has(#viewLive.is-on),
 #previewView:has(#viewConcept.is-on){

@@ -921,12 +921,11 @@ function gotoConceptResGps(index) {
 
 window.onLabelSave = function (data) {
   const btns = document.querySelectorAll(
-      "[id$='labelEditSave'], #labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #fcTrEditSave, #fcLabelEditSave, #fcMemEditSave, #fcNoteEditSave, #noteEditSave, #resEditSave, #relEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
+      "[id$='labelEditSave'], #labelSaveConfirm .abt-save, [id$='alignEditSave'], [id$='collEditSave'], #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #fcTrEditSave, #fcLabelEditSave, #fcMemEditSave, #fcNoteEditSave, #noteEditSave, #resEditSave, #relEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
   );
   if (data.status === "begin") {
     if (typeof hideConfirm === "function") {
       hideConfirm("#labelSaveConfirm");
-      hideConfirm("#collSaveConfirm");
       hideConfirm("#relSaveConfirm");
       hideConfirm("#crelSaveConfirm");
       hideConfirm("#trSaveConfirm");
@@ -1001,3 +1000,34 @@ window.onAlignAutoSearch = function (data) {
   }
 }
 
+
+
+// Alignements : à l'ouverture par « Ajouter » ou par le crayon, la carte mise en avant reçoit le focus
+(function () {
+  function focusAlignCard() {
+    const card = document.querySelector(".align-edit-card.is-focus:not([data-focused])");
+    if (!card) return;
+    card.setAttribute("data-focused", "1");
+    const uri = card.querySelector("input[id$='alignUri']");
+    const source = card.querySelector("input[id$='alignSource']");
+    const target = uri || source;
+    card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (target) {
+      target.focus({ preventScroll: true });
+      if (!card.classList.contains("is-new") && typeof target.select === "function") target.select();
+    }
+  }
+  // La fiche peut être re-rendue plusieurs fois (ajax, rafraîchissements) : on surveille l'apparition de la carte
+  let pending = false;
+  const schedule = () => {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(() => { pending = false; focusAlignCard(); });
+  };
+  const start = () => {
+    new MutationObserver(() => {
+      if (document.querySelector(".align-edit-card.is-focus:not([data-focused])")) schedule();
+    }).observe(document.body, { childList: true, subtree: true });
+  };
+  if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
+})();

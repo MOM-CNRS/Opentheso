@@ -216,12 +216,6 @@ document.addEventListener("click", (e) => {
     hideConfirm("#labelSaveConfirm");
   } else if (act === "label-save-modal") {
     return;
-  } else if (act === "coll-save-ask") {
-    showConfirm("#collSaveConfirm");
-  } else if (act === "coll-save-dismiss") {
-    hideConfirm("#collSaveConfirm");
-  } else if (act === "coll-save-modal") {
-    return;
   } else if (act === "rel-save-ask") {
     showConfirm("#relSaveConfirm");
   } else if (act === "rel-save-dismiss") {
@@ -326,12 +320,6 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     if (typeof closeConceptResImgLightbox === "function") closeConceptResImgLightbox();
   } else if (act === "cv-res-img-lightbox-modal") {
-    return;
-  } else if (act === "align-save-ask") {
-    showConfirm("#alignSaveConfirm");
-  } else if (act === "align-save-dismiss") {
-    hideConfirm("#alignSaveConfirm");
-  } else if (act === "align-save-modal") {
     return;
   } else if (act === "note-save-ask") {
     showConfirm("#noteSaveConfirm");

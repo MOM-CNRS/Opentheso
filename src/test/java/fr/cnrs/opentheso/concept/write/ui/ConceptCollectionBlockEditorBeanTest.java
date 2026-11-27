@@ -144,6 +144,8 @@ class ConceptCollectionBlockEditorBeanTest {
                 ArgumentCaptor.forClass(AddConceptToCollectionCommand.class);
         verify(conceptCollectionMutationService).addToCollection(added.capture());
         assertEquals("G2", added.getValue().collectionId());
+        // L'arbre est rechargé et déplié jusqu'au concept enregistré
+        verify(thesaurusViewBean).reloadTreeRevealing("C1");
         assertFalse(added.getValue().applyToBranch());
         assertFalse(bean.isEditing());
         assertEquals("Collections enregistrées", bean.getFlashMessage());

@@ -402,4 +402,14 @@
         <sqlFile path="v26/26-11_10.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.11.11" author="Miled">
+        <comment>Concept change log: one journal with old and new values, filled from the former history tables</comment>
+        <sqlFile path="v26/26-11_11.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.11.12" author="Miled">
+        <comment>API keys: indexed HMAC fingerprint to find a key without decrypting all of them</comment>
+        <sqlFile path="v26/26-11_12.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

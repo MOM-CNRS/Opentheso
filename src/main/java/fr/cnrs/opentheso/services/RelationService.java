@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.services;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
-import fr.cnrs.opentheso.entites.HierarchicalRelationshipHistorique;
 import fr.cnrs.opentheso.models.BroaderRelationProjection;
 import fr.cnrs.opentheso.models.RelatedRelationProjection;
 import fr.cnrs.opentheso.models.concept.NodeUri;
@@ -46,6 +46,11 @@ public class RelationService {
     private final ConceptTypeService conceptTypeService;
     private final TermService termService;
     private final NtTypeRepository ntTypeRepository;
+
+    /** Journal unique des modifications (concept_change_log), qui remplace les anciennes tables *_historique. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConceptChangeLog changeLog;
+
 
 
     // Fonction générique pour ajouter tout type de relations #MR
@@ -360,15 +365,10 @@ public class RelationService {
     private void addRelationHistorique(String idConcept1, String idThesaurus, String idConcept2, String role, int idUser, String action) {
 
         log.debug("Enregistrement un nouveau historique des relations");
-        hierarchicalRelationshipHistoriqueRepository.save(HierarchicalRelationshipHistorique.builder()
-                .idConcept1(idConcept1)
-                .idConcept2(idConcept2)
-                .idThesaurus(idThesaurus)
-                .modified(new Date())
-                .idUser(idUser)
-                .action(action)
-                .role(role)
-                .build());
+        String normalized = ConceptChangeLog.normalizeActionPublic(action);
+        boolean delete = "DELETE".equals(normalized);
+        journal(new ConceptChangeLog.Change(idThesaurus, idConcept1, ConceptChangeLog.RELATION, idConcept2, null,
+                normalized, delete ? idConcept2 : null, delete ? null : idConcept2, role, idUser, "legacy"));
     }
 
     @Transactional
@@ -612,5 +612,17 @@ public class RelationService {
                     return relation;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void journal(ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.record(change);
+        }
+    }
+
+    private void journalForTerm(String idTerm, ConceptChangeLog.Change change) {
+        if (changeLog != null) {
+            changeLog.recordForTerm(idTerm, change);
+        }
     }
 }

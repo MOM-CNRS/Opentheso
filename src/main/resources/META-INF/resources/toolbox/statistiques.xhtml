@@ -30,7 +30,7 @@
                     <div class="mg-kpi-n" data-stat="collections" aria-busy="true" aria-live="polite">
                       <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
-                    <div class="mg-kpi-l">Micro-thésaurus</div>
+                    <div class="mg-kpi-l">Collections</div>
                   </div>
                   <div class="mg-kpi">
                     <div class="mg-kpi-n" data-stat="languages" aria-busy="true" aria-live="polite">
@@ -52,7 +52,7 @@
                   </div>
                 </div>
                 <div class="bo-card">
-                  <div class="bo-card-h"><span class="bo-card-t">Répartition par micro-thésaurus</span>
+                  <div class="bo-card-h"><span class="bo-card-t">Répartition par collection</span>
                     <span class="cs-cap right" data-stat-collections-cap=""></span></div>
                   <div class="bo-card-b">
                     <div class="mg-bars" data-stat-coverage="collections" aria-busy="true">
@@ -130,6 +130,15 @@
                     </div>
                   </div>
                 </div>
+
+                <ui:fragment rendered="#{thesaurusStatsBean.detailVisible}">
+                  <div class="st-group-head">#{thesaurusStatsBean.usageVisible ? 'Qualité et audience' : 'Qualité'}</div>
+                  <ui:include src="/admin/includes/instance-stats-panel.xhtml">
+                    <ui:param name="dashThesaurusId" value="#{thesaurusStatsBean.thesaurusId}"/>
+                    <ui:param name="dashQuality" value="#{thesaurusStatsBean.qualityVisible}"/>
+                    <ui:param name="dashUsage" value="#{thesaurusStatsBean.usageVisible}"/>
+                  </ui:include>
+                </ui:fragment>
               </div>
             </div>
           </div>

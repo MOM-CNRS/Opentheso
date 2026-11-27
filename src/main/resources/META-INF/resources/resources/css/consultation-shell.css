@@ -161,7 +161,9 @@ a.menu-foot{text-decoration:none;color:var(--accent)}
 
 /* ───────── Barre latérale : identité + recherche + vues ───────── */
 .sidebar{flex:0 0 var(--tree-w);min-width:var(--tree-w);background:var(--surface);
-  border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;
+  /* La barre de sélection masquée (#bulkSel, translateY(12px)) ne doit pas faire défiler la fenêtre. */
+  overflow-y:clip}
 .sidebar-head{flex:0 0 auto;position:relative;z-index:20;display:flex;flex-direction:column;gap:10px;
   padding:12px;border-bottom:1px solid var(--line);background:var(--surface)}
 .sidebar-body{flex:1;min-height:0;overflow-y:auto}
@@ -440,7 +442,8 @@ a.menu-foot{text-decoration:none;color:var(--accent)}
 .tree-empty{padding:28px 18px;color:var(--ink-3);font-size:13.5px;line-height:1.45}
 .tn-row{align-items:center}
 .tn-rowmain{display:flex;align-items:center;flex:1;min-width:0}
-.tn-check{width:16px;height:16px;flex:0 0 auto;margin-left:8px;border-radius:var(--r-sm);border:1.5px solid var(--line-2);
+/* La case est entre la flèche et le libellé, dans le bloc décalé du niveau */
+.tn-check{width:16px;height:16px;flex:0 0 auto;margin:0 2px 0 0;border-radius:var(--r-sm);border:1.5px solid var(--line-2);
   display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;cursor:pointer;background:var(--surface);
   opacity:0;transition:opacity .1s}
 .tn-row:hover .tn-check{opacity:1}

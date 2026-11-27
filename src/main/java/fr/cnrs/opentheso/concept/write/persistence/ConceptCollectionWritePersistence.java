@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.concept.write.persistence;
 
+import fr.cnrs.opentheso.concept.history.ConceptChangeLog;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.concept.write.model.MutationResult;
@@ -19,6 +20,7 @@ public class ConceptCollectionWritePersistence {
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
     private final BranchConceptSupport branchConceptSupport;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    private final ConceptChangeLog changeLog;
 
     public MutationResult addToCollection(AddConceptToCollectionCommand command) {
         if (StringUtils.isBlank(command.collectionId())) {
@@ -30,6 +32,8 @@ public class ConceptCollectionWritePersistence {
         if (CollectionUtils.isEmpty(conceptIds)) {
             return MutationResult.validationError("aucun concept sélectionné !");
         }
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.COLLECTION,
+                command.collectionId().toLowerCase(), conceptIds, "ADD", command.userId());
         for (String conceptId : conceptIds) {
             conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
                     .idGroup(command.collectionId().toLowerCase())
@@ -53,6 +57,8 @@ public class ConceptCollectionWritePersistence {
         if (CollectionUtils.isEmpty(conceptIds)) {
             return MutationResult.validationError("aucun concept sélectionné !");
         }
+        changeLog.recordMembership(command.thesaurusId(), ConceptChangeLog.COLLECTION,
+                command.collectionId().toLowerCase(), conceptIds, "DELETE", command.userId());
         for (String conceptId : conceptIds) {
             conceptGroupConceptRepository.deleteByIdGroupAndIdConceptAndIdThesaurus(
                     command.collectionId().toLowerCase(),
